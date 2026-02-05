@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import '../theme/app_colors.dart';
 
 class OfflineBanner extends StatelessWidget {
   final String language;
@@ -30,7 +31,7 @@ class OfflineBanner extends StatelessWidget {
         children: [
           Icon(
             Platform.isIOS ? CupertinoIcons.wifi_slash : Icons.wifi_off,
-            color: Colors.white,
+            color: AppColors.pebble,
             size: 20,
           ),
           const SizedBox(width: 12),
@@ -38,7 +39,7 @@ class OfflineBanner extends StatelessWidget {
             child: Text(
               message,
               style: const TextStyle(
-                color: Colors.white,
+                color: AppColors.pebble,
                 fontSize: 13,
                 fontWeight: FontWeight.w500,
               ),

@@ -46,8 +46,12 @@ class _BespokeWheelPickerState extends State<BespokeWheelPicker> {
             height: 70, // Matches itemExtent
             width: double.infinity,
             decoration: BoxDecoration(
-              color: AppColors.shamrock.withValues(alpha: 0.1),
+              color: AppColors.styrianForest.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: AppColors.styrianForest.withValues(alpha: 0.2),
+                width: 1,
+              ),
             ),
           ),
           NotificationListener<ScrollNotification>(
@@ -82,7 +86,7 @@ class _BespokeWheelPickerState extends State<BespokeWheelPicker> {
                     child: Text(
                       widget.options[index],
                       style: AppTypography.displayMedium.copyWith(
-                        color: AppColors.carbonBlack,
+                        color: AppColors.slate,
                         fontWeight: FontWeight.w900, // Bolder
                         fontSize: 32, // Larger base size
                       ),

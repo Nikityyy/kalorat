@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:kalorat/theme/app_colors.dart';
 import 'package:provider/provider.dart';
 import '../models/models.dart';
 import '../providers/app_provider.dart';
@@ -89,8 +90,8 @@ class _AddWeightScreenState extends State<AddWeightScreen> {
             ElevatedButton(
               onPressed: _save,
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.deepOrange,
-                foregroundColor: Colors.white,
+                backgroundColor: AppColors.kaiserRed,
+                foregroundColor: AppColors.pebble,
                 padding: const EdgeInsets.symmetric(vertical: 16),
               ),
               child: Text(

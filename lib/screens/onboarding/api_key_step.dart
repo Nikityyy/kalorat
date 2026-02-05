@@ -77,13 +77,14 @@ class _ApiKeyStepState extends State<ApiKeyStep> {
                 TextSpan(
                   text: 'ai.dev/api-keys',
                   style: const TextStyle(
-                    color: AppColors.shamrock,
+                    color: AppColors.primary,
                     fontWeight: FontWeight.bold,
                     decoration: TextDecoration.underline,
                   ),
                   recognizer: TapGestureRecognizer()
                     ..onTap = () => launchUrl(
                       Uri.parse('https://aistudio.google.com/app/apikey'),
+                      mode: LaunchMode.externalApplication,
                     ),
                 ),
                 TextSpan(
@@ -105,14 +106,14 @@ class _ApiKeyStepState extends State<ApiKeyStep> {
               hintText: 'API Key',
               hintStyle: AppTypography.displayMedium.copyWith(
                 fontSize: 18,
-                color: AppColors.carbonBlack.withValues(alpha: 0.3),
+                color: AppColors.slate.withValues(alpha: 0.3),
               ),
               errorText: _errorMessage,
               border: UnderlineInputBorder(
-                borderSide: BorderSide(color: AppColors.celadon, width: 2),
+                borderSide: BorderSide(color: AppColors.pebble, width: 2),
               ),
               focusedBorder: UnderlineInputBorder(
-                borderSide: BorderSide(color: AppColors.shamrock, width: 2),
+                borderSide: BorderSide(color: AppColors.primary, width: 2),
               ),
             ),
           ),

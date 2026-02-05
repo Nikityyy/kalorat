@@ -27,19 +27,19 @@ class BespokeSelectionCard extends StatelessWidget {
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
           color: isSelected
-              ? AppColors.shamrock.withValues(alpha: 0.1)
-              : Colors.white,
-          borderRadius: BorderRadius.circular(24), // Soft squircle
+              ? AppColors.styrianForest.withValues(alpha: 0.1)
+              : AppColors.pebble,
+          borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: isSelected
-                ? AppColors.shamrock
-                : AppColors.celadon.withValues(alpha: 0.5),
-            width: isSelected ? 2 : 1,
+                ? AppColors.styrianForest
+                : AppColors.pebble.withValues(alpha: 0.5),
+            width: isSelected ? 1.5 : 1.0,
           ),
           boxShadow: [
             if (isSelected)
               BoxShadow(
-                color: AppColors.shamrock.withValues(alpha: 0.15),
+                color: AppColors.styrianForest.withValues(alpha: 0.1),
                 blurRadius: 12,
                 offset: const Offset(0, 4),
               ),
@@ -56,8 +56,8 @@ class BespokeSelectionCard extends StatelessWidget {
                     title,
                     style: AppTypography.titleLarge.copyWith(
                       color: isSelected
-                          ? AppColors.shamrock
-                          : AppColors.carbonBlack,
+                          ? AppColors.styrianForest
+                          : AppColors.slate,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -66,7 +66,7 @@ class BespokeSelectionCard extends StatelessWidget {
                     Text(
                       subtitle!,
                       style: AppTypography.bodyMedium.copyWith(
-                        color: AppColors.carbonBlack.withValues(alpha: 0.6),
+                        color: AppColors.slate.withValues(alpha: 0.6),
                       ),
                     ),
                   ],
@@ -78,14 +78,18 @@ class BespokeSelectionCard extends StatelessWidget {
               height: 24,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: isSelected ? AppColors.shamrock : Colors.transparent,
+                color: isSelected
+                    ? AppColors.styrianForest
+                    : Colors.transparent,
                 border: Border.all(
-                  color: isSelected ? AppColors.shamrock : AppColors.celadon,
+                  color: isSelected
+                      ? AppColors.styrianForest
+                      : AppColors.pebble,
                   width: 2,
                 ),
               ),
               child: isSelected
-                  ? const Icon(Icons.check, size: 16, color: Colors.white)
+                  ? const Icon(Icons.check, size: 16, color: AppColors.pebble)
                   : null,
             ),
           ],

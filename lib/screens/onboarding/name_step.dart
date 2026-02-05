@@ -45,13 +45,13 @@ class _NameStepState extends State<NameStep> {
             decoration: InputDecoration(
               hintText: isDe ? 'Dein Name' : 'Your Name',
               hintStyle: AppTypography.displayMedium.copyWith(
-                color: AppColors.carbonBlack.withValues(alpha: 0.3),
+                color: AppColors.slate.withValues(alpha: 0.3),
               ),
               border: UnderlineInputBorder(
-                borderSide: BorderSide(color: AppColors.celadon, width: 2),
+                borderSide: BorderSide(color: AppColors.pebble, width: 2),
               ),
               focusedBorder: UnderlineInputBorder(
-                borderSide: BorderSide(color: AppColors.shamrock, width: 2),
+                borderSide: BorderSide(color: AppColors.primary, width: 2),
               ),
             ),
           ),

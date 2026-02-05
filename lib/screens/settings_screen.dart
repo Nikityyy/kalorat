@@ -1,4 +1,3 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_provider.dart';
@@ -50,11 +49,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
     if (user == null)
       return const Center(
-        child: CircularProgressIndicator(color: AppColors.shamrock),
+        child: CircularProgressIndicator(color: AppColors.primary),
       );
 
     return Scaffold(
-      backgroundColor: AppColors.lavenderBlush,
+      backgroundColor: AppColors.limestone,
       appBar: AppBar(
         title: Text(
           language == 'de' ? 'Einstellungen' : 'Settings',
@@ -101,7 +100,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     : 'Enter or change your API key from ai.dev.',
                 style: TextStyle(
                   fontSize: 12,
-                  color: AppColors.carbonBlack.withValues(alpha: 0.6),
+                  color: AppColors.slate.withValues(alpha: 0.6),
                 ),
               ),
             ),
@@ -113,10 +112,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
               SwitchListTile(
                 title: Text(
                   language == 'de' ? 'Mahlzeit-Erinnerungen' : 'Meal reminders',
-                  style: const TextStyle(color: AppColors.carbonBlack),
+                  style: const TextStyle(color: AppColors.slate),
                 ),
                 value: user.mealRemindersEnabled,
-                activeColor: AppColors.shamrock,
+                activeThumbColor: AppColors.primary,
                 onChanged: (v) => provider.updateUser(mealRemindersEnabled: v),
               ),
               SwitchListTile(
@@ -124,10 +123,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   language == 'de'
                       ? 'Gewichts-Erinnerungen'
                       : 'Weight reminders',
-                  style: const TextStyle(color: AppColors.carbonBlack),
+                  style: const TextStyle(color: AppColors.slate),
                 ),
                 value: user.weightRemindersEnabled,
-                activeColor: AppColors.shamrock,
+                activeThumbColor: AppColors.primary,
                 onChanged: (v) =>
                     provider.updateUser(weightRemindersEnabled: v),
               ),
@@ -136,10 +135,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
           const SizedBox(height: 24),
           _buildSection(language == 'de' ? 'Daten' : 'Data', [
             ListTile(
-              leading: const Icon(Icons.upload, color: AppColors.shamrock),
+              leading: const Icon(Icons.upload, color: AppColors.primary),
               title: Text(
                 language == 'de' ? 'Daten exportieren' : 'Export data',
-                style: const TextStyle(color: AppColors.carbonBlack),
+                style: const TextStyle(color: AppColors.slate),
               ),
               onTap: () async {
                 final path = await provider.exportData();
@@ -151,17 +150,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             ? 'Exportiert: $path'
                             : 'Exported: $path',
                       ),
-                      backgroundColor: AppColors.emerald,
+                      backgroundColor: AppColors.success,
                     ),
                   );
                 }
               },
             ),
             ListTile(
-              leading: const Icon(Icons.download, color: AppColors.shamrock),
+              leading: const Icon(Icons.download, color: AppColors.primary),
               title: Text(
                 language == 'de' ? 'Daten importieren' : 'Import data',
-                style: const TextStyle(color: AppColors.carbonBlack),
+                style: const TextStyle(color: AppColors.slate),
               ),
               onTap: () async {
                 final success = await provider.importData();
@@ -178,7 +177,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                   : 'Import failed'),
                       ),
                       backgroundColor: success
-                          ? AppColors.emerald
+                          ? AppColors.success
                           : AppColors.error,
                     ),
                   );
@@ -206,12 +205,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
           style: const TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
-            color: AppColors.carbonBlack,
+            color: AppColors.slate,
           ),
         ),
         const SizedBox(height: 12),
         AppCard(
-          backgroundColor: AppColors.celadon.withValues(
+          backgroundColor: AppColors.pebble.withValues(
             alpha: 0.3,
           ), // Slightly lighter for input sections
           padding: EdgeInsets.zero,
@@ -235,14 +234,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
         obscureText: obscureText,
         decoration: InputDecoration(
           labelText: label,
-          labelStyle: TextStyle(
-            color: AppColors.carbonBlack.withValues(alpha: 0.6),
-          ),
+          labelStyle: TextStyle(color: AppColors.slate.withValues(alpha: 0.6)),
           border: const UnderlineInputBorder(
-            borderSide: BorderSide(color: AppColors.celadon),
+            borderSide: BorderSide(color: AppColors.pebble),
           ),
           focusedBorder: const UnderlineInputBorder(
-            borderSide: BorderSide(color: AppColors.shamrock),
+            borderSide: BorderSide(color: AppColors.primary),
           ),
         ),
       ),
@@ -250,23 +247,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Widget _buildLanguageSelector(AppProvider provider, String language) {
-    return Column(
-      children: [
-        RadioListTile<String>(
-          title: const Text('Deutsch'),
-          value: 'de',
-          groupValue: language,
-          activeColor: AppColors.shamrock,
-          onChanged: (v) => provider.updateUser(language: v),
-        ),
-        RadioListTile<String>(
-          title: const Text('English'),
-          value: 'en',
-          groupValue: language,
-          activeColor: AppColors.shamrock,
-          onChanged: (v) => provider.updateUser(language: v),
-        ),
-      ],
+    return RadioGroup<String>(
+      groupValue: language,
+      onChanged: (v) => provider.updateUser(language: v),
+      child: Column(
+        children: [
+          RadioListTile<String>(
+            title: const Text('Deutsch'),
+            value: 'de',
+            activeColor: AppColors.primary,
+          ),
+          RadioListTile<String>(
+            title: const Text('English'),
+            value: 'en',
+            activeColor: AppColors.primary,
+          ),
+        ],
+      ),
     );
   }
 
@@ -281,8 +278,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(provider.language == 'de' ? 'Gespeichert!' : 'Saved!'),
-          backgroundColor: AppColors.emerald,
+          content: Text(provider.language == 'de' ? 'Gespeichert' : 'Saved'),
+          backgroundColor: AppColors.success,
         ),
       );
       Navigator.pop(context);

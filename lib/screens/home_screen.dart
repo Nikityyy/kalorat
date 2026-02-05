@@ -225,7 +225,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     });
 
     _showMessage(
-      provider.language == 'de' ? 'Mahlzeit gespeichert!' : 'Meal saved!',
+      provider.language == 'de' ? 'Mahlzeit gespeichert' : 'Meal saved',
     );
   }
 
@@ -306,13 +306,13 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                color: AppColors.shamrock.withValues(alpha: 1.0),
+                color: AppColors.styrianForest.withValues(alpha: 1.0),
                 shape: BoxShape.circle,
               ),
               child: const Icon(
                 Icons.camera_alt_outlined,
                 size: 48,
-                color: Colors.white,
+                color: AppColors.pebble,
               ),
             ),
             const SizedBox(height: 32),
@@ -354,7 +354,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           )
         else
           const Center(
-            child: CircularProgressIndicator(color: AppColors.shamrock),
+            child: CircularProgressIndicator(color: AppColors.styrianForest),
           ),
 
         // Simple Top Bar
@@ -371,18 +371,22 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 ),
                 decoration: BoxDecoration(
                   color: Colors.black.withValues(alpha: 0.5),
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(16),
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.arrow_back, color: Colors.white, size: 16),
+                    const Icon(
+                      Icons.arrow_back,
+                      color: AppColors.pebble,
+                      size: 16,
+                    ),
                     const SizedBox(width: 8),
                     Text(
                       language == 'de'
                           ? 'Zurück zur Auswahl'
                           : 'Back to selection',
                       style: const TextStyle(
-                        color: Colors.white,
+                        color: AppColors.pebble,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -399,16 +403,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           right: 0,
           child: Container(
             padding: const EdgeInsets.only(bottom: 60, top: 40),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.bottomCenter,
-                end: Alignment.topCenter,
-                colors: [
-                  Colors.black.withValues(alpha: 0.5),
-                  Colors.transparent,
-                ],
-              ),
-            ),
+            decoration: const BoxDecoration(color: Colors.black45),
             child: Stack(
               alignment: Alignment.center,
               children: [
@@ -420,12 +415,12 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                     child: Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.2),
+                        color: AppColors.pebble.withValues(alpha: 0.2),
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(
                         Icons.photo_library_outlined,
-                        color: Colors.white,
+                        color: AppColors.pebble,
                         size: 28,
                       ),
                     ),
@@ -440,20 +435,20 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                     height: 84,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white, width: 4),
+                      border: Border.all(color: AppColors.pebble, width: 4),
                     ),
                     child: Center(
                       child: Container(
                         width: 70,
                         height: 70,
                         decoration: const BoxDecoration(
-                          color: Colors.white,
+                          color: AppColors.pebble,
                           shape: BoxShape.circle,
                         ),
                         child: _isCapturing
                             ? const Center(
                                 child: CircularProgressIndicator(
-                                  color: AppColors.shamrock,
+                                  color: AppColors.styrianForest,
                                 ),
                               )
                             : null,
@@ -476,7 +471,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                             height: 60,
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: Colors.white, width: 2),
+                              border: Border.all(
+                                color: AppColors.pebble,
+                                width: 2,
+                              ),
                               image: DecorationImage(
                                 image: FileImage(File(_capturedPhotos.last)),
                                 fit: BoxFit.cover,
@@ -486,13 +484,13 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                           Container(
                             padding: const EdgeInsets.all(4),
                             decoration: const BoxDecoration(
-                              color: AppColors.shamrock,
+                              color: AppColors.styrianForest,
                               shape: BoxShape.circle,
                             ),
                             child: Text(
                               '${_capturedPhotos.length}',
                               style: const TextStyle(
-                                color: Colors.white,
+                                color: AppColors.pebble,
                                 fontSize: 12,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -514,7 +512,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     final isDe = language == 'de';
 
     return Container(
-      color: AppColors.lavenderBlush,
+      color: AppColors.limestone,
       child: Column(
         children: [
           const SizedBox(height: 16),
@@ -540,17 +538,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                     Positioned.fill(
                       child: Container(
                         decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(20),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.1),
-                              blurRadius: 10,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: AppColors.pebble, width: 1),
                         ),
                         child: ClipRRect(
-                          borderRadius: BorderRadius.circular(20),
+                          borderRadius: BorderRadius.circular(16),
                           child: Image.file(
                             File(_capturedPhotos[index]),
                             fit: BoxFit.cover,
@@ -575,7 +567,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                           ),
                           child: const Icon(
                             Icons.close,
-                            color: Colors.white,
+                            color: AppColors.pebble,
                             size: 16,
                           ),
                         ),
@@ -590,15 +582,13 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           Container(
             padding: const EdgeInsets.all(24),
             decoration: const BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black12,
-                  blurRadius: 20,
-                  offset: Offset(0, -5),
-                ),
-              ],
+              color: AppColors.limestone,
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(16),
+              ),
+              border: Border(
+                top: BorderSide(color: AppColors.pebble, width: 1),
+              ),
             ),
             child: SafeArea(
               top: false,
@@ -611,17 +601,15 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                         child: OutlinedButton(
                           onPressed: _clearPhotos,
                           style: OutlinedButton.styleFrom(
-                            side: const BorderSide(color: AppColors.celadon),
+                            side: const BorderSide(color: AppColors.pebble),
                             padding: const EdgeInsets.symmetric(vertical: 16),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(32),
+                              borderRadius: BorderRadius.circular(16),
                             ),
                           ),
                           child: Text(
                             isDe ? 'Verwerfen' : 'Discard',
-                            style: const TextStyle(
-                              color: AppColors.carbonBlack,
-                            ),
+                            style: const TextStyle(color: AppColors.slate),
                           ),
                         ),
                       ),
@@ -630,15 +618,19 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                         child: OutlinedButton(
                           onPressed: () => setState(() => _isTakingMore = true),
                           style: OutlinedButton.styleFrom(
-                            side: const BorderSide(color: AppColors.shamrock),
+                            side: const BorderSide(
+                              color: AppColors.styrianForest,
+                            ),
                             padding: const EdgeInsets.symmetric(vertical: 16),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(32),
+                              borderRadius: BorderRadius.circular(16),
                             ),
                           ),
                           child: Text(
                             isDe ? '+ Foto' : '+ Photo',
-                            style: const TextStyle(color: AppColors.shamrock),
+                            style: const TextStyle(
+                              color: AppColors.styrianForest,
+                            ),
                           ),
                         ),
                       ),
@@ -664,7 +656,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     final isDe = language == 'de';
 
     return Container(
-      color: AppColors.lavenderBlush,
+      color: AppColors.limestone,
       child: Column(
         children: [
           // Header with back button
@@ -698,17 +690,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                     Container(
                       height: 200,
                       decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(32),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.1),
-                            blurRadius: 20,
-                            offset: const Offset(0, 10),
-                          ),
-                        ],
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: AppColors.pebble, width: 1),
                       ),
                       child: ClipRRect(
-                        borderRadius: BorderRadius.circular(32),
+                        borderRadius: BorderRadius.circular(16),
                         child: ListView.separated(
                           scrollDirection: Axis.horizontal,
                           itemCount: meal.photoPaths.length,
@@ -739,22 +725,23 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                     width: double.infinity,
                     padding: const EdgeInsets.symmetric(vertical: 32),
                     decoration: BoxDecoration(
-                      color: AppColors.shamrock,
-                      borderRadius: BorderRadius.circular(32),
+                      color: AppColors.styrianForest,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: AppColors.slate, width: 1),
                     ),
                     child: Column(
                       children: [
                         Text(
                           '${meal.calories.toInt()}',
-                          style: AppTypography.displayLarge.copyWith(
-                            color: Colors.white,
+                          style: AppTypography.heroNumber.copyWith(
+                            color: AppColors.pebble,
                             fontSize: 64,
                           ),
                         ),
                         Text(
                           isDe ? 'KALORIEN' : 'CALORIES',
                           style: AppTypography.labelLarge.copyWith(
-                            color: Colors.white.withValues(alpha: 0.7),
+                            color: AppColors.pebble.withValues(alpha: 0.7),
                             letterSpacing: 2,
                           ),
                         ),
@@ -770,21 +757,21 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                       _MacroCard(
                         label: isDe ? 'Protein' : 'Protein',
                         value: '${meal.protein.toInt()}g',
-                        color: const Color(0xFF4A90E2),
+                        color: AppColors.styrianForest,
                         isDe: isDe,
                       ),
                       const SizedBox(width: 12),
                       _MacroCard(
                         label: isDe ? 'KH' : 'Carbs',
                         value: '${meal.carbs.toInt()}g',
-                        color: const Color(0xFFF5A623),
+                        color: AppColors.styrianForest,
                         isDe: isDe,
                       ),
                       const SizedBox(width: 12),
                       _MacroCard(
                         label: isDe ? 'Fett' : 'Fat',
                         value: '${meal.fats.toInt()}g',
-                        color: const Color(0xFFD0021B),
+                        color: AppColors.styrianForest,
                         isDe: isDe,
                       ),
                     ],
@@ -804,7 +791,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                     child: Text(
                       isDe ? 'Abbrechen' : 'Discard',
                       style: AppTypography.bodyMedium.copyWith(
-                        color: AppColors.carbonBlack.withValues(alpha: 0.5),
+                        color: AppColors.slate.withValues(alpha: 0.5),
                       ),
                     ),
                   ),
@@ -839,7 +826,7 @@ class _MacroCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 8),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.pebble,
           borderRadius: BorderRadius.circular(24),
           border: Border.all(color: color.withValues(alpha: 0.2), width: 2),
         ),
@@ -857,7 +844,7 @@ class _MacroCard extends StatelessWidget {
               label.toUpperCase(),
               style: AppTypography.labelLarge.copyWith(
                 fontSize: 10,
-                color: AppColors.carbonBlack.withValues(alpha: 0.5),
+                color: AppColors.slate.withValues(alpha: 0.5),
                 letterSpacing: 1,
               ),
               textAlign: TextAlign.center,

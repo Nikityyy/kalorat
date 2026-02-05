@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_provider.dart';
@@ -21,7 +22,7 @@ class MeScreen extends StatelessWidget {
 
     if (user == null) {
       return const Center(
-        child: CircularProgressIndicator(color: AppColors.shamrock),
+        child: CircularProgressIndicator(color: AppColors.styrianForest),
       );
     }
 
@@ -29,7 +30,7 @@ class MeScreen extends StatelessWidget {
     final weights = provider.getAllWeights();
 
     return Scaffold(
-      backgroundColor: AppColors.lavenderBlush,
+      backgroundColor: AppColors.limestone,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -49,12 +50,17 @@ class MeScreen extends StatelessWidget {
                       Platform.isIOS
                           ? CupertinoIcons.settings
                           : Icons.settings_outlined,
-                      color: AppColors.carbonBlack,
+                      color: AppColors.slate,
                     ),
-                    onPressed: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const SettingsScreen()),
-                    ),
+                    onPressed: () {
+                      HapticFeedback.lightImpact();
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const SettingsScreen(),
+                        ),
+                      );
+                    },
                   ),
                 ],
               ),
@@ -74,7 +80,7 @@ class MeScreen extends StatelessWidget {
                     child: _buildInfoCard(
                       isDe ? 'DEIN BMI' : 'YOUR BMI',
                       user.bmi.toStringAsFixed(1),
-                      AppColors.shamrock,
+                      AppColors.styrianForest,
                     ),
                   ),
                   const SizedBox(width: 16),
@@ -101,8 +107,8 @@ class MeScreen extends StatelessWidget {
                     style: AppTypography.displayMedium.copyWith(fontSize: 22),
                   ),
                   const Icon(
-                    Icons.flash_on,
-                    color: AppColors.shamrock,
+                    Icons.straighten,
+                    color: AppColors.styrianForest,
                     size: 24,
                   ),
                 ],
@@ -126,21 +132,24 @@ class MeScreen extends StatelessWidget {
                     style: AppTypography.displayMedium.copyWith(fontSize: 22),
                   ),
                   GestureDetector(
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const AddWeightScreen(),
-                      ),
-                    ),
+                    onTap: () {
+                      HapticFeedback.lightImpact();
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const AddWeightScreen(),
+                        ),
+                      );
+                    },
                     child: Container(
                       padding: const EdgeInsets.all(8),
                       decoration: const BoxDecoration(
-                        color: AppColors.shamrock,
+                        color: AppColors.styrianForest,
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(
                         Icons.add,
-                        color: AppColors.carbonBlack,
+                        color: AppColors.pebble,
                         size: 20,
                       ),
                     ),
@@ -170,23 +179,16 @@ class MeScreen extends StatelessWidget {
           width: 100,
           height: 100,
           decoration: BoxDecoration(
-            color: AppColors.shamrock,
+            color: AppColors.styrianForest,
             shape: BoxShape.circle,
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.shamrock.withValues(alpha: 0.3),
-                blurRadius: 20,
-                offset: const Offset(0, 10),
-              ),
-            ],
+            border: Border.all(color: AppColors.pebble, width: 1),
           ),
           child: Center(
             child: Text(
               user.name.isNotEmpty ? user.name[0] : '?',
               style: const TextStyle(
                 fontSize: 40,
-                color: AppColors
-                    .carbonBlack, // Changed from white for better UI context
+                color: AppColors.pebble,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -201,7 +203,7 @@ class MeScreen extends StatelessWidget {
           '${user.age} ${isDe ? 'Jahre' : 'years'} • ${user.height.toInt()} cm',
           style: AppTypography.bodyMedium.copyWith(
             fontSize: 14,
-            color: AppColors.carbonBlack.withValues(alpha: 0.5),
+            color: AppColors.slate.withValues(alpha: 0.5),
           ),
         ),
       ],
@@ -213,9 +215,12 @@ class MeScreen extends StatelessWidget {
       constraints: const BoxConstraints(minHeight: 120),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: AppColors.celadon, width: 1),
+        color: AppColors.limestone,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: AppColors.slate.withValues(alpha: 0.1),
+          width: 1,
+        ),
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -225,17 +230,13 @@ class MeScreen extends StatelessWidget {
             style: AppTypography.labelLarge.copyWith(
               fontSize: 11,
               letterSpacing: 1.2,
-              color: AppColors.carbonBlack.withValues(alpha: 0.4),
+              color: AppColors.slate.withValues(alpha: 0.4),
             ),
           ),
           const SizedBox(height: 8),
           Text(
             value,
-            style: AppTypography.displayMedium.copyWith(
-              fontSize: 22, // Slightly smaller to prevent overflow
-              color: color,
-              height: 1.1,
-            ),
+            style: AppTypography.dataMedium.copyWith(color: color, height: 1.1),
             textAlign: TextAlign.center,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
@@ -251,22 +252,22 @@ class MeScreen extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: AppColors.shamrock,
-        borderRadius: BorderRadius.circular(32),
+        color: AppColors.styrianForest,
+        borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
         children: [
           Text(
             '$calories',
-            style: AppTypography.displayLarge.copyWith(
-              color: AppColors.carbonBlack, // Contrast
+            style: AppTypography.heroNumber.copyWith(
+              color: AppColors.limestone, // High contrast
               fontSize: 52,
             ),
           ),
           Text(
             isDe ? 'KALORIEN AUFGENOMMEN' : 'CALORIES CONSUMED',
             style: AppTypography.labelLarge.copyWith(
-              color: AppColors.carbonBlack.withValues(alpha: 0.6),
+              color: AppColors.limestone.withValues(alpha: 0.6),
               fontSize: 10,
               letterSpacing: 2,
             ),
@@ -299,18 +300,16 @@ class MeScreen extends StatelessWidget {
       children: [
         Text(
           value,
-          style: const TextStyle(
-            color: AppColors.carbonBlack,
-            fontWeight: FontWeight.bold,
+          style: AppTypography.dataMedium.copyWith(
+            color: AppColors.limestone,
             fontSize: 18,
           ),
         ),
         Text(
           label.toUpperCase(),
-          style: TextStyle(
-            color: AppColors.carbonBlack.withValues(alpha: 0.5),
+          style: AppTypography.dataLabel.copyWith(
+            color: AppColors.limestone.withValues(alpha: 0.5),
             fontSize: 10,
-            fontWeight: FontWeight.w600,
           ),
         ),
       ],
@@ -329,9 +328,9 @@ class MeScreen extends StatelessWidget {
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: AppColors.celadon),
+            color: AppColors.pebble,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppColors.pebble),
           ),
           child: Column(
             children: [
@@ -341,7 +340,7 @@ class MeScreen extends StatelessWidget {
                 provider.mealRemindersEnabled,
                 (val) => provider.setMealReminders(val),
               ),
-              const Divider(height: 32, color: AppColors.celadon),
+              const Divider(height: 32, color: AppColors.pebble),
               _buildReminderToggle(
                 isDe ? 'Gewicht loggen' : 'Log weight',
                 isDe ? 'Tägliche Erinnerung' : 'Daily reminder',
@@ -375,7 +374,7 @@ class MeScreen extends StatelessWidget {
                 subtitle,
                 style: AppTypography.bodyMedium.copyWith(
                   fontSize: 12,
-                  color: AppColors.carbonBlack.withValues(alpha: 0.5),
+                  color: AppColors.slate.withValues(alpha: 0.5),
                 ),
               ),
             ],
@@ -383,8 +382,11 @@ class MeScreen extends StatelessWidget {
         ),
         Switch.adaptive(
           value: value,
-          activeColor: AppColors.shamrock,
-          onChanged: onChanged,
+          activeThumbColor: AppColors.styrianForest,
+          onChanged: (val) {
+            HapticFeedback.lightImpact();
+            onChanged(val);
+          },
         ),
       ],
     );
@@ -396,15 +398,15 @@ class MeScreen extends StatelessWidget {
         width: double.infinity,
         padding: const EdgeInsets.all(40),
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(32),
-          border: Border.all(color: AppColors.celadon),
+          color: AppColors.limestone,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColors.slate.withValues(alpha: 0.1)),
         ),
         child: Center(
           child: Text(
             isDe ? 'Keine Daten verfügbar' : 'No data available',
             style: AppTypography.bodyMedium.copyWith(
-              color: AppColors.carbonBlack.withValues(alpha: 0.4),
+              color: AppColors.slate.withValues(alpha: 0.4),
             ),
           ),
         ),
@@ -415,14 +417,12 @@ class MeScreen extends StatelessWidget {
       height: 240,
       padding: const EdgeInsets.fromLTRB(16, 32, 24, 16),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(32),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 20,
-          ),
-        ],
+        color: AppColors.limestone,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: AppColors.slate.withValues(alpha: 0.1),
+          width: 1,
+        ),
       ),
       child: LineChart(
         LineChartData(
@@ -430,7 +430,7 @@ class MeScreen extends StatelessWidget {
             show: true,
             drawVerticalLine: false,
             getDrawingHorizontalLine: (value) => FlLine(
-              color: AppColors.celadon.withValues(alpha: 0.3),
+              color: AppColors.pebble.withValues(alpha: 0.3),
               strokeWidth: 1,
             ),
           ),
@@ -460,7 +460,7 @@ class MeScreen extends StatelessWidget {
                   return Text(
                     value.toInt().toString(),
                     style: TextStyle(
-                      color: AppColors.carbonBlack.withValues(alpha: 0.3),
+                      color: AppColors.slate.withValues(alpha: 0.3),
                       fontSize: 10,
                       fontWeight: FontWeight.bold,
                     ),
@@ -485,7 +485,7 @@ class MeScreen extends StatelessWidget {
                   })
                   .toList(),
               isCurved: true,
-              color: AppColors.shamrock,
+              color: AppColors.styrianForest,
               barWidth: 4,
               isStrokeCapRound: true,
               dotData: FlDotData(
@@ -493,14 +493,14 @@ class MeScreen extends StatelessWidget {
                 getDotPainter: (spot, percent, barData, index) =>
                     FlDotCirclePainter(
                       radius: 6,
-                      color: Colors.white,
+                      color: AppColors.pebble,
                       strokeWidth: 3,
-                      strokeColor: AppColors.shamrock,
+                      strokeColor: AppColors.styrianForest,
                     ),
               ),
               belowBarData: BarAreaData(
                 show: true,
-                color: AppColors.shamrock.withValues(alpha: 0.1),
+                color: AppColors.styrianForest.withValues(alpha: 0.1),
               ),
             ),
           ],
@@ -523,16 +523,16 @@ class MeScreen extends StatelessWidget {
             isDe ? 'Verlauf der letzten Tage' : 'Recent History',
             style: AppTypography.titleLarge.copyWith(
               fontSize: 14,
-              color: AppColors.carbonBlack.withValues(alpha: 0.5),
+              color: AppColors.slate.withValues(alpha: 0.5),
             ),
           ),
         ),
         const SizedBox(height: 12),
         Container(
           decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: AppColors.celadon),
+            color: AppColors.pebble,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppColors.pebble),
           ),
           child: ListView.separated(
             shrinkWrap: true,
@@ -540,7 +540,7 @@ class MeScreen extends StatelessWidget {
             itemCount: recentWeights.length,
             separatorBuilder: (_, __) => const Divider(
               height: 1,
-              color: AppColors.celadon,
+              color: AppColors.pebble,
               indent: 16,
               endIndent: 16,
             ),
@@ -565,9 +565,9 @@ class MeScreen extends StatelessWidget {
                     ),
                     Text(
                       '${w.weight.toStringAsFixed(1)} kg',
-                      style: AppTypography.titleLarge.copyWith(
+                      style: AppTypography.dataMedium.copyWith(
                         fontSize: 18,
-                        color: AppColors.shamrock,
+                        color: AppColors.styrianForest,
                       ),
                     ),
                   ],
@@ -597,10 +597,8 @@ class MeScreen extends StatelessWidget {
 
   Color _getCategoryColor(String category) {
     switch (category.toLowerCase()) {
-      case 'normal':
-        return AppColors.shamrock;
-      case 'underweight':
-        return Colors.blue;
+      case 'normal' || 'underweight':
+        return AppColors.styrianForest;
       default:
         return AppColors.error;
     }

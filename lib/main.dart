@@ -25,7 +25,8 @@ class KaloratApp extends StatelessWidget {
           Widget homeWidget;
           if (!provider.isInitialized) {
             homeWidget = Scaffold(
-              backgroundColor: const Color(0xFFFFF2F4), // lavenderBlush
+              backgroundColor:
+                  AppColors.limestone, // limestone instead of lavenderBlush
               body: Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -33,10 +34,12 @@ class KaloratApp extends StatelessWidget {
                     const Icon(
                       Icons.energy_savings_leaf,
                       size: 80,
-                      color: AppColors.shamrock,
+                      color: AppColors.styrianForest,
                     ),
                     const SizedBox(height: 24),
-                    const CircularProgressIndicator(color: AppColors.shamrock),
+                    const CircularProgressIndicator(
+                      color: AppColors.styrianForest,
+                    ),
                   ],
                 ),
               ),

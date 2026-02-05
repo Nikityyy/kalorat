@@ -34,11 +34,9 @@ class _MainScreenState extends State<MainScreen> {
         tabBar: CupertinoTabBar(
           currentIndex: _currentIndex,
           onTap: (index) => setState(() => _currentIndex = index),
-          activeColor: AppColors.shamrock,
-          inactiveColor: AppColors.carbonBlack.withValues(alpha: 0.5),
-          backgroundColor: AppColors.lavenderBlush.withValues(
-            alpha: 0.8,
-          ), // Translucent
+          activeColor: AppColors.styrianForest,
+          inactiveColor: AppColors.slate.withValues(alpha: 0.5),
+          backgroundColor: AppColors.limestone, // Strictly Matte
           items: [
             BottomNavigationBarItem(
               icon: const Icon(CupertinoIcons.person_fill),
@@ -49,7 +47,7 @@ class _MainScreenState extends State<MainScreen> {
                 padding: const EdgeInsets.all(4),
                 decoration: BoxDecoration(
                   color: _currentIndex == 1
-                      ? AppColors.shamrock.withValues(alpha: 0.1)
+                      ? AppColors.styrianForest.withValues(alpha: 0.1)
                       : Colors.transparent,
                   shape: BoxShape.circle,
                 ),
@@ -76,7 +74,7 @@ class _MainScreenState extends State<MainScreen> {
           labelTextStyle: WidgetStateProperty.all(
             const TextStyle(
               fontWeight: FontWeight.w500,
-              color: AppColors.carbonBlack,
+              color: AppColors.slate,
             ),
           ),
         ),
@@ -84,26 +82,30 @@ class _MainScreenState extends State<MainScreen> {
           selectedIndex: _currentIndex,
           onDestinationSelected: (index) =>
               setState(() => _currentIndex = index),
-          backgroundColor: AppColors.lavenderBlush,
-          indicatorColor: AppColors.shamrock, // Shamrock for active indicator
+          backgroundColor: AppColors.limestone,
+          indicatorColor:
+              AppColors.styrianForest, // Styrian Forest for active indicator
           surfaceTintColor: Colors.transparent,
           destinations: [
             NavigationDestination(
               icon: const Icon(Icons.person_outline),
               selectedIcon: const Icon(
                 Icons.person,
-                color: Colors.white,
+                color: AppColors.pebble,
               ), // White icon on Shamrock
               label: lang == 'de' ? 'Ich' : 'Me',
             ),
             NavigationDestination(
               icon: const Icon(Icons.camera_alt_outlined),
-              selectedIcon: const Icon(Icons.camera_alt, color: Colors.white),
+              selectedIcon: const Icon(
+                Icons.camera_alt,
+                color: AppColors.pebble,
+              ),
               label: 'Home',
             ),
             NavigationDestination(
               icon: const Icon(Icons.history_outlined),
-              selectedIcon: const Icon(Icons.history, color: Colors.white),
+              selectedIcon: const Icon(Icons.history, color: AppColors.pebble),
               label: lang == 'de' ? 'Historie' : 'History',
             ),
           ],

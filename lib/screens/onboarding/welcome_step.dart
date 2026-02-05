@@ -28,9 +28,9 @@ class WelcomeStep extends StatelessWidget {
             alignment: Alignment.topRight,
             child: Container(
               decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: AppColors.celadon),
+                color: AppColors.pebble,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: AppColors.pebble),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -73,13 +73,13 @@ class WelcomeStep extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
-          color: isActive ? AppColors.shamrock : Colors.transparent,
-          borderRadius: BorderRadius.circular(20),
+          color: isActive ? AppColors.primary : Colors.transparent,
+          borderRadius: BorderRadius.circular(16),
         ),
         child: Text(
           code,
           style: AppTypography.labelLarge.copyWith(
-            color: isActive ? Colors.white : AppColors.carbonBlack,
+            color: isActive ? AppColors.pebble : AppColors.slate,
             fontSize: 14,
           ),
         ),

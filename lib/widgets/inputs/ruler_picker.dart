@@ -62,16 +62,16 @@ class _RulerPickerState extends State<RulerPicker> {
           children: [
             Text(
               _currentValue.toStringAsFixed(1).replaceAll('.', ','),
-              style: AppTypography.bespokeNumber.copyWith(
+              style: AppTypography.heroNumber.copyWith(
                 fontSize: 64,
-                color: AppColors.shamrock,
+                color: AppColors.styrianForest,
               ),
             ),
             const SizedBox(width: 4),
             Text(
               widget.unit,
               style: AppTypography.titleLarge.copyWith(
-                color: AppColors.carbonBlack.withValues(alpha: 0.5),
+                color: AppColors.slate.withValues(alpha: 0.5),
               ),
             ),
           ],
@@ -89,7 +89,7 @@ class _RulerPickerState extends State<RulerPicker> {
                 width: 4,
                 height: 60,
                 decoration: BoxDecoration(
-                  color: AppColors.shamrock,
+                  color: AppColors.styrianForest,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -133,7 +133,7 @@ class _RulerPickerState extends State<RulerPicker> {
                             child: Container(
                               width: isMajor ? 3 : 2,
                               height: isMajor ? 50 : (isMedium ? 35 : 20),
-                              color: AppColors.carbonBlack.withValues(
+                              color: AppColors.slate.withValues(
                                 alpha: isMajor ? 0.8 : 0.4,
                               ),
                             ),

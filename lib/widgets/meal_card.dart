@@ -3,6 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../models/models.dart';
 import '../theme/app_colors.dart';
+import '../theme/app_typography.dart';
 import 'common/app_card.dart';
 
 class MealCard extends StatelessWidget {
@@ -30,7 +31,7 @@ class MealCard extends StatelessWidget {
     return AppCard(
       padding: EdgeInsets.zero,
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.pebble,
       onTap: onTap,
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -38,7 +39,9 @@ class MealCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // --- 1. Image Section ---
                 if (meal.photoPaths.isNotEmpty)
                   ClipRRect(
                     borderRadius: BorderRadius.circular(12),
@@ -50,11 +53,8 @@ class MealCard extends StatelessWidget {
                       errorBuilder: (_, _, _) => Container(
                         width: 60,
                         height: 60,
-                        color: AppColors.celadon.withValues(alpha: 0.5),
-                        child: const Icon(
-                          Icons.image,
-                          color: AppColors.carbonBlack,
-                        ),
+                        color: AppColors.pebble.withValues(alpha: 0.5),
+                        child: const Icon(Icons.image, color: AppColors.slate),
                       ),
                     ),
                   )
@@ -63,20 +63,23 @@ class MealCard extends StatelessWidget {
                     width: 60,
                     height: 60,
                     decoration: BoxDecoration(
-                      color: AppColors.celadon.withValues(alpha: 0.5),
+                      color: AppColors.pebble.withValues(alpha: 0.5),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: const Icon(
-                      Icons.restaurant,
-                      color: AppColors.carbonBlack,
-                    ),
+                    child: const Icon(Icons.restaurant, color: AppColors.slate),
                   ),
                 const SizedBox(width: 16),
+
+                // --- 2. Content Section (Split into Top and Bottom Rows) ---
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
+                      // --- Top Row: Name and Time ---
                       Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Expanded(
                             child: Text(
@@ -87,98 +90,116 @@ class MealCard extends StatelessWidget {
                                   : meal.mealName.isNotEmpty
                                   ? meal.mealName
                                   : (language == 'de' ? 'Mahlzeit' : 'Meal'),
-                              style: TextStyle(
-                                fontSize: 16,
+                              style: AppTypography.bodyMedium.copyWith(
                                 fontWeight: FontWeight.w600,
                                 color: meal.isPending
-                                    ? AppColors.warning
-                                    : AppColors.carbonBlack,
+                                    ? AppColors.error
+                                    : AppColors.slate,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
+                          const SizedBox(width: 8),
                           Text(
                             _formatTime(meal.timestamp),
-                            style: TextStyle(
+                            style: AppTypography.bodyMedium.copyWith(
                               fontSize: 12,
-                              color: AppColors.carbonBlack.withValues(
-                                alpha: 0.6,
-                              ),
+                              color: AppColors.slate.withValues(alpha: 0.6),
                             ),
                           ),
                         ],
                       ),
+
                       const SizedBox(height: 4),
-                      if (!meal.isPending) ...[
-                        Text(
-                          '${meal.calories.toInt()} kcal',
-                          style: const TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors
-                                .shamrock, // Highlight calories with primary color
-                          ),
-                        ),
-                      ] else
-                        Row(
-                          children: [
-                            const SizedBox(
-                              width: 16,
-                              height: 16,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: AppColors.warning,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
+
+                      // --- Bottom Row: Calories and Delete Button ---
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          // Left side: Calories or Pending State
+                          if (!meal.isPending) ...[
                             Text(
-                              language == 'de'
-                                  ? 'Wird analysiert...'
-                                  : 'Being analyzed...',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: AppColors.carbonBlack.withValues(
-                                  alpha: 0.6,
-                                ),
+                              '${meal.calories.toInt()} kcal',
+                              style: const TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.styrianForest,
                               ),
                             ),
-                          ],
-                        ),
+                          ] else
+                            Row(
+                              children: [
+                                const SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: AppColors.error,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  language == 'de'
+                                      ? 'Wird analysiert...'
+                                      : 'Being analyzed...',
+                                  style: AppTypography.bodyMedium.copyWith(
+                                    fontSize: 12,
+                                    color: AppColors.slate.withValues(
+                                      alpha: 0.6,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+
+                          // Right side: Delete Button
+                          if (onDelete != null)
+                            SizedBox(
+                              width: 32,
+                              height: 32,
+                              child: IconButton(
+                                padding: EdgeInsets.zero,
+                                alignment: Alignment.centerRight,
+                                icon: Icon(
+                                  Platform.isIOS
+                                      ? CupertinoIcons.delete
+                                      : Icons.delete_outline,
+                                  color: AppColors.error,
+                                  size: 22,
+                                ),
+                                onPressed: onDelete,
+                              ),
+                            ),
+                        ],
+                      ),
                     ],
                   ),
                 ),
-                if (onDelete != null)
-                  IconButton(
-                    icon: Icon(
-                      Platform.isIOS
-                          ? CupertinoIcons.delete
-                          : Icons.delete_outline,
-                      color: AppColors.error,
-                    ),
-                    onPressed: onDelete,
-                  ),
               ],
             ),
+
+            // --- Macros Divider ---
             if (!meal.isPending) ...[
-              const Divider(height: 24, color: AppColors.celadon),
+              const Divider(height: 24, color: AppColors.pebble),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
                   _MacroChip(
                     label: language == 'de' ? 'Eiweiß' : 'Protein',
                     value: '${meal.protein.toInt()}g',
-                    color: const Color(0xFF4A90E2),
+                    color: AppColors.styrianForest,
                   ),
                   _MacroChip(
                     label: language == 'de' ? 'Kohlenhydrate' : 'Carbs',
                     value: '${meal.carbs.toInt()}g',
-                    color: const Color(0xFFF5A623),
+                    color: AppColors.styrianForest,
                   ),
                   _MacroChip(
                     label: language == 'de' ? 'Fett' : 'Fat',
                     value: '${meal.fats.toInt()}g',
-                    color: const Color(0xFFD0021B),
+                    color: AppColors.styrianForest,
                   ),
                 ],
               ),
@@ -207,18 +228,14 @@ class _MacroChip extends StatelessWidget {
       children: [
         Text(
           value,
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: color,
-          ),
+          style: AppTypography.titleLarge.copyWith(fontSize: 16, color: color),
         ),
         const SizedBox(height: 2),
         Text(
           label,
-          style: TextStyle(
+          style: AppTypography.bodyMedium.copyWith(
             fontSize: 11,
-            color: AppColors.carbonBlack.withValues(alpha: 0.6),
+            color: AppColors.slate.withValues(alpha: 0.6),
           ),
         ),
       ],

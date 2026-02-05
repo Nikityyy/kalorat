@@ -81,7 +81,7 @@ class _GoalStepState extends State<GoalStep> {
     return BespokeSelectionCard(
       title: title,
       subtitle: subtitle,
-      icon: Icon(icon, color: AppColors.carbonBlack, size: 28),
+      icon: Icon(icon, color: AppColors.slate, size: 28),
       isSelected: _selectedIndex == index,
       onTap: () => setState(() => _selectedIndex = index),
     );

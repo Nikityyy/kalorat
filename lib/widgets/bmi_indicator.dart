@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
+import '../theme/app_typography.dart';
 
 class BmiIndicator extends StatelessWidget {
   final double bmi;
@@ -16,15 +17,14 @@ class BmiIndicator extends StatelessWidget {
   Color get _color {
     switch (category) {
       case 'underweight':
-        return Colors.blue;
+        return AppColors.pebble;
       case 'normal':
-        return AppColors.emerald; // Success color
+        return AppColors.glacierMint;
       case 'overweight':
-        return AppColors.warning;
       case 'obese':
-        return AppColors.error;
+        return AppColors.kaiserRed;
       default:
-        return Colors.grey;
+        return AppColors.slate;
     }
   }
 
@@ -63,9 +63,9 @@ class BmiIndicator extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: _color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: _color.withValues(alpha: 0.3)),
+        color: AppColors.limestone,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: _color.withValues(alpha: 0.2), width: 1),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -82,17 +82,16 @@ class BmiIndicator extends StatelessWidget {
             children: [
               Text(
                 'BMI: ${bmi.toStringAsFixed(1)}',
-                style: TextStyle(
+                style: AppTypography.dataMedium.copyWith(
                   fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: _color,
+                  color: AppColors.styrianForest,
                 ),
               ),
               Text(
                 _label,
-                style: TextStyle(
+                style: AppTypography.bodyMedium.copyWith(
                   fontSize: 14,
-                  color: _color.withValues(alpha: 0.8),
+                  color: AppColors.slate,
                 ),
               ),
             ],

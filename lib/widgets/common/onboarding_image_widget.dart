@@ -17,22 +17,19 @@ class OnboardingImageWidget extends StatelessWidget {
       height: height,
       width: double.infinity,
       decoration: BoxDecoration(
-        color: AppColors.celadon.withValues(alpha: 0.3),
-        borderRadius: BorderRadius.circular(32),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.shamrock.withValues(alpha: 0.1),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          ),
-        ],
+        color: AppColors.pebble,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: AppColors.slate.withValues(alpha: 0.1),
+          width: 1,
+        ),
       ),
       // In a real app we would load the image, but user asked for placeholders for now
       // "Use a placeholder image asset (e.g. assets/onboarding_placeholder.png)"
       // Since I can't verify if the asset exists, I'll use a FlutterLogo or Icon as fallback if image fails,
       // but ideally this container IS the placeholder visual if the image isn't there.
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(32),
+        borderRadius: BorderRadius.circular(16),
         child: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -40,13 +37,13 @@ class OnboardingImageWidget extends StatelessWidget {
               const Icon(
                 Icons.image_outlined,
                 size: 64,
-                color: AppColors.shamrock,
+                color: AppColors.styrianForest,
               ),
               const SizedBox(height: 16),
               Text(
                 'Placeholder Image',
                 style: TextStyle(
-                  color: AppColors.carbonBlack.withValues(alpha: 0.5),
+                  color: AppColors.slate.withValues(alpha: 0.5),
                   fontWeight: FontWeight.w500,
                 ),
               ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_typography.dart';
 
@@ -20,28 +21,27 @@ class ActionButton extends StatelessWidget {
       width: double.infinity,
       height: 64,
       decoration: BoxDecoration(
-        color: AppColors.carbonBlack, // Dark primary button for high contrast
-        borderRadius: BorderRadius.circular(32), // Pill shape
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.carbonBlack.withValues(alpha: 0.3),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
-          ),
-        ],
+        color: AppColors.kaiserRed, // Signal Red for primary action
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.slate, width: 1),
       ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: isLoading ? null : onPressed,
-          borderRadius: BorderRadius.circular(32),
+          onTap: () {
+            if (!isLoading) {
+              HapticFeedback.lightImpact(); // Rugged "click"
+              onPressed?.call();
+            }
+          },
+          borderRadius: BorderRadius.circular(16),
           child: Center(
             child: isLoading
                 ? const SizedBox(
                     width: 24,
                     height: 24,
                     child: CircularProgressIndicator(
-                      color: Colors.white,
+                      color: AppColors.pebble,
                       strokeWidth: 2,
                     ),
                   )
@@ -50,6 +50,7 @@ class ActionButton extends StatelessWidget {
                     style: AppTypography.labelLarge.copyWith(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
+                      color: AppColors.pebble,
                     ),
                   ),
           ),

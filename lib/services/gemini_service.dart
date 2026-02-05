@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 
 class GeminiService {
   static const String _baseUrl =
-      'https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent';
+      'https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-lite-latest:generateContent';
 
   final String apiKey;
   final String language;
@@ -91,7 +91,7 @@ Estimate the values based on the image. Return only the JSON, no explanations.''
                 as String?;
 
         if (text != null) {
-          // Clean up the response - remove markdown code blocks if present
+          print(text);
           String cleanedText = text.trim();
           if (cleanedText.startsWith('```json')) {
             cleanedText = cleanedText.substring(7);

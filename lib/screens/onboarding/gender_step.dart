@@ -55,8 +55,6 @@ class _GenderStepState extends State<GenderStep> {
           _buildOption(0, isDe ? 'Männlich' : 'Male', Icons.male),
           const SizedBox(height: 16),
           _buildOption(1, isDe ? 'Weiblich' : 'Female', Icons.female),
-          const SizedBox(height: 16),
-          _buildOption(2, isDe ? 'Divers' : 'Other', Icons.person_outline),
 
           const Spacer(),
           ActionButton(
@@ -72,7 +70,7 @@ class _GenderStepState extends State<GenderStep> {
   Widget _buildOption(int index, String title, IconData icon) {
     return BespokeSelectionCard(
       title: title,
-      icon: Icon(icon, color: AppColors.carbonBlack, size: 28),
+      icon: Icon(icon, color: AppColors.slate, size: 28),
       isSelected: _selectedIndex == index,
       onTap: () => setState(() => _selectedIndex = index),
     );

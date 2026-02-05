@@ -1,4 +1,3 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/models.dart';
@@ -29,7 +28,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
         : ['Day', 'Week', 'Month', 'Year'];
 
     return Scaffold(
-      backgroundColor: AppColors.lavenderBlush,
+      backgroundColor: AppColors.limestone,
       body: SafeArea(
         child: Column(
           children: [
@@ -47,9 +46,9 @@ class _HistoryScreenState extends State<HistoryScreen> {
               margin: const EdgeInsets.all(24),
               padding: const EdgeInsets.all(6),
               decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: AppColors.celadon),
+                color: AppColors.limestone,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: AppColors.pebble, width: 1),
               ),
               child: Row(
                 children: List.generate(periods.length, (index) {
@@ -61,8 +60,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         decoration: BoxDecoration(
                           color: isSelected
-                              ? AppColors.shamrock
-                              : Colors.transparent,
+                              ? AppColors.primary
+                              : AppColors.transparent,
                           borderRadius: BorderRadius.circular(16),
                         ),
                         child: Text(
@@ -70,8 +69,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
                           textAlign: TextAlign.center,
                           style: AppTypography.bodyMedium.copyWith(
                             color: isSelected
-                                ? Colors.white
-                                : AppColors.carbonBlack,
+                                ? AppColors.pebble
+                                : AppColors.slate,
                             fontWeight: isSelected
                                 ? FontWeight.bold
                                 : FontWeight.w500,
@@ -85,7 +84,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
               ),
             ),
             _buildPeriodStats(provider, isDe),
-            const Divider(color: AppColors.celadon),
+            const Divider(color: AppColors.pebble),
             Expanded(
               child: meals.isEmpty
                   ? Center(
@@ -139,7 +138,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
     return AppCard(
       margin: const EdgeInsets.symmetric(horizontal: 16),
       padding: const EdgeInsets.all(16),
-      backgroundColor: AppColors.celadon,
+      backgroundColor: AppColors.pebble,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
@@ -147,36 +146,32 @@ class _HistoryScreenState extends State<HistoryScreen> {
             children: [
               Text(
                 '${stats['calories']?.toInt() ?? 0}',
-                style: const TextStyle(
+                style: AppTypography.heroNumber.copyWith(
                   fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.carbonBlack,
+                  color: AppColors.slate,
                 ),
               ),
               Text(
                 'kcal',
-                style: TextStyle(
-                  color: AppColors.carbonBlack.withValues(alpha: 0.6),
-                ),
+                style: TextStyle(color: AppColors.slate.withValues(alpha: 0.6)),
               ),
             ],
           ),
-          Container(width: 1, height: 40, color: Colors.white24),
+          Container(width: 1, height: 40, color: AppColors.slate),
           Column(
             children: [
               Text(
                 '${stats['protein']?.toInt() ?? 0}g',
-                style: const TextStyle(
+                style: AppTypography.heroNumber.copyWith(
                   fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF4A90E2),
+                  color: AppColors.styrianForest,
                 ),
               ),
               Text(
                 isDe ? 'Eiweiß' : 'Protein',
                 style: TextStyle(
                   fontSize: 12,
-                  color: AppColors.carbonBlack.withValues(alpha: 0.6),
+                  color: AppColors.slate.withValues(alpha: 0.6),
                 ),
               ),
             ],
@@ -185,17 +180,16 @@ class _HistoryScreenState extends State<HistoryScreen> {
             children: [
               Text(
                 '${stats['carbs']?.toInt() ?? 0}g',
-                style: const TextStyle(
+                style: AppTypography.heroNumber.copyWith(
                   fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFFF5A623),
+                  color: AppColors.styrianForest,
                 ),
               ),
               Text(
                 isDe ? 'Kohlenhydrate' : 'Carbs',
                 style: TextStyle(
                   fontSize: 12,
-                  color: AppColors.carbonBlack.withValues(alpha: 0.6),
+                  color: AppColors.slate.withValues(alpha: 0.6),
                 ),
               ),
             ],
@@ -204,17 +198,16 @@ class _HistoryScreenState extends State<HistoryScreen> {
             children: [
               Text(
                 '${stats['fats']?.toInt() ?? 0}g',
-                style: const TextStyle(
+                style: AppTypography.heroNumber.copyWith(
                   fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFFD0021B),
+                  color: AppColors.styrianForest,
                 ),
               ),
               Text(
                 isDe ? 'Fett' : 'Fat',
                 style: TextStyle(
                   fontSize: 12,
-                  color: AppColors.carbonBlack.withValues(alpha: 0.6),
+                  color: AppColors.slate.withValues(alpha: 0.6),
                 ),
               ),
             ],

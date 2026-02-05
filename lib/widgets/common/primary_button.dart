@@ -1,7 +1,9 @@
 import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../theme/app_colors.dart';
+import '../../theme/app_typography.dart';
 
 class PrimaryButton extends StatelessWidget {
   final String text;
@@ -24,39 +26,45 @@ class PrimaryButton extends StatelessWidget {
     if (isIos) {
       return CupertinoButton(
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-        color: AppColors.shamrock,
+        color: AppColors.styrianForest,
         borderRadius: BorderRadius.circular(16),
-        onPressed: isLoading ? null : onPressed,
+        onPressed: isLoading
+            ? null
+            : () {
+                HapticFeedback.lightImpact();
+                onPressed?.call();
+              },
         child: isLoading
-            ? const CupertinoActivityIndicator(color: Colors.white)
+            ? const CupertinoActivityIndicator(color: AppColors.pebble)
             : Row(
                 mainAxisSize: MainAxisSize.min,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   if (icon != null) ...[
-                    Icon(icon, color: Colors.white, size: 20),
+                    Icon(icon, color: AppColors.pebble, size: 20),
                     const SizedBox(width: 8),
                   ],
-                  Text(
-                    text,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 17,
-                    ),
-                  ),
+                  Text(text, style: AppTypography.labelLarge),
                 ],
               ),
       );
     }
 
     return ElevatedButton(
-      onPressed: isLoading ? null : onPressed,
+      onPressed: isLoading
+          ? null
+          : () {
+              HapticFeedback.lightImpact();
+              onPressed?.call();
+            },
       style: ElevatedButton.styleFrom(
-        backgroundColor: AppColors.shamrock,
-        foregroundColor: Colors.white,
+        backgroundColor: AppColors.styrianForest,
+        foregroundColor: AppColors.pebble,
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: const BorderSide(color: AppColors.slate, width: 1),
+        ),
         elevation: 0,
         shadowColor: Colors.transparent, // Flat style for modern look
       ),
@@ -66,7 +74,7 @@ class PrimaryButton extends StatelessWidget {
               height: 20,
               child: CircularProgressIndicator(
                 strokeWidth: 2,
-                color: Colors.white,
+                color: AppColors.pebble,
               ),
             )
           : Row(
@@ -77,13 +85,7 @@ class PrimaryButton extends StatelessWidget {
                   Icon(icon, size: 20),
                   const SizedBox(width: 8),
                 ],
-                Text(
-                  text,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+                Text(text, style: AppTypography.labelLarge),
               ],
             ),
     );
