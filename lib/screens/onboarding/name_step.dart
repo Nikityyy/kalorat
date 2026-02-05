@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../theme/app_typography.dart';
 import '../../theme/app_colors.dart';
+import '../../extensions/l10n_extension.dart';
 import '../../widgets/inputs/action_button.dart';
 
 class NameStep extends StatefulWidget {
@@ -18,7 +19,7 @@ class _NameStepState extends State<NameStep> {
 
   @override
   Widget build(BuildContext context) {
-    final isDe = widget.language == 'de';
+    final l10n = context.l10n;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24.0),
@@ -26,24 +27,16 @@ class _NameStepState extends State<NameStep> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const SizedBox(height: 24),
-          Text(
-            isDe ? 'Wie heißt du?' : 'What\'s your name?',
-            style: AppTypography.displayMedium,
-          ),
+          Text(l10n.onboardingName, style: AppTypography.displayMedium),
           const SizedBox(height: 8),
-          Text(
-            isDe
-                ? 'Wir möchten dich persönlich ansprechen.'
-                : 'We\'d like to know how to call you.',
-            style: AppTypography.bodyMedium,
-          ),
+          Text(l10n.nameSubtitle, style: AppTypography.bodyMedium),
           const SizedBox(height: 48),
 
           TextField(
             controller: _controller,
             style: AppTypography.displayMedium,
             decoration: InputDecoration(
-              hintText: isDe ? 'Dein Name' : 'Your Name',
+              hintText: l10n.onboardingNameHint,
               hintStyle: AppTypography.displayMedium.copyWith(
                 color: AppColors.slate.withValues(alpha: 0.3),
               ),
@@ -58,7 +51,7 @@ class _NameStepState extends State<NameStep> {
 
           const Spacer(),
           ActionButton(
-            text: isDe ? 'Weiter' : 'Continue',
+            text: l10n.continueButton,
             onPressed: () {
               if (_controller.text.isNotEmpty) {
                 widget.onNext(_controller.text);

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../theme/app_typography.dart';
+import '../../extensions/l10n_extension.dart';
 import '../../widgets/inputs/action_button.dart';
 import '../../widgets/inputs/bespoke_wheel.dart';
 
@@ -30,7 +31,7 @@ class _AgeStepState extends State<AgeStep> {
 
   @override
   Widget build(BuildContext context) {
-    final isDe = widget.language == 'de';
+    final l10n = context.l10n;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24.0),
@@ -38,10 +39,7 @@ class _AgeStepState extends State<AgeStep> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const SizedBox(height: 24),
-          Text(
-            isDe ? 'Wie alt bist du?' : 'How old are you?',
-            style: AppTypography.displayMedium,
-          ),
+          Text(l10n.howOldAreYou, style: AppTypography.displayMedium),
           const SizedBox(height: 48),
 
           Expanded(
@@ -60,7 +58,7 @@ class _AgeStepState extends State<AgeStep> {
           ),
 
           ActionButton(
-            text: isDe ? 'Weiter' : 'Continue',
+            text: l10n.continueButton,
             onPressed: () => widget.onNext(_currentValue),
           ),
           const SizedBox(height: 32),

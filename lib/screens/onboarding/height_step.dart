@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../theme/app_typography.dart';
+import '../../extensions/l10n_extension.dart';
 import '../../widgets/inputs/action_button.dart';
 import '../../widgets/inputs/ruler_picker.dart';
 
@@ -30,7 +31,7 @@ class _HeightStepState extends State<HeightStep> {
 
   @override
   Widget build(BuildContext context) {
-    final isDe = widget.language == 'de';
+    final l10n = context.l10n;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24.0),
@@ -38,10 +39,7 @@ class _HeightStepState extends State<HeightStep> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const SizedBox(height: 24),
-          Text(
-            isDe ? 'Wie groß bist du?' : 'How tall are you?',
-            style: AppTypography.displayMedium,
-          ),
+          Text(l10n.onboardingHeight, style: AppTypography.displayMedium),
           const SizedBox(height: 48),
 
           Expanded(
@@ -50,14 +48,14 @@ class _HeightStepState extends State<HeightStep> {
                 minValue: 100,
                 maxValue: 250,
                 initialValue: _currentValue,
-                unit: 'cm',
+                unit: l10n.cm,
                 onValueChanged: (val) => _currentValue = val,
               ),
             ),
           ),
 
           ActionButton(
-            text: isDe ? 'Weiter' : 'Continue',
+            text: l10n.continueButton,
             onPressed: () => widget.onNext(_currentValue),
           ),
           const SizedBox(height: 32),

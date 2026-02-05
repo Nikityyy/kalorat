@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'l10n/app_localizations.dart';
 import 'providers/app_provider.dart';
 import 'screens/main_screen.dart';
 import 'screens/onboarding/onboarding_flow.dart';
@@ -31,7 +32,7 @@ class KaloratApp extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Image.asset(
-                      'lib/assets/kalorat-favicon-ios.png',
+                      'assets/kalorat-favicon-ios.png',
                       width: 80,
                       height: 80,
                       fit: BoxFit.contain,
@@ -55,6 +56,9 @@ class KaloratApp extends StatelessWidget {
               debugShowCheckedModeBanner: false,
               title: 'Kalorat',
               theme: AppTheme.iosTheme,
+              locale: Locale(provider.language),
+              localizationsDelegates: AppLocalizations.localizationsDelegates,
+              supportedLocales: AppLocalizations.supportedLocales,
               home: homeWidget,
             );
           }
@@ -65,6 +69,9 @@ class KaloratApp extends StatelessWidget {
             theme: AppTheme.lightTheme,
             darkTheme: AppTheme.darkTheme,
             themeMode: ThemeMode.system,
+            locale: Locale(provider.language),
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
             home: homeWidget,
           );
         },

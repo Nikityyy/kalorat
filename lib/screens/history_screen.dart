@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../extensions/l10n_extension.dart';
 import '../models/models.dart';
 import '../providers/app_provider.dart';
 import '../theme/app_colors.dart';
@@ -20,12 +21,37 @@ class _HistoryScreenState extends State<HistoryScreen> {
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<AppProvider>();
-    final isDe = provider.language == 'de';
-    final meals = provider.getAllMeals();
+    final l10n = context.l10n;
 
-    final periods = isDe
-        ? ['Tag', 'Woche', 'Monat', 'Jahr']
-        : ['Day', 'Week', 'Month', 'Year'];
+    List<MealModel> filteredMeals = [];
+    final now = DateTime.now();
+
+    switch (_selectedPeriod) {
+      case 0: // Day
+        filteredMeals = provider.getMealsByDate(now);
+        break;
+      case 1: // Week
+        final start = now.subtract(Duration(days: now.weekday - 1));
+        final startOfWeek = DateTime(start.year, start.month, start.day);
+        final endOfWeek = startOfWeek.add(const Duration(days: 7));
+        filteredMeals = provider.getMealsByDateRange(startOfWeek, endOfWeek);
+        break;
+      case 2: // Month
+        final start = DateTime(now.year, now.month, 1);
+        final end = DateTime(now.year, now.month + 1, 1);
+        filteredMeals = provider.getMealsByDateRange(start, end);
+        break;
+      case 3: // Year
+        final start = DateTime(now.year, 1, 1);
+        final end = DateTime(now.year + 1, 1, 1);
+        filteredMeals = provider.getMealsByDateRange(start, end);
+        break;
+    }
+
+    // Sort by newest first
+    filteredMeals.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+
+    final periods = [l10n.day, l10n.week, l10n.month, l10n.year];
 
     return Scaffold(
       backgroundColor: AppColors.limestone,
@@ -36,7 +62,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
             Padding(
               padding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
               child: Text(
-                isDe ? 'Meine Historie' : 'My History',
+                l10n.myHistory,
                 style: AppTypography.displayMedium.copyWith(fontSize: 24),
               ),
             ),
@@ -83,28 +109,28 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 }),
               ),
             ),
-            _buildPeriodStats(provider, isDe),
+            _buildPeriodStats(provider, context),
             const Divider(color: AppColors.pebble),
             Expanded(
-              child: meals.isEmpty
+              child: filteredMeals.isEmpty
                   ? Center(
                       child: Text(
-                        isDe
-                            ? 'Noch keine Mahlzeiten erfasst'
-                            : 'No meals recorded yet',
+                        l10n.noMealsRecorded,
                         style: TextStyle(color: Colors.grey[600]),
                       ),
                     )
                   : ListView.builder(
                       padding: const EdgeInsets.all(16),
-                      itemCount: meals.length,
+                      itemCount: filteredMeals.length,
                       itemBuilder: (ctx, i) => Padding(
                         padding: const EdgeInsets.only(bottom: 12.0),
                         child: MealCard(
-                          meal: meals[i],
-                          language: isDe ? 'de' : 'en',
-                          onDelete: () =>
-                              _confirmDelete(context, meals[i], provider, isDe),
+                          meal: filteredMeals[i],
+                          onDelete: () => _confirmDelete(
+                            context,
+                            filteredMeals[i],
+                            provider,
+                          ),
                         ),
                       ),
                     ),
@@ -115,7 +141,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
     );
   }
 
-  Widget _buildPeriodStats(AppProvider provider, bool isDe) {
+  Widget _buildPeriodStats(AppProvider provider, BuildContext context) {
+    final l10n = context.l10n;
     Map<String, double> stats;
     final now = DateTime.now();
 
@@ -152,7 +179,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 ),
               ),
               Text(
-                'kcal',
+                l10n.kcal,
                 style: TextStyle(color: AppColors.slate.withValues(alpha: 0.6)),
               ),
             ],
@@ -161,14 +188,14 @@ class _HistoryScreenState extends State<HistoryScreen> {
           Column(
             children: [
               Text(
-                '${stats['protein']?.toInt() ?? 0}g',
+                '${stats['protein']?.toInt() ?? 0}${l10n.grams}',
                 style: AppTypography.heroNumber.copyWith(
                   fontSize: 18,
                   color: AppColors.styrianForest,
                 ),
               ),
               Text(
-                isDe ? 'Eiweiß' : 'Protein',
+                l10n.protein,
                 style: TextStyle(
                   fontSize: 12,
                   color: AppColors.slate.withValues(alpha: 0.6),
@@ -179,14 +206,14 @@ class _HistoryScreenState extends State<HistoryScreen> {
           Column(
             children: [
               Text(
-                '${stats['carbs']?.toInt() ?? 0}g',
+                '${stats['carbs']?.toInt() ?? 0}${l10n.grams}',
                 style: AppTypography.heroNumber.copyWith(
                   fontSize: 18,
                   color: AppColors.styrianForest,
                 ),
               ),
               Text(
-                isDe ? 'Kohlenhydrate' : 'Carbs',
+                l10n.carbs,
                 style: TextStyle(
                   fontSize: 12,
                   color: AppColors.slate.withValues(alpha: 0.6),
@@ -197,14 +224,14 @@ class _HistoryScreenState extends State<HistoryScreen> {
           Column(
             children: [
               Text(
-                '${stats['fats']?.toInt() ?? 0}g',
+                '${stats['fats']?.toInt() ?? 0}${l10n.grams}',
                 style: AppTypography.heroNumber.copyWith(
                   fontSize: 18,
                   color: AppColors.styrianForest,
                 ),
               ),
               Text(
-                isDe ? 'Fett' : 'Fat',
+                l10n.fats,
                 style: TextStyle(
                   fontSize: 12,
                   color: AppColors.slate.withValues(alpha: 0.6),
@@ -221,31 +248,24 @@ class _HistoryScreenState extends State<HistoryScreen> {
     BuildContext context,
     MealModel meal,
     AppProvider provider,
-    bool isDe,
   ) {
+    final l10n = context.l10n;
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(isDe ? 'Löschen?' : 'Delete?'),
-        content: Text(
-          isDe
-              ? 'Möchtest du diese Mahlzeit wirklich löschen?'
-              : 'Do you really want to delete this meal?',
-        ),
+        title: Text(l10n.deleteQuestion),
+        content: Text(l10n.deleteMealConfirmation),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: Text(isDe ? 'Abbrechen' : 'Cancel'),
+            child: Text(l10n.cancel),
           ),
           TextButton(
             onPressed: () {
               provider.deleteMeal(meal.id);
               Navigator.pop(ctx);
             },
-            child: Text(
-              isDe ? 'Löschen' : 'Delete',
-              style: const TextStyle(color: Colors.red),
-            ),
+            child: Text(l10n.delete, style: const TextStyle(color: Colors.red)),
           ),
         ],
       ),

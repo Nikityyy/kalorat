@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import '../../extensions/l10n_extension.dart';
 import '../models/models.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_typography.dart';
@@ -10,15 +11,8 @@ class MealCard extends StatelessWidget {
   final MealModel meal;
   final VoidCallback? onTap;
   final VoidCallback? onDelete;
-  final String language;
 
-  const MealCard({
-    super.key,
-    required this.meal,
-    this.onTap,
-    this.onDelete,
-    this.language = 'de',
-  });
+  const MealCard({super.key, required this.meal, this.onTap, this.onDelete});
 
   String _formatTime(DateTime timestamp) {
     final hour = timestamp.hour.toString().padLeft(2, '0');
@@ -28,6 +22,8 @@ class MealCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
+
     return AppCard(
       padding: EdgeInsets.zero,
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -44,7 +40,7 @@ class MealCard extends StatelessWidget {
                 // --- 1. Image Section ---
                 if (meal.photoPaths.isNotEmpty)
                   ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(16),
                     child: Image.file(
                       File(meal.photoPaths.first),
                       width: 60,
@@ -84,12 +80,10 @@ class MealCard extends StatelessWidget {
                           Expanded(
                             child: Text(
                               meal.isPending
-                                  ? (language == 'de'
-                                        ? 'Ausstehend...'
-                                        : 'Pending...')
+                                  ? l10n.pendingAnalysis
                                   : meal.mealName.isNotEmpty
                                   ? meal.mealName
-                                  : (language == 'de' ? 'Mahlzeit' : 'Meal'),
+                                  : l10n.mealName,
                               style: AppTypography.bodyMedium.copyWith(
                                 fontWeight: FontWeight.w600,
                                 color: meal.isPending
@@ -121,7 +115,7 @@ class MealCard extends StatelessWidget {
                           // Left side: Calories or Pending State
                           if (!meal.isPending) ...[
                             Text(
-                              '${meal.calories.toInt()} kcal',
+                              '${meal.calories.toInt()} ${l10n.kcal}',
                               style: const TextStyle(
                                 fontSize: 20,
                                 fontWeight: FontWeight.bold,
@@ -141,9 +135,7 @@ class MealCard extends StatelessWidget {
                                 ),
                                 const SizedBox(width: 8),
                                 Text(
-                                  language == 'de'
-                                      ? 'Wird analysiert...'
-                                      : 'Being analyzed...',
+                                  l10n.analyzing,
                                   style: AppTypography.bodyMedium.copyWith(
                                     fontSize: 12,
                                     color: AppColors.slate.withValues(
@@ -187,18 +179,18 @@ class MealCard extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
                   _MacroChip(
-                    label: language == 'de' ? 'Eiweiß' : 'Protein',
-                    value: '${meal.protein.toInt()}g',
+                    label: l10n.protein,
+                    value: '${meal.protein.toInt()}${l10n.grams}',
                     color: AppColors.styrianForest,
                   ),
                   _MacroChip(
-                    label: language == 'de' ? 'Kohlenhydrate' : 'Carbs',
-                    value: '${meal.carbs.toInt()}g',
+                    label: l10n.carbs,
+                    value: '${meal.carbs.toInt()}${l10n.grams}',
                     color: AppColors.styrianForest,
                   ),
                   _MacroChip(
-                    label: language == 'de' ? 'Fett' : 'Fat',
-                    value: '${meal.fats.toInt()}g',
+                    label: l10n.fats,
+                    value: '${meal.fats.toInt()}${l10n.grams}',
                     color: AppColors.styrianForest,
                   ),
                 ],

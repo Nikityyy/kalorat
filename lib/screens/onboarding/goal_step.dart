@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../theme/app_typography.dart';
 import '../../theme/app_colors.dart';
+import '../../extensions/l10n_extension.dart';
 import '../../widgets/inputs/action_button.dart';
 import '../../widgets/inputs/bespoke_selection_card.dart';
 
@@ -31,7 +32,7 @@ class _GoalStepState extends State<GoalStep> {
 
   @override
   Widget build(BuildContext context) {
-    final isDe = widget.language == 'de';
+    final l10n = context.l10n;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24.0),
@@ -39,36 +40,33 @@ class _GoalStepState extends State<GoalStep> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const SizedBox(height: 24),
-          Text(
-            isDe ? 'Was ist dein Ziel?' : 'What is your goal?',
-            style: AppTypography.displayMedium,
-          ),
+          Text(l10n.whatIsYourGoal, style: AppTypography.displayMedium),
           const SizedBox(height: 32),
 
           _buildOption(
             0,
-            isDe ? 'Gewicht verlieren' : 'Lose Weight',
-            isDe ? 'Fett verbrennen' : 'Burn fat & get lean',
+            l10n.loseWeight,
+            l10n.burnFatSubtitle,
             Icons.arrow_downward,
           ),
           const SizedBox(height: 16),
           _buildOption(
             1,
-            isDe ? 'Gewicht halten' : 'Maintain',
-            isDe ? 'Gesund & fit bleiben' : 'Stay healthy & fit',
+            l10n.maintainWeight,
+            l10n.maintainSubtitle,
             Icons.check,
           ),
           const SizedBox(height: 16),
           _buildOption(
             2,
-            isDe ? 'Muskeln aufbauen' : 'Gain Muscle',
-            isDe ? 'Masse & Stärke' : 'Build mass & strength',
+            l10n.gainMuscle,
+            l10n.buildMassSubtitle,
             Icons.arrow_upward,
           ),
 
           const Spacer(),
           ActionButton(
-            text: isDe ? 'Plan erstellen' : 'Create Plan',
+            text: l10n.createPlan,
             onPressed: () => widget.onNext(_selectedIndex),
           ),
           const SizedBox(height: 32),

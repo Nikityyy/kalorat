@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../theme/app_typography.dart';
 import '../../theme/app_colors.dart';
+import '../../extensions/l10n_extension.dart';
 import '../../widgets/inputs/action_button.dart';
 import '../../services/services.dart';
 
@@ -24,11 +25,7 @@ class _ApiKeyStepState extends State<ApiKeyStep> {
   Future<void> _validateAndProceed() async {
     final key = _controller.text.trim();
     if (key.isEmpty) {
-      setState(
-        () => _errorMessage = widget.language == 'de'
-            ? 'Bitte gib einen API-Key ein'
-            : 'Please enter an API Key',
-      );
+      setState(() => _errorMessage = context.l10n.enterApiKeyError);
       return;
     }
 
@@ -44,18 +41,14 @@ class _ApiKeyStepState extends State<ApiKeyStep> {
       if (isValid) {
         widget.onNext(key);
       } else {
-        setState(
-          () => _errorMessage = widget.language == 'de'
-              ? 'Ungültiger API-Key. Bitte überprüfe deine Eingabe.'
-              : 'Invalid API Key. Please check your input.',
-        );
+        setState(() => _errorMessage = context.l10n.invalidApiKeyError);
       }
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final isDe = widget.language == 'de';
+    final l10n = context.l10n;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24.0),
@@ -63,19 +56,16 @@ class _ApiKeyStepState extends State<ApiKeyStep> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const SizedBox(height: 24),
-          Text(
-            isDe ? 'AI Konfigurieren' : 'Configure AI',
-            style: AppTypography.displayMedium,
-          ),
+          Text(l10n.aiConfigure, style: AppTypography.displayMedium),
           const SizedBox(height: 16),
 
           RichText(
             text: TextSpan(
               style: AppTypography.bodyMedium,
               children: [
-                TextSpan(text: isDe ? 'Gehe zu ' : 'Go to '),
+                TextSpan(text: l10n.goTo),
                 TextSpan(
-                  text: 'ai.dev/api-keys',
+                  text: 'Google AI Studio',
                   style: const TextStyle(
                     color: AppColors.primary,
                     fontWeight: FontWeight.bold,
@@ -83,15 +73,11 @@ class _ApiKeyStepState extends State<ApiKeyStep> {
                   ),
                   recognizer: TapGestureRecognizer()
                     ..onTap = () => launchUrl(
-                      Uri.parse('https://aistudio.google.com/app/apikey'),
+                      Uri.parse('https://ai.dev/apikey/'),
                       mode: LaunchMode.externalApplication,
                     ),
                 ),
-                TextSpan(
-                  text: isDe
-                      ? ' und erstelle einen kostenlosen Key. Kopiere ihn, füge ihn hier ein und tracke deine Kalorien.'
-                      : ' and create a free key. Copy it, paste it here, and start tracking.',
-                ),
+                TextSpan(text: l10n.createKeyInstruction),
               ],
             ),
           ),
@@ -120,7 +106,7 @@ class _ApiKeyStepState extends State<ApiKeyStep> {
 
           const Spacer(),
           ActionButton(
-            text: isDe ? 'Validieren & Weiter' : 'Validate & Continue',
+            text: l10n.validateAndContinue,
             isLoading: _isValidating,
             onPressed: _validateAndProceed,
           ),

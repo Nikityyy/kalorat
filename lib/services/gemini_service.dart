@@ -36,29 +36,7 @@ class GeminiService {
       }
 
       // Build prompt based on language
-      final prompt = language == 'de'
-          ? '''Analysiere dieses Essen und antworte NUR mit einem validen JSON-Objekt ohne Markdown-Formatierung:
-{
-  "meal_name": "Name der Mahlzeit auf Deutsch",
-  "calories": Kalorien als Zahl,
-  "protein": Protein in Gramm als Zahl,
-  "carbs": Kohlenhydrate in Gramm als Zahl,
-  "fats": Fett in Gramm als Zahl,
-  "vitamins": {"A": mg, "C": mg, "D": µg, ...},
-  "minerals": {"Calcium": mg, "Eisen": mg, ...}
-}
-Schätze die Werte basierend auf dem Bild. Gib nur das JSON zurück, keine Erklärungen.'''
-          : '''Analyze this food and respond ONLY with a valid JSON object without Markdown formatting:
-{
-  "meal_name": "Name of the meal",
-  "calories": calories as number,
-  "protein": protein in grams as number,
-  "carbs": carbohydrates in grams as number,
-  "fats": fat in grams as number,
-  "vitamins": {"A": mg, "C": mg, "D": µg, ...},
-  "minerals": {"Calcium": mg, "Iron": mg, ...}
-}
-Estimate the values based on the image. Return only the JSON, no explanations.''';
+      final prompt = _getPrompt(language);
 
       // Build request body
       final requestBody = {
@@ -166,6 +144,46 @@ Estimate the values based on the image. Return only the JSON, no explanations.''
         return 'image/webp';
       default:
         return 'image/jpeg';
+    }
+  }
+
+  String _getPrompt(String language) {
+    if (language == 'de') {
+      return '''Analysiere dieses Essen oder Nährwerttabelle und antworte NUR mit einem validen JSON-Objekt ohne Markdown-Formatierung.
+Wenn du KEIN Essen oder KEINE Nährwerttabelle erkennen kannst, antworte exakt: {"error": "no_food_detected"}
+
+Wenn es eine Verpackung/Nährwerttabelle ist: Extrahiere die genauen Werte für 100g oder die Portion.
+Wenn es ein Gericht ist: Schätze die Werte für die gesamte Portion auf dem Bild.
+
+Format:
+{
+  "meal_name": "Name der Mahlzeit auf Deutsch",
+  "calories": Kalorien als Zahl,
+  "protein": Protein in Gramm als Zahl,
+  "carbs": Kohlenhydrate in Gramm als Zahl,
+  "fats": Fett in Gramm als Zahl,
+  "vitamins": {"A": mg, "C": mg, "D": µg, ...},
+  "minerals": {"Calcium": mg, "Eisen": mg, ...}
+}
+Gib nur das JSON zurück.''';
+    } else {
+      return '''Analyze this food or nutrition label and respond ONLY with a valid JSON object without Markdown formatting.
+If you CANNOT detect any food or nutrition label, respond exactly: {"error": "no_food_detected"}
+
+If it is packaging/nutrition label: Extract the exact values for 100g or the serving.
+If it is a meal: Estimate the values for the entire portion visible.
+
+Format:
+{
+  "meal_name": "Name of the meal",
+  "calories": calories as number,
+  "protein": protein in grams as number,
+  "carbs": carbohydrates in grams as number,
+  "fats": fat in grams as number,
+  "vitamins": {"A": mg, "C": mg, "D": µg, ...},
+  "minerals": {"Calcium": mg, "Iron": mg, ...}
+}
+Return only the JSON.''';
     }
   }
 }

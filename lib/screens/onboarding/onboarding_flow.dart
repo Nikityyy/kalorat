@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../providers/app_provider.dart';
 import '../../theme/app_colors.dart';
 import 'welcome_step.dart';
 import 'name_step.dart';
@@ -20,10 +22,15 @@ class OnboardingFlow extends StatefulWidget {
 class _OnboardingFlowState extends State<OnboardingFlow> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
-
-  // Data State
-  String _language = 'de'; // Default to German
+  late String _language;
   String _name = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _language = context.read<AppProvider>().language;
+  }
+
   int _genderIndex = 0; // 0: Male, 1: Female, 2: Other
   int _age = 25;
   double _height = 170.0;
@@ -109,8 +116,10 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
                 children: [
                   WelcomeStep(
                     language: _language,
-                    onLanguageChanged: (lang) =>
-                        setState(() => _language = lang),
+                    onLanguageChanged: (lang) {
+                      setState(() => _language = lang);
+                      context.read<AppProvider>().updateLanguage(lang);
+                    },
                     onNext: _nextPage,
                   ),
                   NameStep(

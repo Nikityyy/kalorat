@@ -14,7 +14,7 @@ dependencies:
 
   # UI & Icons
   cupertino_icons: ^1.0.8
-  google_fonts: ^6.1.0
+  google_fonts: ^8.0.1
 
   # Camera & Media
   camera: ^0.11.0+2
@@ -58,20 +58,20 @@ dev_dependencies:
   flutter_lints: ^6.0.0
   hive_generator: ^2.0.1
   build_runner: ^2.4.13
-  flutter_launcher_icons: ^0.13.1
+  flutter_launcher_icons: ^0.14.4
 
 flutter:
   uses-material-design: true
   generate: true
   assets:
-    - lib/assets/
+    - assets/
 
 flutter_launcher_icons:
   android: true
   ios: true
   theme_color: "#0F5838" 
-  image_path: "lib/assets/kalorat-favicon-ios.png"
+  image_path: "assets/kalorat-favicon-ios.png"
   adaptive_icon_background: "#F7F5F2"
-  adaptive_icon_foreground: "lib/assets/kalorat-favicon-android.png"
+  adaptive_icon_foreground: "assets/kalorat-favicon-android.png"
   remove_alpha_ios: true 
   background_color_ios: "#F7F5F2"

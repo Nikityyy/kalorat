@@ -1,21 +1,16 @@
 import 'package:flutter/material.dart';
+import '../../extensions/l10n_extension.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_typography.dart';
 
 class BmiIndicator extends StatelessWidget {
   final double bmi;
   final String category;
-  final String language;
 
-  const BmiIndicator({
-    super.key,
-    required this.bmi,
-    required this.category,
-    this.language = 'de',
-  });
+  const BmiIndicator({super.key, required this.bmi, required this.category});
 
   Color get _color {
-    switch (category) {
+    switch (category.toLowerCase()) {
       case 'underweight':
         return AppColors.pebble;
       case 'normal':
@@ -28,33 +23,19 @@ class BmiIndicator extends StatelessWidget {
     }
   }
 
-  String get _label {
-    if (language == 'de') {
-      switch (category) {
-        case 'underweight':
-          return 'Untergewicht';
-        case 'normal':
-          return 'Normalgewicht';
-        case 'overweight':
-          return 'Übergewicht';
-        case 'obese':
-          return 'Adipositas';
-        default:
-          return '';
-      }
-    } else {
-      switch (category) {
-        case 'underweight':
-          return 'Underweight';
-        case 'normal':
-          return 'Normal weight';
-        case 'overweight':
-          return 'Overweight';
-        case 'obese':
-          return 'Obese';
-        default:
-          return '';
-      }
+  String _getLabel(BuildContext context) {
+    final l10n = context.l10n;
+    switch (category.toLowerCase()) {
+      case 'underweight':
+        return l10n.bmiUnderweight;
+      case 'normal':
+        return l10n.bmiNormal;
+      case 'overweight':
+        return l10n.bmiOverweight;
+      case 'obese':
+        return l10n.bmiObese;
+      default:
+        return category;
     }
   }
 
@@ -88,7 +69,7 @@ class BmiIndicator extends StatelessWidget {
                 ),
               ),
               Text(
-                _label,
+                _getLabel(context),
                 style: AppTypography.bodyMedium.copyWith(
                   fontSize: 14,
                   color: AppColors.slate,

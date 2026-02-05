@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../theme/app_typography.dart';
 import '../../theme/app_colors.dart';
+import '../../extensions/l10n_extension.dart';
 import '../../models/models.dart';
 import '../../providers/app_provider.dart';
 import '../main_screen.dart';
@@ -54,6 +55,8 @@ class _AnalysisStepState extends State<AnalysisStep> {
       language: widget.language,
       geminiApiKey: widget.apiKey,
       onboardingCompleted: true,
+      goal: widget.goalIndex,
+      gender: widget.genderIndex,
     );
 
     await context.read<AppProvider>().saveUser(user);
@@ -67,7 +70,7 @@ class _AnalysisStepState extends State<AnalysisStep> {
 
   @override
   Widget build(BuildContext context) {
-    final isDe = widget.language == 'de';
+    final l10n = context.l10n;
 
     return Center(
       child: Column(
@@ -75,15 +78,9 @@ class _AnalysisStepState extends State<AnalysisStep> {
         children: [
           const CircularProgressIndicator(color: AppColors.primary),
           const SizedBox(height: 24),
-          Text(
-            isDe ? 'Wir erstellen deinen Plan...' : 'Building your plan...',
-            style: AppTypography.titleLarge,
-          ),
+          Text(l10n.buildingPlan, style: AppTypography.titleLarge),
           const SizedBox(height: 8),
-          Text(
-            isDe ? 'Metabolismus wird analysiert' : 'Analyzing your metabolism',
-            style: AppTypography.bodyMedium,
-          ),
+          Text(l10n.analyzingMetabolism, style: AppTypography.bodyMedium),
         ],
       ),
     );

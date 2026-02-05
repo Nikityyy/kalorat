@@ -1,8 +1,7 @@
 import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../providers/app_provider.dart';
+import '../extensions/l10n_extension.dart';
 import '../theme/app_colors.dart';
 import 'home_screen.dart';
 import 'me_screen.dart';
@@ -26,8 +25,7 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final provider = context.watch<AppProvider>();
-    final lang = provider.language;
+    final l10n = context.l10n;
 
     if (Platform.isIOS) {
       return CupertinoTabScaffold(
@@ -40,7 +38,7 @@ class _MainScreenState extends State<MainScreen> {
           items: [
             BottomNavigationBarItem(
               icon: const Icon(CupertinoIcons.person_fill),
-              label: lang == 'de' ? 'Ich' : 'Me',
+              label: l10n.me,
             ),
             BottomNavigationBarItem(
               icon: Container(
@@ -53,11 +51,11 @@ class _MainScreenState extends State<MainScreen> {
                 ),
                 child: const Icon(CupertinoIcons.camera_fill, size: 28),
               ),
-              label: 'Home',
+              label: l10n.home,
             ),
             BottomNavigationBarItem(
               icon: const Icon(CupertinoIcons.clock_fill),
-              label: lang == 'de' ? 'Historie' : 'History',
+              label: l10n.history,
             ),
           ],
         ),
@@ -93,7 +91,7 @@ class _MainScreenState extends State<MainScreen> {
                 Icons.person,
                 color: AppColors.pebble,
               ), // White icon on Shamrock
-              label: lang == 'de' ? 'Ich' : 'Me',
+              label: l10n.me,
             ),
             NavigationDestination(
               icon: const Icon(Icons.camera_alt_outlined),
@@ -101,12 +99,12 @@ class _MainScreenState extends State<MainScreen> {
                 Icons.camera_alt,
                 color: AppColors.pebble,
               ),
-              label: 'Home',
+              label: l10n.home,
             ),
             NavigationDestination(
               icon: const Icon(Icons.history_outlined),
               selectedIcon: const Icon(Icons.history, color: AppColors.pebble),
-              label: lang == 'de' ? 'Historie' : 'History',
+              label: l10n.history,
             ),
           ],
         ),

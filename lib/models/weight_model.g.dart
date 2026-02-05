@@ -2,6 +2,10 @@
 
 part of 'weight_model.dart';
 
+// **************************************************************************
+// TypeAdapterGenerator
+// **************************************************************************
+
 class WeightModelAdapter extends TypeAdapter<WeightModel> {
   @override
   final int typeId = 2;

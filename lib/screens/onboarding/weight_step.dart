@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../theme/app_typography.dart';
+import '../../extensions/l10n_extension.dart';
 import '../../widgets/inputs/action_button.dart';
 import '../../widgets/inputs/ruler_picker.dart';
 
@@ -30,7 +31,7 @@ class _WeightStepState extends State<WeightStep> {
 
   @override
   Widget build(BuildContext context) {
-    final isDe = widget.language == 'de';
+    final l10n = context.l10n;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24.0),
@@ -38,10 +39,7 @@ class _WeightStepState extends State<WeightStep> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const SizedBox(height: 24),
-          Text(
-            isDe ? 'Wie viel wiegst du?' : 'What is your weight?',
-            style: AppTypography.displayMedium,
-          ),
+          Text(l10n.onboardingWeight, style: AppTypography.displayMedium),
           const SizedBox(height: 48),
 
           Expanded(
@@ -50,7 +48,7 @@ class _WeightStepState extends State<WeightStep> {
                 minValue: 30,
                 maxValue: 200,
                 initialValue: _currentValue,
-                unit: 'kg',
+                unit: l10n.kg,
                 isHorizontal: true, // Use horizontal for consistency for now
                 onValueChanged: (val) => _currentValue = val,
               ),
@@ -58,7 +56,7 @@ class _WeightStepState extends State<WeightStep> {
           ),
 
           ActionButton(
-            text: isDe ? 'Weiter' : 'Continue',
+            text: l10n.continueButton,
             onPressed: () => widget.onNext(_currentValue),
           ),
           const SizedBox(height: 32),

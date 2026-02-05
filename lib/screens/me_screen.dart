@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:provider/provider.dart';
+import '../extensions/l10n_extension.dart';
 import '../providers/app_provider.dart';
 import '../models/models.dart';
 import '../theme/app_colors.dart';
@@ -18,7 +19,7 @@ class MeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final provider = context.watch<AppProvider>();
     final user = provider.user;
-    final isDe = provider.language == 'de';
+    final l10n = context.l10n;
 
     if (user == null) {
       return const Center(
@@ -42,7 +43,7 @@ class MeScreen extends StatelessWidget {
                 children: [
                   const SizedBox(width: 48), // Spacer for centering title
                   Text(
-                    isDe ? 'Mein Profil' : 'My Profile',
+                    l10n.profile,
                     style: AppTypography.displayMedium.copyWith(fontSize: 24),
                   ),
                   IconButton(
@@ -68,7 +69,7 @@ class MeScreen extends StatelessWidget {
               const SizedBox(height: 32),
 
               // Profile Header (Centered)
-              _buildCenteredProfile(user, isDe),
+              _buildCenteredProfile(context, user),
 
               const SizedBox(height: 32),
 
@@ -78,7 +79,7 @@ class MeScreen extends StatelessWidget {
                 children: [
                   Expanded(
                     child: _buildInfoCard(
-                      isDe ? 'DEIN BMI' : 'YOUR BMI',
+                      l10n.yourBmi.toUpperCase(),
                       user.bmi.toStringAsFixed(1),
                       AppColors.styrianForest,
                     ),
@@ -86,10 +87,8 @@ class MeScreen extends StatelessWidget {
                   const SizedBox(width: 16),
                   Expanded(
                     child: _buildInfoCard(
-                      isDe ? 'STATUS' : 'STATUS',
-                      isDe
-                          ? _getGermanCategory(user.bmiCategory)
-                          : user.bmiCategory,
+                      l10n.status.toUpperCase(),
+                      _getLocalizedCategory(context, user.bmiCategory),
                       _getCategoryColor(user.bmiCategory),
                     ),
                   ),
@@ -103,7 +102,7 @@ class MeScreen extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    isDe ? 'Heute' : 'Today',
+                    l10n.today,
                     style: AppTypography.displayMedium.copyWith(fontSize: 22),
                   ),
                   const Icon(
@@ -114,12 +113,12 @@ class MeScreen extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 16),
-              _buildTodayStatsGrid(todayStats, isDe),
+              _buildTodayStatsGrid(context, user, todayStats),
 
               const SizedBox(height: 40),
 
               // Reminders Section
-              _buildRemindersSection(provider, isDe),
+              _buildRemindersSection(context, provider),
 
               const SizedBox(height: 40),
 
@@ -128,7 +127,7 @@ class MeScreen extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    isDe ? 'Gewichtsverlauf' : 'Weight Progress',
+                    l10n.weightProgress,
                     style: AppTypography.displayMedium.copyWith(fontSize: 22),
                   ),
                   GestureDetector(
@@ -157,12 +156,12 @@ class MeScreen extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 16),
-              _buildWeightChart(weights, isDe),
+              _buildWeightChart(context, weights),
 
               const SizedBox(height: 24),
 
               // Precise Weight List
-              _buildWeightList(weights, isDe),
+              _buildWeightList(context, weights),
 
               const SizedBox(height: 40),
             ],
@@ -172,7 +171,8 @@ class MeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildCenteredProfile(UserModel user, bool isDe) {
+  Widget _buildCenteredProfile(BuildContext context, UserModel user) {
+    final l10n = context.l10n;
     return Column(
       children: [
         Container(
@@ -200,10 +200,26 @@ class MeScreen extends StatelessWidget {
           style: AppTypography.displayMedium.copyWith(fontSize: 32),
         ),
         Text(
-          '${user.age} ${isDe ? 'Jahre' : 'years'} • ${user.height.toInt()} cm',
+          '${user.age} ${l10n.years} • ${user.height.toInt()} ${l10n.cm}',
           style: AppTypography.bodyMedium.copyWith(
             fontSize: 14,
             color: AppColors.slate.withValues(alpha: 0.5),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+          decoration: BoxDecoration(
+            color: AppColors.pebble.withValues(alpha: 0.5),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Text(
+            _getGoalText(context, user.goal),
+            style: AppTypography.labelLarge.copyWith(
+              fontSize: 12,
+              color: AppColors.styrianForest,
+              letterSpacing: 0.5,
+            ),
           ),
         ),
       ],
@@ -246,82 +262,153 @@ class MeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildTodayStatsGrid(Map<String, double> stats, bool isDe) {
-    final calories = stats['calories']?.toInt() ?? 0;
+  Widget _buildTodayStatsGrid(
+    BuildContext context,
+    UserModel user,
+    Map<String, double> stats,
+  ) {
+    final l10n = context.l10n;
+    // Ensure we have the grid view package or use a column of rows if not available
+    // Assuming StaggeredGrid is available from context based on previous files
+    // If not, we'll use a Wrap/Column structure
 
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: AppColors.styrianForest,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        children: [
-          Text(
-            '$calories',
-            style: AppTypography.heroNumber.copyWith(
-              color: AppColors.limestone, // High contrast
-              fontSize: 52,
-            ),
-          ),
-          Text(
-            isDe ? 'KALORIEN AUFGENOMMEN' : 'CALORIES CONSUMED',
-            style: AppTypography.labelLarge.copyWith(
-              color: AppColors.limestone.withValues(alpha: 0.6),
-              fontSize: 10,
-              letterSpacing: 2,
-            ),
-          ),
-          const SizedBox(height: 24),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildMiniMacro(
-                isDe ? 'Eiw.' : 'Prot',
-                '${stats['protein']?.toInt() ?? 0}g',
-              ),
-              _buildMiniMacro(
-                isDe ? 'KH' : 'Carb',
-                '${stats['carbs']?.toInt() ?? 0}g',
-              ),
-              _buildMiniMacro(
-                isDe ? 'Fett' : 'Fat',
-                '${stats['fats']?.toInt() ?? 0}g',
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMiniMacro(String label, String value) {
     return Column(
       children: [
-        Text(
-          value,
-          style: AppTypography.dataMedium.copyWith(
-            color: AppColors.limestone,
-            fontSize: 18,
-          ),
+        Row(
+          children: [
+            Expanded(
+              child: _buildStatCard(
+                title: l10n.calories,
+                value:
+                    '${stats['calories']!.toInt()} / ${user.dailyCalorieTarget.toInt()}',
+                unit: l10n.kcal,
+                icon: Icons.local_fire_department_outlined,
+                color: AppColors.primary,
+                progress: stats['calories']! / user.dailyCalorieTarget,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _buildStatCard(
+                title: l10n.protein,
+                value:
+                    '${stats['protein']!.toInt()} / ${user.dailyProteinTarget.toInt()}',
+                unit: l10n.grams,
+                icon: Icons.fitness_center_outlined,
+                color: AppColors.styrianForest,
+                progress: stats['protein']! / user.dailyProteinTarget,
+              ),
+            ),
+          ],
         ),
-        Text(
-          label.toUpperCase(),
-          style: AppTypography.dataLabel.copyWith(
-            color: AppColors.limestone.withValues(alpha: 0.5),
-            fontSize: 10,
-          ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: _buildStatCard(
+                title: l10n.carbs,
+                value: '${stats['carbs']!.toInt()}',
+                unit: l10n.grams,
+                icon: Icons.bakery_dining_outlined,
+                color: AppColors.limestone,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _buildStatCard(
+                title: l10n.fats,
+                value: '${stats['fats']!.toInt()}',
+                unit: l10n.grams,
+                icon: Icons.opacity_outlined,
+                color: AppColors.limestone,
+              ),
+            ),
+          ],
         ),
       ],
     );
   }
 
-  Widget _buildRemindersSection(AppProvider provider, bool isDe) {
+  Widget _buildStatCard({
+    required String title,
+    required String value,
+    required String unit,
+    required IconData icon,
+    required Color color,
+    double? progress,
+  }) {
+    final isPrimary =
+        color == AppColors.primary || color == AppColors.styrianForest;
+    final textColor = isPrimary ? AppColors.limestone : AppColors.slate;
+    final subTextColor = isPrimary
+        ? AppColors.limestone.withValues(alpha: 0.7)
+        : AppColors.slate.withValues(alpha: 0.5);
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isPrimary ? color : AppColors.pebble,
+        borderRadius: BorderRadius.circular(20),
+        border: isPrimary ? null : Border.all(color: AppColors.pebble),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, size: 18, color: subTextColor),
+              const SizedBox(width: 8),
+              Text(
+                title.toUpperCase(),
+                style: AppTypography.labelLarge.copyWith(
+                  fontSize: 10,
+                  color: subTextColor,
+                  letterSpacing: 1.0,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            value,
+            style: AppTypography.dataMedium.copyWith(
+              color: textColor,
+              fontSize: 18,
+            ),
+          ),
+          Text(
+            unit,
+            style: AppTypography.bodyMedium.copyWith(
+              color: subTextColor,
+              fontSize: 12,
+            ),
+          ),
+          if (progress != null) ...[
+            const SizedBox(height: 12),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(4),
+              child: LinearProgressIndicator(
+                value: progress.clamp(0.0, 1.0),
+                backgroundColor: Colors.black.withValues(alpha: 0.1),
+                valueColor: AlwaysStoppedAnimation<Color>(
+                  isPrimary ? AppColors.limestone : AppColors.primary,
+                ),
+                minHeight: 4,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRemindersSection(BuildContext context, AppProvider provider) {
+    final l10n = context.l10n;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          isDe ? 'Erinnerungen' : 'Reminders',
+          l10n.reminders,
           style: AppTypography.displayMedium.copyWith(fontSize: 22),
         ),
         const SizedBox(height: 16),
@@ -335,15 +422,15 @@ class MeScreen extends StatelessWidget {
           child: Column(
             children: [
               _buildReminderToggle(
-                isDe ? 'Mahlzeiten loggen' : 'Log meals',
-                isDe ? 'Morgens, Mittags, Abends' : 'Morning, Lunch, Dinner',
+                l10n.logMeals,
+                l10n.logMealsSubtitle,
                 provider.mealRemindersEnabled,
                 (val) => provider.setMealReminders(val),
               ),
               const Divider(height: 32, color: AppColors.pebble),
               _buildReminderToggle(
-                isDe ? 'Gewicht loggen' : 'Log weight',
-                isDe ? 'Tägliche Erinnerung' : 'Daily reminder',
+                l10n.logWeight,
+                l10n.logWeightSubtitle,
                 provider.weightRemindersEnabled,
                 (val) => provider.setWeightReminders(val),
               ),
@@ -393,46 +480,82 @@ class MeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildWeightChart(List<WeightModel> weights, bool isDe) {
-    if (weights.length <= 1) {
+  Widget _buildWeightChart(BuildContext context, List<WeightModel> weights) {
+    final l10n = context.l10n;
+    if (weights.length < 2) {
       return Container(
         width: double.infinity,
         padding: const EdgeInsets.all(40),
         decoration: BoxDecoration(
           color: AppColors.limestone,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.slate.withValues(alpha: 0.1)),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: AppColors.pebble),
         ),
-        child: Center(
-          child: Text(
-            isDe ? 'Keine Daten verfügbar' : 'No data available',
-            style: AppTypography.bodyMedium.copyWith(
-              color: AppColors.slate.withValues(alpha: 0.4),
+        child: Column(
+          children: [
+            Icon(
+              Icons.show_chart,
+              size: 48,
+              color: AppColors.slate.withValues(alpha: 0.2),
             ),
-          ),
+            const SizedBox(height: 16),
+            Text(
+              l10n.noDataAvailable,
+              style: AppTypography.bodyMedium.copyWith(
+                color: AppColors.slate.withValues(alpha: 0.5),
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
         ),
       );
     }
 
+    final recentWeights = weights.take(14).toList().reversed.toList();
+    double minWeight = recentWeights
+        .map((e) => e.weight)
+        .reduce((a, b) => a < b ? a : b);
+    double maxWeight = recentWeights
+        .map((e) => e.weight)
+        .reduce((a, b) => a > b ? a : b);
+
+    // Dynamic padding
+    double minY = (minWeight - 1).floorToDouble();
+    double maxY = (maxWeight + 1).ceilToDouble();
+    // Ensure we have some range
+    if (maxY == minY) {
+      maxY += 1;
+      minY -= 1;
+    }
+
     return Container(
-      height: 240,
-      padding: const EdgeInsets.fromLTRB(16, 32, 24, 16),
+      height: 280,
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(16, 24, 24, 16),
       decoration: BoxDecoration(
         color: AppColors.limestone,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: AppColors.slate.withValues(alpha: 0.1),
-          width: 1,
-        ),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: AppColors.pebble),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.slate.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: LineChart(
         LineChartData(
+          minY: minY,
+          maxY: maxY,
           gridData: FlGridData(
             show: true,
             drawVerticalLine: false,
+            horizontalInterval: (maxY - minY) / 4, // roughly 4 lines
             getDrawingHorizontalLine: (value) => FlLine(
-              color: AppColors.pebble.withValues(alpha: 0.3),
+              color: AppColors.pebble.withValues(alpha: 0.5),
               strokeWidth: 1,
+              dashArray: [4, 4],
             ),
           ),
           titlesData: FlTitlesData(
@@ -449,70 +572,125 @@ class MeScreen extends StatelessWidget {
                 reservedSize: 30,
                 interval: 1,
                 getTitlesWidget: (value, meta) {
-                  return const SizedBox.shrink(); // Simplify for now
+                  final index = value.toInt();
+                  if (index < 0 || index >= recentWeights.length) {
+                    return const SizedBox.shrink();
+                  }
+                  final date = recentWeights[index].date;
+                  final dateStr = '${date.day}.${date.month}';
+
+                  return Padding(
+                    padding: const EdgeInsets.only(top: 8.0),
+                    child: Text(
+                      dateStr,
+                      style: TextStyle(
+                        color: AppColors.slate.withValues(alpha: 0.4),
+                        fontSize: 10,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  );
                 },
               ),
             ),
             leftTitles: AxisTitles(
               sideTitles: SideTitles(
                 showTitles: true,
-                interval: 5, // Improved precision
+                interval: (maxY - minY) / 4,
+                reservedSize: 40,
                 getTitlesWidget: (value, meta) {
+                  if (value == minY || value == maxY) {
+                    return const SizedBox.shrink();
+                  }
                   return Text(
-                    value.toInt().toString(),
+                    value.toStringAsFixed(1),
                     style: TextStyle(
-                      color: AppColors.slate.withValues(alpha: 0.3),
+                      color: AppColors.slate.withValues(alpha: 0.4),
                       fontSize: 10,
-                      fontWeight: FontWeight.bold,
+                      fontWeight: FontWeight.w600,
                     ),
+                    textAlign: TextAlign.center,
                   );
                 },
-                reservedSize: 32,
               ),
             ),
           ),
           borderData: FlBorderData(show: false),
           lineBarsData: [
             LineChartBarData(
-              spots: weights
-                  .take(7)
-                  .toList()
-                  .reversed
-                  .toList()
-                  .asMap()
-                  .entries
-                  .map((e) {
-                    return FlSpot(e.key.toDouble(), e.value.weight);
-                  })
-                  .toList(),
+              spots: recentWeights.asMap().entries.map((e) {
+                return FlSpot(e.key.toDouble(), e.value.weight);
+              }).toList(),
               isCurved: true,
+              curveSmoothness: 0.35,
               color: AppColors.styrianForest,
-              barWidth: 4,
+              barWidth: 3,
               isStrokeCapRound: true,
               dotData: FlDotData(
                 show: true,
                 getDotPainter: (spot, percent, barData, index) =>
                     FlDotCirclePainter(
-                      radius: 6,
-                      color: AppColors.pebble,
-                      strokeWidth: 3,
+                      radius: 4,
+                      color: AppColors.limestone,
+                      strokeWidth: 2,
                       strokeColor: AppColors.styrianForest,
                     ),
               ),
               belowBarData: BarAreaData(
                 show: true,
-                color: AppColors.styrianForest.withValues(alpha: 0.1),
+                gradient: LinearGradient(
+                  colors: [
+                    AppColors.styrianForest.withValues(alpha: 0.2),
+                    AppColors.styrianForest.withValues(alpha: 0.0),
+                  ],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                ),
               ),
             ),
           ],
+          lineTouchData: LineTouchData(
+            touchTooltipData: LineTouchTooltipData(
+              getTooltipColor: (spot) => AppColors.styrianForest,
+              tooltipPadding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 8,
+              ),
+              tooltipMargin: 8,
+              getTooltipItems: (touchedSpots) {
+                return touchedSpots
+                    .map((LineBarSpot touchedSpot) {
+                      final index = touchedSpot.x.toInt();
+                      // Check index bounds safety
+                      if (index < 0 || index >= recentWeights.length) {
+                        return null;
+                      }
+                      final date = recentWeights[index].date;
+                      final dateStr = '${date.day}.${date.month}';
+
+                      final textStyle = TextStyle(
+                        color: AppColors.limestone,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
+                      );
+                      return LineTooltipItem(
+                        '$dateStr\n${touchedSpot.y.toStringAsFixed(1)} ${l10n.kg}',
+                        textStyle,
+                      );
+                    })
+                    .whereType<LineTooltipItem>()
+                    .toList();
+              },
+            ),
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildWeightList(List<WeightModel> weights, bool isDe) {
+  Widget _buildWeightList(BuildContext context, List<WeightModel> weights) {
     if (weights.isEmpty) return const SizedBox.shrink();
-
+    final l10n = context.l10n;
     final recentWeights = weights.take(10).toList();
 
     return Column(
@@ -521,7 +699,7 @@ class MeScreen extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 4),
           child: Text(
-            isDe ? 'Verlauf der letzten Tage' : 'Recent History',
+            l10n.recentHistory,
             style: AppTypography.titleLarge.copyWith(
               fontSize: 14,
               color: AppColors.slate.withValues(alpha: 0.5),
@@ -550,28 +728,44 @@ class MeScreen extends StatelessWidget {
               final dateStr =
                   '${w.date.day.toString().padLeft(2, '0')}.${w.date.month.toString().padLeft(2, '0')}.${w.date.year}';
 
-              return Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 16,
+              return Dismissible(
+                key: Key(w.date.toIso8601String()),
+                direction: DismissDirection.endToStart,
+                background: Container(
+                  padding: const EdgeInsets.only(right: 20),
+                  alignment: Alignment.centerRight,
+                  decoration: BoxDecoration(
+                    color: AppColors.error,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: const Icon(Icons.delete, color: Colors.white),
                 ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      dateStr,
-                      style: AppTypography.bodyMedium.copyWith(
-                        fontWeight: FontWeight.w600,
+                onDismissed: (direction) {
+                  context.read<AppProvider>().deleteWeight(w.date);
+                },
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 16,
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        dateStr,
+                        style: AppTypography.bodyMedium.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
-                    ),
-                    Text(
-                      '${w.weight.toStringAsFixed(1)} kg',
-                      style: AppTypography.dataMedium.copyWith(
-                        fontSize: 18,
-                        color: AppColors.styrianForest,
+                      Text(
+                        '${w.weight.toStringAsFixed(1)} ${l10n.kg}',
+                        style: AppTypography.dataMedium.copyWith(
+                          fontSize: 18,
+                          color: AppColors.styrianForest,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               );
             },
@@ -581,16 +775,17 @@ class MeScreen extends StatelessWidget {
     );
   }
 
-  String _getGermanCategory(String category) {
+  String _getLocalizedCategory(BuildContext context, String category) {
+    final l10n = context.l10n;
     switch (category.toLowerCase()) {
       case 'underweight':
-        return 'Untergewicht';
+        return l10n.bmiUnderweight;
       case 'normal':
-        return 'Normalgewicht';
+        return l10n.bmiNormal;
       case 'overweight':
-        return 'Übergewicht';
+        return l10n.bmiOverweight;
       case 'obese':
-        return 'Adipositas';
+        return l10n.bmiObese;
       default:
         return category;
     }
@@ -602,6 +797,19 @@ class MeScreen extends StatelessWidget {
         return AppColors.styrianForest;
       default:
         return AppColors.error;
+    }
+  }
+
+  String _getGoalText(BuildContext context, int goal) {
+    final l10n = context.l10n;
+    switch (goal) {
+      case 0:
+        return l10n.goalWeightLoss;
+      case 2:
+        return l10n.goalMuscleGain;
+      case 1:
+      default:
+        return l10n.goalMaintainWeight;
     }
   }
 }

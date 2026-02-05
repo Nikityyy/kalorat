@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:kalorat/l10n/app_localizations.dart';
 import '../../theme/app_typography.dart';
 import '../../theme/app_colors.dart';
 import '../../widgets/inputs/action_button.dart';
@@ -44,21 +45,19 @@ class WelcomeStep extends StatelessWidget {
 
           Spacer(),
           Image.asset(
-            'lib/assets/kalorat-textlogo.png',
-            width: 200,
+            'assets/kalorat-textlogo.png',
+            width: 300,
             fit: BoxFit.contain,
           ),
           const SizedBox(height: 16),
           Text(
-            isDe
-                ? 'Kalorien, schön getrackt.'
-                : 'Calories, tracked beautifully.',
+            AppLocalizations.of(context)!.welcomeSlogan,
             style: AppTypography.bodyLarge,
             textAlign: TextAlign.center,
           ),
           const Spacer(),
           ActionButton(
-            text: isDe ? 'Los geht\'s' : 'Get Started',
+            text: AppLocalizations.of(context)!.getStarted,
             onPressed: onNext,
           ),
           const SizedBox(height: 32),

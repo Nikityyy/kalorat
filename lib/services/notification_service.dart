@@ -1,7 +1,9 @@
 import 'dart:io';
+import 'dart:ui' as ui;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
+import '../l10n/app_localizations.dart';
 
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
@@ -58,7 +60,7 @@ class NotificationService {
 
   Future<void> scheduleMealReminders({
     required bool enabled,
-    String language = 'de',
+    required String language,
   }) async {
     await _notifications.cancel(id: mealReminderId);
     await _notifications.cancel(id: mealReminderId + 10);
@@ -66,20 +68,15 @@ class NotificationService {
 
     if (!enabled) return;
 
-    final title = language == 'de'
-        ? 'Zeit fürs Essen loggen!'
-        : 'Time to log your meal!';
-    final body = language == 'de'
-        ? 'Vergiss nicht, deine Mahlzeit zu fotografieren.'
-        : "Don't forget to take a photo of your meal.";
+    final l10n = lookupAppLocalizations(ui.Locale(language));
 
     // Schedule for breakfast (8:00), lunch (12:00), dinner (18:00)
     final times = [8, 12, 18];
     for (int i = 0; i < times.length; i++) {
       await _scheduleDailyNotification(
         id: mealReminderId + (i * 10),
-        title: title,
-        body: body,
+        title: l10n.mealReminderTitle,
+        body: l10n.mealReminderBody,
         hour: times[i],
       );
     }
@@ -87,21 +84,18 @@ class NotificationService {
 
   Future<void> scheduleWeightReminder({
     required bool enabled,
-    String language = 'de',
+    required String language,
   }) async {
     await _notifications.cancel(id: weightReminderId);
 
     if (!enabled) return;
 
-    final title = language == 'de' ? 'Gewicht eintragen' : 'Log your weight';
-    final body = language == 'de'
-        ? 'Zeit, dein tägliches Gewicht einzutragen!'
-        : 'Time to log your daily weight!';
+    final l10n = lookupAppLocalizations(ui.Locale(language));
 
     await _scheduleDailyNotification(
       id: weightReminderId,
-      title: title,
-      body: body,
+      title: l10n.logYourWeight,
+      body: l10n.weightReminderBody,
       hour: 7, // Morning reminder
     );
   }

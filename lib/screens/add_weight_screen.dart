@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:kalorat/theme/app_colors.dart';
+import 'package:kalorat/extensions/l10n_extension.dart';
 import 'package:provider/provider.dart';
 import '../models/models.dart';
 import '../providers/app_provider.dart';
@@ -34,21 +35,15 @@ class _AddWeightScreenState extends State<AddWeightScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final provider = context.watch<AppProvider>();
-    final language = provider.language;
-
     return Scaffold(
-      appBar: AppBar(
-        title: Text(language == 'de' ? 'Gewicht eintragen' : 'Add weight'),
-        centerTitle: true,
-      ),
+      appBar: AppBar(title: Text(context.l10n.addWeight), centerTitle: true),
       body: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
-              language == 'de' ? 'Datum' : 'Date',
+              context.l10n.date,
               style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 8),
@@ -68,7 +63,7 @@ class _AddWeightScreenState extends State<AddWeightScreen> {
             ),
             const SizedBox(height: 24),
             Text(
-              language == 'de' ? 'Gewicht (kg)' : 'Weight (kg)',
+              context.l10n.weightKg,
               style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 8),
@@ -95,7 +90,7 @@ class _AddWeightScreenState extends State<AddWeightScreen> {
                 padding: const EdgeInsets.symmetric(vertical: 16),
               ),
               child: Text(
-                language == 'de' ? 'Speichern' : 'Save',
+                context.l10n.save,
                 style: const TextStyle(fontSize: 18),
               ),
             ),
@@ -140,15 +135,9 @@ class _AddWeightScreenState extends State<AddWeightScreen> {
 
     if (mounted) {
       Navigator.pop(context);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            provider.language == 'de'
-                ? 'Gewicht gespeichert!'
-                : 'Weight saved!',
-          ),
-        ),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(context.l10n.weightSaved)));
     }
   }
 }

@@ -2,6 +2,10 @@
 
 part of 'user_model.dart';
 
+// **************************************************************************
+// TypeAdapterGenerator
+// **************************************************************************
+
 class UserModelAdapter extends TypeAdapter<UserModel> {
   @override
   final int typeId = 0;
@@ -20,15 +24,17 @@ class UserModelAdapter extends TypeAdapter<UserModel> {
       language: fields[4] as String,
       geminiApiKey: fields[5] as String,
       onboardingCompleted: fields[6] as bool,
-      mealRemindersEnabled: fields[7] as bool? ?? true,
-      weightRemindersEnabled: fields[8] as bool? ?? true,
+      mealRemindersEnabled: fields[7] as bool,
+      weightRemindersEnabled: fields[8] as bool,
+      goal: fields[9] as int,
+      gender: fields[10] as int?,
     );
   }
 
   @override
   void write(BinaryWriter writer, UserModel obj) {
     writer
-      ..writeByte(9)
+      ..writeByte(11)
       ..writeByte(0)
       ..write(obj.name)
       ..writeByte(1)
@@ -46,7 +52,11 @@ class UserModelAdapter extends TypeAdapter<UserModel> {
       ..writeByte(7)
       ..write(obj.mealRemindersEnabled)
       ..writeByte(8)
-      ..write(obj.weightRemindersEnabled);
+      ..write(obj.weightRemindersEnabled)
+      ..writeByte(9)
+      ..write(obj.goal)
+      ..writeByte(10)
+      ..write(obj.gender);
   }
 
   @override

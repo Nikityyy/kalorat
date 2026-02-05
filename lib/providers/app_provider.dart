@@ -1,3 +1,4 @@
+import 'dart:ui' as ui;
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import '../models/models.dart';
@@ -10,6 +11,7 @@ class AppProvider extends ChangeNotifier {
   final NotificationService _notificationService = NotificationService();
 
   UserModel? _user;
+  String? _languageOverride;
   bool _isOnline = true;
   bool _isInitialized = false;
   bool _isProcessingQueue = false;
@@ -18,7 +20,15 @@ class AppProvider extends ChangeNotifier {
   bool get isOnline => _isOnline;
   bool get isInitialized => _isInitialized;
   bool get isOnboardingCompleted => _user?.onboardingCompleted ?? false;
-  String get language => _user?.language ?? 'de';
+  String get language {
+    if (_user != null) return _user!.language;
+    if (_languageOverride != null) return _languageOverride!;
+
+    // Fallback to device language
+    final systemLocale = ui.PlatformDispatcher.instance.locale.languageCode;
+    return systemLocale == 'de' ? 'de' : 'en';
+  }
+
   String get apiKey => _user?.geminiApiKey ?? '';
   int get pendingMealsCount => _offlineQueueService.getPendingCount();
 
@@ -74,6 +84,28 @@ class AppProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> deleteWeight(DateTime date) async {
+    await _databaseService.deleteWeight(date);
+
+    // Refresh user weight if we deleted the current weight
+    if (_user != null) {
+      final allWeights = _databaseService.getAllWeights();
+      allWeights.sort((a, b) => b.date.compareTo(a.date));
+
+      if (allWeights.isNotEmpty) {
+        // Revert to the newest available weight
+        if (_user!.weight != allWeights.first.weight) {
+          await updateUser(weight: allWeights.first.weight);
+        }
+      } else {
+        // If all weights are deleted, reset user's weight to null or default
+        await updateUser(weight: null);
+      }
+    }
+
+    notifyListeners();
+  }
+
   Future<void> updateUser({
     String? name,
     DateTime? birthdate,
@@ -84,6 +116,8 @@ class AppProvider extends ChangeNotifier {
     bool? onboardingCompleted,
     bool? mealRemindersEnabled,
     bool? weightRemindersEnabled,
+    int? goal,
+    int? gender,
   }) async {
     if (_user == null) return;
 
@@ -98,6 +132,8 @@ class AppProvider extends ChangeNotifier {
       mealRemindersEnabled: mealRemindersEnabled ?? _user!.mealRemindersEnabled,
       weightRemindersEnabled:
           weightRemindersEnabled ?? _user!.weightRemindersEnabled,
+      goal: goal ?? _user!.goal,
+      gender: gender ?? _user!.gender,
     );
 
     await _databaseService.saveUser(_user!);
@@ -115,6 +151,15 @@ class AppProvider extends ChangeNotifier {
     }
 
     notifyListeners();
+  }
+
+  Future<void> updateLanguage(String languageCode) async {
+    if (_user != null) {
+      await updateUser(language: languageCode);
+    } else {
+      _languageOverride = languageCode;
+      notifyListeners();
+    }
   }
 
   Future<void> processOfflineQueue() async {
@@ -162,16 +207,19 @@ class AppProvider extends ChangeNotifier {
   Future<void> saveWeight(WeightModel weight) async {
     await _databaseService.saveWeight(weight);
 
-    // Update user's current weight
+    // Update user's current weight ONLY if this is the most recent entry
     if (_user != null) {
-      await updateUser(weight: weight.weight);
+      final allWeights = _databaseService.getAllWeights();
+      // Sort by date descending (newest first)
+      allWeights.sort((a, b) => b.date.compareTo(a.date));
+
+      if (allWeights.isNotEmpty &&
+          !weight.date.isBefore(allWeights.first.date)) {
+        // If the new weight is equal to or after the newest existing weight, update profile
+        await updateUser(weight: weight.weight);
+      }
     }
 
-    notifyListeners();
-  }
-
-  Future<void> deleteWeight(DateTime date) async {
-    await _databaseService.deleteWeight(date);
     notifyListeners();
   }
 

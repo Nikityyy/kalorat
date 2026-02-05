@@ -607,6 +607,534 @@ abstract class AppLocalizations {
   /// In de, this message translates to:
   /// **'Berechtigung erteilen'**
   String get grantPermission;
+
+  /// No description provided for @name.
+  ///
+  /// In de, this message translates to:
+  /// **'Name'**
+  String get name;
+
+  /// No description provided for @heightCm.
+  ///
+  /// In de, this message translates to:
+  /// **'Größe (cm)'**
+  String get heightCm;
+
+  /// No description provided for @weightKg.
+  ///
+  /// In de, this message translates to:
+  /// **'Gewicht (kg)'**
+  String get weightKg;
+
+  /// No description provided for @birthdate.
+  ///
+  /// In de, this message translates to:
+  /// **'Geburtsdatum'**
+  String get birthdate;
+
+  /// No description provided for @ageYears.
+  ///
+  /// In de, this message translates to:
+  /// **'{age} Jahre'**
+  String ageYears(int age);
+
+  /// No description provided for @saveChanges.
+  ///
+  /// In de, this message translates to:
+  /// **'Änderungen speichern'**
+  String get saveChanges;
+
+  /// No description provided for @saved.
+  ///
+  /// In de, this message translates to:
+  /// **'Gespeichert'**
+  String get saved;
+
+  /// No description provided for @data.
+  ///
+  /// In de, this message translates to:
+  /// **'Daten'**
+  String get data;
+
+  /// No description provided for @exported.
+  ///
+  /// In de, this message translates to:
+  /// **'Exportiert: {path}'**
+  String exported(String path);
+
+  /// No description provided for @importSuccessful.
+  ///
+  /// In de, this message translates to:
+  /// **'Import erfolgreich'**
+  String get importSuccessful;
+
+  /// No description provided for @importFailed.
+  ///
+  /// In de, this message translates to:
+  /// **'Import fehlgeschlagen'**
+  String get importFailed;
+
+  /// No description provided for @buildingPlan.
+  ///
+  /// In de, this message translates to:
+  /// **'Wir erstellen deinen Plan...'**
+  String get buildingPlan;
+
+  /// No description provided for @analyzingMetabolism.
+  ///
+  /// In de, this message translates to:
+  /// **'Metabolismus wird analysiert'**
+  String get analyzingMetabolism;
+
+  /// No description provided for @apiKeyValidationError.
+  ///
+  /// In de, this message translates to:
+  /// **'Bitte einen gültigen API-Key eingeben'**
+  String get apiKeyValidationError;
+
+  /// No description provided for @analysisError.
+  ///
+  /// In de, this message translates to:
+  /// **'Fehler bei der Analyse: {error}'**
+  String analysisError(String error);
+
+  /// No description provided for @mealSaved.
+  ///
+  /// In de, this message translates to:
+  /// **'Mahlzeit gespeichert'**
+  String get mealSaved;
+
+  /// No description provided for @logYourWeight.
+  ///
+  /// In de, this message translates to:
+  /// **'Gewicht eintragen'**
+  String get logYourWeight;
+
+  /// No description provided for @weightReminderBody.
+  ///
+  /// In de, this message translates to:
+  /// **'Vergiss nicht, dein Gewicht heute einzutragen.'**
+  String get weightReminderBody;
+
+  /// No description provided for @mealReminderTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Zeit zum Essen'**
+  String get mealReminderTitle;
+
+  /// No description provided for @mealReminderBody.
+  ///
+  /// In de, this message translates to:
+  /// **'Denk daran, deine Mahlzeit zu erfassen.'**
+  String get mealReminderBody;
+
+  /// No description provided for @howOldAreYou.
+  ///
+  /// In de, this message translates to:
+  /// **'Wie alt bist du?'**
+  String get howOldAreYou;
+
+  /// No description provided for @whatsYourGoal.
+  ///
+  /// In de, this message translates to:
+  /// **'Was ist dein Ziel?'**
+  String get whatsYourGoal;
+
+  /// No description provided for @loseWeight.
+  ///
+  /// In de, this message translates to:
+  /// **'Abnehmen'**
+  String get loseWeight;
+
+  /// No description provided for @maintainWeight.
+  ///
+  /// In de, this message translates to:
+  /// **'Gewicht halten'**
+  String get maintainWeight;
+
+  /// No description provided for @gainMuscle.
+  ///
+  /// In de, this message translates to:
+  /// **'Muskeln aufbauen'**
+  String get gainMuscle;
+
+  /// No description provided for @whatsYourGender.
+  ///
+  /// In de, this message translates to:
+  /// **'Was ist dein Geschlecht?'**
+  String get whatsYourGender;
+
+  /// No description provided for @male.
+  ///
+  /// In de, this message translates to:
+  /// **'Männlich'**
+  String get male;
+
+  /// No description provided for @female.
+  ///
+  /// In de, this message translates to:
+  /// **'Weiblich'**
+  String get female;
+
+  /// No description provided for @other.
+  ///
+  /// In de, this message translates to:
+  /// **'Divers'**
+  String get other;
+
+  /// No description provided for @yourBmi.
+  ///
+  /// In de, this message translates to:
+  /// **'DEIN BMI'**
+  String get yourBmi;
+
+  /// No description provided for @status.
+  ///
+  /// In de, this message translates to:
+  /// **'STATUS'**
+  String get status;
+
+  /// No description provided for @weightProgress.
+  ///
+  /// In de, this message translates to:
+  /// **'Gewichtsverlauf'**
+  String get weightProgress;
+
+  /// No description provided for @caloriesConsumed.
+  ///
+  /// In de, this message translates to:
+  /// **'KALORIEN AUFGENOMMEN'**
+  String get caloriesConsumed;
+
+  /// No description provided for @proteinShort.
+  ///
+  /// In de, this message translates to:
+  /// **'Eiw.'**
+  String get proteinShort;
+
+  /// No description provided for @carbsShort.
+  ///
+  /// In de, this message translates to:
+  /// **'KH'**
+  String get carbsShort;
+
+  /// No description provided for @fatsShort.
+  ///
+  /// In de, this message translates to:
+  /// **'Fett'**
+  String get fatsShort;
+
+  /// No description provided for @reminders.
+  ///
+  /// In de, this message translates to:
+  /// **'Erinnerungen'**
+  String get reminders;
+
+  /// No description provided for @logMeals.
+  ///
+  /// In de, this message translates to:
+  /// **'Mahlzeiten loggen'**
+  String get logMeals;
+
+  /// No description provided for @logMealsSubtitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Morgens, Mittags, Abends'**
+  String get logMealsSubtitle;
+
+  /// No description provided for @logWeight.
+  ///
+  /// In de, this message translates to:
+  /// **'Gewicht loggen'**
+  String get logWeight;
+
+  /// No description provided for @logWeightSubtitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Tägliche Erinnerung'**
+  String get logWeightSubtitle;
+
+  /// No description provided for @noDataAvailable.
+  ///
+  /// In de, this message translates to:
+  /// **'Keine Daten verfügbar'**
+  String get noDataAvailable;
+
+  /// No description provided for @recentHistory.
+  ///
+  /// In de, this message translates to:
+  /// **'Verlauf der letzten Tage'**
+  String get recentHistory;
+
+  /// No description provided for @noFoodDetected.
+  ///
+  /// In de, this message translates to:
+  /// **'Kein Essen erkannt. Bitte versuche es erneut.'**
+  String get noFoodDetected;
+
+  /// No description provided for @myHistory.
+  ///
+  /// In de, this message translates to:
+  /// **'Meine Historie'**
+  String get myHistory;
+
+  /// No description provided for @noMealsRecorded.
+  ///
+  /// In de, this message translates to:
+  /// **'Noch keine Mahlzeiten erfasst'**
+  String get noMealsRecorded;
+
+  /// No description provided for @deleteQuestion.
+  ///
+  /// In de, this message translates to:
+  /// **'Löschen?'**
+  String get deleteQuestion;
+
+  /// No description provided for @deleteMealConfirmation.
+  ///
+  /// In de, this message translates to:
+  /// **'Möchtest du diese Mahlzeit wirklich löschen?'**
+  String get deleteMealConfirmation;
+
+  /// No description provided for @analyzingMeal.
+  ///
+  /// In de, this message translates to:
+  /// **'Mahlzeit wird analysiert...'**
+  String get analyzingMeal;
+
+  /// No description provided for @cameraNeeded.
+  ///
+  /// In de, this message translates to:
+  /// **'Kamera benötigt'**
+  String get cameraNeeded;
+
+  /// No description provided for @cameraPermissionText.
+  ///
+  /// In de, this message translates to:
+  /// **'Damit Kalorat deine Mahlzeiten analysieren kann, benötigen wir Zugriff auf deine Kamera.'**
+  String get cameraPermissionText;
+
+  /// No description provided for @backToSelection.
+  ///
+  /// In de, this message translates to:
+  /// **'Zurück zur Auswahl'**
+  String get backToSelection;
+
+  /// No description provided for @reviewPhotos.
+  ///
+  /// In de, this message translates to:
+  /// **'Fotos überprüfen'**
+  String get reviewPhotos;
+
+  /// No description provided for @discard.
+  ///
+  /// In de, this message translates to:
+  /// **'Verwerfen'**
+  String get discard;
+
+  /// No description provided for @addPhoto.
+  ///
+  /// In de, this message translates to:
+  /// **'+ Foto'**
+  String get addPhoto;
+
+  /// No description provided for @startAnalysis.
+  ///
+  /// In de, this message translates to:
+  /// **'Analyse starten'**
+  String get startAnalysis;
+
+  /// No description provided for @analysisResult.
+  ///
+  /// In de, this message translates to:
+  /// **'Analyse Ergebnis'**
+  String get analysisResult;
+
+  /// No description provided for @saveMeal.
+  ///
+  /// In de, this message translates to:
+  /// **'Speichern'**
+  String get saveMeal;
+
+  /// No description provided for @welcomeSlogan.
+  ///
+  /// In de, this message translates to:
+  /// **'Kalorien, schön getrackt.'**
+  String get welcomeSlogan;
+
+  /// No description provided for @getStarted.
+  ///
+  /// In de, this message translates to:
+  /// **'Los geht\'s'**
+  String get getStarted;
+
+  /// No description provided for @genderLabel.
+  ///
+  /// In de, this message translates to:
+  /// **'Geschlecht'**
+  String get genderLabel;
+
+  /// No description provided for @goalLabel.
+  ///
+  /// In de, this message translates to:
+  /// **'Ziel'**
+  String get goalLabel;
+
+  /// No description provided for @geminiApiKeyLabel.
+  ///
+  /// In de, this message translates to:
+  /// **'Gemini API-Key'**
+  String get geminiApiKeyLabel;
+
+  /// No description provided for @ok.
+  ///
+  /// In de, this message translates to:
+  /// **'OK'**
+  String get ok;
+
+  /// No description provided for @chooseGender.
+  ///
+  /// In de, this message translates to:
+  /// **'Wähle dein Geschlecht'**
+  String get chooseGender;
+
+  /// No description provided for @calculateMetabolicRate.
+  ///
+  /// In de, this message translates to:
+  /// **'Um deinen Grundumsatz zu berechnen.'**
+  String get calculateMetabolicRate;
+
+  /// No description provided for @continueButton.
+  ///
+  /// In de, this message translates to:
+  /// **'Weiter'**
+  String get continueButton;
+
+  /// No description provided for @whatIsYourGoal.
+  ///
+  /// In de, this message translates to:
+  /// **'Was ist dein Ziel?'**
+  String get whatIsYourGoal;
+
+  /// No description provided for @burnFatSubtitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Fett verbrennen'**
+  String get burnFatSubtitle;
+
+  /// No description provided for @maintainSubtitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Gesund & fit bleiben'**
+  String get maintainSubtitle;
+
+  /// No description provided for @buildMassSubtitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Masse & Stärke'**
+  String get buildMassSubtitle;
+
+  /// No description provided for @createPlan.
+  ///
+  /// In de, this message translates to:
+  /// **'Plan erstellen'**
+  String get createPlan;
+
+  /// No description provided for @aiConfigure.
+  ///
+  /// In de, this message translates to:
+  /// **'AI Konfigurieren'**
+  String get aiConfigure;
+
+  /// No description provided for @goTo.
+  ///
+  /// In de, this message translates to:
+  /// **'Gehe zu '**
+  String get goTo;
+
+  /// No description provided for @createKeyInstruction.
+  ///
+  /// In de, this message translates to:
+  /// **' und erstelle einen kostenlosen Key. Kopiere ihn, füge ihn hier ein und tracke deine Kalorien.'**
+  String get createKeyInstruction;
+
+  /// No description provided for @enterApiKeyError.
+  ///
+  /// In de, this message translates to:
+  /// **'Bitte gib einen API-Key ein'**
+  String get enterApiKeyError;
+
+  /// No description provided for @invalidApiKeyError.
+  ///
+  /// In de, this message translates to:
+  /// **'Ungültiger API-Key. Bitte überprüfe deine Eingabe.'**
+  String get invalidApiKeyError;
+
+  /// No description provided for @validateAndContinue.
+  ///
+  /// In de, this message translates to:
+  /// **'Validieren & Weiter'**
+  String get validateAndContinue;
+
+  /// No description provided for @nameSubtitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Wir möchten dich persönlich ansprechen.'**
+  String get nameSubtitle;
+
+  /// No description provided for @cm.
+  ///
+  /// In de, this message translates to:
+  /// **'cm'**
+  String get cm;
+
+  /// No description provided for @kg.
+  ///
+  /// In de, this message translates to:
+  /// **'kg'**
+  String get kg;
+
+  /// No description provided for @kcal.
+  ///
+  /// In de, this message translates to:
+  /// **'kcal'**
+  String get kcal;
+
+  /// No description provided for @grams.
+  ///
+  /// In de, this message translates to:
+  /// **'g'**
+  String get grams;
+
+  /// No description provided for @weightSaved.
+  ///
+  /// In de, this message translates to:
+  /// **'Gewicht gespeichert!'**
+  String get weightSaved;
+
+  /// No description provided for @goalWeightLoss.
+  ///
+  /// In de, this message translates to:
+  /// **'Gewicht verlieren'**
+  String get goalWeightLoss;
+
+  /// No description provided for @goalMaintainWeight.
+  ///
+  /// In de, this message translates to:
+  /// **'Gewicht halten'**
+  String get goalMaintainWeight;
+
+  /// No description provided for @goalMuscleGain.
+  ///
+  /// In de, this message translates to:
+  /// **'Muskeln aufbauen'**
+  String get goalMuscleGain;
+
+  /// No description provided for @date.
+  ///
+  /// In de, this message translates to:
+  /// **'Datum'**
+  String get date;
 }
 
 class _AppLocalizationsDelegate

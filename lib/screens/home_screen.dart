@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
+import '../extensions/l10n_extension.dart';
 import '../models/models.dart';
 import '../providers/app_provider.dart';
 import '../services/gemini_service.dart';
@@ -30,6 +31,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   bool _isAnalyzing = false;
   List<String> _capturedPhotos = [];
   MealModel? _analyzedMeal;
+  bool _isTakingMore = false;
 
   @override
   void initState() {
@@ -139,6 +141,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     final isOnline = provider.isOnline;
     final apiKey = provider.apiKey;
     final language = provider.language;
+    final l10n = context.l10n;
 
     final mealId = DateTime.now().millisecondsSinceEpoch.toString();
 
@@ -158,11 +161,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       });
 
       if (mounted) {
-        _showMessage(
-          language == 'de'
-              ? 'Du bist offline. Die Mahlzeit wird später analysiert.'
-              : 'You are offline. The meal will be analyzed later.',
-        );
+        _showMessage(l10n.offlineMessage);
       }
       return;
     }
@@ -174,6 +173,13 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       final result = await gemini.analyzeMeal(_capturedPhotos);
 
       if (result != null) {
+        if (result.containsKey('error') &&
+            result['error'] == 'no_food_detected') {
+          _showMessage(l10n.noFoodDetected);
+          _clearPhotos();
+          return;
+        }
+
         final meal = MealModel(
           id: mealId,
           timestamp: DateTime.now(),
@@ -205,9 +211,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         });
       }
     } catch (e) {
-      _showMessage(
-        language == 'de' ? 'Fehler bei der Analyse: $e' : 'Analysis error: $e',
-      );
+      _showMessage(l10n.analysisError(e.toString()));
     } finally {
       setState(() => _isAnalyzing = false);
     }
@@ -217,6 +221,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     if (_analyzedMeal == null) return;
 
     final provider = context.read<AppProvider>();
+    final l10n = context.l10n;
     await provider.saveMeal(_analyzedMeal!);
 
     setState(() {
@@ -224,9 +229,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       _analyzedMeal = null;
     });
 
-    _showMessage(
-      provider.language == 'de' ? 'Mahlzeit gespeichert' : 'Meal saved',
-    );
+    _showMessage(l10n.mealSaved);
   }
 
   void _showMessage(String message) {
@@ -237,7 +240,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           content: Text(message),
           actions: [
             CupertinoDialogAction(
-              child: const Text('OK'),
+              child: Text(context.l10n.ok),
               onPressed: () => Navigator.pop(ctx),
             ),
           ],
@@ -260,7 +263,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<AppProvider>();
-    final language = provider.language;
     final isOnline = provider.isOnline;
 
     return Scaffold(
@@ -268,35 +270,248 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       body: SafeArea(
         child: Column(
           children: [
-            if (!isOnline) OfflineBanner(language: language),
-            Expanded(child: _buildContent(language)),
+            if (!isOnline) const OfflineBanner(),
+            Expanded(child: _buildContent()),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildContent(String language) {
+  Widget _buildContent() {
     if (!_hasPermission) {
-      return _buildPermissionRequest(language);
+      return _buildPermissionRequest();
     }
 
     if (_analyzedMeal != null) {
-      return _buildMealResult(language);
+      return _buildMealResult();
+    }
+
+    // Show skeleton loading screen while analyzing
+    if (_isAnalyzing) {
+      return _buildAnalyzingSkeleton();
     }
 
     // Change: if we are in 'review' but click 'more', we go back to camera but keep state.
     // I'll add a boolean to toggle between 'review mode' and 'camera mode' if photos exist.
     if (_capturedPhotos.isNotEmpty && !_isTakingMore) {
-      return _buildPhotoReview(language);
+      return _buildPhotoReview();
     }
 
-    return _buildCamera(language);
+    return _buildCamera();
   }
 
-  bool _isTakingMore = false;
+  Widget _buildAnalyzingSkeleton() {
+    final l10n = context.l10n;
 
-  Widget _buildPermissionRequest(String language) {
+    return Container(
+      color: AppColors.limestone,
+      child: Column(
+        children: [
+          // Header
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Row(
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.arrow_back),
+                  onPressed: () {
+                    // Cancel analysis (user can go back)
+                  },
+                ),
+                Expanded(
+                  child: Text(
+                    l10n.analyzing,
+                    style: AppTypography.titleLarge,
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+                const SizedBox(width: 48),
+              ],
+            ),
+          ),
+
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                children: [
+                  // Skeleton Image Preview
+                  const SkeletonBox(
+                    height: 200,
+                    width: double.infinity,
+                    borderRadius: 16,
+                  ),
+
+                  const SizedBox(height: 32),
+
+                  // Skeleton Meal Name
+                  const SkeletonBox(height: 36, width: 200, borderRadius: 8),
+
+                  const SizedBox(height: 32),
+
+                  // Skeleton Calories Card
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 32),
+                    decoration: BoxDecoration(
+                      color: AppColors.styrianForest,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: AppColors.slate, width: 1),
+                    ),
+                    child: Column(
+                      children: [
+                        const SkeletonBox(
+                          height: 64,
+                          width: 120,
+                          borderRadius: 8,
+                        ),
+                        const SizedBox(height: 8),
+                        SkeletonBox(height: 16, width: 80, borderRadius: 4),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // Skeleton Macros Row
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 20,
+                            horizontal: 8,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.pebble,
+                            borderRadius: BorderRadius.circular(24),
+                            border: Border.all(
+                              color: AppColors.styrianForest.withValues(
+                                alpha: 0.2,
+                              ),
+                              width: 2,
+                            ),
+                          ),
+                          child: const Column(
+                            children: [
+                              SkeletonBox(
+                                height: 24,
+                                width: 50,
+                                borderRadius: 4,
+                              ),
+                              SizedBox(height: 4),
+                              SkeletonBox(
+                                height: 12,
+                                width: 40,
+                                borderRadius: 4,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 20,
+                            horizontal: 8,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.pebble,
+                            borderRadius: BorderRadius.circular(24),
+                            border: Border.all(
+                              color: AppColors.styrianForest.withValues(
+                                alpha: 0.2,
+                              ),
+                              width: 2,
+                            ),
+                          ),
+                          child: const Column(
+                            children: [
+                              SkeletonBox(
+                                height: 24,
+                                width: 50,
+                                borderRadius: 4,
+                              ),
+                              SizedBox(height: 4),
+                              SkeletonBox(
+                                height: 12,
+                                width: 40,
+                                borderRadius: 4,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 20,
+                            horizontal: 8,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.pebble,
+                            borderRadius: BorderRadius.circular(24),
+                            border: Border.all(
+                              color: AppColors.styrianForest.withValues(
+                                alpha: 0.2,
+                              ),
+                              width: 2,
+                            ),
+                          ),
+                          child: const Column(
+                            children: [
+                              SkeletonBox(
+                                height: 24,
+                                width: 50,
+                                borderRadius: 4,
+                              ),
+                              SizedBox(height: 4),
+                              SkeletonBox(
+                                height: 12,
+                                width: 40,
+                                borderRadius: 4,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 48),
+
+                  // Loading indicator with text
+                  Column(
+                    children: [
+                      const CircularProgressIndicator(
+                        color: AppColors.styrianForest,
+                        strokeWidth: 3,
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        l10n.analyzingMeal,
+                        style: AppTypography.bodyMedium.copyWith(
+                          color: AppColors.slate.withValues(alpha: 0.7),
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 40),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPermissionRequest() {
+    final l10n = context.l10n;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32.0),
@@ -317,32 +532,26 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             ),
             const SizedBox(height: 32),
             Text(
-              language == 'de' ? 'Kamera benötigt' : 'Camera Access Needed',
+              l10n.cameraNeeded,
               style: AppTypography.displayMedium,
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 16),
             Text(
-              language == 'de'
-                  ? 'Damit Kalorat deine Mahlzeiten analysieren kann, benötigen wir Zugriff auf deine Kamera.'
-                  : 'To analyze your meals, Kalorat needs access to your camera.',
+              l10n.cameraPermissionText,
               style: AppTypography.bodyMedium,
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 48),
-            ActionButton(
-              text: language == 'de'
-                  ? 'Berechtigung erteilen'
-                  : 'Grant Permission',
-              onPressed: _initCamera,
-            ),
+            ActionButton(text: l10n.grantPermission, onPressed: _initCamera),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildCamera(String language) {
+  Widget _buildCamera() {
+    final l10n = context.l10n;
     return Stack(
       children: [
         if (_isCameraInitialized && _cameraController != null)
@@ -382,9 +591,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      language == 'de'
-                          ? 'Zurück zur Auswahl'
-                          : 'Back to selection',
+                      l10n.backToSelection,
                       style: const TextStyle(
                         color: AppColors.pebble,
                         fontWeight: FontWeight.bold,
@@ -508,8 +715,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     );
   }
 
-  Widget _buildPhotoReview(String language) {
-    final isDe = language == 'de';
+  Widget _buildPhotoReview() {
+    final l10n = context.l10n;
 
     return Container(
       color: AppColors.limestone,
@@ -517,7 +724,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         children: [
           const SizedBox(height: 16),
           Text(
-            isDe ? 'Fotos überprüfen' : 'Review Photos',
+            l10n.reviewPhotos,
             style: AppTypography.displayMedium.copyWith(fontSize: 24),
           ),
           const SizedBox(height: 16),
@@ -583,9 +790,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             padding: const EdgeInsets.all(24),
             decoration: const BoxDecoration(
               color: AppColors.limestone,
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(16),
-              ),
+              borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
               border: Border(
                 top: BorderSide(color: AppColors.pebble, width: 1),
               ),
@@ -608,7 +813,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                             ),
                           ),
                           child: Text(
-                            isDe ? 'Verwerfen' : 'Discard',
+                            l10n.discard,
                             style: const TextStyle(color: AppColors.slate),
                           ),
                         ),
@@ -627,7 +832,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                             ),
                           ),
                           child: Text(
-                            isDe ? '+ Foto' : '+ Photo',
+                            l10n.addPhoto,
                             style: const TextStyle(
                               color: AppColors.styrianForest,
                             ),
@@ -638,7 +843,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   ),
                   const SizedBox(height: 16),
                   ActionButton(
-                    text: isDe ? 'Analyse starten' : 'Start Analysis',
+                    text: l10n.startAnalysis,
                     isLoading: _isAnalyzing,
                     onPressed: _analyzeMeal,
                   ),
@@ -651,9 +856,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     );
   }
 
-  Widget _buildMealResult(String language) {
+  Widget _buildMealResult() {
     final meal = _analyzedMeal!;
-    final isDe = language == 'de';
+    final l10n = context.l10n;
 
     return Container(
       color: AppColors.limestone,
@@ -670,7 +875,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 ),
                 Expanded(
                   child: Text(
-                    isDe ? 'Analyse Ergebnis' : 'Analysis Result',
+                    l10n.analysisResult,
                     style: AppTypography.titleLarge,
                     textAlign: TextAlign.center,
                   ),
@@ -739,7 +944,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                           ),
                         ),
                         Text(
-                          isDe ? 'KALORIEN' : 'CALORIES',
+                          l10n.calories.toUpperCase(),
                           style: AppTypography.labelLarge.copyWith(
                             color: AppColors.pebble.withValues(alpha: 0.7),
                             letterSpacing: 2,
@@ -755,41 +960,35 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   Row(
                     children: [
                       _MacroCard(
-                        label: isDe ? 'Protein' : 'Protein',
+                        label: l10n.protein,
                         value: '${meal.protein.toInt()}g',
                         color: AppColors.styrianForest,
-                        isDe: isDe,
                       ),
                       const SizedBox(width: 12),
                       _MacroCard(
-                        label: isDe ? 'KH' : 'Carbs',
+                        label: l10n.carbs,
                         value: '${meal.carbs.toInt()}g',
                         color: AppColors.styrianForest,
-                        isDe: isDe,
                       ),
                       const SizedBox(width: 12),
                       _MacroCard(
-                        label: isDe ? 'Fett' : 'Fat',
+                        label: l10n.fats,
                         value: '${meal.fats.toInt()}g',
                         color: AppColors.styrianForest,
-                        isDe: isDe,
                       ),
                     ],
                   ),
 
                   const SizedBox(height: 48),
 
-                  ActionButton(
-                    text: isDe ? 'Speichern' : 'Save Meal',
-                    onPressed: _saveMeal,
-                  ),
+                  ActionButton(text: l10n.saveMeal, onPressed: _saveMeal),
 
                   const SizedBox(height: 16),
 
                   TextButton(
                     onPressed: _clearPhotos,
                     child: Text(
-                      isDe ? 'Abbrechen' : 'Discard',
+                      l10n.discard,
                       style: AppTypography.bodyMedium.copyWith(
                         color: AppColors.slate.withValues(alpha: 0.5),
                       ),
@@ -811,13 +1010,11 @@ class _MacroCard extends StatelessWidget {
   final String label;
   final String value;
   final Color color;
-  final bool isDe;
 
   const _MacroCard({
     required this.label,
     required this.value,
     required this.color,
-    required this.isDe,
   });
 
   @override

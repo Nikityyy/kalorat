@@ -1,18 +1,15 @@
 import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import '../../extensions/l10n_extension.dart';
 import '../theme/app_colors.dart';
 
 class OfflineBanner extends StatelessWidget {
-  final String language;
-
-  const OfflineBanner({super.key, this.language = 'de'});
+  const OfflineBanner({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final message = language == 'de'
-        ? 'Du bist offline. Die AI wird die Mahlzeit analysieren, sobald du wieder online bist.'
-        : 'You are offline. The AI will analyze your meal once you are back online.';
+    final l10n = context.l10n;
 
     return Container(
       width: double.infinity,
@@ -37,7 +34,7 @@ class OfflineBanner extends StatelessWidget {
           const SizedBox(width: 12),
           Expanded(
             child: Text(
-              message,
+              l10n.offlineMessage,
               style: const TextStyle(
                 color: AppColors.pebble,
                 fontSize: 13,

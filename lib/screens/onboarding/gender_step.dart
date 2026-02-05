@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../theme/app_typography.dart';
 import '../../theme/app_colors.dart';
+import '../../extensions/l10n_extension.dart';
 import '../../widgets/inputs/action_button.dart';
 import '../../widgets/inputs/bespoke_selection_card.dart';
 
@@ -31,7 +32,7 @@ class _GenderStepState extends State<GenderStep> {
 
   @override
   Widget build(BuildContext context) {
-    final isDe = widget.language == 'de';
+    final l10n = context.l10n;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24.0),
@@ -39,26 +40,18 @@ class _GenderStepState extends State<GenderStep> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const SizedBox(height: 24),
-          Text(
-            isDe ? 'Wähle dein Geschlecht' : 'Choose your gender',
-            style: AppTypography.displayMedium,
-          ),
+          Text(l10n.chooseGender, style: AppTypography.displayMedium),
           const SizedBox(height: 8),
-          Text(
-            isDe
-                ? 'Um deinen Grundumsatz zu berechnen.'
-                : 'To calculate your metabolic rate.',
-            style: AppTypography.bodyMedium,
-          ),
+          Text(l10n.calculateMetabolicRate, style: AppTypography.bodyMedium),
           const SizedBox(height: 32),
 
-          _buildOption(0, isDe ? 'Männlich' : 'Male', Icons.male),
+          _buildOption(0, l10n.male, Icons.male),
           const SizedBox(height: 16),
-          _buildOption(1, isDe ? 'Weiblich' : 'Female', Icons.female),
+          _buildOption(1, l10n.female, Icons.female),
 
           const Spacer(),
           ActionButton(
-            text: isDe ? 'Weiter' : 'Continue',
+            text: l10n.continueButton,
             onPressed: () => widget.onNext(_selectedIndex),
           ),
           const SizedBox(height: 32),

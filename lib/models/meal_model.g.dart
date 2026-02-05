@@ -2,6 +2,10 @@
 
 part of 'meal_model.dart';
 
+// **************************************************************************
+// TypeAdapterGenerator
+// **************************************************************************
+
 class MealModelAdapter extends TypeAdapter<MealModel> {
   @override
   final int typeId = 1;
@@ -16,15 +20,15 @@ class MealModelAdapter extends TypeAdapter<MealModel> {
       id: fields[0] as String,
       timestamp: fields[1] as DateTime,
       photoPaths: (fields[2] as List).cast<String>(),
-      mealName: fields[3] as String? ?? '',
-      calories: fields[4] as double? ?? 0,
-      protein: fields[5] as double? ?? 0,
-      carbs: fields[6] as double? ?? 0,
-      fats: fields[7] as double? ?? 0,
+      mealName: fields[3] as String,
+      calories: fields[4] as double,
+      protein: fields[5] as double,
+      carbs: fields[6] as double,
+      fats: fields[7] as double,
       vitamins: (fields[8] as Map?)?.cast<String, double>(),
       minerals: (fields[9] as Map?)?.cast<String, double>(),
-      isPending: fields[10] as bool? ?? false,
-      isManualEntry: fields[11] as bool? ?? false,
+      isPending: fields[10] as bool,
+      isManualEntry: fields[11] as bool,
     );
   }
 
