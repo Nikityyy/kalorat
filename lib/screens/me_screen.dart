@@ -107,7 +107,7 @@ class MeScreen extends StatelessWidget {
                     style: AppTypography.displayMedium.copyWith(fontSize: 22),
                   ),
                   const Icon(
-                    Icons.straighten,
+                    Icons.calendar_today,
                     color: AppColors.styrianForest,
                     size: 24,
                   ),
@@ -382,7 +382,8 @@ class MeScreen extends StatelessWidget {
         ),
         Switch.adaptive(
           value: value,
-          activeThumbColor: AppColors.styrianForest,
+          activeThumbColor: AppColors.pebble.withValues(alpha: 0.5),
+          activeTrackColor: AppColors.styrianForest,
           onChanged: (val) {
             HapticFeedback.lightImpact();
             onChanged(val);
@@ -393,7 +394,7 @@ class MeScreen extends StatelessWidget {
   }
 
   Widget _buildWeightChart(List<WeightModel> weights, bool isDe) {
-    if (weights.isEmpty) {
+    if (weights.length <= 1) {
       return Container(
         width: double.infinity,
         padding: const EdgeInsets.all(40),

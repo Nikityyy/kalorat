@@ -10,7 +10,7 @@ class AnalysisStep extends StatefulWidget {
   final String name;
   final int genderIndex;
   final int age;
-  final int height;
+  final double height;
   final double weight;
   final int goalIndex;
   final String apiKey;

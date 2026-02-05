@@ -25,16 +25,16 @@ class KaloratApp extends StatelessWidget {
           Widget homeWidget;
           if (!provider.isInitialized) {
             homeWidget = Scaffold(
-              backgroundColor:
-                  AppColors.limestone, // limestone instead of lavenderBlush
+              backgroundColor: AppColors.limestone,
               body: Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(
-                      Icons.energy_savings_leaf,
-                      size: 80,
-                      color: AppColors.styrianForest,
+                    Image.asset(
+                      'lib/assets/kalorat-favicon-ios.png',
+                      width: 80,
+                      height: 80,
+                      fit: BoxFit.contain,
                     ),
                     const SizedBox(height: 24),
                     const CircularProgressIndicator(

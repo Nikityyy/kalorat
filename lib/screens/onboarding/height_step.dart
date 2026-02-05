@@ -4,8 +4,8 @@ import '../../widgets/inputs/action_button.dart';
 import '../../widgets/inputs/ruler_picker.dart';
 
 class HeightStep extends StatefulWidget {
-  final int initialValue;
-  final Function(int) onNext;
+  final double initialValue;
+  final Function(double) onNext;
   final String language;
 
   const HeightStep({
@@ -20,7 +20,7 @@ class HeightStep extends StatefulWidget {
 }
 
 class _HeightStepState extends State<HeightStep> {
-  late int _currentValue;
+  late double _currentValue;
 
   @override
   void initState() {
@@ -49,9 +49,9 @@ class _HeightStepState extends State<HeightStep> {
               child: RulerPicker(
                 minValue: 100,
                 maxValue: 250,
-                initialValue: _currentValue.toDouble(),
+                initialValue: _currentValue,
                 unit: 'cm',
-                onValueChanged: (val) => _currentValue = val.round(),
+                onValueChanged: (val) => _currentValue = val,
               ),
             ),
           ),

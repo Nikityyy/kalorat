@@ -26,7 +26,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
   String _name = '';
   int _genderIndex = 0; // 0: Male, 1: Female, 2: Other
   int _age = 25;
-  int _height = 170;
+  double _height = 170.0;
   double _weight = 70.0; // Double for precision
   int _goalIndex = 1; // 0: Lose, 1: Maintain, 2: Gain
   String _apiKey = '';

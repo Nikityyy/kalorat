@@ -19,9 +19,4 @@ class AppColors {
   static const Color warning = amber;
 
   static const Color transparent = Colors.transparent;
-
-  // Legacy Aliases (deprecated - to be removed in next version)
-  // static const Color shamrock = primary;
-  // static const Color carbonBlack = slate;
-  // static const Color emerald = success;
 }

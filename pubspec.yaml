@@ -58,7 +58,20 @@ dev_dependencies:
   flutter_lints: ^6.0.0
   hive_generator: ^2.0.1
   build_runner: ^2.4.13
+  flutter_launcher_icons: ^0.13.1
 
 flutter:
   uses-material-design: true
   generate: true
+  assets:
+    - lib/assets/
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  theme_color: "#0F5838" 
+  image_path: "lib/assets/kalorat-favicon-ios.png"
+  adaptive_icon_background: "#F7F5F2"
+  adaptive_icon_foreground: "lib/assets/kalorat-favicon-android.png"
+  remove_alpha_ios: true 
+  background_color_ios: "#F7F5F2"

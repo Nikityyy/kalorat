@@ -43,10 +43,10 @@ class WelcomeStep extends StatelessWidget {
           ),
 
           Spacer(),
-          // Branding
-          Text(
-            'Kalorat',
-            style: AppTypography.displayLarge.copyWith(fontSize: 42),
+          Image.asset(
+            'lib/assets/kalorat-textlogo.png',
+            width: 200,
+            fit: BoxFit.contain,
           ),
           const SizedBox(height: 16),
           Text(
