@@ -11,6 +11,7 @@ import '../models/models.dart';
 import '../providers/app_provider.dart';
 import '../services/gemini_service.dart';
 import '../theme/app_colors.dart';
+import '../theme/app_theme.dart';
 import '../theme/app_typography.dart';
 import '../widgets/inputs/action_button.dart';
 import '../widgets/widgets.dart';
@@ -305,7 +306,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     final l10n = context.l10n;
 
     return Container(
-      color: AppColors.limestone,
+      color: AppColors.glacialWhite,
       child: Column(
         children: [
           // Header
@@ -356,8 +357,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                     padding: const EdgeInsets.symmetric(vertical: 32),
                     decoration: BoxDecoration(
                       color: AppColors.styrianForest,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: AppColors.slate, width: 1),
+                      borderRadius: BorderRadius.circular(
+                        AppTheme.borderRadius,
+                      ),
+                      border: Border.all(color: AppColors.borderGrey, width: 1),
                     ),
                     child: Column(
                       children: [
@@ -384,8 +387,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                             horizontal: 8,
                           ),
                           decoration: BoxDecoration(
-                            color: AppColors.pebble,
-                            borderRadius: BorderRadius.circular(24),
+                            color: AppColors.steel,
+                            borderRadius: BorderRadius.circular(
+                              AppTheme.borderRadius,
+                            ),
                             border: Border.all(
                               color: AppColors.styrianForest.withValues(
                                 alpha: 0.2,
@@ -527,7 +532,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               child: const Icon(
                 Icons.camera_alt_outlined,
                 size: 48,
-                color: AppColors.pebble,
+                color: AppColors.glacialWhite,
               ),
             ),
             const SizedBox(height: 32),
@@ -580,7 +585,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 ),
                 decoration: BoxDecoration(
                   color: Colors.black.withValues(alpha: 0.5),
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(AppTheme.borderRadius),
                 ),
                 child: Row(
                   children: [
@@ -719,7 +724,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     final l10n = context.l10n;
 
     return Container(
-      color: AppColors.limestone,
+      color: AppColors.glacialWhite,
       child: Column(
         children: [
           const SizedBox(height: 16),
@@ -745,11 +750,18 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                     Positioned.fill(
                       child: Container(
                         decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: AppColors.pebble, width: 1),
+                          borderRadius: BorderRadius.circular(
+                            AppTheme.borderRadius,
+                          ),
+                          border: Border.all(
+                            color: AppColors.borderGrey,
+                            width: 1,
+                          ),
                         ),
                         child: ClipRRect(
-                          borderRadius: BorderRadius.circular(16),
+                          borderRadius: BorderRadius.circular(
+                            AppTheme.borderRadius,
+                          ),
                           child: Image.file(
                             File(_capturedPhotos[index]),
                             fit: BoxFit.cover,
@@ -789,10 +801,12 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           Container(
             padding: const EdgeInsets.all(24),
             decoration: const BoxDecoration(
-              color: AppColors.limestone,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+              color: AppColors.glacialWhite,
+              borderRadius: BorderRadius.vertical(
+                top: Radius.circular(AppTheme.borderRadius),
+              ),
               border: Border(
-                top: BorderSide(color: AppColors.pebble, width: 1),
+                top: BorderSide(color: AppColors.borderGrey, width: 1),
               ),
             ),
             child: SafeArea(
@@ -809,7 +823,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                             side: const BorderSide(color: AppColors.pebble),
                             padding: const EdgeInsets.symmetric(vertical: 16),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
+                              borderRadius: BorderRadius.circular(
+                                AppTheme.borderRadius,
+                              ),
                             ),
                           ),
                           child: Text(
@@ -828,7 +844,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                             ),
                             padding: const EdgeInsets.symmetric(vertical: 16),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
+                              borderRadius: BorderRadius.circular(
+                                AppTheme.borderRadius,
+                              ),
                             ),
                           ),
                           child: Text(
@@ -861,7 +879,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     final l10n = context.l10n;
 
     return Container(
-      color: AppColors.limestone,
+      color: AppColors.glacialWhite,
       child: Column(
         children: [
           // Header with back button
@@ -895,11 +913,18 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                     Container(
                       height: 200,
                       decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: AppColors.pebble, width: 1),
+                        borderRadius: BorderRadius.circular(
+                          AppTheme.borderRadius,
+                        ),
+                        border: Border.all(
+                          color: AppColors.borderGrey,
+                          width: 1,
+                        ),
                       ),
                       child: ClipRRect(
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(
+                          AppTheme.borderRadius,
+                        ),
                         child: ListView.separated(
                           scrollDirection: Axis.horizontal,
                           itemCount: meal.photoPaths.length,
@@ -931,22 +956,26 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                     padding: const EdgeInsets.symmetric(vertical: 32),
                     decoration: BoxDecoration(
                       color: AppColors.styrianForest,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: AppColors.slate, width: 1),
+                      borderRadius: BorderRadius.circular(
+                        AppTheme.borderRadius,
+                      ),
+                      border: Border.all(color: AppColors.borderGrey, width: 1),
                     ),
                     child: Column(
                       children: [
                         Text(
                           '${meal.calories.toInt()}',
                           style: AppTypography.heroNumber.copyWith(
-                            color: AppColors.pebble,
+                            color: AppColors.glacialWhite,
                             fontSize: 64,
                           ),
                         ),
                         Text(
                           l10n.calories.toUpperCase(),
                           style: AppTypography.labelLarge.copyWith(
-                            color: AppColors.pebble.withValues(alpha: 0.7),
+                            color: AppColors.glacialWhite.withValues(
+                              alpha: 0.7,
+                            ),
                             letterSpacing: 2,
                           ),
                         ),
@@ -1023,8 +1052,8 @@ class _MacroCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 8),
         decoration: BoxDecoration(
-          color: AppColors.pebble,
-          borderRadius: BorderRadius.circular(24),
+          color: AppColors.steel,
+          borderRadius: BorderRadius.circular(AppTheme.borderRadius),
           border: Border.all(color: color.withValues(alpha: 0.2), width: 2),
         ),
         child: Column(
@@ -1041,7 +1070,7 @@ class _MacroCard extends StatelessWidget {
               label.toUpperCase(),
               style: AppTypography.labelLarge.copyWith(
                 fontSize: 10,
-                color: AppColors.slate.withValues(alpha: 0.5),
+                color: AppColors.frost.withValues(alpha: 0.5),
                 letterSpacing: 1,
               ),
               textAlign: TextAlign.center,

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../theme/app_colors.dart';
+import '../../theme/app_theme.dart';
 import '../../theme/app_typography.dart';
 
 class BespokeSelectionCard extends StatelessWidget {
@@ -21,29 +23,23 @@ class BespokeSelectionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: onTap,
+      onTap: () {
+        HapticFeedback.heavyImpact(); // Mechanical click feel
+        onTap();
+      },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
           color: isSelected
-              ? AppColors.styrianForest.withValues(alpha: 0.1)
-              : AppColors.pebble,
-          borderRadius: BorderRadius.circular(16),
+              ? AppColors.styrianForest.withValues(alpha: 0.08)
+              : AppColors.steel,
+          borderRadius: BorderRadius.circular(AppTheme.borderRadius),
           border: Border.all(
-            color: isSelected
-                ? AppColors.styrianForest
-                : AppColors.pebble.withValues(alpha: 0.5),
+            color: isSelected ? AppColors.styrianForest : AppColors.borderGrey,
             width: isSelected ? 1.5 : 1.0,
           ),
-          boxShadow: [
-            if (isSelected)
-              BoxShadow(
-                color: AppColors.styrianForest.withValues(alpha: 0.1),
-                blurRadius: 12,
-                offset: const Offset(0, 4),
-              ),
-          ],
+          // No boxShadow - flat design mandate
         ),
         child: Row(
           children: [
@@ -57,7 +53,7 @@ class BespokeSelectionCard extends StatelessWidget {
                     style: AppTypography.titleLarge.copyWith(
                       color: isSelected
                           ? AppColors.styrianForest
-                          : AppColors.slate,
+                          : AppColors.frost,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -66,7 +62,7 @@ class BespokeSelectionCard extends StatelessWidget {
                     Text(
                       subtitle!,
                       style: AppTypography.bodyMedium.copyWith(
-                        color: AppColors.slate.withValues(alpha: 0.6),
+                        color: AppColors.frost.withValues(alpha: 0.6),
                       ),
                     ),
                   ],
@@ -84,12 +80,16 @@ class BespokeSelectionCard extends StatelessWidget {
                 border: Border.all(
                   color: isSelected
                       ? AppColors.styrianForest
-                      : AppColors.pebble,
+                      : AppColors.borderGrey,
                   width: 2,
                 ),
               ),
               child: isSelected
-                  ? const Icon(Icons.check, size: 16, color: AppColors.pebble)
+                  ? const Icon(
+                      Icons.check,
+                      size: 16,
+                      color: AppColors.glacialWhite,
+                    )
                   : null,
             ),
           ],

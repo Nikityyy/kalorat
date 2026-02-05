@@ -239,7 +239,7 @@ abstract class AppLocalizations {
   /// No description provided for @home.
   ///
   /// In de, this message translates to:
-  /// **'Home'**
+  /// **'Start'**
   String get home;
 
   /// No description provided for @me.

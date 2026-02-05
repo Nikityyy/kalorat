@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import '../../theme/app_colors.dart';
+import '../../theme/app_theme.dart';
 
 class OnboardingImageWidget extends StatelessWidget {
-  final String assetName; // For future real assets
+  final String assetName;
   final double height;
 
   const OnboardingImageWidget({
     super.key,
-    this.assetName = 'assets/onboarding_placeholder.png', // Default
+    this.assetName = 'assets/onboarding_placeholder.png',
     this.height = 300,
   });
 
@@ -17,19 +18,12 @@ class OnboardingImageWidget extends StatelessWidget {
       height: height,
       width: double.infinity,
       decoration: BoxDecoration(
-        color: AppColors.pebble,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: AppColors.slate.withValues(alpha: 0.1),
-          width: 1,
-        ),
+        color: AppColors.steel,
+        borderRadius: BorderRadius.circular(AppTheme.borderRadius),
+        border: Border.all(color: AppColors.borderGrey, width: 1),
       ),
-      // In a real app we would load the image, but user asked for placeholders for now
-      // "Use a placeholder image asset (e.g. assets/onboarding_placeholder.png)"
-      // Since I can't verify if the asset exists, I'll use a FlutterLogo or Icon as fallback if image fails,
-      // but ideally this container IS the placeholder visual if the image isn't there.
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppTheme.borderRadius),
         child: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -43,7 +37,7 @@ class OnboardingImageWidget extends StatelessWidget {
               Text(
                 'Placeholder Image',
                 style: TextStyle(
-                  color: AppColors.slate.withValues(alpha: 0.5),
+                  color: AppColors.frost.withValues(alpha: 0.5),
                   fontWeight: FontWeight.w500,
                 ),
               ),

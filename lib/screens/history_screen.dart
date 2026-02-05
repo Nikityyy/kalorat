@@ -4,6 +4,7 @@ import '../extensions/l10n_extension.dart';
 import '../models/models.dart';
 import '../providers/app_provider.dart';
 import '../theme/app_colors.dart';
+import '../theme/app_theme.dart';
 import '../theme/app_typography.dart';
 import '../widgets/common/app_card.dart';
 import '../widgets/widgets.dart';
@@ -73,7 +74,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
               padding: const EdgeInsets.all(6),
               decoration: BoxDecoration(
                 color: AppColors.limestone,
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(AppTheme.borderRadius),
                 border: Border.all(color: AppColors.pebble, width: 1),
               ),
               child: Row(
@@ -88,7 +89,9 @@ class _HistoryScreenState extends State<HistoryScreen> {
                           color: isSelected
                               ? AppColors.primary
                               : AppColors.transparent,
-                          borderRadius: BorderRadius.circular(16),
+                          borderRadius: BorderRadius.circular(
+                            AppTheme.borderRadius,
+                          ),
                         ),
                         child: Text(
                           periods[index],

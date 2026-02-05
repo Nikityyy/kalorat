@@ -8,6 +8,7 @@ import '../extensions/l10n_extension.dart';
 import '../providers/app_provider.dart';
 import '../models/models.dart';
 import '../theme/app_colors.dart';
+import '../theme/app_theme.dart';
 import '../theme/app_typography.dart';
 import 'settings_screen.dart';
 import 'add_weight_screen.dart';
@@ -232,7 +233,7 @@ class MeScreen extends StatelessWidget {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: AppColors.limestone,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppTheme.borderRadius),
         border: Border.all(
           color: AppColors.slate.withValues(alpha: 0.1),
           width: 1,
@@ -416,7 +417,7 @@ class MeScreen extends StatelessWidget {
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: AppColors.pebble,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(AppTheme.borderRadius),
             border: Border.all(color: AppColors.pebble),
           ),
           child: Column(
@@ -535,14 +536,8 @@ class MeScreen extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.limestone,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: AppColors.pebble),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.slate.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        border: Border.all(color: AppColors.borderGrey),
+        // No boxShadow - flat design mandate
       ),
       child: LineChart(
         LineChartData(
@@ -710,7 +705,7 @@ class MeScreen extends StatelessWidget {
         Container(
           decoration: BoxDecoration(
             color: AppColors.pebble,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(AppTheme.borderRadius),
             border: Border.all(color: AppColors.pebble),
           ),
           child: ListView.separated(
@@ -736,7 +731,7 @@ class MeScreen extends StatelessWidget {
                   alignment: Alignment.centerRight,
                   decoration: BoxDecoration(
                     color: AppColors.error,
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(AppTheme.borderRadius),
                   ),
                   child: const Icon(Icons.delete, color: Colors.white),
                 ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../extensions/l10n_extension.dart';
 import '../theme/app_colors.dart';
+import '../theme/app_theme.dart';
 import '../theme/app_typography.dart';
 
 class BmiIndicator extends StatelessWidget {
@@ -12,14 +13,14 @@ class BmiIndicator extends StatelessWidget {
   Color get _color {
     switch (category.toLowerCase()) {
       case 'underweight':
-        return AppColors.pebble;
+        return AppColors.amber;
       case 'normal':
         return AppColors.glacierMint;
       case 'overweight':
       case 'obese':
         return AppColors.kaiserRed;
       default:
-        return AppColors.slate;
+        return AppColors.frost;
     }
   }
 
@@ -44,9 +45,9 @@ class BmiIndicator extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: AppColors.limestone,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _color.withValues(alpha: 0.2), width: 1),
+        color: AppColors.glacialWhite,
+        borderRadius: BorderRadius.circular(AppTheme.borderRadius),
+        border: Border.all(color: AppColors.borderGrey, width: 1),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -72,7 +73,7 @@ class BmiIndicator extends StatelessWidget {
                 _getLabel(context),
                 style: AppTypography.bodyMedium.copyWith(
                   fontSize: 14,
-                  color: AppColors.slate,
+                  color: AppColors.frost,
                 ),
               ),
             ],

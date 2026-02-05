@@ -3,6 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../../extensions/l10n_extension.dart';
 import '../theme/app_colors.dart';
+import '../theme/app_theme.dart';
 
 class OfflineBanner extends StatelessWidget {
   const OfflineBanner({super.key});
@@ -15,28 +16,24 @@ class OfflineBanner extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: Colors.orange.withValues(alpha: 0.9),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        color: AppColors.amber,
+        borderRadius: BorderRadius.circular(AppTheme.borderRadius),
+        border: Border.all(color: AppColors.borderGrey, width: 1),
+        // No boxShadow - flat design mandate
       ),
       child: Row(
         children: [
           Icon(
             Platform.isIOS ? CupertinoIcons.wifi_slash : Icons.wifi_off,
-            color: AppColors.pebble,
+            color: AppColors.frost,
             size: 20,
           ),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
               l10n.offlineMessage,
-              style: const TextStyle(
-                color: AppColors.pebble,
+              style: TextStyle(
+                color: AppColors.frost,
                 fontSize: 13,
                 fontWeight: FontWeight.w500,
               ),

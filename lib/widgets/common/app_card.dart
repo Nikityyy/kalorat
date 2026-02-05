@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import '../../theme/app_colors.dart';
+import '../../theme/app_theme.dart';
 
 class AppCard extends StatelessWidget {
   final Widget child;
@@ -26,9 +27,11 @@ class AppCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const borderRadius = BorderRadius.all(Radius.circular(16));
+    final borderRadius = BorderRadius.all(
+      Radius.circular(AppTheme.borderRadius),
+    );
 
-    final Color effectiveColor = backgroundColor ?? AppColors.pebble;
+    final Color effectiveColor = backgroundColor ?? AppColors.steel;
 
     return GestureDetector(
       onTap: onTap,
@@ -40,10 +43,7 @@ class AppCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: effectiveColor,
           borderRadius: borderRadius,
-          border: Border.all(
-            color: AppColors.slate.withValues(alpha: 0.1),
-            width: 1.0,
-          ),
+          border: Border.all(color: AppColors.borderGrey, width: 1.0),
         ),
         child: child,
       ),

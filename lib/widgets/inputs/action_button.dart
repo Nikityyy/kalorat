@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../theme/app_colors.dart';
+import '../../theme/app_theme.dart';
 import '../../theme/app_typography.dart';
 
 class ActionButton extends StatelessWidget {
@@ -22,26 +23,26 @@ class ActionButton extends StatelessWidget {
       height: 64,
       decoration: BoxDecoration(
         color: AppColors.kaiserRed, // Signal Red for primary action
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.slate, width: 1),
+        borderRadius: BorderRadius.circular(AppTheme.borderRadius),
+        border: Border.all(color: AppColors.borderGrey, width: 1),
       ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
           onTap: () {
             if (!isLoading) {
-              HapticFeedback.lightImpact(); // Rugged "click"
+              HapticFeedback.heavyImpact(); // Mechanical click
               onPressed?.call();
             }
           },
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(AppTheme.borderRadius),
           child: Center(
             child: isLoading
                 ? const SizedBox(
                     width: 24,
                     height: 24,
                     child: CircularProgressIndicator(
-                      color: AppColors.pebble,
+                      color: AppColors.glacialWhite,
                       strokeWidth: 2,
                     ),
                   )
@@ -50,7 +51,7 @@ class ActionButton extends StatelessWidget {
                     style: AppTypography.labelLarge.copyWith(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      color: AppColors.pebble,
+                      color: AppColors.glacialWhite,
                     ),
                   ),
           ),

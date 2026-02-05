@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../theme/app_colors.dart';
+import '../../theme/app_theme.dart';
 import '../../theme/app_typography.dart';
 
 class BespokeWheelPicker extends StatefulWidget {
@@ -37,58 +38,47 @@ class _BespokeWheelPickerState extends State<BespokeWheelPicker> {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 280, // Slightly taller
+      height: 280,
       child: Stack(
         alignment: Alignment.center,
         children: [
           // Selection Highlight
           Container(
-            height: 70, // Matches itemExtent
+            height: 70,
             width: double.infinity,
             decoration: BoxDecoration(
-              color: AppColors.styrianForest.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: AppColors.styrianForest.withValues(alpha: 0.2),
-                width: 1,
-              ),
+              color: AppColors.styrianForest.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(AppTheme.borderRadius),
+              border: Border.all(color: AppColors.borderGrey, width: 1),
             ),
           ),
           NotificationListener<ScrollNotification>(
             onNotification: (notification) {
-              if (notification is ScrollUpdateNotification) {
-                // HapticFeedback.selectionClick();
-              }
               return false;
             },
             child: ListWheelScrollView.useDelegate(
               controller: _controller,
-              itemExtent: 70, // Increased from 60
-              perspective: 0.003, // Flatter
-              diameterRatio: 1.8, // Better curve
+              itemExtent: 70,
+              perspective: 0.003,
+              diameterRatio: 1.8,
               useMagnifier: true,
-              magnification:
-                  1.3, // Slightly less aggressive zoom to stay within itemExtent
-              overAndUnderCenterOpacity: 0.2, // More focus on center
+              magnification: 1.3,
+              overAndUnderCenterOpacity: 0.2,
               physics: const FixedExtentScrollPhysics(),
               onSelectedItemChanged: (index) {
-                HapticFeedback.lightImpact();
+                HapticFeedback.heavyImpact(); // Mechanical click feel
                 widget.onValueChanged(index);
               },
               childDelegate: ListWheelChildBuilderDelegate(
                 childCount: widget.options.length,
                 builder: (context, index) {
-                  // We can't know the exact selected index in builder easily without tracking scroll position continuously,
-                  // but ListWheelScrollView handles opacity/size with 'magnification'. The user said "seeing what age is selected is quite hard".
-                  // I will increase magnification and opacity contrast.
-
                   return Center(
                     child: Text(
                       widget.options[index],
                       style: AppTypography.displayMedium.copyWith(
-                        color: AppColors.slate,
-                        fontWeight: FontWeight.w900, // Bolder
-                        fontSize: 32, // Larger base size
+                        color: AppColors.frost,
+                        fontWeight: FontWeight.w900,
+                        fontSize: 32,
                       ),
                     ),
                   );

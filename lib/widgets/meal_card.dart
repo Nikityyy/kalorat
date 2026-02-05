@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../../extensions/l10n_extension.dart';
 import '../models/models.dart';
 import '../theme/app_colors.dart';
+import '../theme/app_theme.dart';
 import '../theme/app_typography.dart';
 import 'common/app_card.dart';
 
@@ -27,7 +28,7 @@ class MealCard extends StatelessWidget {
     return AppCard(
       padding: EdgeInsets.zero,
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      backgroundColor: AppColors.pebble,
+      backgroundColor: AppColors.steel,
       onTap: onTap,
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -40,7 +41,7 @@ class MealCard extends StatelessWidget {
                 // --- 1. Image Section ---
                 if (meal.photoPaths.isNotEmpty)
                   ClipRRect(
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(AppTheme.borderRadius),
                     child: Image.file(
                       File(meal.photoPaths.first),
                       width: 60,
@@ -49,8 +50,8 @@ class MealCard extends StatelessWidget {
                       errorBuilder: (_, _, _) => Container(
                         width: 60,
                         height: 60,
-                        color: AppColors.pebble.withValues(alpha: 0.5),
-                        child: const Icon(Icons.image, color: AppColors.slate),
+                        color: AppColors.steel.withValues(alpha: 0.5),
+                        child: const Icon(Icons.image, color: AppColors.frost),
                       ),
                     ),
                   )
@@ -59,14 +60,16 @@ class MealCard extends StatelessWidget {
                     width: 60,
                     height: 60,
                     decoration: BoxDecoration(
-                      color: AppColors.pebble.withValues(alpha: 0.5),
-                      borderRadius: BorderRadius.circular(12),
+                      color: AppColors.steel.withValues(alpha: 0.5),
+                      borderRadius: BorderRadius.circular(
+                        AppTheme.borderRadius,
+                      ),
                     ),
-                    child: const Icon(Icons.restaurant, color: AppColors.slate),
+                    child: const Icon(Icons.restaurant, color: AppColors.frost),
                   ),
                 const SizedBox(width: 16),
 
-                // --- 2. Content Section (Split into Top and Bottom Rows) ---
+                // --- 2. Content Section ---
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -88,7 +91,7 @@ class MealCard extends StatelessWidget {
                                 fontWeight: FontWeight.w600,
                                 color: meal.isPending
                                     ? AppColors.error
-                                    : AppColors.slate,
+                                    : AppColors.frost,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -99,7 +102,7 @@ class MealCard extends StatelessWidget {
                             _formatTime(meal.timestamp),
                             style: AppTypography.bodyMedium.copyWith(
                               fontSize: 12,
-                              color: AppColors.slate.withValues(alpha: 0.6),
+                              color: AppColors.frost.withValues(alpha: 0.6),
                             ),
                           ),
                         ],
@@ -112,11 +115,10 @@ class MealCard extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          // Left side: Calories or Pending State
                           if (!meal.isPending) ...[
                             Text(
                               '${meal.calories.toInt()} ${l10n.kcal}',
-                              style: const TextStyle(
+                              style: AppTypography.dataMedium.copyWith(
                                 fontSize: 20,
                                 fontWeight: FontWeight.bold,
                                 color: AppColors.styrianForest,
@@ -138,7 +140,7 @@ class MealCard extends StatelessWidget {
                                   l10n.analyzing,
                                   style: AppTypography.bodyMedium.copyWith(
                                     fontSize: 12,
-                                    color: AppColors.slate.withValues(
+                                    color: AppColors.frost.withValues(
                                       alpha: 0.6,
                                     ),
                                   ),
@@ -146,7 +148,6 @@ class MealCard extends StatelessWidget {
                               ],
                             ),
 
-                          // Right side: Delete Button
                           if (onDelete != null)
                             SizedBox(
                               width: 32,
@@ -174,7 +175,7 @@ class MealCard extends StatelessWidget {
 
             // --- Macros Divider ---
             if (!meal.isPending) ...[
-              const Divider(height: 24, color: AppColors.pebble),
+              Divider(height: 24, color: AppColors.borderGrey),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
@@ -220,14 +221,14 @@ class _MacroChip extends StatelessWidget {
       children: [
         Text(
           value,
-          style: AppTypography.titleLarge.copyWith(fontSize: 16, color: color),
+          style: AppTypography.dataMedium.copyWith(fontSize: 16, color: color),
         ),
         const SizedBox(height: 2),
         Text(
           label,
           style: AppTypography.bodyMedium.copyWith(
             fontSize: 11,
-            color: AppColors.slate.withValues(alpha: 0.6),
+            color: AppColors.frost.withValues(alpha: 0.6),
           ),
         ),
       ],

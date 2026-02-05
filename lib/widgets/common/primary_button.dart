@@ -3,6 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../theme/app_colors.dart';
+import '../../theme/app_theme.dart';
 import '../../theme/app_typography.dart';
 
 class PrimaryButton extends StatelessWidget {
@@ -27,21 +28,21 @@ class PrimaryButton extends StatelessWidget {
       return CupertinoButton(
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
         color: AppColors.styrianForest,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppTheme.borderRadius),
         onPressed: isLoading
             ? null
             : () {
-                HapticFeedback.lightImpact();
+                HapticFeedback.heavyImpact(); // Mechanical click feel
                 onPressed?.call();
               },
         child: isLoading
-            ? const CupertinoActivityIndicator(color: AppColors.pebble)
+            ? const CupertinoActivityIndicator(color: AppColors.glacialWhite)
             : Row(
                 mainAxisSize: MainAxisSize.min,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   if (icon != null) ...[
-                    Icon(icon, color: AppColors.pebble, size: 20),
+                    Icon(icon, color: AppColors.glacialWhite, size: 20),
                     const SizedBox(width: 8),
                   ],
                   Text(text, style: AppTypography.labelLarge),
@@ -54,19 +55,19 @@ class PrimaryButton extends StatelessWidget {
       onPressed: isLoading
           ? null
           : () {
-              HapticFeedback.lightImpact();
+              HapticFeedback.heavyImpact(); // Mechanical click feel
               onPressed?.call();
             },
       style: ElevatedButton.styleFrom(
         backgroundColor: AppColors.styrianForest,
-        foregroundColor: AppColors.pebble,
+        foregroundColor: AppColors.glacialWhite,
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-          side: const BorderSide(color: AppColors.slate, width: 1),
+          borderRadius: BorderRadius.circular(AppTheme.borderRadius),
+          side: const BorderSide(color: AppColors.borderGrey, width: 1),
         ),
         elevation: 0,
-        shadowColor: Colors.transparent, // Flat style for modern look
+        shadowColor: Colors.transparent,
       ),
       child: isLoading
           ? const SizedBox(
@@ -74,7 +75,7 @@ class PrimaryButton extends StatelessWidget {
               height: 20,
               child: CircularProgressIndicator(
                 strokeWidth: 2,
-                color: AppColors.pebble,
+                color: AppColors.glacialWhite,
               ),
             )
           : Row(
