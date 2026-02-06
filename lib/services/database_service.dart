@@ -72,26 +72,74 @@ class DatabaseService {
     }).toList();
   }
 
+  /// Get paginated meals for infinite scroll / lazy loading
+  /// Returns meals sorted by timestamp (newest first), with offset and limit
+  List<MealModel> getMealsPaginated({
+    required int offset,
+    required int limit,
+    DateTime? startDate,
+    DateTime? endDate,
+  }) {
+    var meals = _mealsBox.values.toList();
+
+    // Apply date filters if provided
+    if (startDate != null || endDate != null) {
+      meals = meals.where((meal) {
+        if (startDate != null && meal.timestamp.isBefore(startDate))
+          return false;
+        if (endDate != null && meal.timestamp.isAfter(endDate)) return false;
+        return true;
+      }).toList();
+    }
+
+    // Sort by newest first
+    meals.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+
+    // Apply pagination
+    if (offset >= meals.length) return [];
+    final end = (offset + limit).clamp(0, meals.length);
+    return meals.sublist(offset, end);
+  }
+
+  /// Total meal count for pagination calculations
+  int getMealCount({DateTime? startDate, DateTime? endDate}) {
+    if (startDate == null && endDate == null) {
+      return _mealsBox.length;
+    }
+    return _mealsBox.values.where((meal) {
+      if (startDate != null && meal.timestamp.isBefore(startDate)) return false;
+      if (endDate != null && meal.timestamp.isAfter(endDate)) return false;
+      return true;
+    }).length;
+  }
+
   List<MealModel> getPendingMeals() {
     return _mealsBox.values.where((meal) => meal.isPending).toList();
   }
 
   Future<void> saveMeal(MealModel meal) async {
-    final existingIndex = _mealsBox.values.toList().indexWhere(
-      (m) => m.id == meal.id,
-    );
-    if (existingIndex >= 0) {
-      await _mealsBox.putAt(existingIndex, meal);
+    // Use meal.id as Hive key for O(1) lookup
+    final existingKey = _findMealKey(meal.id);
+    if (existingKey != null) {
+      await _mealsBox.put(existingKey, meal);
     } else {
-      await _mealsBox.add(meal);
+      await _mealsBox.put(meal.id, meal);
     }
   }
 
   Future<void> deleteMeal(String mealId) async {
-    final index = _mealsBox.values.toList().indexWhere((m) => m.id == mealId);
-    if (index >= 0) {
-      await _mealsBox.deleteAt(index);
+    // O(1) delete using key
+    await _mealsBox.delete(mealId);
+  }
+
+  /// Helper to find meal by ID when key might differ from ID
+  /// (for backwards compatibility with auto-generated keys)
+  dynamic _findMealKey(String mealId) {
+    for (final key in _mealsBox.keys) {
+      final meal = _mealsBox.get(key);
+      if (meal?.id == mealId) return key;
     }
+    return null;
   }
 
   // Weight operations

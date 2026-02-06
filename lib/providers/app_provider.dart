@@ -17,6 +17,14 @@ class AppProvider extends ChangeNotifier {
   bool _isInitialized = false;
   bool _isProcessingQueue = false;
 
+  // Stats cache for performance (invalidated on meal changes)
+  Map<String, double>? _cachedTodayStats;
+  DateTime? _cachedTodayStatsDate;
+  Map<String, double>? _cachedWeekStats;
+  int? _cachedWeekNumber;
+  Map<String, double>? _cachedMonthStats;
+  int? _cachedMonth;
+
   UserModel? get user => _user;
   bool get isOnline => _isOnline;
   bool get isInitialized => _isInitialized;
@@ -195,6 +203,7 @@ class AppProvider extends ChangeNotifier {
 
   Future<void> saveMeal(MealModel meal) async {
     await _databaseService.saveMeal(meal);
+    _invalidateStatsCache(); // Invalidate on meal change
 
     // Sync to health platform if enabled
     if (_user?.healthSyncEnabled == true &&
@@ -208,7 +217,15 @@ class AppProvider extends ChangeNotifier {
 
   Future<void> deleteMeal(String mealId) async {
     await _databaseService.deleteMeal(mealId);
+    _invalidateStatsCache(); // Invalidate on meal change
     notifyListeners();
+  }
+
+  /// Clears all cached stats - called when meals are modified
+  void _invalidateStatsCache() {
+    _cachedTodayStats = null;
+    _cachedWeekStats = null;
+    _cachedMonthStats = null;
   }
 
   // Weight operations
@@ -284,23 +301,50 @@ class AppProvider extends ChangeNotifier {
 
   Map<String, double> getTodayStats() {
     final now = DateTime.now();
-    final start = DateTime(now.year, now.month, now.day);
+    final today = DateTime(now.year, now.month, now.day);
+
+    // Check if cache is valid for today
+    if (_cachedTodayStats != null && _cachedTodayStatsDate == today) {
+      return _cachedTodayStats!;
+    }
+
+    final start = today;
     final end = start.add(const Duration(days: 1));
-    return getStatsForDateRange(start, end);
+    _cachedTodayStats = getStatsForDateRange(start, end);
+    _cachedTodayStatsDate = today;
+    return _cachedTodayStats!;
   }
 
   Map<String, double> getWeekStats() {
     final now = DateTime.now();
+    final weekNumber = ((now.day + now.month * 31 + now.year * 365) ~/ 7);
+
+    // Check if cache is valid for this week
+    if (_cachedWeekStats != null && _cachedWeekNumber == weekNumber) {
+      return _cachedWeekStats!;
+    }
+
     final start = now.subtract(Duration(days: now.weekday - 1));
     final startOfWeek = DateTime(start.year, start.month, start.day);
     final endOfWeek = startOfWeek.add(const Duration(days: 7));
-    return getStatsForDateRange(startOfWeek, endOfWeek);
+    _cachedWeekStats = getStatsForDateRange(startOfWeek, endOfWeek);
+    _cachedWeekNumber = weekNumber;
+    return _cachedWeekStats!;
   }
 
   Map<String, double> getMonthStats() {
     final now = DateTime.now();
+    final currentMonth = now.year * 12 + now.month;
+
+    // Check if cache is valid for this month
+    if (_cachedMonthStats != null && _cachedMonth == currentMonth) {
+      return _cachedMonthStats!;
+    }
+
     final start = DateTime(now.year, now.month, 1);
     final end = DateTime(now.year, now.month + 1, 1);
-    return getStatsForDateRange(start, end);
+    _cachedMonthStats = getStatsForDateRange(start, end);
+    _cachedMonth = currentMonth;
+    return _cachedMonthStats!;
   }
 }

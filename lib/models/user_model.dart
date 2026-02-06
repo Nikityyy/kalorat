@@ -137,8 +137,8 @@ class UserModel extends HiveObject {
   factory UserModel.fromJson(Map<String, dynamic> json) => UserModel(
     name: json['name'] ?? '',
     birthdate: DateTime.parse(json['birthdate']),
-    height: (json['height'] ?? 170.0),
-    weight: (json['weight'] ?? 70.0),
+    height: (json['height'] as num?)?.toDouble() ?? 170.0,
+    weight: (json['weight'] as num?)?.toDouble() ?? 70.0,
     language: json['language'] ?? 'de',
     geminiApiKey: json['geminiApiKey'] ?? '',
     onboardingCompleted: json['onboardingCompleted'] ?? false,

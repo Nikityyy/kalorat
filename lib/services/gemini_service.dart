@@ -1,8 +1,37 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/io_client.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+
+/// Encodes image bytes to base64 in a background isolate
+/// This prevents UI jank when processing large images
+String _encodeImageBytes(List<int> bytes) {
+  return base64Encode(bytes);
+}
+
+/// Error types for structured error handling
+enum GeminiErrorType {
+  rateLimited,
+  noFood,
+  networkError,
+  parseError,
+  invalidApiKey,
+  unknown,
+}
+
+/// Structured error for Gemini API failures
+class GeminiError implements Exception {
+  final GeminiErrorType type;
+  final String message;
+  final String? technicalDetails;
+
+  GeminiError(this.type, this.message, {this.technicalDetails});
+
+  @override
+  String toString() => message;
+}
 
 class GeminiService {
   static const String _baseUrlBase =
@@ -83,13 +112,14 @@ class GeminiService {
     final client = IOClient(httpClient);
 
     try {
-      // Prepare image parts
+      // Prepare image parts in background to avoid UI jank
       final List<Map<String, dynamic>> imageParts = [];
       for (final path in imagePaths) {
         final file = File(path);
         if (await file.exists()) {
           final bytes = await file.readAsBytes();
-          final base64Image = base64Encode(bytes);
+          // Encode in background isolate for large images
+          final base64Image = await compute(_encodeImageBytes, bytes);
           final mimeType = _getMimeType(path);
           imageParts.add({
             'inline_data': {'mime_type': mimeType, 'data': base64Image},

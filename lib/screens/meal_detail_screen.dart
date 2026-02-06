@@ -34,8 +34,21 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
   @override
   void initState() {
     super.initState();
-    _meal = widget.meal;
-    _portionMultiplier = 1.0;
+    _portionMultiplier = widget.meal.portionMultiplier;
+
+    // If the meal was saved with a multiplier (e.g. 2x), the stored calories
+    // are already 2x. We need to divide by the multiplier to get the "base"
+    // values for the editing session, so that the UI can re-multiply them consistently.
+    if (_portionMultiplier != 1.0 && _portionMultiplier > 0) {
+      _meal = widget.meal.copyWith(
+        calories: widget.meal.calories / _portionMultiplier,
+        protein: widget.meal.protein / _portionMultiplier,
+        carbs: widget.meal.carbs / _portionMultiplier,
+        fats: widget.meal.fats / _portionMultiplier,
+      );
+    } else {
+      _meal = widget.meal;
+    }
   }
 
   void _updatePortion(double change) {
@@ -48,18 +61,13 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
   void _saveMeal() {
     final provider = context.read<AppProvider>();
 
-    // If it's a new entry (from Home), we add it.
-    // If it's an existing entry (from History), we update it.
-    // However, existing meals already have an ID.
-    // Let's assume if it exists in DB, we update.
-    // For now, simple logic:
-
     // Adjust values by portion multiplier before saving
     final finalMeal = _meal.copyWith(
       calories: _meal.calories * _portionMultiplier,
       protein: _meal.protein * _portionMultiplier,
       carbs: _meal.carbs * _portionMultiplier,
       fats: _meal.fats * _portionMultiplier,
+      portionMultiplier: _portionMultiplier,
     );
 
     // saveMeal handles both create and update

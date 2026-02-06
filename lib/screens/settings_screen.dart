@@ -447,7 +447,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
         ),
         value: user.healthSyncEnabled,
-        activeColor: AppColors.primary,
+        activeThumbColor: AppColors.primary,
         onChanged: (val) async {
           if (val) {
             // Try to connect
@@ -487,7 +487,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             style: const TextStyle(fontSize: 14, color: AppColors.slate),
           ),
           value: user.syncMealsToHealth,
-          activeColor: AppColors.primary,
+          activeThumbColor: AppColors.primary,
           onChanged: (val) => provider.updateUser(syncMealsToHealth: val),
         ),
         SwitchListTile(
@@ -496,7 +496,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             style: const TextStyle(fontSize: 14, color: AppColors.slate),
           ),
           value: user.syncWeightToHealth,
-          activeColor: AppColors.primary,
+          activeThumbColor: AppColors.primary,
           onChanged: (val) => provider.updateUser(syncWeightToHealth: val),
         ),
       ],
