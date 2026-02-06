@@ -341,7 +341,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   const SkeletonBox(
                     height: 200,
                     width: double.infinity,
-                    borderRadius: 16,
+                    borderRadius: AppTheme.borderRadius,
                   ),
 
                   const SizedBox(height: 32),
@@ -392,10 +392,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                               AppTheme.borderRadius,
                             ),
                             border: Border.all(
-                              color: AppColors.styrianForest.withValues(
-                                alpha: 0.2,
-                              ),
-                              width: 2,
+                              color: AppColors.borderGrey,
+                              width: 1,
                             ),
                           ),
                           child: const Column(
@@ -423,13 +421,13 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                             horizontal: 8,
                           ),
                           decoration: BoxDecoration(
-                            color: AppColors.pebble,
-                            borderRadius: BorderRadius.circular(24),
+                            color: AppColors.steel,
+                            borderRadius: BorderRadius.circular(
+                              AppTheme.borderRadius,
+                            ),
                             border: Border.all(
-                              color: AppColors.styrianForest.withValues(
-                                alpha: 0.2,
-                              ),
-                              width: 2,
+                              color: AppColors.borderGrey,
+                              width: 1,
                             ),
                           ),
                           child: const Column(
@@ -457,13 +455,13 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                             horizontal: 8,
                           ),
                           decoration: BoxDecoration(
-                            color: AppColors.pebble,
-                            borderRadius: BorderRadius.circular(24),
+                            color: AppColors.steel,
+                            borderRadius: BorderRadius.circular(
+                              AppTheme.borderRadius,
+                            ),
                             border: Border.all(
-                              color: AppColors.styrianForest.withValues(
-                                alpha: 0.2,
-                              ),
-                              width: 2,
+                              color: AppColors.borderGrey,
+                              width: 1,
                             ),
                           ),
                           child: const Column(

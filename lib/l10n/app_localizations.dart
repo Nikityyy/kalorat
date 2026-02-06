@@ -113,7 +113,7 @@ abstract class AppLocalizations {
   /// No description provided for @welcomeSubtitle.
   ///
   /// In de, this message translates to:
-  /// **'Dein persönlicher Kalorientracker'**
+  /// **'Dein Begleiter am Berg.'**
   String get welcomeSubtitle;
 
   /// No description provided for @next.
@@ -335,13 +335,13 @@ abstract class AppLocalizations {
   /// No description provided for @analyzeMeal.
   ///
   /// In de, this message translates to:
-  /// **'Mahlzeit analysieren'**
+  /// **'Mahlzeit checken'**
   String get analyzeMeal;
 
   /// No description provided for @analyzing.
   ///
   /// In de, this message translates to:
-  /// **'Analysiere...'**
+  /// **'Prüfe...'**
   String get analyzing;
 
   /// No description provided for @mealName.
@@ -485,7 +485,7 @@ abstract class AppLocalizations {
   /// No description provided for @noWeightData.
   ///
   /// In de, this message translates to:
-  /// **'Noch keine Gewichtsdaten vorhanden'**
+  /// **'Der Weg beginnt hier.'**
   String get noWeightData;
 
   /// No description provided for @statistics.
@@ -683,7 +683,7 @@ abstract class AppLocalizations {
   /// No description provided for @analyzingMetabolism.
   ///
   /// In de, this message translates to:
-  /// **'Metabolismus wird analysiert'**
+  /// **'Dein Stoffwechsel wird analysiert'**
   String get analyzingMetabolism;
 
   /// No description provided for @apiKeyValidationError.
@@ -743,19 +743,19 @@ abstract class AppLocalizations {
   /// No description provided for @loseWeight.
   ///
   /// In de, this message translates to:
-  /// **'Abnehmen'**
+  /// **'Gesundes Tempo'**
   String get loseWeight;
 
   /// No description provided for @maintainWeight.
   ///
   /// In de, this message translates to:
-  /// **'Gewicht halten'**
+  /// **'Pfad halten'**
   String get maintainWeight;
 
   /// No description provided for @gainMuscle.
   ///
   /// In de, this message translates to:
-  /// **'Muskeln aufbauen'**
+  /// **'Kraft aufbauen'**
   String get gainMuscle;
 
   /// No description provided for @whatsYourGender.
@@ -827,7 +827,7 @@ abstract class AppLocalizations {
   /// No description provided for @reminders.
   ///
   /// In de, this message translates to:
-  /// **'Erinnerungen'**
+  /// **'Impulse'**
   String get reminders;
 
   /// No description provided for @logMeals.
@@ -881,7 +881,7 @@ abstract class AppLocalizations {
   /// No description provided for @noMealsRecorded.
   ///
   /// In de, this message translates to:
-  /// **'Noch keine Mahlzeiten erfasst'**
+  /// **'Dein Journal ist leer.'**
   String get noMealsRecorded;
 
   /// No description provided for @deleteQuestion.
@@ -899,7 +899,7 @@ abstract class AppLocalizations {
   /// No description provided for @analyzingMeal.
   ///
   /// In de, this message translates to:
-  /// **'Mahlzeit wird analysiert...'**
+  /// **'Mahlzeit wird geprüft...'**
   String get analyzingMeal;
 
   /// No description provided for @cameraNeeded.
@@ -953,7 +953,7 @@ abstract class AppLocalizations {
   /// No description provided for @saveMeal.
   ///
   /// In de, this message translates to:
-  /// **'Speichern'**
+  /// **'Eintrag loggen'**
   String get saveMeal;
 
   /// No description provided for @welcomeSlogan.

@@ -15,7 +15,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get welcome => 'Welcome to Kalorat';
 
   @override
-  String get welcomeSubtitle => 'Your personal calorie tracker';
+  String get welcomeSubtitle => 'Your companion for the climb.';
 
   @override
   String get next => 'Next';
@@ -121,22 +121,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get bmiObese => 'Obese';
 
   @override
-  String get takePhoto => 'Take photo';
+  String get takePhoto => 'Capture';
 
   @override
   String get addMorePhotos => 'Add more photos';
 
   @override
-  String get analyzeMeal => 'Analyze meal';
+  String get analyzeMeal => 'Check Provisions';
 
   @override
-  String get analyzing => 'Analyzing...';
+  String get analyzing => 'Checking...';
 
   @override
   String get mealName => 'Meal';
 
   @override
-  String get calories => 'Calories';
+  String get calories => 'Energy';
 
   @override
   String get protein => 'Protein';
@@ -203,7 +203,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get weightHistory => 'Weight history';
 
   @override
-  String get noWeightData => 'No weight data available yet';
+  String get noWeightData => 'The path starts here.';
 
   @override
   String get statistics => 'Statistics';
@@ -338,13 +338,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get whatsYourGoal => 'What\'s your goal?';
 
   @override
-  String get loseWeight => 'Lose weight';
+  String get loseWeight => 'Healthy Pace';
 
   @override
-  String get maintainWeight => 'Maintain weight';
+  String get maintainWeight => 'Steady Path';
 
   @override
-  String get gainMuscle => 'Gain muscle';
+  String get gainMuscle => 'Building Strength';
 
   @override
   String get whatsYourGender => 'What\'s your gender?';
@@ -380,7 +380,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get fatsShort => 'Fat';
 
   @override
-  String get reminders => 'Reminders';
+  String get reminders => 'Nudges';
 
   @override
   String get logMeals => 'Log meals';
@@ -407,7 +407,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get myHistory => 'My History';
 
   @override
-  String get noMealsRecorded => 'No meals recorded yet';
+  String get noMealsRecorded => 'Your journal is empty.';
 
   @override
   String get deleteQuestion => 'Delete?';
@@ -417,7 +417,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Do you really want to delete this meal?';
 
   @override
-  String get analyzingMeal => 'Analyzing your meal...';
+  String get analyzingMeal => 'Checking provisions...';
 
   @override
   String get cameraNeeded => 'Camera Access Needed';
@@ -445,7 +445,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get analysisResult => 'Analysis Result';
 
   @override
-  String get saveMeal => 'Save Meal';
+  String get saveMeal => 'Log Entry';
 
   @override
   String get welcomeSlogan => 'Calories, tracked beautifully.';

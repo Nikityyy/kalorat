@@ -107,7 +107,7 @@ class MeScreen extends StatelessWidget {
                     style: AppTypography.displayMedium.copyWith(fontSize: 22),
                   ),
                   const Icon(
-                    Icons.calendar_today,
+                    Icons.today,
                     color: AppColors.styrianForest,
                     size: 24,
                   ),
@@ -349,7 +349,7 @@ class MeScreen extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: isPrimary ? color : AppColors.pebble,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppTheme.borderRadius),
         border: isPrimary ? null : Border.all(color: AppColors.pebble),
       ),
       child: Column(
@@ -489,7 +489,7 @@ class MeScreen extends StatelessWidget {
         padding: const EdgeInsets.all(40),
         decoration: BoxDecoration(
           color: AppColors.limestone,
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(AppTheme.borderRadius),
           border: Border.all(color: AppColors.pebble),
         ),
         child: Column(
@@ -535,7 +535,7 @@ class MeScreen extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(16, 24, 24, 16),
       decoration: BoxDecoration(
         color: AppColors.limestone,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(AppTheme.borderRadius),
         border: Border.all(color: AppColors.borderGrey),
         // No boxShadow - flat design mandate
       ),
@@ -545,12 +545,14 @@ class MeScreen extends StatelessWidget {
           maxY: maxY,
           gridData: FlGridData(
             show: true,
-            drawVerticalLine: false,
-            horizontalInterval: (maxY - minY) / 4, // roughly 4 lines
-            getDrawingHorizontalLine: (value) => FlLine(
-              color: AppColors.pebble.withValues(alpha: 0.5),
+            horizontalInterval: (maxY - minY) / 4,
+            getDrawingHorizontalLine: (value) =>
+                FlLine(color: AppColors.borderGrey, strokeWidth: 1),
+            drawVerticalLine: true,
+            verticalInterval: 1,
+            getDrawingVerticalLine: (value) => FlLine(
+              color: AppColors.borderGrey.withValues(alpha: 0.3),
               strokeWidth: 1,
-              dashArray: [4, 4],
             ),
           ),
           titlesData: FlTitlesData(
@@ -578,7 +580,7 @@ class MeScreen extends StatelessWidget {
                     padding: const EdgeInsets.only(top: 8.0),
                     child: Text(
                       dateStr,
-                      style: TextStyle(
+                      style: AppTypography.dataLabel.copyWith(
                         color: AppColors.slate.withValues(alpha: 0.4),
                         fontSize: 10,
                         fontWeight: FontWeight.w600,
@@ -599,7 +601,7 @@ class MeScreen extends StatelessWidget {
                   }
                   return Text(
                     value.toStringAsFixed(1),
-                    style: TextStyle(
+                    style: AppTypography.dataLabel.copyWith(
                       color: AppColors.slate.withValues(alpha: 0.4),
                       fontSize: 10,
                       fontWeight: FontWeight.w600,
@@ -616,8 +618,7 @@ class MeScreen extends StatelessWidget {
               spots: recentWeights.asMap().entries.map((e) {
                 return FlSpot(e.key.toDouble(), e.value.weight);
               }).toList(),
-              isCurved: true,
-              curveSmoothness: 0.35,
+              isCurved: false, // Stepped technical plot
               color: AppColors.styrianForest,
               barWidth: 3,
               isStrokeCapRound: true,
@@ -632,16 +633,8 @@ class MeScreen extends StatelessWidget {
                     ),
               ),
               belowBarData: BarAreaData(
-                show: true,
-                gradient: LinearGradient(
-                  colors: [
-                    AppColors.styrianForest.withValues(alpha: 0.2),
-                    AppColors.styrianForest.withValues(alpha: 0.0),
-                  ],
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                ),
-              ),
+                show: false,
+              ), // No gradient fill - flat design
             ),
           ],
           lineTouchData: LineTouchData(
@@ -663,7 +656,7 @@ class MeScreen extends StatelessWidget {
                       final date = recentWeights[index].date;
                       final dateStr = '${date.day}.${date.month}';
 
-                      final textStyle = TextStyle(
+                      final textStyle = AppTypography.dataLabel.copyWith(
                         color: AppColors.limestone,
                         fontWeight: FontWeight.bold,
                         fontSize: 12,

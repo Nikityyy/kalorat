@@ -6,6 +6,7 @@ import 'package:kalorat/extensions/l10n_extension.dart';
 import 'package:provider/provider.dart';
 import '../models/models.dart';
 import '../providers/app_provider.dart';
+import '../theme/app_theme.dart';
 
 class AddWeightScreen extends StatefulWidget {
   const AddWeightScreen({super.key});
@@ -52,8 +53,8 @@ class _AddWeightScreenState extends State<AddWeightScreen> {
               child: Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey),
-                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: AppColors.borderGrey),
+                  borderRadius: BorderRadius.circular(AppTheme.borderRadius),
                 ),
                 child: Text(
                   '${_selectedDate.day}.${_selectedDate.month}.${_selectedDate.year}',
@@ -77,7 +78,7 @@ class _AddWeightScreenState extends State<AddWeightScreen> {
                 hintText: '70.0',
                 suffixText: 'kg',
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(AppTheme.borderRadius),
                 ),
               ),
             ),
@@ -85,7 +86,7 @@ class _AddWeightScreenState extends State<AddWeightScreen> {
             ElevatedButton(
               onPressed: _save,
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.kaiserRed,
+                backgroundColor: AppColors.styrianForest,
                 foregroundColor: AppColors.pebble,
                 padding: const EdgeInsets.symmetric(vertical: 16),
               ),
