@@ -2,10 +2,20 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:http/io_client.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 
 class GeminiService {
-  static const String _baseUrl =
-      'https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-lite-latest:generateContent';
+  static const String _baseUrlBase =
+      'https://generativelanguage.googleapis.com/v1beta/models/';
+
+  static const List<String> _primaryModels = [
+    'gemini-flash-lite-latest',
+    'gemini-flash-latest',
+  ];
+
+  static const String _fallbackModel = 'gemma-3-27b-it';
+  static const String _settingsBoxName = 'gemini_settings_box';
+  static const String _lastModelIndexKey = 'last_used_model_index';
 
   final String apiKey;
   final String language;
@@ -17,6 +27,55 @@ class GeminiService {
       throw Exception('API key is not set');
     }
 
+    final box = await Hive.openBox(_settingsBoxName);
+    int lastIndex = box.get(_lastModelIndexKey, defaultValue: 0) as int;
+
+    // Start with the model AFTER the last used one to ensure rotation
+    int startIndex = (lastIndex + 1) % _primaryModels.length;
+
+    // Try primary models in sequence
+    for (int i = 0; i < _primaryModels.length; i++) {
+      int currentIndex = (startIndex + i) % _primaryModels.length;
+      String model = _primaryModels[currentIndex];
+
+      try {
+        print('Attempting analysis with primary model: $model');
+        final result = await _makeRequest(model, imagePaths);
+
+        // If successful, save this index as the last used one
+        await box.put(_lastModelIndexKey, currentIndex);
+        return result;
+      } catch (e) {
+        // Check for rate limit (429) or other errors to decide whether to continue
+        // We'll proceed to next model on 429.
+        if (e.toString().contains('429')) {
+          print('Model $model rate limited (429). Switching to next option...');
+          continue; // Try next primary model
+        } else {
+          // For other errors, we might want to fail fast or try others.
+          // Given the requirement is specifically about rate limits, we'll rethrow others for now
+          // unless we want to be very resilient.
+          rethrow;
+        }
+      }
+    }
+
+    // specific fallback
+    print(
+      'All primary models failed or rate limited. Attempting fallback: $_fallbackModel',
+    );
+    try {
+      return await _makeRequest(_fallbackModel, imagePaths);
+    } catch (e) {
+      print('Fallback model also failed: $e');
+      rethrow;
+    }
+  }
+
+  Future<Map<String, dynamic>?> _makeRequest(
+    String modelName,
+    List<String> imagePaths,
+  ) async {
     // Use a custom client with longer timeouts
     final httpClient = HttpClient()
       ..connectionTimeout = const Duration(minutes: 2)
@@ -45,6 +104,19 @@ class GeminiService {
       // Build prompt based on language
       final prompt = _getPrompt(language);
 
+      // Build config
+      final Map<String, dynamic> generationConfig = {
+        'temperature': 0.4,
+        'topK': 32,
+        'topP': 1,
+        'maxOutputTokens': 1280,
+      };
+
+      // Apply thinking config only for Gemini models
+      if (modelName.contains('gemini')) {
+        generationConfig['thinkingConfig'] = {'thinkingBudget': 1024};
+      }
+
       // Build request body
       final requestBody = {
         'contents': [
@@ -55,18 +127,14 @@ class GeminiService {
             ],
           },
         ],
-        'generationConfig': {
-          'temperature': 0.4,
-          'topK': 32,
-          'topP': 1,
-          'maxOutputTokens': 1280,
-          "thinkingConfig": {"thinkingBudget": "1024"},
-        },
+        'generationConfig': generationConfig,
       };
+
+      final url = '$_baseUrlBase$modelName:generateContent?key=$apiKey';
 
       final response = await client
           .post(
-            Uri.parse('$_baseUrl?key=$apiKey'),
+            Uri.parse(url),
             headers: {'Content-Type': 'application/json'},
             body: jsonEncode(requestBody),
           )
@@ -79,7 +147,7 @@ class GeminiService {
                 as String?;
 
         if (text != null) {
-          print('Gemini Response: $text');
+          print('Gemini Response ($modelName): $text');
           String cleanedText = text.trim();
           if (cleanedText.startsWith('```json')) {
             cleanedText = cleanedText.substring(7);
@@ -143,6 +211,7 @@ class GeminiService {
           throw Exception('Empty response from Gemini');
         }
       } else {
+        // Throw exception with status code to catch it in analyzeMeal
         throw Exception('API error: ${response.statusCode} - ${response.body}');
       }
     } catch (e) {
@@ -150,21 +219,18 @@ class GeminiService {
     } finally {
       client.close();
     }
-
-    // Unreachable due to rethrow, but keeps analyzer happy if needed
-    // return null;
   }
 
   Future<bool> validateApiKey(String key) async {
     if (key.isEmpty) return false;
 
-    // We basically make a dummy request to check validity.
-    // Using a cheap model or just empty prompt validation if possible.
-    // We'll try to generate a simple "Ping" with the key.
+    // Use Flash Lite for validation as it's cheaper/quicker
+    final url =
+        '${_baseUrlBase}gemini-flash-lite-latest:generateContent?key=$key';
 
     try {
       final response = await http.post(
-        Uri.parse('$_baseUrl?key=$key'),
+        Uri.parse(url),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'contents': [

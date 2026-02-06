@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -130,6 +131,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
               onChanged: (v) => provider.updateUser(weightRemindersEnabled: v),
             ),
           ]),
+          const SizedBox(height: 24),
+          _buildHealthSection(provider, user),
           const SizedBox(height: 24),
           _buildSection(l10n.data, [
             ListTile(
@@ -419,6 +422,85 @@ class _SettingsScreenState extends State<SettingsScreen> {
         _selectedBirthdate = picked;
       });
     }
+  }
+
+  Widget _buildHealthSection(AppProvider provider, UserModel user) {
+    final l10n = context.l10n;
+    final healthAppName = Platform.isIOS ? 'Apple Health' : 'Health Connect';
+
+    return _buildSection(l10n.healthIntegration, [
+      SwitchListTile(
+        title: Text(
+          l10n.syncWith(healthAppName),
+          style: const TextStyle(
+            fontWeight: FontWeight.w600,
+            color: AppColors.slate,
+          ),
+        ),
+        subtitle: Text(
+          user.healthSyncEnabled ? l10n.connected : l10n.disconnected,
+          style: TextStyle(
+            fontSize: 12,
+            color: user.healthSyncEnabled
+                ? AppColors.success
+                : AppColors.slate.withValues(alpha: 0.6),
+          ),
+        ),
+        value: user.healthSyncEnabled,
+        activeColor: AppColors.primary,
+        onChanged: (val) async {
+          if (val) {
+            // Try to connect
+            final success = await provider.healthService.requestPermissions();
+            if (success) {
+              provider.updateUser(healthSyncEnabled: true);
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(l10n.healthConnected),
+                    backgroundColor: AppColors.success,
+                  ),
+                );
+              }
+            } else {
+              // Failed
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(l10n.healthConnectionFailed),
+                    backgroundColor: AppColors.error,
+                  ),
+                );
+              }
+            }
+          } else {
+            // Disconnect
+            provider.updateUser(healthSyncEnabled: false);
+          }
+        },
+      ),
+      if (user.healthSyncEnabled) ...[
+        const Divider(height: 1, indent: 16, endIndent: 16),
+        SwitchListTile(
+          title: Text(
+            l10n.syncMeals,
+            style: const TextStyle(fontSize: 14, color: AppColors.slate),
+          ),
+          value: user.syncMealsToHealth,
+          activeColor: AppColors.primary,
+          onChanged: (val) => provider.updateUser(syncMealsToHealth: val),
+        ),
+        SwitchListTile(
+          title: Text(
+            l10n.syncWeight,
+            style: const TextStyle(fontSize: 14, color: AppColors.slate),
+          ),
+          value: user.syncWeightToHealth,
+          activeColor: AppColors.primary,
+          onChanged: (val) => provider.updateUser(syncWeightToHealth: val),
+        ),
+      ],
+    ]);
   }
 
   void _saveChanges() async {

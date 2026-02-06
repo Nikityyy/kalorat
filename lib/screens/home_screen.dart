@@ -50,28 +50,47 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (_cameraController == null || !_cameraController!.value.isInitialized) {
-      return;
-    }
-
     if (state == AppLifecycleState.inactive) {
-      _cameraController?.dispose();
+      if (_cameraController != null && _cameraController!.value.isInitialized) {
+        _cameraController?.dispose();
+        setState(() {
+          _isCameraInitialized = false;
+        });
+      }
     } else if (state == AppLifecycleState.resumed) {
-      _initCamera();
+      if (!_isCameraInitialized) {
+        _initCamera();
+      }
     }
   }
 
   Future<void> _initCamera() async {
     final status = await Permission.camera.request();
     if (!status.isGranted) {
-      setState(() => _hasPermission = false);
+      if (mounted) setState(() => _hasPermission = false);
       return;
     }
 
-    setState(() => _hasPermission = true);
+    if (mounted) setState(() => _hasPermission = true);
 
-    _cameras = await availableCameras();
-    if (_cameras == null || _cameras!.isEmpty) return;
+    try {
+      _cameras = await availableCameras();
+    } catch (e) {
+      debugPrint('Error accessing cameras: $e');
+      _cameras = [];
+    }
+
+    if (_cameras == null || _cameras!.isEmpty) {
+      if (mounted) {
+        setState(() => _isCameraInitialized = false);
+      }
+      return;
+    }
+
+    // Dispose old controller if it exists
+    if (_cameraController != null) {
+      await _cameraController!.dispose();
+    }
 
     _cameraController = CameraController(
       _cameras!.first,
@@ -86,6 +105,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       }
     } catch (e) {
       debugPrint('Camera init error: $e');
+      if (mounted) {
+        setState(() => _isCameraInitialized = false);
+      }
     }
   }
 
@@ -518,9 +540,16 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
   Widget _buildCamera() {
     final l10n = context.l10n;
+
+    final bool canShowCamera =
+        _isCameraInitialized &&
+        _cameraController != null &&
+        _cameraController!.value.isInitialized &&
+        _cameraController!.value.previewSize != null;
+
     return Stack(
       children: [
-        if (_isCameraInitialized && _cameraController != null)
+        if (canShowCamera)
           Positioned.fill(
             child: AspectRatio(
               aspectRatio: _cameraController!.value.aspectRatio,
@@ -528,8 +557,30 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             ),
           )
         else
-          const Center(
-            child: CircularProgressIndicator(color: AppColors.styrianForest),
+          Container(
+            color: Colors.black,
+            child: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (_cameras != null && _cameras!.isEmpty)
+                    Padding(
+                      padding: const EdgeInsets.all(32.0),
+                      child: Text(
+                        'No camera found. Please use Gallery.',
+                        textAlign: TextAlign.center,
+                        style: AppTypography.bodyMedium.copyWith(
+                          color: AppColors.pebble,
+                        ),
+                      ),
+                    )
+                  else
+                    const CircularProgressIndicator(
+                      color: AppColors.styrianForest,
+                    ),
+                ],
+              ),
+            ),
           ),
 
         // Simple Top Bar

@@ -16,6 +16,7 @@ class AnalysisStep extends StatefulWidget {
   final int goalIndex;
   final String apiKey;
   final String language;
+  final bool healthSyncEnabled;
 
   const AnalysisStep({
     super.key,
@@ -27,6 +28,7 @@ class AnalysisStep extends StatefulWidget {
     required this.goalIndex,
     required this.apiKey,
     required this.language,
+    this.healthSyncEnabled = false,
   });
 
   @override
@@ -57,9 +59,19 @@ class _AnalysisStepState extends State<AnalysisStep> {
       onboardingCompleted: true,
       goal: widget.goalIndex,
       gender: widget.genderIndex,
+      healthSyncEnabled: widget.healthSyncEnabled,
+      syncMealsToHealth: widget.healthSyncEnabled,
+      syncWeightToHealth: widget.healthSyncEnabled,
     );
 
     await context.read<AppProvider>().saveUser(user);
+
+    // KEY FIX: Instantly use weight as first history log
+    if (widget.weight > 0) {
+      await context.read<AppProvider>().saveWeight(
+        WeightModel(weight: widget.weight, date: DateTime.now()),
+      );
+    }
 
     if (mounted) {
       Navigator.of(

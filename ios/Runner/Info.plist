@@ -51,5 +51,9 @@
 	<string>Kalorat benötigt Zugriff auf Fotos für Mahlzeiten-Analyse.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>Kalorat speichert Fotos deiner Mahlzeiten.</string>
+	<key>NSHealthShareUsageDescription</key>
+	<string>Kalorat reads your health data to provide comprehensive nutrition insights.</string>
+	<key>NSHealthUpdateUsageDescription</key>
+	<string>Kalorat writes nutrition and weight data to Apple Health for a complete health overview.</string>
 </dict>
 </plist>

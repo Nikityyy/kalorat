@@ -201,6 +201,38 @@
   "goalMuscleGain": "Muskeln aufbauen",
   "editMealName": "Mahlzeitnamen bearbeiten",
   "editCalories": "Kalorien bearbeiten",
-  "date": "Datum"
+  "date": "Datum",
+
+  "healthIntegration": "Gesundheitsintegration",
+  "healthSyncEnabled": "Mit Gesundheit synchronisieren",
+  "healthSyncDescription": "Teile Ernährungs- und Gewichtsdaten mit Apple Health oder Google Health Connect.",
+  "connectHealth": "Verbinden",
+  "disconnectHealth": "Trennen",
+  "syncMeals": "Mahlzeiten synchronisieren",
+  "syncWeight": "Gewicht synchronisieren",
+  "healthConnected": "Verbunden",
+  "healthNotConnected": "Nicht verbunden",
+  "healthConnectNotInstalled": "Health Connect App nicht installiert",
+  "healthPermissionDenied": "Gesundheitsberechtigungen verweigert",
+  "healthSyncSuccess": "Mit Gesundheits-App synchronisiert",
+
+  "healthOnboardingTitle": "Gesundheit verbinden",
+  "healthOnboardingDescription": "Synchronisiere deine Ernährungs- und Gewichtsdaten mit der Gesundheits-App deines Geräts für einen vollständigen Überblick.",
+  "healthOnboardingBenefit1": "Automatisches Mahlzeiten-Logging",
+  "healthOnboardingBenefit2": "Gewicht über Apps synchronisieren",
+  "healthOnboardingBenefit3": "Einheitliches Gesundheits-Dashboard",
+  "connectNow": "Jetzt verbinden",
+  "skipForNow": "Später einrichten",
+  "syncWith": "Mit {appName} synchronisieren",
+  "@syncWith": {
+    "placeholders": {
+      "appName": {
+        "type": "String"
+      }
+    }
+  },
+  "connected": "Verbunden",
+  "disconnected": "Getrennt",
+  "healthConnectionFailed": "Verbindung fehlgeschlagen"
 }
 

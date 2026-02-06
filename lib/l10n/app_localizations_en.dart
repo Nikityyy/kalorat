@@ -543,4 +543,77 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get date => 'Date';
+
+  @override
+  String get healthIntegration => 'Health Integration';
+
+  @override
+  String get healthSyncEnabled => 'Sync with Health';
+
+  @override
+  String get healthSyncDescription =>
+      'Share nutrition and weight data with Apple Health or Google Health Connect.';
+
+  @override
+  String get connectHealth => 'Connect';
+
+  @override
+  String get disconnectHealth => 'Disconnect';
+
+  @override
+  String get syncMeals => 'Sync meals';
+
+  @override
+  String get syncWeight => 'Sync weight';
+
+  @override
+  String get healthConnected => 'Connected';
+
+  @override
+  String get healthNotConnected => 'Not connected';
+
+  @override
+  String get healthConnectNotInstalled => 'Health Connect app not installed';
+
+  @override
+  String get healthPermissionDenied => 'Health permissions denied';
+
+  @override
+  String get healthSyncSuccess => 'Synced with health app';
+
+  @override
+  String get healthOnboardingTitle => 'Connect Your Health';
+
+  @override
+  String get healthOnboardingDescription =>
+      'Sync your nutrition and weight data with your device\'s health app for a complete picture of your wellness.';
+
+  @override
+  String get healthOnboardingBenefit1 => 'Automatic meal logging';
+
+  @override
+  String get healthOnboardingBenefit2 => 'Weight sync across apps';
+
+  @override
+  String get healthOnboardingBenefit3 => 'Unified health dashboard';
+
+  @override
+  String get connectNow => 'Connect Now';
+
+  @override
+  String get skipForNow => 'Skip for now';
+
+  @override
+  String syncWith(String appName) {
+    return 'Sync with $appName';
+  }
+
+  @override
+  String get connected => 'Connected';
+
+  @override
+  String get disconnected => 'Disconnected';
+
+  @override
+  String get healthConnectionFailed => 'Connection failed';
 }

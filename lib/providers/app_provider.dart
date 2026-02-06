@@ -9,6 +9,7 @@ class AppProvider extends ChangeNotifier {
   late final OfflineQueueService _offlineQueueService;
   late final ExportImportService _exportImportService;
   final NotificationService _notificationService = NotificationService();
+  final HealthService _healthService = HealthService();
 
   UserModel? _user;
   String? _languageOverride;
@@ -47,6 +48,7 @@ class AppProvider extends ChangeNotifier {
   OfflineQueueService get offlineQueueService => _offlineQueueService;
   ExportImportService get exportImportService => _exportImportService;
   NotificationService get notificationService => _notificationService;
+  HealthService get healthService => _healthService;
 
   Future<void> init() async {
     await _databaseService.init();
@@ -118,6 +120,9 @@ class AppProvider extends ChangeNotifier {
     bool? weightRemindersEnabled,
     int? goal,
     int? gender,
+    bool? healthSyncEnabled,
+    bool? syncMealsToHealth,
+    bool? syncWeightToHealth,
   }) async {
     if (_user == null) return;
 
@@ -134,6 +139,9 @@ class AppProvider extends ChangeNotifier {
           weightRemindersEnabled ?? _user!.weightRemindersEnabled,
       goal: goal ?? _user!.goal,
       gender: gender ?? _user!.gender,
+      healthSyncEnabled: healthSyncEnabled ?? _user!.healthSyncEnabled,
+      syncMealsToHealth: syncMealsToHealth ?? _user!.syncMealsToHealth,
+      syncWeightToHealth: syncWeightToHealth ?? _user!.syncWeightToHealth,
     );
 
     await _databaseService.saveUser(_user!);
@@ -187,6 +195,14 @@ class AppProvider extends ChangeNotifier {
 
   Future<void> saveMeal(MealModel meal) async {
     await _databaseService.saveMeal(meal);
+
+    // Sync to health platform if enabled
+    if (_user?.healthSyncEnabled == true &&
+        _user?.syncMealsToHealth == true &&
+        !meal.isPending) {
+      await _healthService.writeMealData(meal);
+    }
+
     notifyListeners();
   }
 
@@ -218,6 +234,11 @@ class AppProvider extends ChangeNotifier {
         // If the new weight is equal to or after the newest existing weight, update profile
         await updateUser(weight: weight.weight);
       }
+    }
+
+    // Sync to health platform if enabled
+    if (_user?.healthSyncEnabled == true && _user?.syncWeightToHealth == true) {
+      await _healthService.writeWeight(weight.weight, weight.date);
     }
 
     notifyListeners();

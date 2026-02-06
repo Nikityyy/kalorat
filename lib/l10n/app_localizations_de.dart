@@ -546,4 +546,78 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get date => 'Datum';
+
+  @override
+  String get healthIntegration => 'Gesundheitsintegration';
+
+  @override
+  String get healthSyncEnabled => 'Mit Gesundheit synchronisieren';
+
+  @override
+  String get healthSyncDescription =>
+      'Teile Ernährungs- und Gewichtsdaten mit Apple Health oder Google Health Connect.';
+
+  @override
+  String get connectHealth => 'Verbinden';
+
+  @override
+  String get disconnectHealth => 'Trennen';
+
+  @override
+  String get syncMeals => 'Mahlzeiten synchronisieren';
+
+  @override
+  String get syncWeight => 'Gewicht synchronisieren';
+
+  @override
+  String get healthConnected => 'Verbunden';
+
+  @override
+  String get healthNotConnected => 'Nicht verbunden';
+
+  @override
+  String get healthConnectNotInstalled =>
+      'Health Connect App nicht installiert';
+
+  @override
+  String get healthPermissionDenied => 'Gesundheitsberechtigungen verweigert';
+
+  @override
+  String get healthSyncSuccess => 'Mit Gesundheits-App synchronisiert';
+
+  @override
+  String get healthOnboardingTitle => 'Gesundheit verbinden';
+
+  @override
+  String get healthOnboardingDescription =>
+      'Synchronisiere deine Ernährungs- und Gewichtsdaten mit der Gesundheits-App deines Geräts für einen vollständigen Überblick.';
+
+  @override
+  String get healthOnboardingBenefit1 => 'Automatisches Mahlzeiten-Logging';
+
+  @override
+  String get healthOnboardingBenefit2 => 'Gewicht über Apps synchronisieren';
+
+  @override
+  String get healthOnboardingBenefit3 => 'Einheitliches Gesundheits-Dashboard';
+
+  @override
+  String get connectNow => 'Jetzt verbinden';
+
+  @override
+  String get skipForNow => 'Später einrichten';
+
+  @override
+  String syncWith(String appName) {
+    return 'Mit $appName synchronisieren';
+  }
+
+  @override
+  String get connected => 'Verbunden';
+
+  @override
+  String get disconnected => 'Getrennt';
+
+  @override
+  String get healthConnectionFailed => 'Verbindung fehlgeschlagen';
 }

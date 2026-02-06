@@ -9,6 +9,7 @@ import 'age_step.dart';
 import 'height_step.dart';
 import 'weight_step.dart';
 import 'goal_step.dart';
+import 'health_step.dart';
 import 'api_key_step.dart';
 import 'analysis_step.dart';
 
@@ -37,6 +38,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
   double _weight = 70.0; // Double for precision
   int _goalIndex = 1; // 0: Lose, 1: Maintain, 2: Gain
   String _apiKey = '';
+  bool _healthSyncEnabled = false;
 
   @override
   void dispose() {
@@ -83,14 +85,14 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
                     const SizedBox(width: 24),
 
                   if (_currentPage > 0 &&
-                      _currentPage < 8) // Hide on welcome and analysis
+                      _currentPage < 9) // Hide on welcome and analysis
                     Expanded(
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         child: TweenAnimationBuilder<double>(
                           duration: const Duration(milliseconds: 300),
                           curve: Curves.easeInOut,
-                          tween: Tween<double>(begin: 0, end: _currentPage / 8),
+                          tween: Tween<double>(begin: 0, end: _currentPage / 9),
                           builder: (context, value, _) =>
                               LinearProgressIndicator(
                                 value: value,
@@ -169,6 +171,13 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
                       _nextPage();
                     },
                   ),
+                  HealthStep(
+                    language: _language,
+                    onNext: (connected) {
+                      setState(() => _healthSyncEnabled = connected);
+                      _nextPage();
+                    },
+                  ),
                   ApiKeyStep(
                     language: _language,
                     onNext: (key) {
@@ -185,6 +194,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
                     weight: _weight,
                     goalIndex: _goalIndex,
                     apiKey: _apiKey,
+                    healthSyncEnabled: _healthSyncEnabled,
                   ),
                 ],
               ),

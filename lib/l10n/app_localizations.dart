@@ -1147,6 +1147,144 @@ abstract class AppLocalizations {
   /// In de, this message translates to:
   /// **'Datum'**
   String get date;
+
+  /// No description provided for @healthIntegration.
+  ///
+  /// In de, this message translates to:
+  /// **'Gesundheitsintegration'**
+  String get healthIntegration;
+
+  /// No description provided for @healthSyncEnabled.
+  ///
+  /// In de, this message translates to:
+  /// **'Mit Gesundheit synchronisieren'**
+  String get healthSyncEnabled;
+
+  /// No description provided for @healthSyncDescription.
+  ///
+  /// In de, this message translates to:
+  /// **'Teile Ernährungs- und Gewichtsdaten mit Apple Health oder Google Health Connect.'**
+  String get healthSyncDescription;
+
+  /// No description provided for @connectHealth.
+  ///
+  /// In de, this message translates to:
+  /// **'Verbinden'**
+  String get connectHealth;
+
+  /// No description provided for @disconnectHealth.
+  ///
+  /// In de, this message translates to:
+  /// **'Trennen'**
+  String get disconnectHealth;
+
+  /// No description provided for @syncMeals.
+  ///
+  /// In de, this message translates to:
+  /// **'Mahlzeiten synchronisieren'**
+  String get syncMeals;
+
+  /// No description provided for @syncWeight.
+  ///
+  /// In de, this message translates to:
+  /// **'Gewicht synchronisieren'**
+  String get syncWeight;
+
+  /// No description provided for @healthConnected.
+  ///
+  /// In de, this message translates to:
+  /// **'Verbunden'**
+  String get healthConnected;
+
+  /// No description provided for @healthNotConnected.
+  ///
+  /// In de, this message translates to:
+  /// **'Nicht verbunden'**
+  String get healthNotConnected;
+
+  /// No description provided for @healthConnectNotInstalled.
+  ///
+  /// In de, this message translates to:
+  /// **'Health Connect App nicht installiert'**
+  String get healthConnectNotInstalled;
+
+  /// No description provided for @healthPermissionDenied.
+  ///
+  /// In de, this message translates to:
+  /// **'Gesundheitsberechtigungen verweigert'**
+  String get healthPermissionDenied;
+
+  /// No description provided for @healthSyncSuccess.
+  ///
+  /// In de, this message translates to:
+  /// **'Mit Gesundheits-App synchronisiert'**
+  String get healthSyncSuccess;
+
+  /// No description provided for @healthOnboardingTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Gesundheit verbinden'**
+  String get healthOnboardingTitle;
+
+  /// No description provided for @healthOnboardingDescription.
+  ///
+  /// In de, this message translates to:
+  /// **'Synchronisiere deine Ernährungs- und Gewichtsdaten mit der Gesundheits-App deines Geräts für einen vollständigen Überblick.'**
+  String get healthOnboardingDescription;
+
+  /// No description provided for @healthOnboardingBenefit1.
+  ///
+  /// In de, this message translates to:
+  /// **'Automatisches Mahlzeiten-Logging'**
+  String get healthOnboardingBenefit1;
+
+  /// No description provided for @healthOnboardingBenefit2.
+  ///
+  /// In de, this message translates to:
+  /// **'Gewicht über Apps synchronisieren'**
+  String get healthOnboardingBenefit2;
+
+  /// No description provided for @healthOnboardingBenefit3.
+  ///
+  /// In de, this message translates to:
+  /// **'Einheitliches Gesundheits-Dashboard'**
+  String get healthOnboardingBenefit3;
+
+  /// No description provided for @connectNow.
+  ///
+  /// In de, this message translates to:
+  /// **'Jetzt verbinden'**
+  String get connectNow;
+
+  /// No description provided for @skipForNow.
+  ///
+  /// In de, this message translates to:
+  /// **'Später einrichten'**
+  String get skipForNow;
+
+  /// No description provided for @syncWith.
+  ///
+  /// In de, this message translates to:
+  /// **'Mit {appName} synchronisieren'**
+  String syncWith(String appName);
+
+  /// No description provided for @connected.
+  ///
+  /// In de, this message translates to:
+  /// **'Verbunden'**
+  String get connected;
+
+  /// No description provided for @disconnected.
+  ///
+  /// In de, this message translates to:
+  /// **'Getrennt'**
+  String get disconnected;
+
+  /// No description provided for @healthConnectionFailed.
+  ///
+  /// In de, this message translates to:
+  /// **'Verbindung fehlgeschlagen'**
+  String get healthConnectionFailed;
 }
 
 class _AppLocalizationsDelegate

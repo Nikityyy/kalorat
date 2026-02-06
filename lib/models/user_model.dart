@@ -37,6 +37,15 @@ class UserModel extends HiveObject {
   @HiveField(10)
   int? gender; // 0: Male, 1: Female
 
+  @HiveField(11)
+  bool healthSyncEnabled;
+
+  @HiveField(12)
+  bool syncMealsToHealth;
+
+  @HiveField(13)
+  bool syncWeightToHealth;
+
   UserModel({
     required this.name,
     required this.birthdate,
@@ -49,6 +58,9 @@ class UserModel extends HiveObject {
     this.weightRemindersEnabled = true,
     this.goal = 1,
     this.gender,
+    this.healthSyncEnabled = false,
+    this.syncMealsToHealth = true,
+    this.syncWeightToHealth = true,
   });
 
   int get age {
@@ -117,6 +129,9 @@ class UserModel extends HiveObject {
     'weightRemindersEnabled': weightRemindersEnabled,
     'goal': goal,
     'gender': gender,
+    'healthSyncEnabled': healthSyncEnabled,
+    'syncMealsToHealth': syncMealsToHealth,
+    'syncWeightToHealth': syncWeightToHealth,
   };
 
   factory UserModel.fromJson(Map<String, dynamic> json) => UserModel(
@@ -131,5 +146,8 @@ class UserModel extends HiveObject {
     weightRemindersEnabled: json['weightRemindersEnabled'] ?? true,
     goal: json['goal'] ?? 1,
     gender: json['gender'] ?? 0,
+    healthSyncEnabled: json['healthSyncEnabled'] ?? false,
+    syncMealsToHealth: json['syncMealsToHealth'] ?? true,
+    syncWeightToHealth: json['syncWeightToHealth'] ?? true,
   );
 }
