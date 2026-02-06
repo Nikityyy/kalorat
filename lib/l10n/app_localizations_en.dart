@@ -536,5 +536,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get goalMuscleGain => 'Muscle Gain';
 
   @override
+  String get editMealName => 'Edit meal name';
+
+  @override
+  String get editCalories => 'Edit calories';
+
+  @override
   String get date => 'Date';
 }

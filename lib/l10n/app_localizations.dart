@@ -1130,6 +1130,18 @@ abstract class AppLocalizations {
   /// **'Muskeln aufbauen'**
   String get goalMuscleGain;
 
+  /// No description provided for @editMealName.
+  ///
+  /// In de, this message translates to:
+  /// **'Mahlzeitnamen bearbeiten'**
+  String get editMealName;
+
+  /// No description provided for @editCalories.
+  ///
+  /// In de, this message translates to:
+  /// **'Kalorien bearbeiten'**
+  String get editCalories;
+
   /// No description provided for @date.
   ///
   /// In de, this message translates to:

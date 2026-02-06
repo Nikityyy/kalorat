@@ -40,6 +40,9 @@ class MealModel extends HiveObject {
   @HiveField(11)
   bool isManualEntry;
 
+  @HiveField(12)
+  bool isCalorieOverride;
+
   MealModel({
     required this.id,
     required this.timestamp,
@@ -53,6 +56,7 @@ class MealModel extends HiveObject {
     this.minerals,
     this.isPending = false,
     this.isManualEntry = false,
+    this.isCalorieOverride = false,
   });
 
   MealModel copyWith({
@@ -68,6 +72,7 @@ class MealModel extends HiveObject {
     Map<String, double>? minerals,
     bool? isPending,
     bool? isManualEntry,
+    bool? isCalorieOverride,
   }) {
     return MealModel(
       id: id ?? this.id,
@@ -82,6 +87,7 @@ class MealModel extends HiveObject {
       minerals: minerals ?? this.minerals,
       isPending: isPending ?? this.isPending,
       isManualEntry: isManualEntry ?? this.isManualEntry,
+      isCalorieOverride: isCalorieOverride ?? this.isCalorieOverride,
     );
   }
 
@@ -98,6 +104,7 @@ class MealModel extends HiveObject {
     'minerals': minerals,
     'isPending': isPending,
     'isManualEntry': isManualEntry,
+    'isCalorieOverride': isCalorieOverride,
   };
 
   factory MealModel.fromJson(Map<String, dynamic> json) => MealModel(
@@ -117,5 +124,6 @@ class MealModel extends HiveObject {
         : null,
     isPending: json['isPending'] ?? false,
     isManualEntry: json['isManualEntry'] ?? false,
+    isCalorieOverride: json['isCalorieOverride'] ?? false,
   );
 }

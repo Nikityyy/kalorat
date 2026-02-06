@@ -15,6 +15,7 @@ import '../theme/app_theme.dart';
 import '../theme/app_typography.dart';
 import '../widgets/inputs/action_button.dart';
 import '../widgets/widgets.dart';
+import 'meal_detail_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -31,7 +32,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   bool _isCapturing = false;
   bool _isAnalyzing = false;
   List<String> _capturedPhotos = [];
-  MealModel? _analyzedMeal;
   bool _isTakingMore = false;
 
   @override
@@ -158,7 +158,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
       setState(() {
         _capturedPhotos = [];
-        _analyzedMeal = null;
       });
 
       if (mounted) {
@@ -174,6 +173,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       final result = await gemini.analyzeMeal(_capturedPhotos);
 
       if (result != null) {
+        debugPrint('Analysis result received. Checking content...');
         if (result.containsKey('error') &&
             result['error'] == 'no_food_detected') {
           _showMessage(l10n.noFoodDetected);
@@ -181,56 +181,62 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           return;
         }
 
-        final meal = MealModel(
-          id: mealId,
-          timestamp: DateTime.now(),
-          photoPaths: List.from(_capturedPhotos),
-          mealName: result['meal_name'] ?? '',
-          calories: (result['calories'] ?? 0).toDouble(),
-          protein: (result['protein'] ?? 0).toDouble(),
-          carbs: (result['carbs'] ?? 0).toDouble(),
-          fats: (result['fats'] ?? 0).toDouble(),
-          vitamins: result['vitamins'] != null
-              ? Map<String, double>.from(
-                  (result['vitamins'] as Map).map(
-                    (k, v) => MapEntry(k.toString(), (v ?? 0).toDouble()),
-                  ),
-                )
-              : null,
-          minerals: result['minerals'] != null
-              ? Map<String, double>.from(
-                  (result['minerals'] as Map).map(
-                    (k, v) => MapEntry(k.toString(), (v ?? 0).toDouble()),
-                  ),
-                )
-              : null,
-          isPending: false,
-        );
+        try {
+          debugPrint('Parsing meal data...');
+          final finalMeal = MealModel(
+            id: mealId,
+            timestamp: DateTime.now(),
+            photoPaths: List.from(_capturedPhotos),
+            mealName: result['meal_name'] ?? '',
+            calories: (result['calories'] ?? 0).toDouble(),
+            protein: (result['protein'] ?? 0).toDouble(),
+            carbs: (result['carbs'] ?? 0).toDouble(),
+            fats: (result['fats'] ?? 0).toDouble(),
+            vitamins: result['vitamins'] != null
+                ? Map<String, double>.from(
+                    (result['vitamins'] as Map).map(
+                      (k, v) => MapEntry(k.toString(), (v ?? 0).toDouble()),
+                    ),
+                  )
+                : null,
+            minerals: result['minerals'] != null
+                ? Map<String, double>.from(
+                    (result['minerals'] as Map).map(
+                      (k, v) => MapEntry(k.toString(), (v ?? 0).toDouble()),
+                    ),
+                  )
+                : null,
+            isPending: false,
+          );
+          debugPrint('Meal parsed successfully: ${finalMeal.mealName}');
 
-        setState(() {
-          _analyzedMeal = meal;
-        });
+          if (mounted) {
+            debugPrint('Pushing MealDetailScreen...');
+            await Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) =>
+                    MealDetailScreen(meal: finalMeal, isNewEntry: true),
+              ),
+            );
+            debugPrint('Returned from MealDetailScreen');
+            _clearPhotos();
+          }
+        } catch (e, stack) {
+          debugPrint('Error parsing/pushing: $e\n$stack');
+          _showMessage(l10n.analysisError('Parse error: $e'));
+        }
       }
     } catch (e) {
-      _showMessage(l10n.analysisError(e.toString()));
+      debugPrint('Outer analysis error: $e');
+      if (mounted) {
+        _showMessage(l10n.analysisError(e.toString()));
+      }
     } finally {
-      setState(() => _isAnalyzing = false);
+      if (mounted) {
+        setState(() => _isAnalyzing = false);
+      }
     }
-  }
-
-  Future<void> _saveMeal() async {
-    if (_analyzedMeal == null) return;
-
-    final provider = context.read<AppProvider>();
-    final l10n = context.l10n;
-    await provider.saveMeal(_analyzedMeal!);
-
-    setState(() {
-      _capturedPhotos = [];
-      _analyzedMeal = null;
-    });
-
-    _showMessage(l10n.mealSaved);
   }
 
   void _showMessage(String message) {
@@ -257,7 +263,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   void _clearPhotos() {
     setState(() {
       _capturedPhotos = [];
-      _analyzedMeal = null;
     });
   }
 
@@ -284,10 +289,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       return _buildPermissionRequest();
     }
 
-    if (_analyzedMeal != null) {
-      return _buildMealResult();
-    }
-
     // Show skeleton loading screen while analyzing
     if (_isAnalyzing) {
       return _buildAnalyzingSkeleton();
@@ -304,54 +305,101 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
   Widget _buildAnalyzingSkeleton() {
     final l10n = context.l10n;
+    final screenHeight = MediaQuery.of(context).size.height;
 
-    return Container(
-      color: AppColors.glacialWhite,
-      child: Column(
-        children: [
-          // Header
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Row(
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.arrow_back),
-                  onPressed: () {
-                    // Cancel analysis (user can go back)
-                  },
-                ),
-                Expanded(
-                  child: Text(
-                    l10n.analyzing,
-                    style: AppTypography.titleLarge,
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-                const SizedBox(width: 48),
-              ],
-            ),
+    return Stack(
+      children: [
+        // 1. Background Image (Actual captured photo)
+        if (_capturedPhotos.isNotEmpty)
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            height: screenHeight * 0.35,
+            child: Image.file(File(_capturedPhotos.first), fit: BoxFit.cover),
           ),
 
-          Expanded(
+        // 2. Back Button (Overlay)
+        Positioned(
+          top: MediaQuery.of(context).padding.top + 8,
+          left: 16,
+          child: CircleAvatar(
+            backgroundColor: Colors.black26,
+            child: IconButton(
+              icon: const Icon(Icons.arrow_back, color: Colors.white),
+              onPressed: () {
+                // Cancel analysis (user can go back)
+              },
+            ),
+          ),
+        ),
+
+        // 3. Content Sheet
+        Positioned(
+          top: screenHeight * 0.3,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          child: Container(
+            decoration: const BoxDecoration(
+              color: AppColors.glacialWhite,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+            ),
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.fromLTRB(24, 32, 24, 140),
               child: Column(
                 children: [
-                  // Skeleton Image Preview
-                  const SkeletonBox(
-                    height: 200,
-                    width: double.infinity,
-                    borderRadius: AppTheme.borderRadius,
+                  // Header Text (Analyzing...)
+                  Text(
+                    l10n.analyzing,
+                    style: AppTypography.displayMedium.copyWith(fontSize: 32),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Skeleton Portion Control
+                  Container(
+                    width: 160,
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: AppColors.glacialWhite,
+                      borderRadius: BorderRadius.circular(24),
+                      border: Border.all(color: AppColors.borderGrey),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        // Minus skeleton
+                        Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: AppColors.pebble.withValues(alpha: 0.1),
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        // Text skeleton
+                        const SkeletonBox(
+                          width: 40,
+                          height: 16,
+                          borderRadius: 4,
+                        ),
+                        // Plus skeleton
+                        Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: AppColors.pebble.withValues(alpha: 0.1),
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
 
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 24),
 
-                  // Skeleton Meal Name
-                  const SkeletonBox(height: 36, width: 200, borderRadius: 8),
-
-                  const SizedBox(height: 32),
-
-                  // Skeleton Calories Card
+                  // Skeleton Calories Card (Green)
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.symmetric(vertical: 32),
@@ -368,9 +416,15 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                           height: 64,
                           width: 120,
                           borderRadius: 8,
+                          color: Colors.white24,
                         ),
                         const SizedBox(height: 8),
-                        SkeletonBox(height: 16, width: 80, borderRadius: 4),
+                        const SkeletonBox(
+                          height: 16,
+                          width: 80,
+                          borderRadius: 4,
+                          color: Colors.white24,
+                        ),
                       ],
                     ),
                   ),
@@ -380,134 +434,43 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   // Skeleton Macros Row
                   Row(
                     children: [
-                      Expanded(
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            vertical: 20,
-                            horizontal: 8,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppColors.steel,
-                            borderRadius: BorderRadius.circular(
-                              AppTheme.borderRadius,
-                            ),
-                            border: Border.all(
-                              color: AppColors.borderGrey,
-                              width: 1,
-                            ),
-                          ),
-                          child: const Column(
-                            children: [
-                              SkeletonBox(
-                                height: 24,
-                                width: 50,
-                                borderRadius: 4,
-                              ),
-                              SizedBox(height: 4),
-                              SkeletonBox(
-                                height: 12,
-                                width: 40,
-                                borderRadius: 4,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
+                      Expanded(child: _buildSkeletonMacroCard()),
                       const SizedBox(width: 12),
-                      Expanded(
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            vertical: 20,
-                            horizontal: 8,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppColors.steel,
-                            borderRadius: BorderRadius.circular(
-                              AppTheme.borderRadius,
-                            ),
-                            border: Border.all(
-                              color: AppColors.borderGrey,
-                              width: 1,
-                            ),
-                          ),
-                          child: const Column(
-                            children: [
-                              SkeletonBox(
-                                height: 24,
-                                width: 50,
-                                borderRadius: 4,
-                              ),
-                              SizedBox(height: 4),
-                              SkeletonBox(
-                                height: 12,
-                                width: 40,
-                                borderRadius: 4,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
+                      Expanded(child: _buildSkeletonMacroCard()),
                       const SizedBox(width: 12),
-                      Expanded(
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            vertical: 20,
-                            horizontal: 8,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppColors.steel,
-                            borderRadius: BorderRadius.circular(
-                              AppTheme.borderRadius,
-                            ),
-                            border: Border.all(
-                              color: AppColors.borderGrey,
-                              width: 1,
-                            ),
-                          ),
-                          child: const Column(
-                            children: [
-                              SkeletonBox(
-                                height: 24,
-                                width: 50,
-                                borderRadius: 4,
-                              ),
-                              SizedBox(height: 4),
-                              SkeletonBox(
-                                height: 12,
-                                width: 40,
-                                borderRadius: 4,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
+                      Expanded(child: _buildSkeletonMacroCard()),
                     ],
                   ),
 
                   const SizedBox(height: 48),
 
-                  // Loading indicator with text
-                  Column(
-                    children: [
-                      const CircularProgressIndicator(
-                        color: AppColors.styrianForest,
-                        strokeWidth: 3,
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        l10n.analyzingMeal,
-                        style: AppTypography.bodyMedium.copyWith(
-                          color: AppColors.slate.withValues(alpha: 0.7),
-                        ),
-                      ),
-                    ],
+                  // Loading indicator
+                  const CircularProgressIndicator(
+                    color: AppColors.styrianForest,
+                    strokeWidth: 3,
                   ),
-
-                  const SizedBox(height: 40),
                 ],
               ),
             ),
           ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSkeletonMacroCard() {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 8),
+      decoration: BoxDecoration(
+        color: AppColors.steel,
+        borderRadius: BorderRadius.circular(AppTheme.borderRadius),
+        border: Border.all(color: AppColors.borderGrey, width: 1),
+      ),
+      child: const Column(
+        children: [
+          SkeletonBox(height: 24, width: 50, borderRadius: 4),
+          SizedBox(height: 4),
+          SkeletonBox(height: 12, width: 40, borderRadius: 4),
         ],
       ),
     );
@@ -868,213 +831,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildMealResult() {
-    final meal = _analyzedMeal!;
-    final l10n = context.l10n;
-
-    return Container(
-      color: AppColors.glacialWhite,
-      child: Column(
-        children: [
-          // Header with back button
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Row(
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.arrow_back),
-                  onPressed: _clearPhotos,
-                ),
-                Expanded(
-                  child: Text(
-                    l10n.analysisResult,
-                    style: AppTypography.titleLarge,
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-                const SizedBox(width: 48), // Placeholder for symmetry
-              ],
-            ),
-          ),
-
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                children: [
-                  // Image Preview
-                  if (meal.photoPaths.isNotEmpty)
-                    Container(
-                      height: 200,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(
-                          AppTheme.borderRadius,
-                        ),
-                        border: Border.all(
-                          color: AppColors.borderGrey,
-                          width: 1,
-                        ),
-                      ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(
-                          AppTheme.borderRadius,
-                        ),
-                        child: ListView.separated(
-                          scrollDirection: Axis.horizontal,
-                          itemCount: meal.photoPaths.length,
-                          separatorBuilder: (_, __) =>
-                              const SizedBox(width: 12),
-                          itemBuilder: (ctx, i) => Image.file(
-                            File(meal.photoPaths[i]),
-                            width: 200,
-                            fit: BoxFit.cover,
-                          ),
-                        ),
-                      ),
-                    ),
-
-                  const SizedBox(height: 32),
-
-                  // Meal Name
-                  Text(
-                    meal.mealName,
-                    style: AppTypography.displayMedium.copyWith(fontSize: 32),
-                    textAlign: TextAlign.center,
-                  ),
-
-                  const SizedBox(height: 32),
-
-                  // Calories Card
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(vertical: 32),
-                    decoration: BoxDecoration(
-                      color: AppColors.styrianForest,
-                      borderRadius: BorderRadius.circular(
-                        AppTheme.borderRadius,
-                      ),
-                      border: Border.all(color: AppColors.borderGrey, width: 1),
-                    ),
-                    child: Column(
-                      children: [
-                        Text(
-                          '${meal.calories.toInt()}',
-                          style: AppTypography.heroNumber.copyWith(
-                            color: AppColors.glacialWhite,
-                            fontSize: 64,
-                          ),
-                        ),
-                        Text(
-                          l10n.calories.toUpperCase(),
-                          style: AppTypography.labelLarge.copyWith(
-                            color: AppColors.glacialWhite.withValues(
-                              alpha: 0.7,
-                            ),
-                            letterSpacing: 2,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  // Macros Row
-                  Row(
-                    children: [
-                      _MacroCard(
-                        label: l10n.protein,
-                        value: '${meal.protein.toInt()}g',
-                        color: AppColors.styrianForest,
-                      ),
-                      const SizedBox(width: 12),
-                      _MacroCard(
-                        label: l10n.carbs,
-                        value: '${meal.carbs.toInt()}g',
-                        color: AppColors.styrianForest,
-                      ),
-                      const SizedBox(width: 12),
-                      _MacroCard(
-                        label: l10n.fats,
-                        value: '${meal.fats.toInt()}g',
-                        color: AppColors.styrianForest,
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 48),
-
-                  ActionButton(text: l10n.saveMeal, onPressed: _saveMeal),
-
-                  const SizedBox(height: 16),
-
-                  TextButton(
-                    onPressed: _clearPhotos,
-                    child: Text(
-                      l10n.discard,
-                      style: AppTypography.bodyMedium.copyWith(
-                        color: AppColors.slate.withValues(alpha: 0.5),
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 40),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _MacroCard extends StatelessWidget {
-  final String label;
-  final String value;
-  final Color color;
-
-  const _MacroCard({
-    required this.label,
-    required this.value,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 8),
-        decoration: BoxDecoration(
-          color: AppColors.steel,
-          borderRadius: BorderRadius.circular(AppTheme.borderRadius),
-          border: Border.all(color: color.withValues(alpha: 0.2), width: 2),
-        ),
-        child: Column(
-          children: [
-            Text(
-              value,
-              style: AppTypography.titleLarge.copyWith(
-                color: color,
-                fontSize: 24,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              label.toUpperCase(),
-              style: AppTypography.labelLarge.copyWith(
-                fontSize: 10,
-                color: AppColors.frost.withValues(alpha: 0.5),
-                letterSpacing: 1,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
       ),
     );
   }

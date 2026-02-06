@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
+import 'package:http/io_client.dart';
 
 class GeminiService {
   static const String _baseUrl =
@@ -15,6 +16,12 @@ class GeminiService {
     if (apiKey.isEmpty) {
       throw Exception('API key is not set');
     }
+
+    // Use a custom client with longer timeouts
+    final httpClient = HttpClient()
+      ..connectionTimeout = const Duration(minutes: 2)
+      ..idleTimeout = const Duration(minutes: 2);
+    final client = IOClient(httpClient);
 
     try {
       // Prepare image parts
@@ -52,15 +59,18 @@ class GeminiService {
           'temperature': 0.4,
           'topK': 32,
           'topP': 1,
-          'maxOutputTokens': 1024,
+          'maxOutputTokens': 1280,
+          "thinkingConfig": {"thinkingBudget": "1024"},
         },
       };
 
-      final response = await http.post(
-        Uri.parse('$_baseUrl?key=$apiKey'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode(requestBody),
-      );
+      final response = await client
+          .post(
+            Uri.parse('$_baseUrl?key=$apiKey'),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode(requestBody),
+          )
+          .timeout(const Duration(minutes: 3));
 
       if (response.statusCode == 200) {
         final responseData = jsonDecode(response.body);
@@ -69,7 +79,7 @@ class GeminiService {
                 as String?;
 
         if (text != null) {
-          print(text);
+          print('Gemini Response: $text');
           String cleanedText = text.trim();
           if (cleanedText.startsWith('```json')) {
             cleanedText = cleanedText.substring(7);
@@ -87,18 +97,62 @@ class GeminiService {
             // Try to extract JSON from the text
             final jsonMatch = RegExp(r'\{[\s\S]*\}').firstMatch(cleanedText);
             if (jsonMatch != null) {
-              return jsonDecode(jsonMatch.group(0)!) as Map<String, dynamic>;
+              try {
+                final jsonResponse =
+                    jsonDecode(jsonMatch.group(0)!) as Map<String, dynamic>;
+
+                // --- Client-Side Validation Log ---
+                if (jsonResponse.containsKey('calories') &&
+                    jsonResponse.containsKey('protein') &&
+                    jsonResponse.containsKey('carbs') &&
+                    jsonResponse.containsKey('fats')) {
+                  final double cal = (jsonResponse['calories'] as num)
+                      .toDouble();
+                  final double p = (jsonResponse['protein'] as num).toDouble();
+                  final double c = (jsonResponse['carbs'] as num).toDouble();
+                  final double f = (jsonResponse['fats'] as num).toDouble();
+
+                  final double calculated = (p * 4) + (c * 4) + (f * 9);
+                  final double diff = (cal - calculated).abs();
+
+                  print(
+                    'Atwater Check: Reported=$cal, Calculated=$calculated, Diff=$diff',
+                  );
+                  if (diff > (cal * 0.15)) {
+                    print(
+                      'WARNING: Significant discrepancy in macro calculation!',
+                    );
+                  }
+                }
+
+                if (jsonResponse.containsKey('confidence_score')) {
+                  print(
+                    'Confidence Score: ${jsonResponse['confidence_score']}',
+                  );
+                }
+                // ----------------------------------
+
+                return jsonResponse;
+              } catch (e2) {
+                throw Exception('Failed to decode extracted JSON: $e2');
+              }
             }
+            throw Exception('Failed to parse JSON response. Raw text: $text');
           }
+        } else {
+          throw Exception('Empty response from Gemini');
         }
       } else {
         throw Exception('API error: ${response.statusCode} - ${response.body}');
       }
     } catch (e) {
       rethrow;
+    } finally {
+      client.close();
     }
 
-    return null;
+    // Unreachable due to rethrow, but keeps analyzer happy if needed
+    // return null;
   }
 
   Future<bool> validateApiKey(String key) async {
@@ -149,41 +203,58 @@ class GeminiService {
 
   String _getPrompt(String language) {
     if (language == 'de') {
-      return '''Analysiere dieses Essen oder Nährwerttabelle und antworte NUR mit einem validen JSON-Objekt ohne Markdown-Formatierung.
-Wenn du KEIN Essen oder KEINE Nährwerttabelle erkennen kannst, antworte exakt: {"error": "no_food_detected"}
+      return '''Du bist ein professioneller Ernährungsberater (AI Nutritionist). Analysiere dieses Bild (Essen oder Nährwerttabelle) und antworte NUR mit einem validen JSON-Objekt ohne Markdown-Formatierung.
 
-Wenn es eine Verpackung/Nährwerttabelle ist: Extrahiere die genauen Werte für 100g oder die Portion.
-Wenn es ein Gericht ist: Schätze die Werte für die gesamte Portion auf dem Bild.
+REGELN:
+1. KEIN Markdown (kein ```json ... ```), nur das reine JSON-Objekt.
+2. Wenn KEIN Essen/Nährwerttabelle zu sehen ist: {"error": "no_food_detected"}
+3. VALIDIERUNG (Atwater-System): Prüfe deine Schätzung mathematisch!
+   Kalorien ≈ (Protein * 4) + (Kohlenhydrate * 4) + (Fett * 9).
+   Stelle sicher, dass die "calories" Summe zu den Makros passt (Toleranz ±10%).
+4. MENGENSCHÄTZUNG:
+   - Verpackung: Extrahiere exakte Werte für 100g oder Portion.
+   - Gericht: Schätze das VOLUMEN basierend auf Standard-Portionsgrößen (Tellergröße, Besteck als Referenz). Berechne das Gewicht: Masse = Volumen * Dichte.
+5. SPRACHE:
+   - Der "meal_name" MUSS auf DEUTSCH sein, auch wenn das Essen international ist (z.B. "Gebratenes Hühnchen" statt "Fried Chicken").
+   - "analysis_note" MUSS auf DEUTSCH sein.
 
-Format:
+FORMAT:
 {
-  "meal_name": "Name der Mahlzeit auf Deutsch",
-  "calories": Kalorien als Zahl,
-  "protein": Protein in Gramm als Zahl,
-  "carbs": Kohlenhydrate in Gramm als Zahl,
-  "fats": Fett in Gramm als Zahl,
-  "vitamins": {"A": mg, "C": mg, "D": µg, ...},
-  "minerals": {"Calcium": mg, "Eisen": mg, ...}
-}
-Gib nur das JSON zurück.''';
+  "meal_name": "Präziser Name des Gerichts",
+  "calories": 0.0 (Zahl, valide Kalorien),
+  "protein": 0.0 (Zahl in Gramm),
+  "carbs": 0.0 (Zahl in Gramm),
+  "fats": 0.0 (Zahl in Gramm),
+  "vitamins": {"A": 0.0, "C": 0.0},
+  "minerals": {"Calcium": 0.0},
+  "confidence_score": 0.0 (0.0 bis 1.0, wie sicher bist du?),
+  "analysis_note": "Kurze Notiz zur Schätzung (z.B. 'Basierend auf 400g Lasagne')"
+}''';
     } else {
-      return '''Analyze this food or nutrition label and respond ONLY with a valid JSON object without Markdown formatting.
-If you CANNOT detect any food or nutrition label, respond exactly: {"error": "no_food_detected"}
+      return '''You are a professional AI Nutritionist. Analyze this image (food or nutrition label) and respond ONLY with a valid JSON object without Markdown formatting.
 
-If it is packaging/nutrition label: Extract the exact values for 100g or the serving.
-If it is a meal: Estimate the values for the entire portion visible.
+RULES:
+1. NO Markdown (no ```json ... ```), just the raw JSON object.
+2. If NO food/label is detected: {"error": "no_food_detected"}
+3. VALIDATION (Atwater System): Mathematically verify your estimate!
+   Calories ≈ (Protein * 4) + (Carbs * 4) + (Fat * 9).
+   Ensure "calories" sum aligns with macros (Tolerance ±10%).
+4. VOLUMETRIC ESTIMATION:
+   - Packaging: Extract exact values for 100g or serving.
+   - Plated Meal: Estimate VOLUME based on standard serving sizes (plate size, cutlery as reference). Calculate weight: Mass = Volume * Density.
 
-Format:
+FORMAT:
 {
-  "meal_name": "Name of the meal",
-  "calories": calories as number,
-  "protein": protein in grams as number,
-  "carbs": carbohydrates in grams as number,
-  "fats": fat in grams as number,
-  "vitamins": {"A": mg, "C": mg, "D": µg, ...},
-  "minerals": {"Calcium": mg, "Iron": mg, ...}
-}
-Return only the JSON.''';
+  "meal_name": "Precise name of the meal",
+  "calories": 0.0 (number, valid calories),
+  "protein": 0.0 (number in grams),
+  "carbs": 0.0 (number in grams),
+  "fats": 0.0 (number in grams),
+  "vitamins": {"A": 0.0, "C": 0.0},
+  "minerals": {"Calcium": 0.0},
+  "confidence_score": 0.0 (0.0 to 1.0, how confident are you?),
+  "analysis_note": "Short note on estimation (e.g., 'Based on 400g Lasagne')"
+}''';
     }
   }
 }

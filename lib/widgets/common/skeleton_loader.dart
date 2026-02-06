@@ -72,12 +72,14 @@ class SkeletonBox extends StatelessWidget {
   final double? width;
   final double height;
   final double borderRadius;
+  final Color? color;
 
   const SkeletonBox({
     super.key,
     this.width,
     required this.height,
     this.borderRadius = 8,
+    this.color,
   });
 
   @override
@@ -87,7 +89,7 @@ class SkeletonBox extends StatelessWidget {
         width: width,
         height: height,
         decoration: BoxDecoration(
-          color: AppColors.pebble.withValues(alpha: 0.3),
+          color: color ?? AppColors.pebble.withValues(alpha: 0.3),
           borderRadius: BorderRadius.circular(borderRadius),
         ),
       ),

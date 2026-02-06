@@ -199,6 +199,8 @@
   "goalWeightLoss": "Gewicht verlieren",
   "goalMaintainWeight": "Gewicht halten",
   "goalMuscleGain": "Muskeln aufbauen",
+  "editMealName": "Mahlzeitnamen bearbeiten",
+  "editCalories": "Kalorien bearbeiten",
   "date": "Datum"
 }
 

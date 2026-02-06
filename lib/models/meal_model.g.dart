@@ -29,13 +29,14 @@ class MealModelAdapter extends TypeAdapter<MealModel> {
       minerals: (fields[9] as Map?)?.cast<String, double>(),
       isPending: fields[10] as bool,
       isManualEntry: fields[11] as bool,
+      isCalorieOverride: fields[12] as bool,
     );
   }
 
   @override
   void write(BinaryWriter writer, MealModel obj) {
     writer
-      ..writeByte(12)
+      ..writeByte(13)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -59,7 +60,9 @@ class MealModelAdapter extends TypeAdapter<MealModel> {
       ..writeByte(10)
       ..write(obj.isPending)
       ..writeByte(11)
-      ..write(obj.isManualEntry);
+      ..write(obj.isManualEntry)
+      ..writeByte(12)
+      ..write(obj.isCalorieOverride);
   }
 
   @override

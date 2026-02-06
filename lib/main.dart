@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
 import 'package:provider/provider.dart';
 import 'l10n/app_localizations.dart';
 import 'providers/app_provider.dart';
@@ -19,62 +20,64 @@ class KaloratApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => AppProvider()..init(),
-      child: Consumer<AppProvider>(
-        builder: (context, provider, _) {
-          Widget homeWidget;
-          if (!provider.isInitialized) {
-            homeWidget = Scaffold(
-              backgroundColor: AppColors.limestone,
-              body: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Image.asset(
-                      'assets/kalorat-favicon-ios.png',
-                      width: 80,
-                      height: 80,
-                      fit: BoxFit.contain,
-                    ),
-                    const SizedBox(height: 24),
-                    const CircularProgressIndicator(
-                      color: AppColors.styrianForest,
-                    ),
-                  ],
+    return KeyboardVisibilityProvider(
+      child: ChangeNotifierProvider(
+        create: (_) => AppProvider()..init(),
+        child: Consumer<AppProvider>(
+          builder: (context, provider, _) {
+            Widget homeWidget;
+            if (!provider.isInitialized) {
+              homeWidget = Scaffold(
+                backgroundColor: AppColors.limestone,
+                body: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Image.asset(
+                        'assets/kalorat-favicon-ios.png',
+                        width: 80,
+                        height: 80,
+                        fit: BoxFit.contain,
+                      ),
+                      const SizedBox(height: 24),
+                      const CircularProgressIndicator(
+                        color: AppColors.styrianForest,
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            );
-          } else if (provider.isOnboardingCompleted) {
-            homeWidget = const MainScreen();
-          } else {
-            homeWidget = const OnboardingFlow();
-          }
+              );
+            } else if (provider.isOnboardingCompleted) {
+              homeWidget = const MainScreen();
+            } else {
+              homeWidget = const OnboardingFlow();
+            }
 
-          if (Platform.isIOS) {
-            return CupertinoApp(
+            if (Platform.isIOS) {
+              return CupertinoApp(
+                debugShowCheckedModeBanner: false,
+                title: 'Kalorat',
+                theme: AppTheme.iosTheme,
+                locale: Locale(provider.language),
+                localizationsDelegates: AppLocalizations.localizationsDelegates,
+                supportedLocales: AppLocalizations.supportedLocales,
+                home: homeWidget,
+              );
+            }
+
+            return MaterialApp(
               debugShowCheckedModeBanner: false,
               title: 'Kalorat',
-              theme: AppTheme.iosTheme,
+              theme: AppTheme.lightTheme,
+              darkTheme: AppTheme.darkTheme,
+              themeMode: ThemeMode.system,
               locale: Locale(provider.language),
               localizationsDelegates: AppLocalizations.localizationsDelegates,
               supportedLocales: AppLocalizations.supportedLocales,
               home: homeWidget,
             );
-          }
-
-          return MaterialApp(
-            debugShowCheckedModeBanner: false,
-            title: 'Kalorat',
-            theme: AppTheme.lightTheme,
-            darkTheme: AppTheme.darkTheme,
-            themeMode: ThemeMode.system,
-            locale: Locale(provider.language),
-            localizationsDelegates: AppLocalizations.localizationsDelegates,
-            supportedLocales: AppLocalizations.supportedLocales,
-            home: homeWidget,
-          );
-        },
+          },
+        ),
       ),
     );
   }

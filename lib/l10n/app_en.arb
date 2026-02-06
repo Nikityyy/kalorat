@@ -199,6 +199,8 @@
   "goalWeightLoss": "Weight Loss",
   "goalMaintainWeight": "Maintain Weight",
   "goalMuscleGain": "Muscle Gain",
+  "editMealName": "Edit meal name",
+  "editCalories": "Edit calories",
   "date": "Date"
 }
 

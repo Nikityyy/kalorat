@@ -539,5 +539,11 @@ class AppLocalizationsDe extends AppLocalizations {
   String get goalMuscleGain => 'Muskeln aufbauen';
 
   @override
+  String get editMealName => 'Mahlzeitnamen bearbeiten';
+
+  @override
+  String get editCalories => 'Kalorien bearbeiten';
+
+  @override
   String get date => 'Datum';
 }

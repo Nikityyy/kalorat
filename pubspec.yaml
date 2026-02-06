@@ -11,6 +11,7 @@ dependencies:
     sdk: flutter
   flutter_localizations:
     sdk: flutter
+  flutter_keyboard_visibility: ^6.0.0
 
   # UI & Icons
   cupertino_icons: ^1.0.8
@@ -71,7 +72,7 @@ flutter_launcher_icons:
   ios: true
   theme_color: "#0F5838" 
   image_path: "assets/kalorat-favicon-ios.png"
-  adaptive_icon_background: "#F7F5F2"
+  adaptive_icon_background: "#F0F2F5"
   adaptive_icon_foreground: "assets/kalorat-favicon-android.png"
   remove_alpha_ios: true 
-  background_color_ios: "#F7F5F2"
+  background_color_ios: "#F0F2F5"

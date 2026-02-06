@@ -8,6 +8,7 @@ import '../theme/app_theme.dart';
 import '../theme/app_typography.dart';
 import '../widgets/common/app_card.dart';
 import '../widgets/widgets.dart';
+import 'meal_detail_screen.dart';
 
 class HistoryScreen extends StatefulWidget {
   const HistoryScreen({super.key});
@@ -129,6 +130,15 @@ class _HistoryScreenState extends State<HistoryScreen> {
                         padding: const EdgeInsets.only(bottom: 12.0),
                         child: MealCard(
                           meal: filteredMeals[i],
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => MealDetailScreen(
+                                meal: filteredMeals[i],
+                                isNewEntry: false,
+                              ),
+                            ),
+                          ),
                           onDelete: () => _confirmDelete(
                             context,
                             filteredMeals[i],
