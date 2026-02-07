@@ -8,12 +8,12 @@ void main() {
         final meal = MealModel(
           id: 'test-id',
           timestamp: DateTime(2026, 2, 6, 12, 0),
-          photoPaths: ['/path/to/photo.jpg'],
+          photoPaths: ['/test/photo.jpg'],
         );
 
         expect(meal.id, 'test-id');
         expect(meal.timestamp, DateTime(2026, 2, 6, 12, 0));
-        expect(meal.photoPaths, ['/path/to/photo.jpg']);
+        expect(meal.photoPaths, ['/test/photo.jpg']);
         expect(meal.mealName, '');
         expect(meal.calories, 0);
         expect(meal.protein, 0);
@@ -29,7 +29,7 @@ void main() {
         final meal = MealModel(
           id: 'test-id',
           timestamp: DateTime(2026, 2, 6, 12, 0),
-          photoPaths: ['/path/to/photo.jpg'],
+          photoPaths: ['/test/photo.jpg'],
           mealName: 'Test Meal',
           calories: 500,
           protein: 25,
@@ -62,7 +62,7 @@ void main() {
         final original = MealModel(
           id: 'test-id',
           timestamp: DateTime(2026, 2, 6),
-          photoPaths: ['/path.jpg'],
+          photoPaths: ['/test/photo.jpg'],
           mealName: 'Original',
           calories: 100,
         );
@@ -78,7 +78,7 @@ void main() {
         final original = MealModel(
           id: 'test-id',
           timestamp: DateTime(2026, 2, 6),
-          photoPaths: ['/path.jpg'],
+          photoPaths: ['/test/photo.jpg'],
           mealName: 'Original',
           calories: 100,
         );
@@ -103,7 +103,7 @@ void main() {
         final meal = MealModel(
           id: 'test-id',
           timestamp: DateTime(2026, 2, 6, 12, 0),
-          photoPaths: ['/path/to/photo.jpg'],
+          photoPaths: ['/test/photo.jpg'],
           mealName: 'Test Meal',
           calories: 500,
           protein: 25,
@@ -120,7 +120,7 @@ void main() {
 
         expect(json['id'], 'test-id');
         expect(json['timestamp'], '2026-02-06T12:00:00.000');
-        expect(json['photoPaths'], ['/path/to/photo.jpg']);
+        expect(json['photoPaths'], ['/test/photo.jpg']);
         expect(json['mealName'], 'Test Meal');
         expect(json['calories'], 500);
         expect(json['protein'], 25);
@@ -139,7 +139,7 @@ void main() {
         final json = {
           'id': 'test-id',
           'timestamp': '2026-02-06T12:00:00.000',
-          'photoPaths': ['/path/to/photo.jpg'],
+          'photoPaths': ['/test/photo.jpg'],
           'mealName': 'Test Meal',
           'calories': 500,
           'protein': 25,
@@ -198,7 +198,7 @@ void main() {
         final original = MealModel(
           id: 'roundtrip-test',
           timestamp: DateTime(2026, 2, 6, 12, 30, 45),
-          photoPaths: ['/photo1.jpg', '/photo2.jpg'],
+          photoPaths: ['/test/photo.jpg', '/test/photo.jpg'],
           mealName: 'Roundtrip Meal',
           calories: 750.5,
           protein: 30.2,

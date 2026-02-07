@@ -34,7 +34,7 @@ void main() {
         final service = GeminiService(apiKey: '');
 
         expect(
-          () => service.analyzeMeal(['/path/to/image.jpg']),
+          () => service.analyzeMeal(['/test/photo.jpg']),
           throwsA(isA<Exception>()),
         );
       });
