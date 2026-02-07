@@ -1,4 +1,5 @@
-import 'dart:io';
+import 'dart:convert';
+import 'dart:io' show File;
 import 'package:camera/camera.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -13,6 +14,7 @@ import '../services/gemini_service.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 import '../theme/app_typography.dart';
+import '../utils/platform_utils.dart';
 import '../widgets/inputs/action_button.dart';
 import '../widgets/widgets.dart';
 import 'meal_detail_screen.dart';
@@ -65,6 +67,12 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   }
 
   Future<void> _initCamera() async {
+    // On web, camera APIs are not available - use image picker only
+    if (PlatformUtils.isWeb) {
+      if (mounted) setState(() => _hasPermission = true);
+      return;
+    }
+
     final status = await Permission.camera.request();
     if (!status.isGranted) {
       if (mounted) setState(() => _hasPermission = false);
@@ -112,6 +120,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   }
 
   Future<void> _capturePhoto() async {
+    // Camera capture not available on web
+    if (PlatformUtils.isWeb) return;
+
     if (_cameraController == null ||
         !_cameraController!.value.isInitialized ||
         _isCapturing) {
@@ -145,13 +156,23 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     final List<XFile> images = await picker.pickMultiImage();
 
     if (images.isNotEmpty) {
-      final appDir = await getApplicationDocumentsDirectory();
-      for (final image in images) {
-        final fileName =
-            'meal_${DateTime.now().millisecondsSinceEpoch}_${_capturedPhotos.length}.jpg';
-        final savedPath = '${appDir.path}/$fileName';
-        await File(image.path).copy(savedPath);
-        _capturedPhotos.add(savedPath);
+      // On web, use Base64 string
+      // On mobile, copy to app documents directory
+      if (PlatformUtils.isWeb) {
+        for (final image in images) {
+          final bytes = await image.readAsBytes();
+          final base64Image = base64Encode(bytes);
+          _capturedPhotos.add(base64Image);
+        }
+      } else {
+        final appDir = await getApplicationDocumentsDirectory();
+        for (final image in images) {
+          final fileName =
+              'meal_${DateTime.now().millisecondsSinceEpoch}_${_capturedPhotos.length}.jpg';
+          final savedPath = '${appDir.path}/$fileName';
+          await File(image.path).copy(savedPath);
+          _capturedPhotos.add(savedPath);
+        }
       }
       setState(() {});
     }
@@ -262,7 +283,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   }
 
   void _showMessage(String message) {
-    if (Platform.isIOS) {
+    if (PlatformUtils.isIOS) {
       showCupertinoDialog(
         context: context,
         builder: (ctx) => CupertinoAlertDialog(
@@ -332,14 +353,18 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     return Stack(
       children: [
         // 1. Background Image (Actual captured photo)
-        if (_capturedPhotos.isNotEmpty)
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            height: screenHeight * 0.35,
-            child: Image.file(File(_capturedPhotos.first), fit: BoxFit.cover),
-          ),
+        Positioned(
+          top: 0,
+          left: 0,
+          right: 0,
+          height: screenHeight * 0.35,
+          child: PlatformUtils.isWeb
+              ? Image.memory(
+                  base64Decode(_capturedPhotos.first),
+                  fit: BoxFit.cover,
+                )
+              : Image.file(File(_capturedPhotos.first), fit: BoxFit.cover),
+        ),
 
         // 2. Back Button (Overlay)
         Positioned(
@@ -700,7 +725,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                                 width: 2,
                               ),
                               image: DecorationImage(
-                                image: FileImage(File(_capturedPhotos.last)),
+                                image: PlatformUtils.isWeb
+                                    ? NetworkImage(_capturedPhotos.last)
+                                    : FileImage(File(_capturedPhotos.last))
+                                          as ImageProvider,
                                 fit: BoxFit.cover,
                               ),
                             ),
@@ -774,10 +802,15 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                           borderRadius: BorderRadius.circular(
                             AppTheme.borderRadius,
                           ),
-                          child: Image.file(
-                            File(_capturedPhotos[index]),
-                            fit: BoxFit.cover,
-                          ),
+                          child: PlatformUtils.isWeb
+                              ? Image.memory(
+                                  base64Decode(_capturedPhotos[index]),
+                                  fit: BoxFit.cover,
+                                )
+                              : Image.file(
+                                  File(_capturedPhotos[index]),
+                                  fit: BoxFit.cover,
+                                ),
                         ),
                       ),
                     ),

@@ -44,6 +44,7 @@ dependencies:
   introduction_screen: ^4.0.0
 
   # File Operations
+  cross_file: ^0.3.3
   file_picker: ^10.3.10
 
   # Notifications
@@ -55,6 +56,12 @@ dependencies:
 
   # Health Integration
   health: ^13.3.0
+
+  # Authentication & Cloud Sync (Supabase)
+  supabase_flutter: ^2.8.3
+  google_sign_in: ^6.2.2
+  share_plus: ^12.0.1
+  flutter_svg: ^2.2.3
 
 dev_dependencies:
   flutter_test:
@@ -74,6 +81,11 @@ flutter:
 flutter_launcher_icons:
   android: true
   ios: true
+  web:
+    generate: true
+    image_path: "assets/kalorat-favicon-android.png"
+    background_color: "#0F5838"
+    theme_color: "#0F5838"
   theme_color: "#0F5838" 
   image_path: "assets/kalorat-favicon-ios.png"
   adaptive_icon_background: "#F0F2F5"

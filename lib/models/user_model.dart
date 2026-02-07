@@ -46,6 +46,21 @@ class UserModel extends HiveObject {
   @HiveField(13)
   bool syncWeightToHealth;
 
+  @HiveField(14)
+  String? supabaseUserId;
+
+  @HiveField(15)
+  bool isGuest;
+
+  @HiveField(16)
+  String? email;
+
+  @HiveField(17)
+  DateTime? lastSyncTimestamp;
+
+  @HiveField(18)
+  String? photoUrl;
+
   UserModel({
     required this.name,
     required this.birthdate,
@@ -61,6 +76,11 @@ class UserModel extends HiveObject {
     this.healthSyncEnabled = false,
     this.syncMealsToHealth = true,
     this.syncWeightToHealth = true,
+    this.supabaseUserId,
+    this.isGuest = true,
+    this.email,
+    this.lastSyncTimestamp,
+    this.photoUrl,
   });
 
   int get age {
@@ -117,6 +137,51 @@ class UserModel extends HiveObject {
     return weight * multiplier;
   }
 
+  UserModel copyWith({
+    String? name,
+    DateTime? birthdate,
+    double? height,
+    double? weight,
+    String? language,
+    String? geminiApiKey,
+    bool? onboardingCompleted,
+    bool? mealRemindersEnabled,
+    bool? weightRemindersEnabled,
+    int? goal,
+    int? gender,
+    bool? healthSyncEnabled,
+    bool? syncMealsToHealth,
+    bool? syncWeightToHealth,
+    String? supabaseUserId,
+    bool? isGuest,
+    String? email,
+    DateTime? lastSyncTimestamp,
+    String? photoUrl,
+  }) {
+    return UserModel(
+      name: name ?? this.name,
+      birthdate: birthdate ?? this.birthdate,
+      height: height ?? this.height,
+      weight: weight ?? this.weight,
+      language: language ?? this.language,
+      geminiApiKey: geminiApiKey ?? this.geminiApiKey,
+      onboardingCompleted: onboardingCompleted ?? this.onboardingCompleted,
+      mealRemindersEnabled: mealRemindersEnabled ?? this.mealRemindersEnabled,
+      weightRemindersEnabled:
+          weightRemindersEnabled ?? this.weightRemindersEnabled,
+      goal: goal ?? this.goal,
+      gender: gender ?? this.gender,
+      healthSyncEnabled: healthSyncEnabled ?? this.healthSyncEnabled,
+      syncMealsToHealth: syncMealsToHealth ?? this.syncMealsToHealth,
+      syncWeightToHealth: syncWeightToHealth ?? this.syncWeightToHealth,
+      supabaseUserId: supabaseUserId ?? this.supabaseUserId,
+      isGuest: isGuest ?? this.isGuest,
+      email: email ?? this.email,
+      lastSyncTimestamp: lastSyncTimestamp ?? this.lastSyncTimestamp,
+      photoUrl: photoUrl ?? this.photoUrl,
+    );
+  }
+
   Map<String, dynamic> toJson() => {
     'name': name,
     'birthdate': birthdate.toIso8601String(),
@@ -132,6 +197,11 @@ class UserModel extends HiveObject {
     'healthSyncEnabled': healthSyncEnabled,
     'syncMealsToHealth': syncMealsToHealth,
     'syncWeightToHealth': syncWeightToHealth,
+    'supabaseUserId': supabaseUserId,
+    'isGuest': isGuest,
+    'email': email,
+    'lastSyncTimestamp': lastSyncTimestamp?.toIso8601String(),
+    'photoUrl': photoUrl,
   };
 
   factory UserModel.fromJson(Map<String, dynamic> json) => UserModel(
@@ -149,5 +219,12 @@ class UserModel extends HiveObject {
     healthSyncEnabled: json['healthSyncEnabled'] ?? false,
     syncMealsToHealth: json['syncMealsToHealth'] ?? true,
     syncWeightToHealth: json['syncWeightToHealth'] ?? true,
+    supabaseUserId: json['supabaseUserId'],
+    isGuest: json['isGuest'] ?? true,
+    email: json['email'],
+    lastSyncTimestamp: json['lastSyncTimestamp'] != null
+        ? DateTime.parse(json['lastSyncTimestamp'])
+        : null,
+    photoUrl: json['photoUrl'],
   );
 }

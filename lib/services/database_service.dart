@@ -1,6 +1,7 @@
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:path_provider/path_provider.dart';
 import '../models/models.dart';
+import '../utils/platform_utils.dart';
 
 class DatabaseService {
   static const String userBoxName = 'user_box';
@@ -12,8 +13,14 @@ class DatabaseService {
   late Box<WeightModel> _weightsBox;
 
   Future<void> init() async {
-    final appDocDir = await getApplicationDocumentsDirectory();
-    await Hive.initFlutter(appDocDir.path);
+    // On web, Hive uses IndexedDB and doesn't need a path
+    // On mobile, use the documents directory
+    if (PlatformUtils.isWeb) {
+      await Hive.initFlutter();
+    } else {
+      final appDocDir = await getApplicationDocumentsDirectory();
+      await Hive.initFlutter(appDocDir.path);
+    }
 
     // Register adapters
     if (!Hive.isAdapterRegistered(0)) {
@@ -30,15 +37,37 @@ class DatabaseService {
     _userBox = await Hive.openBox<UserModel>(userBoxName);
     _mealsBox = await Hive.openBox<MealModel>(mealsBoxName);
     _weightsBox = await Hive.openBox<WeightModel>(weightsBoxName);
+    await Hive.openBox('settings_box');
+  }
+
+  // Settings operations
+  Future<void> saveOnboardingStep(int step) async {
+    final box = Hive.box('settings_box');
+    await box.put('onboarding_step', step);
+  }
+
+  int getOnboardingStep() {
+    if (!Hive.isBoxOpen('settings_box')) return 0;
+    final box = Hive.box('settings_box');
+    return box.get('onboarding_step', defaultValue: 0);
   }
 
   // User operations
   UserModel? getUser() {
+    if (!Hive.isBoxOpen(userBoxName)) {
+      // Emergency init if somehow accessed before ready
+      // This is a band-aid; ideally init() is awaited in main
+      return null;
+    }
     if (_userBox.isEmpty) return null;
     return _userBox.getAt(0);
   }
 
   Future<void> saveUser(UserModel user) async {
+    if (!Hive.isBoxOpen(userBoxName)) {
+      // Re-init if needed or return
+      _userBox = await Hive.openBox<UserModel>(userBoxName);
+    }
     if (_userBox.isEmpty) {
       await _userBox.add(user);
     } else {
@@ -85,8 +114,9 @@ class DatabaseService {
     // Apply date filters if provided
     if (startDate != null || endDate != null) {
       meals = meals.where((meal) {
-        if (startDate != null && meal.timestamp.isBefore(startDate))
+        if (startDate != null && meal.timestamp.isBefore(startDate)) {
           return false;
+        }
         if (endDate != null && meal.timestamp.isAfter(endDate)) return false;
         return true;
       }).toList();
@@ -130,6 +160,10 @@ class DatabaseService {
   Future<void> deleteMeal(String mealId) async {
     // O(1) delete using key
     await _mealsBox.delete(mealId);
+  }
+
+  bool hasMeal(String mealId) {
+    return _mealsBox.containsKey(mealId) || _findMealKey(mealId) != null;
   }
 
   /// Helper to find meal by ID when key might differ from ID

@@ -1,6 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'dart:io';
+import '../utils/platform_utils.dart';
 
 class PlatformNavBar extends StatelessWidget {
   final int currentIndex;
@@ -20,7 +20,7 @@ class PlatformNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (Platform.isIOS) {
+    if (PlatformUtils.isIOS) {
       return CupertinoTabBar(
         currentIndex: currentIndex,
         onTap: onTap,

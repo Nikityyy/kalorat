@@ -1,4 +1,4 @@
-import 'dart:io';
+import '../utils/platform_utils.dart';
 import 'dart:ui' as ui;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest.dart' as tz;
@@ -37,13 +37,13 @@ class NotificationService {
   }
 
   Future<bool> requestPermissions() async {
-    if (Platform.isAndroid) {
+    if (PlatformUtils.isAndroid) {
       final androidPlugin = _notifications
           .resolvePlatformSpecificImplementation<
             AndroidFlutterLocalNotificationsPlugin
           >();
       return await androidPlugin?.requestNotificationsPermission() ?? false;
-    } else if (Platform.isIOS) {
+    } else if (PlatformUtils.isIOS) {
       final iosPlugin = _notifications
           .resolvePlatformSpecificImplementation<
             IOSFlutterLocalNotificationsPlugin

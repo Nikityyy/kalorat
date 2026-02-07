@@ -31,13 +31,18 @@ class UserModelAdapter extends TypeAdapter<UserModel> {
       healthSyncEnabled: fields[11] as bool,
       syncMealsToHealth: fields[12] as bool,
       syncWeightToHealth: fields[13] as bool,
+      supabaseUserId: fields[14] as String?,
+      isGuest: fields[15] as bool,
+      email: fields[16] as String?,
+      lastSyncTimestamp: fields[17] as DateTime?,
+      photoUrl: fields[18] as String?,
     );
   }
 
   @override
   void write(BinaryWriter writer, UserModel obj) {
     writer
-      ..writeByte(14)
+      ..writeByte(19)
       ..writeByte(0)
       ..write(obj.name)
       ..writeByte(1)
@@ -65,7 +70,17 @@ class UserModelAdapter extends TypeAdapter<UserModel> {
       ..writeByte(12)
       ..write(obj.syncMealsToHealth)
       ..writeByte(13)
-      ..write(obj.syncWeightToHealth);
+      ..write(obj.syncWeightToHealth)
+      ..writeByte(14)
+      ..write(obj.supabaseUserId)
+      ..writeByte(15)
+      ..write(obj.isGuest)
+      ..writeByte(16)
+      ..write(obj.email)
+      ..writeByte(17)
+      ..write(obj.lastSyncTimestamp)
+      ..writeByte(18)
+      ..write(obj.photoUrl);
   }
 
   @override

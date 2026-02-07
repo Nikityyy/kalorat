@@ -176,7 +176,7 @@
   "goalLabel": "Ziel",
   "geminiApiKeyLabel": "Gemini API-Key",
   "ok": "OK",
-  "chooseGender": "Wähle dein Geschlecht",
+  "chooseGender": "Welches Geschlecht hast du?",
   "calculateMetabolicRate": "Um deinen Grundumsatz zu berechnen.",
   "continueButton": "Weiter",
   "whatIsYourGoal": "Was ist dein Ziel?",
@@ -233,6 +233,42 @@
   },
   "connected": "Verbunden",
   "disconnected": "Getrennt",
-  "healthConnectionFailed": "Verbindung fehlgeschlagen"
+  "healthConnectionFailed": "Verbindung fehlgeschlagen",
+
+  "loginTitle": "Anmelden",
+  "loginSubtitle": "Synchronisiere deine Daten auf all deinen Geräten",
+  "signInWithGoogle": "Mit Google anmelden",
+  "continueAsGuest": "Als Gast fortfahren",
+  "guestWarning": "Gastdaten werden nur lokal gespeichert und können nicht wiederhergestellt werden, wenn du das Gerät wechselst.",
+
+  "account": "Konto",
+  "loggedInAs": "Angemeldet als {email}",
+  "@loggedInAs": {
+    "placeholders": {
+      "email": {"type": "String"}
+    }
+  },
+  "logOut": "Abmelden",
+  "deleteAccount": "Konto löschen",
+  "deleteAccountConfirm": "Bist du sicher? Alle deine Daten werden unwiderruflich gelöscht.",
+  "requestData": "Meine Daten anfordern",
+  "guestMode": "Gastmodus",
+  "loginToSync": "Anmelden um Daten zu synchronisieren",
+  "syncComplete": "Synchronisierung abgeschlossen",
+  "accountDeleted": "Konto gelöscht",
+  "dataExported": "Daten exportiert",
+  "accountSection": "Deine Daten werden nur lokal gespeichert",
+  "settingsSaved": "Einstellungen gespeichert",
+  "logOutConfirm": "Möchtest du dich wirklich abmelden?",
+  "loggedOut": "Erfolgreich abgemeldet",
+  "error": "Fehler",
+  "rateLimitMeals": "Der Guide sagt: Ruh dich etwas aus, du hast heute genug getrackt.",
+  "rateLimitPhotos": "Der Guide sagt: Pack leicht. 5 Fotos genügen.",
+  "legal": "Rechtliches",
+  "privacyPolicy": "Datenschutzerklärung",
+  "termsOfService": "Nutzungsbedingungen",
+
+  "featureOnlyInApp": "Nur in der App",
+  "healthNotAvailableWeb": "Die Gesundheitsintegration erfordert die native App"
 }
 

@@ -995,7 +995,7 @@ abstract class AppLocalizations {
   /// No description provided for @chooseGender.
   ///
   /// In de, this message translates to:
-  /// **'Wähle dein Geschlecht'**
+  /// **'Welches Geschlecht hast du?'**
   String get chooseGender;
 
   /// No description provided for @calculateMetabolicRate.
@@ -1285,6 +1285,174 @@ abstract class AppLocalizations {
   /// In de, this message translates to:
   /// **'Verbindung fehlgeschlagen'**
   String get healthConnectionFailed;
+
+  /// No description provided for @loginTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Anmelden'**
+  String get loginTitle;
+
+  /// No description provided for @loginSubtitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Synchronisiere deine Daten auf all deinen Geräten'**
+  String get loginSubtitle;
+
+  /// No description provided for @signInWithGoogle.
+  ///
+  /// In de, this message translates to:
+  /// **'Mit Google anmelden'**
+  String get signInWithGoogle;
+
+  /// No description provided for @continueAsGuest.
+  ///
+  /// In de, this message translates to:
+  /// **'Als Gast fortfahren'**
+  String get continueAsGuest;
+
+  /// No description provided for @guestWarning.
+  ///
+  /// In de, this message translates to:
+  /// **'Gastdaten werden nur lokal gespeichert und können nicht wiederhergestellt werden, wenn du das Gerät wechselst.'**
+  String get guestWarning;
+
+  /// No description provided for @account.
+  ///
+  /// In de, this message translates to:
+  /// **'Konto'**
+  String get account;
+
+  /// No description provided for @loggedInAs.
+  ///
+  /// In de, this message translates to:
+  /// **'Angemeldet als {email}'**
+  String loggedInAs(String email);
+
+  /// No description provided for @logOut.
+  ///
+  /// In de, this message translates to:
+  /// **'Abmelden'**
+  String get logOut;
+
+  /// No description provided for @deleteAccount.
+  ///
+  /// In de, this message translates to:
+  /// **'Konto löschen'**
+  String get deleteAccount;
+
+  /// No description provided for @deleteAccountConfirm.
+  ///
+  /// In de, this message translates to:
+  /// **'Bist du sicher? Alle deine Daten werden unwiderruflich gelöscht.'**
+  String get deleteAccountConfirm;
+
+  /// No description provided for @requestData.
+  ///
+  /// In de, this message translates to:
+  /// **'Meine Daten anfordern'**
+  String get requestData;
+
+  /// No description provided for @guestMode.
+  ///
+  /// In de, this message translates to:
+  /// **'Gastmodus'**
+  String get guestMode;
+
+  /// No description provided for @loginToSync.
+  ///
+  /// In de, this message translates to:
+  /// **'Anmelden um Daten zu synchronisieren'**
+  String get loginToSync;
+
+  /// No description provided for @syncComplete.
+  ///
+  /// In de, this message translates to:
+  /// **'Synchronisierung abgeschlossen'**
+  String get syncComplete;
+
+  /// No description provided for @accountDeleted.
+  ///
+  /// In de, this message translates to:
+  /// **'Konto gelöscht'**
+  String get accountDeleted;
+
+  /// No description provided for @dataExported.
+  ///
+  /// In de, this message translates to:
+  /// **'Daten exportiert'**
+  String get dataExported;
+
+  /// No description provided for @accountSection.
+  ///
+  /// In de, this message translates to:
+  /// **'Deine Daten werden nur lokal gespeichert'**
+  String get accountSection;
+
+  /// No description provided for @settingsSaved.
+  ///
+  /// In de, this message translates to:
+  /// **'Einstellungen gespeichert'**
+  String get settingsSaved;
+
+  /// No description provided for @logOutConfirm.
+  ///
+  /// In de, this message translates to:
+  /// **'Möchtest du dich wirklich abmelden?'**
+  String get logOutConfirm;
+
+  /// No description provided for @loggedOut.
+  ///
+  /// In de, this message translates to:
+  /// **'Erfolgreich abgemeldet'**
+  String get loggedOut;
+
+  /// No description provided for @error.
+  ///
+  /// In de, this message translates to:
+  /// **'Fehler'**
+  String get error;
+
+  /// No description provided for @rateLimitMeals.
+  ///
+  /// In de, this message translates to:
+  /// **'Der Guide sagt: Ruh dich etwas aus, du hast heute genug getrackt.'**
+  String get rateLimitMeals;
+
+  /// No description provided for @rateLimitPhotos.
+  ///
+  /// In de, this message translates to:
+  /// **'Der Guide sagt: Pack leicht. 5 Fotos genügen.'**
+  String get rateLimitPhotos;
+
+  /// No description provided for @legal.
+  ///
+  /// In de, this message translates to:
+  /// **'Rechtliches'**
+  String get legal;
+
+  /// No description provided for @privacyPolicy.
+  ///
+  /// In de, this message translates to:
+  /// **'Datenschutzerklärung'**
+  String get privacyPolicy;
+
+  /// No description provided for @termsOfService.
+  ///
+  /// In de, this message translates to:
+  /// **'Nutzungsbedingungen'**
+  String get termsOfService;
+
+  /// No description provided for @featureOnlyInApp.
+  ///
+  /// In de, this message translates to:
+  /// **'Nur in der App'**
+  String get featureOnlyInApp;
+
+  /// No description provided for @healthNotAvailableWeb.
+  ///
+  /// In de, this message translates to:
+  /// **'Die Gesundheitsintegration erfordert die native App'**
+  String get healthNotAvailableWeb;
 }
 
 class _AppLocalizationsDelegate

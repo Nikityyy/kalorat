@@ -65,4 +65,16 @@ class AppTypography {
     fontWeight: FontWeight.w700,
     color: AppColors.styrianForest,
   );
+
+  static TextStyle get bodySmall => GoogleFonts.outfit(
+    fontSize: 14,
+    fontWeight: FontWeight.w400,
+    color: AppColors.frost.withValues(alpha: 0.7),
+  );
+
+  static TextStyle get buttonLarge => GoogleFonts.outfit(
+    fontSize: 16,
+    fontWeight: FontWeight.w600,
+    color: AppColors.glacialWhite,
+  );
 }

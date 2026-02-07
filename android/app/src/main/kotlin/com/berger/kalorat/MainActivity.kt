@@ -1,4 +1,4 @@
-package com.example.kalorat
+package com.berger.kalorat
 
 import io.flutter.embedding.android.FlutterFragmentActivity
 

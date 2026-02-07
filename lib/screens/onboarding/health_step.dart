@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import '../../theme/app_typography.dart';
 import '../../theme/app_colors.dart';
@@ -6,6 +5,7 @@ import '../../theme/app_theme.dart';
 import '../../extensions/l10n_extension.dart';
 import '../../widgets/inputs/action_button.dart';
 import '../../services/health_service.dart';
+import '../../utils/platform_utils.dart';
 
 class HealthStep extends StatefulWidget {
   final Function(bool connected) onNext;
@@ -32,7 +32,7 @@ class _HealthStepState extends State<HealthStep> {
       final healthService = HealthService();
 
       // Check if Health Connect is available on Android
-      if (Platform.isAndroid) {
+      if (PlatformUtils.isAndroid) {
         final available = await healthService.isHealthConnectAvailable();
         if (!available) {
           setState(() {
@@ -70,7 +70,7 @@ class _HealthStepState extends State<HealthStep> {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final healthAppName = Platform.isIOS ? 'Apple Health' : 'Health Connect';
+    final healthAppName = PlatformUtils.healthAppName;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24.0),
@@ -94,14 +94,14 @@ class _HealthStepState extends State<HealthStep> {
               width: 100,
               height: 100,
               decoration: BoxDecoration(
-                color: Platform.isIOS
+                color: PlatformUtils.isIOS
                     ? const Color(0xFFFF2D55) // Apple Health red
                     : AppColors.primary, // Health Connect green
                 borderRadius: BorderRadius.circular(24),
                 boxShadow: [
                   BoxShadow(
                     color:
-                        (Platform.isIOS
+                        (PlatformUtils.isIOS
                                 ? const Color(0xFFFF2D55)
                                 : AppColors.primary)
                             .withValues(alpha: 0.3),

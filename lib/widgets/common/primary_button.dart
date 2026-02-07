@@ -1,4 +1,4 @@
-import 'dart:io';
+import '../../utils/platform_utils.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -22,7 +22,7 @@ class PrimaryButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool isIos = Platform.isIOS;
+    final bool isIos = PlatformUtils.isIOS;
 
     if (isIos) {
       return CupertinoButton(

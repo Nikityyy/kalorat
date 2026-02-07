@@ -233,6 +233,42 @@
   },
   "connected": "Connected",
   "disconnected": "Disconnected",
-  "healthConnectionFailed": "Connection failed"
+  "healthConnectionFailed": "Connection failed",
+
+  "loginTitle": "Sign In",
+  "loginSubtitle": "Sync your data across all your devices",
+  "signInWithGoogle": "Sign in with Google",
+  "continueAsGuest": "Continue as guest",
+  "guestWarning": "Guest data is only stored locally and cannot be recovered if you switch devices.",
+
+  "account": "Account",
+  "loggedInAs": "Signed in as {email}",
+  "@loggedInAs": {
+    "placeholders": {
+      "email": {"type": "String"}
+    }
+  },
+  "logOut": "Sign Out",
+  "deleteAccount": "Delete Account",
+  "deleteAccountConfirm": "Are you sure? All your data will be permanently deleted.",
+  "requestData": "Request My Data",
+  "guestMode": "Guest Mode",
+  "loginToSync": "Sign in to sync your data",
+  "syncComplete": "Sync complete",
+  "accountDeleted": "Account deleted",
+  "dataExported": "Data exported",
+  "accountSection": "Your data is stored locally only",
+  "settingsSaved": "Settings saved",
+  "logOutConfirm": "Are you sure you want to log out?",
+  "loggedOut": "Logged out successfully",
+  "error": "Error",
+  "rateLimitMeals": "The Guide says: Rest a bit, you've tracked enough for today.",
+  "rateLimitPhotos": "The Guide says: Pack light. 5 photos are enough.",
+  "legal": "Legal",
+  "privacyPolicy": "Privacy Policy",
+  "termsOfService": "Terms of Service",
+
+  "featureOnlyInApp": "Only in app",
+  "healthNotAvailableWeb": "Health integration requires the native app"
 }
 

@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'dart:io';
+import '../utils/platform_utils.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
@@ -271,10 +273,12 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
               left: 0,
               right: 0,
               height: screenHeight * 0.35,
-              child: Image.file(
-                File(_meal.photoPaths.first),
-                fit: BoxFit.cover,
-              ),
+              child: PlatformUtils.isWeb
+                  ? Image.memory(
+                      base64Decode(_meal.photoPaths.first),
+                      fit: BoxFit.cover,
+                    )
+                  : Image.file(File(_meal.photoPaths.first), fit: BoxFit.cover),
             ),
 
           // 2. Back Button (Overlay)

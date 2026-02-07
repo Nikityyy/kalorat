@@ -1,6 +1,6 @@
-import 'dart:io';
 import 'package:health/health.dart';
 import '../models/models.dart';
+import '../utils/platform_utils.dart';
 
 /// Unified health service for Apple Health and Google Health Connect
 class HealthService {
@@ -26,7 +26,7 @@ class HealthService {
   // For permissions on Android (Health Connect), we must request the grouped NUTRITION type
   // instead of individual dietary types.
   List<HealthDataType> get _permissionTypes {
-    if (Platform.isAndroid) {
+    if (PlatformUtils.isAndroid) {
       // Note: DIETARY_ENERGY_CONSUMED writes to Nutrition record, so NUTRITION permission covers it.
       return [HealthDataType.NUTRITION, HealthDataType.WEIGHT];
     }
@@ -35,6 +35,7 @@ class HealthService {
 
   /// Configure the health plugin. Must be called before any other method.
   Future<void> configure() async {
+    if (PlatformUtils.isWeb) return; // Health not available on web
     if (_isConfigured) return;
     await _health.configure();
     _isConfigured = true;
@@ -42,7 +43,8 @@ class HealthService {
 
   /// Check if Health Connect is available on Android
   Future<bool> isHealthConnectAvailable() async {
-    if (!Platform.isAndroid) return true; // iOS always has HealthKit
+    if (PlatformUtils.isWeb) return false; // Not available on web
+    if (!PlatformUtils.isAndroid) return true; // iOS always has HealthKit
 
     try {
       final status = await _health.getHealthConnectSdkStatus();
@@ -54,17 +56,16 @@ class HealthService {
 
   /// Check if we have the required health permissions
   Future<bool> hasPermissions() async {
+    if (PlatformUtils.isWeb) return false; // Not available on web
     await configure();
 
     try {
-      print('DEBUG: Requesting health permissions...');
       final result = await _health.hasPermissions(
         _permissionTypes,
         permissions: _permissionTypes
             .map((_) => HealthDataAccess.READ_WRITE)
             .toList(),
       );
-      print('DEBUG: hasPermissions result: $result');
       return result ?? false;
     } catch (e) {
       return false;
@@ -73,6 +74,7 @@ class HealthService {
 
   /// Request health permissions from the user
   Future<bool> requestPermissions() async {
+    if (PlatformUtils.isWeb) return false; // Not available on web
     await configure();
 
     try {
@@ -90,6 +92,7 @@ class HealthService {
 
   /// Revoke health permissions
   Future<void> revokePermissions() async {
+    if (PlatformUtils.isWeb) return; // Not available on web
     try {
       await _health.revokePermissions();
     } catch (e) {
@@ -102,8 +105,6 @@ class HealthService {
     await configure();
 
     try {
-      print('DEBUG: writeMealData (v2) started for meal ${meal.mealName}');
-
       final timestamp = meal.timestamp;
       final endTime = timestamp.add(const Duration(minutes: 1));
 
@@ -120,10 +121,8 @@ class HealthService {
         mealType: MealType.UNKNOWN,
       );
 
-      print('DEBUG: writeMealData finished. Success: $success');
       return success;
     } catch (e) {
-      print('DEBUG: writeMealData ERROR: $e');
       return false;
     }
   }

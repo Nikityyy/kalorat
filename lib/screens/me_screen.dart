@@ -1,4 +1,4 @@
-import 'dart:io';
+import '../utils/platform_utils.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -49,7 +49,7 @@ class MeScreen extends StatelessWidget {
                   ),
                   IconButton(
                     icon: Icon(
-                      Platform.isIOS
+                      PlatformUtils.isIOS
                           ? CupertinoIcons.settings
                           : Icons.settings_outlined,
                       color: AppColors.slate,
@@ -183,17 +183,25 @@ class MeScreen extends StatelessWidget {
             color: AppColors.styrianForest,
             shape: BoxShape.circle,
             border: Border.all(color: AppColors.pebble, width: 1),
+            image: user.photoUrl != null
+                ? DecorationImage(
+                    image: NetworkImage(user.photoUrl!),
+                    fit: BoxFit.cover,
+                  )
+                : null,
           ),
-          child: Center(
-            child: Text(
-              user.name.isNotEmpty ? user.name[0] : '?',
-              style: const TextStyle(
-                fontSize: 40,
-                color: AppColors.pebble,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
+          child: user.photoUrl == null
+              ? Center(
+                  child: Text(
+                    user.name.isNotEmpty ? user.name[0] : '?',
+                    style: const TextStyle(
+                      fontSize: 40,
+                      color: AppColors.pebble,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                )
+              : null,
         ),
         const SizedBox(height: 16),
         Text(
@@ -705,7 +713,7 @@ class MeScreen extends StatelessWidget {
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             itemCount: recentWeights.length,
-            separatorBuilder: (_, __) => const Divider(
+            separatorBuilder: (_, _) => const Divider(
               height: 1,
               color: AppColors.pebble,
               indent: 16,

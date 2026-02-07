@@ -616,4 +616,95 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get healthConnectionFailed => 'Connection failed';
+
+  @override
+  String get loginTitle => 'Sign In';
+
+  @override
+  String get loginSubtitle => 'Sync your data across all your devices';
+
+  @override
+  String get signInWithGoogle => 'Sign in with Google';
+
+  @override
+  String get continueAsGuest => 'Continue as guest';
+
+  @override
+  String get guestWarning =>
+      'Guest data is only stored locally and cannot be recovered if you switch devices.';
+
+  @override
+  String get account => 'Account';
+
+  @override
+  String loggedInAs(String email) {
+    return 'Signed in as $email';
+  }
+
+  @override
+  String get logOut => 'Sign Out';
+
+  @override
+  String get deleteAccount => 'Delete Account';
+
+  @override
+  String get deleteAccountConfirm =>
+      'Are you sure? All your data will be permanently deleted.';
+
+  @override
+  String get requestData => 'Request My Data';
+
+  @override
+  String get guestMode => 'Guest Mode';
+
+  @override
+  String get loginToSync => 'Sign in to sync your data';
+
+  @override
+  String get syncComplete => 'Sync complete';
+
+  @override
+  String get accountDeleted => 'Account deleted';
+
+  @override
+  String get dataExported => 'Data exported';
+
+  @override
+  String get accountSection => 'Your data is stored locally only';
+
+  @override
+  String get settingsSaved => 'Settings saved';
+
+  @override
+  String get logOutConfirm => 'Are you sure you want to log out?';
+
+  @override
+  String get loggedOut => 'Logged out successfully';
+
+  @override
+  String get error => 'Error';
+
+  @override
+  String get rateLimitMeals =>
+      'The Guide says: Rest a bit, you\'ve tracked enough for today.';
+
+  @override
+  String get rateLimitPhotos =>
+      'The Guide says: Pack light. 5 photos are enough.';
+
+  @override
+  String get legal => 'Legal';
+
+  @override
+  String get privacyPolicy => 'Privacy Policy';
+
+  @override
+  String get termsOfService => 'Terms of Service';
+
+  @override
+  String get featureOnlyInApp => 'Only in app';
+
+  @override
+  String get healthNotAvailableWeb =>
+      'Health integration requires the native app';
 }

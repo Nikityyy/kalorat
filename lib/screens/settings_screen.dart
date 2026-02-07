@@ -1,10 +1,16 @@
 import 'dart:io';
+import '../utils/platform_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:path_provider/path_provider.dart';
 import '../extensions/l10n_extension.dart';
 import '../models/models.dart';
 import '../providers/app_provider.dart';
+import '../services/auth_service.dart';
+import '../services/sync_service.dart';
+
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 import '../widgets/common/app_card.dart';
@@ -27,7 +33,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   void initState() {
     super.initState();
+    // Access provider safely in initState
     final user = context.read<AppProvider>().user;
+
     _nameController = TextEditingController(text: user?.name ?? '');
     _heightController = TextEditingController(
       text: user?.height.toString() ?? '',
@@ -48,16 +56,48 @@ class _SettingsScreenState extends State<SettingsScreen> {
     super.dispose();
   }
 
+  Future<void> _saveChanges() async {
+    final provider = context.read<AppProvider>();
+    final user = provider.user;
+    if (user == null) return;
+
+    final name = _nameController.text.trim();
+    final height =
+        double.tryParse(_heightController.text.trim()) ?? user.height;
+    final weight =
+        double.tryParse(_weightController.text.trim()) ?? user.weight;
+    final apiKey = _apiKeyController.text.trim();
+
+    await provider.updateUser(
+      name: name,
+      height: height,
+      weight: weight,
+      apiKey: apiKey,
+      birthdate: _selectedBirthdate,
+    );
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(context.l10n.settingsSaved),
+          backgroundColor: AppColors.success,
+        ),
+      );
+      Navigator.pop(context);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<AppProvider>();
     final user = provider.user;
     final l10n = context.l10n;
 
-    if (user == null)
+    if (user == null) {
       return const Center(
         child: CircularProgressIndicator(color: AppColors.primary),
       );
+    }
 
     return Scaffold(
       backgroundColor: AppColors.limestone,
@@ -134,6 +174,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
           const SizedBox(height: 24),
           _buildHealthSection(provider, user),
           const SizedBox(height: 24),
+          _buildLegalSection(provider, l10n),
+          const SizedBox(height: 24),
+          _buildAccountSection(provider, user),
+          const SizedBox(height: 24),
           _buildSection(l10n.data, [
             ListTile(
               leading: const Icon(Icons.upload, color: AppColors.primary),
@@ -144,11 +188,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
               onTap: () async {
                 final path = await provider.exportData();
                 if (path != null && mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(l10n.exported(path)),
-                      backgroundColor: AppColors.success,
-                    ),
+                  // Use Share Plus to open system share sheet (Save to Files, Drive, etc.)
+                  await SharePlus.instance.share(
+                    ShareParams(files: [XFile(path)], text: 'Kalorat Backup'),
                   );
                 }
               },
@@ -161,7 +203,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
               onTap: () async {
                 final success = await provider.importData();
-                if (mounted) {
+                if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text(
@@ -182,6 +224,68 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ],
       ),
     );
+  }
+
+  Widget _buildLegalSection(AppProvider provider, dynamic l10n) {
+    return _buildSection(l10n.legal, [
+      ListTile(
+        leading: const Icon(
+          Icons.privacy_tip_outlined,
+          color: AppColors.primary,
+        ),
+        title: Text(
+          l10n.privacyPolicy,
+          style: const TextStyle(color: AppColors.slate),
+        ),
+        trailing: const Icon(Icons.open_in_new, size: 16),
+        onTap: () {
+          // Placeholder for actual URL
+          // In a real app, this would use url_launcher
+          showDialog(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: Text(l10n.privacyPolicy),
+              content: const Text(
+                "Privacy Policy placeholder. Your data is stored locally and optionally synced to Supabase (if logged in). Meal photos are processed by Google's Gemini API.",
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text("OK"),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+      const Divider(height: 1, indent: 16, endIndent: 16),
+      ListTile(
+        leading: const Icon(
+          Icons.description_outlined,
+          color: AppColors.primary,
+        ),
+        title: Text(
+          l10n.termsOfService,
+          style: const TextStyle(color: AppColors.slate),
+        ),
+        trailing: const Icon(Icons.open_in_new, size: 16),
+        onTap: () {
+          showDialog(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: Text(l10n.termsOfService),
+              content: const Text("Terms of Service placeholder."),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text("OK"),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    ]);
   }
 
   Widget _buildSection(String title, List<Widget> children) {
@@ -218,6 +322,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         controller: controller,
         keyboardType: keyboardType,
         obscureText: obscureText,
+        style: const TextStyle(color: AppColors.slate),
         decoration: InputDecoration(
           labelText: label,
           labelStyle: TextStyle(color: AppColors.slate.withValues(alpha: 0.6)),
@@ -336,7 +441,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
           child: Column(
             children: List.generate(genders.length, (index) {
               return RadioListTile<int>(
-                title: Text(genders[index]),
+                title: Text(
+                  genders[index],
+                  style: const TextStyle(color: AppColors.slate),
+                ),
                 value: index,
                 activeColor: AppColors.primary,
                 contentPadding: const EdgeInsets.symmetric(horizontal: 4),
@@ -376,7 +484,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
           child: Column(
             children: List.generate(goals.length, (index) {
               return RadioListTile<int>(
-                title: Text(goals[index]),
+                title: Text(
+                  goals[index],
+                  style: const TextStyle(color: AppColors.slate),
+                ),
                 value: index,
                 activeColor: AppColors.primary,
                 contentPadding: const EdgeInsets.symmetric(horizontal: 4),
@@ -426,8 +537,49 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Widget _buildHealthSection(AppProvider provider, UserModel user) {
     final l10n = context.l10n;
-    final healthAppName = Platform.isIOS ? 'Apple Health' : 'Health Connect';
+    final healthAppName = PlatformUtils.healthAppName;
 
+    // On web, show grayed-out section with "only available in app" message
+    if (PlatformUtils.isWeb) {
+      return _buildSection(l10n.healthIntegration, [
+        Opacity(
+          opacity: 0.5,
+          child: ListTile(
+            leading: Icon(
+              Icons.favorite_border,
+              color: AppColors.slate.withValues(alpha: 0.5),
+            ),
+            title: Text(
+              l10n.syncWith(healthAppName),
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                color: AppColors.slate.withValues(alpha: 0.7),
+              ),
+            ),
+            trailing: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: AppColors.pebble.withValues(alpha: 0.5),
+                borderRadius: BorderRadius.circular(AppTheme.borderRadius / 2),
+                border: Border.all(
+                  color: AppColors.slate.withValues(alpha: 0.2),
+                ),
+              ),
+              child: Text(
+                l10n.featureOnlyInApp,
+                style: TextStyle(
+                  fontSize: 11,
+                  color: AppColors.slate.withValues(alpha: 0.6),
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ]);
+    }
+
+    // Native platform: show full health integration options
     return _buildSection(l10n.healthIntegration, [
       SwitchListTile(
         title: Text(
@@ -503,34 +655,253 @@ class _SettingsScreenState extends State<SettingsScreen> {
     ]);
   }
 
-  void _saveChanges() async {
-    final provider = context.read<AppProvider>();
+  Widget _buildAccountSection(AppProvider provider, UserModel user) {
     final l10n = context.l10n;
+    final authService = AuthService();
+    final syncService = SyncService(provider.databaseService);
+    final isGuest = user.isGuest;
 
-    final oldWeight = provider.user?.weight;
-    final newWeightStr = _weightController.text.trim();
-    final newWeight = double.tryParse(newWeightStr);
+    return _buildSection(l10n.account, [
+      // Show current account status
+      ListTile(
+        leading: Icon(
+          isGuest ? Icons.person_outline : Icons.person,
+          color: AppColors.primary,
+        ),
+        title: Text(
+          isGuest ? l10n.guestMode : (user.email ?? l10n.account),
+          style: const TextStyle(
+            fontWeight: FontWeight.w600,
+            color: AppColors.slate,
+          ),
+        ),
+        subtitle: isGuest
+            ? Text(
+                l10n.accountSection,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: AppColors.slate.withValues(alpha: 0.6),
+                ),
+              )
+            : null,
+      ),
+      const Divider(height: 1, indent: 16, endIndent: 16),
 
-    await provider.updateUser(
-      name: _nameController.text.trim(),
-      height: double.tryParse(_heightController.text) ?? provider.user!.height,
-      weight: newWeight ?? provider.user!.weight,
-      birthdate: _selectedBirthdate,
-      apiKey: _apiKeyController.text.trim(),
-    );
+      if (isGuest) ...[
+        // Guest: Show login option
+        ListTile(
+          leading: const Icon(Icons.login, color: AppColors.primary),
+          title: Text(
+            l10n.loginToSync,
+            style: const TextStyle(color: AppColors.slate),
+          ),
+          trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+          onTap: () async {
+            try {
+              final (response, photoUrl) = await authService.signInWithGoogle();
+              if (response.user != null && mounted) {
+                await provider.updateUser(
+                  supabaseUserId: response.user!.id,
+                  email: response.user!.email,
+                  isGuest: false,
+                  photoUrl: photoUrl,
+                );
+                await syncService.mergeLocalToCloud();
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(l10n.syncComplete),
+                      backgroundColor: AppColors.success,
+                    ),
+                  );
+                }
+              }
+            } catch (e) {
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(e.toString()),
+                    backgroundColor: AppColors.error,
+                  ),
+                );
+              }
+            }
+          },
+        ),
+      ] else ...[
+        // Logged in: Show account options
+        ListTile(
+          leading: const Icon(Icons.sync, color: AppColors.primary),
+          title: Text(
+            l10n.syncComplete,
+            style: const TextStyle(color: AppColors.slate),
+          ),
+          subtitle: user.lastSyncTimestamp != null
+              ? Text(
+                  DateFormat.yMd(
+                    provider.language,
+                  ).add_Hm().format(user.lastSyncTimestamp!),
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: AppColors.slate.withValues(alpha: 0.6),
+                  ),
+                )
+              : null,
+          onTap: () async {
+            await syncService.syncToCloud();
+            await provider.updateUser(lastSyncTimestamp: DateTime.now());
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(l10n.syncComplete),
+                  backgroundColor: AppColors.success,
+                ),
+              );
+            }
+          },
+        ),
+        ListTile(
+          leading: const Icon(Icons.download, color: AppColors.primary),
+          title: Text(
+            l10n.requestData,
+            style: const TextStyle(color: AppColors.slate),
+          ),
+          onTap: () async {
+            try {
+              final jsonString = await syncService.exportUserData();
 
-    // Auto-track weight if it changed
-    if (oldWeight != null && newWeight != null && oldWeight != newWeight) {
-      await provider.saveWeight(
-        WeightModel(weight: newWeight, date: DateTime.now()),
-      );
-    }
+              // Write to temp file for sharing
+              final directory = await getTemporaryDirectory();
+              final fileName =
+                  'kalorat_user_data_${DateTime.now().toIso8601String().replaceAll(':', '-')}.json';
+              final file = File('${directory.path}/$fileName');
+              await file.writeAsString(jsonString);
 
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.saved), backgroundColor: AppColors.success),
-      );
-      Navigator.pop(context);
-    }
+              if (mounted) {
+                await SharePlus.instance.share(
+                  ShareParams(
+                    files: [XFile(file.path)],
+                    text: 'Kalorat User Data',
+                  ),
+                );
+              }
+            } catch (e) {
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      l10n.error,
+                    ), // Use generic error or specific message
+                    backgroundColor: AppColors.error,
+                  ),
+                );
+              }
+            }
+          },
+        ),
+        ListTile(
+          leading: const Icon(Icons.logout, color: AppColors.slate),
+          title: Text(
+            l10n.logOut,
+            style: const TextStyle(color: AppColors.slate),
+          ),
+          onTap: () async {
+            final confirm = await showDialog<bool>(
+              context: context,
+              builder: (context) => AlertDialog(
+                title: Text(l10n.logOut),
+                content: Text(l10n.logOutConfirm),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context, false),
+                    child: Text(l10n.cancel),
+                  ),
+                  TextButton(
+                    onPressed: () => Navigator.pop(context, true),
+                    child: Text(
+                      l10n.logOut,
+                      style: const TextStyle(color: AppColors.error),
+                    ),
+                  ),
+                ],
+              ),
+            );
+
+            if (confirm == true && mounted) {
+              // Sign out from Auth Service
+              await authService.signOut();
+
+              // Update Provider State to Guest
+              await provider.updateUser(
+                supabaseUserId: null,
+                email: null,
+                isGuest: true,
+                photoUrl: null,
+              );
+
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(l10n.loggedOut),
+                    backgroundColor: AppColors.success,
+                  ),
+                );
+              }
+            }
+          },
+        ),
+        ListTile(
+          leading: const Icon(Icons.delete_forever, color: AppColors.error),
+          title: Text(
+            l10n.deleteAccount,
+            style: const TextStyle(color: AppColors.slate),
+          ),
+          onTap: () async {
+            final confirm = await showDialog<bool>(
+              context: context,
+              builder: (context) => AlertDialog(
+                title: Text(l10n.deleteAccount),
+                content: Text(
+                  l10n.deleteAccountConfirm,
+                ), // Ensure this string exists or use a hardcoded warning
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context, false),
+                    child: Text(l10n.cancel),
+                  ),
+                  TextButton(
+                    onPressed: () => Navigator.pop(context, true),
+                    child: Text(
+                      l10n.deleteAccount,
+                      style: const TextStyle(color: AppColors.error),
+                    ),
+                  ),
+                ],
+              ),
+            );
+
+            if (confirm == true && mounted) {
+              await authService.deleteAccount();
+              // Update Provider State to Guest
+              await provider.updateUser(
+                supabaseUserId: null,
+                email: null,
+                isGuest: true,
+                photoUrl: null,
+              );
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(l10n.accountDeleted),
+                    backgroundColor: AppColors.success,
+                  ),
+                );
+                Navigator.of(context).popUntil((route) => route.isFirst);
+              }
+            }
+          },
+        ),
+      ],
+    ]);
   }
 }

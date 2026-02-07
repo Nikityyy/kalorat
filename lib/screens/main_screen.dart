@@ -1,4 +1,4 @@
-import 'dart:io';
+import '../utils/platform_utils.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../extensions/l10n_extension.dart';
@@ -27,7 +27,7 @@ class _MainScreenState extends State<MainScreen> {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
 
-    if (Platform.isIOS) {
+    if (PlatformUtils.isIOS) {
       return CupertinoTabScaffold(
         tabBar: CupertinoTabBar(
           currentIndex: _currentIndex,
@@ -75,6 +75,12 @@ class _MainScreenState extends State<MainScreen> {
               color: AppColors.slate,
             ),
           ),
+          iconTheme: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.selected)) {
+              return const IconThemeData(color: AppColors.pebble);
+            }
+            return const IconThemeData(color: AppColors.slate);
+          }),
         ),
         child: NavigationBar(
           selectedIndex: _currentIndex,

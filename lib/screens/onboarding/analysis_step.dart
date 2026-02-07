@@ -49,13 +49,13 @@ class _AnalysisStepState extends State<AnalysisStep> {
     if (!mounted) return;
 
     // Save User
-    final user = UserModel(
+    await context.read<AppProvider>().updateUser(
       name: widget.name,
       birthdate: DateTime(DateTime.now().year - widget.age),
       height: widget.height.toDouble(),
       weight: widget.weight,
       language: widget.language,
-      geminiApiKey: widget.apiKey,
+      apiKey: widget.apiKey,
       onboardingCompleted: true,
       goal: widget.goalIndex,
       gender: widget.genderIndex,
@@ -64,9 +64,8 @@ class _AnalysisStepState extends State<AnalysisStep> {
       syncWeightToHealth: widget.healthSyncEnabled,
     );
 
-    await context.read<AppProvider>().saveUser(user);
+    if (!mounted) return;
 
-    // KEY FIX: Instantly use weight as first history log
     if (widget.weight > 0) {
       await context.read<AppProvider>().saveWeight(
         WeightModel(weight: widget.weight, date: DateTime.now()),

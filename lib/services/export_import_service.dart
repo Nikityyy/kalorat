@@ -23,7 +23,6 @@ class ExportImportService {
       await file.writeAsString(jsonString);
       return file.path;
     } catch (e) {
-      print('Export error: $e');
       return null;
     }
   }
@@ -51,7 +50,6 @@ class ExportImportService {
       await _databaseService.importAll(data);
       return true;
     } catch (e) {
-      print('Import error: $e');
       return false;
     }
   }

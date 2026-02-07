@@ -468,7 +468,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get ok => 'OK';
 
   @override
-  String get chooseGender => 'Wähle dein Geschlecht';
+  String get chooseGender => 'Welches Geschlecht hast du?';
 
   @override
   String get calculateMetabolicRate => 'Um deinen Grundumsatz zu berechnen.';
@@ -620,4 +620,95 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get healthConnectionFailed => 'Verbindung fehlgeschlagen';
+
+  @override
+  String get loginTitle => 'Anmelden';
+
+  @override
+  String get loginSubtitle =>
+      'Synchronisiere deine Daten auf all deinen Geräten';
+
+  @override
+  String get signInWithGoogle => 'Mit Google anmelden';
+
+  @override
+  String get continueAsGuest => 'Als Gast fortfahren';
+
+  @override
+  String get guestWarning =>
+      'Gastdaten werden nur lokal gespeichert und können nicht wiederhergestellt werden, wenn du das Gerät wechselst.';
+
+  @override
+  String get account => 'Konto';
+
+  @override
+  String loggedInAs(String email) {
+    return 'Angemeldet als $email';
+  }
+
+  @override
+  String get logOut => 'Abmelden';
+
+  @override
+  String get deleteAccount => 'Konto löschen';
+
+  @override
+  String get deleteAccountConfirm =>
+      'Bist du sicher? Alle deine Daten werden unwiderruflich gelöscht.';
+
+  @override
+  String get requestData => 'Meine Daten anfordern';
+
+  @override
+  String get guestMode => 'Gastmodus';
+
+  @override
+  String get loginToSync => 'Anmelden um Daten zu synchronisieren';
+
+  @override
+  String get syncComplete => 'Synchronisierung abgeschlossen';
+
+  @override
+  String get accountDeleted => 'Konto gelöscht';
+
+  @override
+  String get dataExported => 'Daten exportiert';
+
+  @override
+  String get accountSection => 'Deine Daten werden nur lokal gespeichert';
+
+  @override
+  String get settingsSaved => 'Einstellungen gespeichert';
+
+  @override
+  String get logOutConfirm => 'Möchtest du dich wirklich abmelden?';
+
+  @override
+  String get loggedOut => 'Erfolgreich abgemeldet';
+
+  @override
+  String get error => 'Fehler';
+
+  @override
+  String get rateLimitMeals =>
+      'Der Guide sagt: Ruh dich etwas aus, du hast heute genug getrackt.';
+
+  @override
+  String get rateLimitPhotos => 'Der Guide sagt: Pack leicht. 5 Fotos genügen.';
+
+  @override
+  String get legal => 'Rechtliches';
+
+  @override
+  String get privacyPolicy => 'Datenschutzerklärung';
+
+  @override
+  String get termsOfService => 'Nutzungsbedingungen';
+
+  @override
+  String get featureOnlyInApp => 'Nur in der App';
+
+  @override
+  String get healthNotAvailableWeb =>
+      'Die Gesundheitsintegration erfordert die native App';
 }

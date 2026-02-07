@@ -131,25 +131,61 @@ class AppProvider extends ChangeNotifier {
     bool? healthSyncEnabled,
     bool? syncMealsToHealth,
     bool? syncWeightToHealth,
+    String? supabaseUserId,
+    bool? isGuest,
+    String? email,
+    DateTime? lastSyncTimestamp,
+    String? photoUrl,
   }) async {
-    if (_user == null) return;
+    // If user is null (e.g. during onboarding before first save), create a new one
+    // Use device language for new users instead of hardcoded 'en'
+    final systemLocale = ui.PlatformDispatcher.instance.locale.languageCode;
+    final defaultLanguage = systemLocale == 'de' ? 'de' : 'en';
 
-    _user = UserModel(
-      name: name ?? _user!.name,
-      birthdate: birthdate ?? _user!.birthdate,
-      height: height ?? _user!.height,
-      weight: weight ?? _user!.weight,
-      language: language ?? _user!.language,
-      geminiApiKey: apiKey ?? _user!.geminiApiKey,
-      onboardingCompleted: onboardingCompleted ?? _user!.onboardingCompleted,
-      mealRemindersEnabled: mealRemindersEnabled ?? _user!.mealRemindersEnabled,
+    final currentUser =
+        _user ??
+        UserModel(
+          // Defaults for new user
+          name: '',
+          birthdate: DateTime.now(),
+          height: 170.0,
+          weight: 70.0,
+          language: defaultLanguage,
+          geminiApiKey: '',
+          onboardingCompleted: false,
+          mealRemindersEnabled: true,
+          weightRemindersEnabled: true,
+          goal: 0,
+          gender: 0,
+          healthSyncEnabled: false,
+          syncMealsToHealth: false,
+          syncWeightToHealth: false,
+          isGuest: true,
+        );
+
+    _user = currentUser.copyWith(
+      name: name ?? currentUser.name,
+      birthdate: birthdate ?? currentUser.birthdate,
+      height: height ?? currentUser.height,
+      weight: weight ?? currentUser.weight,
+      language: language ?? currentUser.language,
+      geminiApiKey: apiKey ?? currentUser.geminiApiKey,
+      onboardingCompleted:
+          onboardingCompleted ?? currentUser.onboardingCompleted,
+      mealRemindersEnabled:
+          mealRemindersEnabled ?? currentUser.mealRemindersEnabled,
       weightRemindersEnabled:
-          weightRemindersEnabled ?? _user!.weightRemindersEnabled,
-      goal: goal ?? _user!.goal,
-      gender: gender ?? _user!.gender,
-      healthSyncEnabled: healthSyncEnabled ?? _user!.healthSyncEnabled,
-      syncMealsToHealth: syncMealsToHealth ?? _user!.syncMealsToHealth,
-      syncWeightToHealth: syncWeightToHealth ?? _user!.syncWeightToHealth,
+          weightRemindersEnabled ?? currentUser.weightRemindersEnabled,
+      goal: goal ?? currentUser.goal,
+      gender: gender ?? currentUser.gender,
+      healthSyncEnabled: healthSyncEnabled ?? currentUser.healthSyncEnabled,
+      syncMealsToHealth: syncMealsToHealth ?? currentUser.syncMealsToHealth,
+      syncWeightToHealth: syncWeightToHealth ?? currentUser.syncWeightToHealth,
+      supabaseUserId: supabaseUserId ?? currentUser.supabaseUserId,
+      isGuest: isGuest ?? currentUser.isGuest,
+      email: email ?? currentUser.email,
+      lastSyncTimestamp: lastSyncTimestamp ?? currentUser.lastSyncTimestamp,
+      photoUrl: photoUrl ?? currentUser.photoUrl,
     );
 
     await _databaseService.saveUser(_user!);
@@ -202,6 +238,32 @@ class AppProvider extends ChangeNotifier {
       _databaseService.getMealsByDateRange(start, end);
 
   Future<void> saveMeal(MealModel meal) async {
+    // RATE LIMIT: Max 5 photos per meal
+    if (meal.photoPaths.length > 5) {
+      final isGerman = language == 'de';
+      // Manual fallback if context unavailable, though usually handled by UI
+      throw Exception(
+        isGerman
+            ? "Der Guide sagt: Pack leicht. 5 Fotos genügen."
+            : "The Guide says: Pack light. 5 photos are enough.",
+      );
+    }
+
+    // RATE LIMIT: Max 10 meals per day
+    // Only check if it's a NEW meal (not an update to an existing one)
+    final existingMeal = _databaseService.hasMeal(meal.id);
+    if (!existingMeal) {
+      final todayMeals = _databaseService.getMealsByDate(DateTime.now());
+      if (todayMeals.length >= 10) {
+        final isGerman = language == 'de';
+        throw Exception(
+          isGerman
+              ? "Der Guide sagt: Ruh dich etwas aus, du hast heute genug getrackt."
+              : "The Guide says: Rest a bit, you've tracked enough for today.",
+        );
+      }
+    }
+
     await _databaseService.saveMeal(meal);
     _invalidateStatsCache(); // Invalidate on meal change
 

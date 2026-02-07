@@ -1,9 +1,9 @@
 import 'dart:convert';
-import 'dart:io';
+import 'package:cross_file/cross_file.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
-import 'package:http/io_client.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import '../utils/platform_utils.dart';
 
 /// Encodes image bytes to base64 in a background isolate
 /// This prevents UI jank when processing large images
@@ -68,7 +68,6 @@ class GeminiService {
       String model = _primaryModels[currentIndex];
 
       try {
-        print('Attempting analysis with primary model: $model');
         final result = await _makeRequest(model, imagePaths);
 
         // If successful, save this index as the last used one
@@ -78,7 +77,6 @@ class GeminiService {
         // Check for rate limit (429) or other errors to decide whether to continue
         // We'll proceed to next model on 429.
         if (e.toString().contains('429')) {
-          print('Model $model rate limited (429). Switching to next option...');
           continue; // Try next primary model
         } else {
           // For other errors, we might want to fail fast or try others.
@@ -90,13 +88,9 @@ class GeminiService {
     }
 
     // specific fallback
-    print(
-      'All primary models failed or rate limited. Attempting fallback: $_fallbackModel',
-    );
     try {
       return await _makeRequest(_fallbackModel, imagePaths);
     } catch (e) {
-      print('Fallback model also failed: $e');
       rethrow;
     }
   }
@@ -105,25 +99,43 @@ class GeminiService {
     String modelName,
     List<String> imagePaths,
   ) async {
-    // Use a custom client with longer timeouts
-    final httpClient = HttpClient()
-      ..connectionTimeout = const Duration(minutes: 2)
-      ..idleTimeout = const Duration(minutes: 2);
-    final client = IOClient(httpClient);
+    // Use standard client which works on both mobile and web
+    final client = http.Client();
 
     try {
       // Prepare image parts in background to avoid UI jank
       final List<Map<String, dynamic>> imageParts = [];
       for (final path in imagePaths) {
-        final file = File(path);
-        if (await file.exists()) {
-          final bytes = await file.readAsBytes();
-          // Encode in background isolate for large images
-          final base64Image = await compute(_encodeImageBytes, bytes);
-          final mimeType = _getMimeType(path);
-          imageParts.add({
-            'inline_data': {'mime_type': mimeType, 'data': base64Image},
-          });
+        // Use XFile for cross-platform file reading (works with paths and blob URLs)
+        try {
+          final List<int> bytes;
+          String mimeType = 'image/jpeg';
+
+          if (PlatformUtils.isWeb) {
+            // On Web, imagePaths are Base64 strings (unless blob URL from old session)
+            if (path.startsWith('blob:')) {
+              final file = XFile(path);
+              bytes = await file.readAsBytes();
+              mimeType = _getMimeType(path);
+            } else {
+              bytes = base64Decode(path);
+              // Default to jpeg for base64
+            }
+          } else {
+            final file = XFile(path);
+            bytes = await file.readAsBytes();
+            mimeType = _getMimeType(path);
+          }
+
+          if (bytes.isNotEmpty) {
+            // Encode in background isolate for large images
+            final base64Image = await compute(_encodeImageBytes, bytes);
+            imageParts.add({
+              'inline_data': {'mime_type': mimeType, 'data': base64Image},
+            });
+          }
+        } catch (e) {
+          print('Error reading image $path: $e');
         }
       }
 
@@ -255,8 +267,7 @@ class GeminiService {
     if (key.isEmpty) return false;
 
     // Use Flash Lite for validation as it's cheaper/quicker
-    final url =
-        '${_baseUrlBase}gemini-flash-lite-latest:generateContent?key=$key';
+    final url = '${_baseUrlBase}gemma-3-27b-it:generateContent?key=$key';
 
     try {
       final response = await http.post(

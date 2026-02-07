@@ -1,4 +1,4 @@
-import 'dart:io';
+import '../utils/platform_utils.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:kalorat/theme/app_colors.dart';
@@ -102,7 +102,7 @@ class _AddWeightScreenState extends State<AddWeightScreen> {
   }
 
   void _pickDate(BuildContext context) async {
-    if (Platform.isIOS) {
+    if (PlatformUtils.isIOS) {
       showCupertinoModalPopup(
         context: context,
         builder: (ctx) => Container(

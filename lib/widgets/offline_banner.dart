@@ -1,4 +1,4 @@
-import 'dart:io';
+import '../utils/platform_utils.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../../extensions/l10n_extension.dart';
@@ -24,7 +24,7 @@ class OfflineBanner extends StatelessWidget {
       child: Row(
         children: [
           Icon(
-            Platform.isIOS ? CupertinoIcons.wifi_slash : Icons.wifi_off,
+            PlatformUtils.isIOS ? CupertinoIcons.wifi_slash : Icons.wifi_off,
             color: AppColors.frost,
             size: 20,
           ),

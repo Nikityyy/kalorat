@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
@@ -9,9 +8,19 @@ import 'screens/main_screen.dart';
 import 'screens/onboarding/onboarding_flow.dart';
 import 'theme/app_colors.dart';
 import 'theme/app_theme.dart';
+import 'utils/platform_utils.dart';
+
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  await Supabase.initialize(
+    url: 'https://likdthixmzuugbtgrdqz.supabase.co',
+    anonKey:
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxpa2R0aGl4bXp1dWdidGdyZHF6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA0NjEzMTQsImV4cCI6MjA4NjAzNzMxNH0.E2pe3eIM1QsL0bs5H9-nuf3ACRWdw4vr2rvGuZNNXHQ',
+  );
+
   runApp(const KaloratApp());
 }
 
@@ -53,7 +62,7 @@ class KaloratApp extends StatelessWidget {
               homeWidget = const OnboardingFlow();
             }
 
-            if (Platform.isIOS) {
+            if (PlatformUtils.isIOS) {
               return CupertinoApp(
                 debugShowCheckedModeBanner: false,
                 title: 'Kalorat',

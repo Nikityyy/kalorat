@@ -1,4 +1,6 @@
-import 'dart:io';
+import 'dart:convert';
+import 'dart:io' show File;
+import '../utils/platform_utils.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../../extensions/l10n_extension.dart';
@@ -42,18 +44,37 @@ class MealCard extends StatelessWidget {
                 if (meal.photoPaths.isNotEmpty)
                   ClipRRect(
                     borderRadius: BorderRadius.circular(AppTheme.borderRadius),
-                    child: Image.file(
-                      File(meal.photoPaths.first),
-                      width: 60,
-                      height: 60,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, _, _) => Container(
-                        width: 60,
-                        height: 60,
-                        color: AppColors.steel.withValues(alpha: 0.5),
-                        child: const Icon(Icons.image, color: AppColors.frost),
-                      ),
-                    ),
+                    child: PlatformUtils.isWeb
+                        ? Image.memory(
+                            base64Decode(meal.photoPaths.first),
+                            width: 60,
+                            height: 60,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, _, _) => Container(
+                              width: 60,
+                              height: 60,
+                              color: AppColors.steel.withValues(alpha: 0.5),
+                              child: const Icon(
+                                Icons.image,
+                                color: AppColors.frost,
+                              ),
+                            ),
+                          )
+                        : Image.file(
+                            File(meal.photoPaths.first),
+                            width: 60,
+                            height: 60,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, _, _) => Container(
+                              width: 60,
+                              height: 60,
+                              color: AppColors.steel.withValues(alpha: 0.5),
+                              child: const Icon(
+                                Icons.image,
+                                color: AppColors.frost,
+                              ),
+                            ),
+                          ),
                   )
                 else
                   Container(
@@ -156,7 +177,7 @@ class MealCard extends StatelessWidget {
                                 padding: EdgeInsets.zero,
                                 alignment: Alignment.centerRight,
                                 icon: Icon(
-                                  Platform.isIOS
+                                  PlatformUtils.isIOS
                                       ? CupertinoIcons.delete
                                       : Icons.delete_outline,
                                   color: AppColors.error,
