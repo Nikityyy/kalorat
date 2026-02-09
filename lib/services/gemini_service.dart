@@ -3,6 +3,7 @@ import 'package:cross_file/cross_file.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:flutter/services.dart';
 import '../utils/platform_utils.dart';
 
 /// Encodes image bytes to base64 in a background isolate
@@ -49,9 +50,15 @@ class GeminiService {
   final String apiKey;
   final String language;
 
+  // Cache for example image parts to avoid repeated asset loading
+  List<Map<String, dynamic>>? _cachedExampleParts;
+
   GeminiService({required this.apiKey, this.language = 'de'});
 
-  Future<Map<String, dynamic>?> analyzeMeal(List<String> imagePaths) async {
+  Future<Map<String, dynamic>?> analyzeMeal(
+    List<String> imagePaths, {
+    bool useGrams = false,
+  }) async {
     if (apiKey.isEmpty) {
       throw Exception('API key is not set');
     }
@@ -68,7 +75,11 @@ class GeminiService {
       String model = _primaryModels[currentIndex];
 
       try {
-        final result = await _makeRequest(model, imagePaths);
+        final result = await _makeRequest(
+          model,
+          imagePaths,
+          useGrams: useGrams,
+        );
 
         // If successful, save this index as the last used one
         await box.put(_lastModelIndexKey, currentIndex);
@@ -87,7 +98,7 @@ class GeminiService {
 
     // specific fallback
     try {
-      return await _makeRequest(_fallbackModel, imagePaths);
+      return await _makeRequest(_fallbackModel, imagePaths, useGrams: useGrams);
     } catch (e) {
       rethrow;
     }
@@ -95,8 +106,9 @@ class GeminiService {
 
   Future<Map<String, dynamic>?> _makeRequest(
     String modelName,
-    List<String> imagePaths,
-  ) async {
+    List<String> imagePaths, {
+    bool useGrams = false,
+  }) async {
     // Use standard client which works on both mobile and web
     final client = http.Client();
 
@@ -142,14 +154,12 @@ class GeminiService {
       }
 
       // Build prompt based on language
-      final prompt = _getPrompt(language);
+      final prompt = _getPrompt(language, useGrams: useGrams);
 
       // Build config
       final Map<String, dynamic> generationConfig = {
-        'temperature': 0.1,
-        'topK': 32,
-        'topP': 1,
-        'maxOutputTokens': 1280,
+        'temperature': 0.0,
+        'maxOutputTokens': 1536,
       };
 
       // Apply thinking config only for specific reasoning models
@@ -157,15 +167,19 @@ class GeminiService {
         generationConfig['thinkingConfig'] = {'thinkingBudget': 1024};
       }
 
+      // Load multimodal examples if not already cached
+      _cachedExampleParts ??= await _loadExampleParts();
+
       // Build request body
       final requestBody = {
+        'system_instruction': {
+          'parts': [
+            {'text': prompt},
+            ...?_cachedExampleParts,
+          ],
+        },
         'contents': [
-          {
-            'parts': [
-              {'text': prompt},
-              ...imageParts,
-            ],
-          },
+          {'parts': imageParts},
         ],
         'generationConfig': generationConfig,
       };
@@ -302,97 +316,188 @@ class GeminiService {
         return 'image/gif';
       case 'webp':
         return 'image/webp';
+      case 'avif':
+        return 'image/avif';
       default:
         return 'image/jpeg';
     }
   }
 
-  String _getPrompt(String language) {
+  Future<List<Map<String, dynamic>>> _loadExampleParts() async {
+    try {
+      final List<Map<String, dynamic>> parts = [];
+
+      // Example 1
+      final firstBytes = await rootBundle.load('assets/examples/first.jpg');
+      parts.add({'text': 'EXAMPLE 1 IMAGE:'});
+      parts.add({
+        'inline_data': {
+          'mime_type': 'image/jpeg',
+          'data': base64Encode(firstBytes.buffer.asUint8List()),
+        },
+      });
+      parts.add({'text': 'EXAMPLE 1 ANALYSIS (GOLD STANDARD):'});
+      parts.add({'text': _getExample1Json()});
+
+      // Example 2
+      final secondBytes = await rootBundle.load('assets/examples/second.avif');
+      parts.add({'text': 'EXAMPLE 2 IMAGE:'});
+      parts.add({
+        'inline_data': {
+          'mime_type': 'image/avif',
+          'data': base64Encode(secondBytes.buffer.asUint8List()),
+        },
+      });
+      parts.add({'text': 'EXAMPLE 2 ANALYSIS (GOLD STANDARD):'});
+      parts.add({'text': _getExample2Json()});
+
+      return parts;
+    } catch (e) {
+      print('Error loading example assets: $e');
+      return [];
+    }
+  }
+
+  String _getExample1Json() {
+    return '''{
+  "analysis_note": "Reasoning: [Chicken Breast, cooked]: The pan contains approx. 35-40 bite-sized cubes. Estimating ~500g cooked weight -> ~155g Protein, ~18g Fat, 0g Carbs. [Broccoli, cooked]: Approx. ~250g -> ~6g Protein, ~17g Carbs, ~1g Fat. [Sauce & Oil]: Glossy sheen indicates oil/sugar glaze. 2 tbsp oil (30g Fat) and ~45g sugars/starch (45g Carbs). Total calculated: (161g P * 4) + (62g C * 4) + (49g F * 9) = 1333 kcal. Verification: Matches total estimate.",
+  "meal_name": "Honey Garlic Chicken and Broccoli Skillet",
+  "calories": 1333.0,
+  "protein": 161.0,
+  "carbs": 62.0,
+  "fats": 49.0,
+  "detected_quantity": 825.0,
+  "detected_unit": "gram",
+  "confidence_score": 0.95
+}''';
+  }
+
+  String _getExample2Json() {
+    return '''{
+  "analysis_note": "Reasoning: Analyzed as a standard 300g serving. [White Rice]: 100g -> 130 kcal, 28g carbs, 2.7g protein, 0.3g fat. [Shredded Chicken Breast]: 85g -> 140 kcal, 0g carbs, 26g protein, 3g fat. [Broccoli Florets]: 60g -> 20 kcal, 4g carbs, 2g protein, 0.2g fat. [Cheese & Cream Sauce]: 45g -> 120 kcal, 4g carbs, 4g protein, 9g fat. [Crispy Topping]: 10g -> 50 kcal, 6g carbs, 1g protein, 3.5g fat. Total calculated: 460 kcal. Verification: (35.7*4) + (42*4) + (16*9) = 454.8 kcal (matches closely).",
+  "meal_name": "Chicken Broccoli Rice Casserole",
+  "calories": 460.0,
+  "protein": 35.7,
+  "carbs": 42.0,
+  "fats": 16.0,
+  "detected_quantity": 300.0,
+  "detected_unit": "gram",
+  "confidence_score": 0.9
+}''';
+  }
+
+  String _getPrompt(String language, {bool useGrams = false}) {
+    final unitString = useGrams ? 'gram' : 'serving';
+    final example1Note = useGrams
+        ? 'Reasoning: [Hähnchenbrust, gegart]: Ca. 35-40 Stücke. Schätzung ~500g gegart -> ~155g Protein, ~18g Fett, 0g KH. [Brokkoli]: Nimmt die Hälfte der Pfanne ein. Schätzung ~250g -> ~6g Protein, ~17g KH, ~1g Fett. [Sauce & Öl]: Glanz deutet auf Öl/Zucker-Glasur hin. 2 EL Öl (30g Fett) und ~45g Zucker/Stärke (45g KH). Gesamt: (161g P * 4) + (62g C * 4) + (49g F * 9) = 1333 kcal. Verifikation: Passt zur Gesamtschätzung.'
+        : 'Reasoning: Analyse einer großen Pfannenportion (ca. 800g). Komponenten: Viel mageres Hähnchen, Brokkoli, dunkle Sauce. Proteinreich (~160g), mäßig Kohlenhydrate aus der Sauce (~60g), Fett hauptsächlich durch Öl (~50g). Gesamtschätzung: ~1330 kcal.';
+
+    final example1Name = useGrams
+        ? 'Honey Garlic Chicken Brokkoli Pfanne'
+        : 'Große Hähnchen-Brokkoli Pfanne';
+    final example1Qty = useGrams ? 825.0 : 1.0;
+
+    final example2Note = useGrams
+        ? 'Reasoning: Analyse einer Standardportion (300g). [Weißer Reis]: 100g -> 130 kcal, 28g KH, 2.7g P, 0.3g F. [Hähnchen]: 85g -> 140 kcal, 0g KH, 26g P, 3g F. [Brokkoli]: 60g -> 20 kcal, 4g KH, 2g P, 0.2g F. [Saucenbasis]: 45g (Cheddar/Creme) -> 120 kcal, 4g KH, 4g P, 9g F. [Topping]: 10g -> 50 kcal, 6g KH, 1g P, 3.5g F. Gesamt: 460 kcal. Verifikation: (35.7*4) + (42*4) + (16*9) = 454.8 kcal (nahezu identisch).'
+        : 'Reasoning: Typische Einzelportion (ca. 300-350g). Hauptbestandteile: Reis, gezupftes Hähnchen, Brokkoli, Käsesauce. Moderate Kaloriendichte durch Sauce. Makroberteilung: 35g P, 40g C, 15g F. Gesamt: ~450 kcal.';
+    final example2Qty = useGrams ? 300.0 : 1.0;
+
     if (language == 'de') {
-      return '''Du bist ein professioneller Ernährungsberater (AI Nutritionist) und Kalorien-Experte. Analysiere dieses Bild mit höchster Präzision.
+      return '''Du bist ein fachkundiger KI-Ernährungsberater. Deine Aufgabe ist die hochpräzise Analyse von Mahlzeiten-Bildern.
 
-DENKPROZESS (Interne Analyse):
-1. WAS SEHE ICH? (Mahlzeit auf Teller/Pfanne, Nährwerttabelle?)
-2. PORTIONS-LOGIK: 
-   - Ein Foto zeigt meistens GENAU das, was der Nutzer tracken möchte.
-   - SOWOHL ein Teller, als AUCH eine Pfanne oder Bowl entsprechen in der Regel 1.0 Portion (detected_quantity: 1.0).
-   - Schätze die Kalorien für den GESAMTEN sichtbaren Inhalt des Behältners.
-3. MENGEN-MATHEMATIK:
-   - Wenn Nährwerttabelle sichtbar: Werte für 100g/ml extrahieren. detected_quantity = 100.0.
+LOGIK-REGELN:
+1.  **Zuerst Denken (Chain of Thought)**: Beschreibe im Feld "analysis_note" zuerst deine Analyse.
+    - Identifiziere jede Zutat.
+    ${useGrams ? '- Schätze das Gewicht in Gramm (sei realistisch!).' : '- Schätze die Anzahl der Portionen (meist 1.0 für einen Teller, oder mehr für Pfannen/Töpfe).'}
+    - Benutze wissenschaftliche Referenzwerte:
+        * Hähnchenbrust (gegart): ~31g Protein / 100g.
+        * Reis (gekocht): ~28g KH / 100g.
+        * Öl/Fett: ~90-100% Fettanteil.
+    - Berechne die Makros pro Zutat.
+    - Summiere alles auf und verifiziere mit der Atwater-Formel: (P*4 + C*4 + F*9) ≈ Kalorien.
+2.  **Standard-Einheit**: Verwende IMMER "$unitString" für die `detected_unit`.
+3.  **Genauigkeit & Volumen**: Sei objektiv. ${useGrams ? 'Eine volle Pfanne (10-12 inch) wiegt meist 800-1200g. Ein Einzelteller wiegt meist 300-500g.' : 'Ein Standardteller ist normalerweise 1.0 Portionen. Eine volle Pfanne kann 2-4 Portionen sein.'}
 
-BEISPIELE:
-- Teller Nudeln -> 1.0 Portion.
-- Kleine Pfanne mit Hähnchen -> 1.0 Portion.
-- 2 ganze Bananen -> 2.0 Portionen (Stückgut).
-
-REGELN FÜR DIE ANTWORT:
-1. IDENTIFIKATION & PORTIONIERUNG:
-   - Der Standardwert für ein Foto einer Mahlzeit (egal ob Teller, Pfanne, Bowl) ist IMMER 1.0 Portion.
-   - Nur mehr als 1.0 schätzen, wenn offensichtlich mehrere separate Einheiten/Stücke (z.B. "3 Äpfel") oder ein riesiges Blech/Vorratstopf zu sehen ist.
-   - Nährwerttabelle sichtbar -> IMMER 100.0 (detected_quantity) und 'gram'/'ml' (detected_unit).
-   - Benutze nur dann Dezimalzahlen (z.B. 0.5), wenn wirklich nur ein Bruchteil einer Portion zu sehen ist.
-   - Nährwerttabelle sichtbar -> IMMER 100.0 (detected_quantity) und 'gram'/'ml' (detected_unit).
-2. VALIDIERUNG (Atwater-System):
-   - Prüfe deine Schätzung mathematisch! Kalorien ≈ (Protein * 4) + (Kohlenhydrate * 4) + (Fett * 9).
-   - Die "calories" müssen die GESAMT-Kalorien für die "detected_quantity" sein.
-3. SPRACHE & FORMAT:
-   - "meal_name" und "analysis_note" auf DEUTSCH.
-   - NUR JSON antworten, KEIN Markdown.
-
-FORMAT:
+BEISPIEL 1 (Pfanne/Große Portion):
 {
-  "meal_name": "Präziser Name",
-  "calories": 0.0,
-  "protein": 0.0,
-  "carbs": 0.0,
-  "fats": 0.0,
-  "detected_quantity": 0.0,
-  "detected_unit": "serving" | "gram" | "ml",
-  "confidence_score": 0.0,
-  "analysis_note": "Kurze Begründung (z.B. 'Ein Teller erkannt = 1.0 Portion. Kalorien für den gesamten Inhalt geschätzt.')"
-}''';
+  "analysis_note": "$example1Note",
+  "meal_name": "$example1Name",
+  "calories": 1333.0,
+  "protein": 161.0,
+  "carbs": 62.0,
+  "fats": 49.0,
+  "detected_quantity": $example1Qty,
+  "detected_unit": "$unitString",
+  "confidence_score": 0.95
+}
+
+BEISPIEL 2 (Teller/Einzelportion):
+{
+  "analysis_note": "$example2Note",
+  "meal_name": "Chicken Brokkoli Reis Auflauf",
+  "calories": 460.0,
+  "protein": 35.7,
+  "carbs": 42.0,
+  "fats": 16.0,
+  "detected_quantity": $example2Qty,
+  "detected_unit": "$unitString",
+  "confidence_score": 0.9
+}
+
+ANTWORTE NUR ALS JSON. DAS FELD 'analysis_note' MUSS ZUERST ERSCHEINEN.
+''';
     } else {
-      return '''You are a professional AI Nutritionist and calorie expert. Analyze this image with extreme precision.
+      final unitStringEn = useGrams ? 'gram' : 'serving';
+      final example1NoteEn = useGrams
+          ? 'Reasoning: [Chicken Breast, cooked]: The pan contains approx. 35-40 bite-sized cubes. Estimating ~500g cooked weight -> ~155g Protein, ~18g Fat, 0g Carbs. [Broccoli, cooked]: Approx. ~250g -> ~6g Protein, ~17g Carbs, ~1g Fat. [Sauce & Oil]: Glossy sheen indicates oil/sugar glaze. 2 tbsp oil (30g Fat) and ~45g sugars/starch (45g Carbs). Total calculated: (161g P * 4) + (62g C * 4) + (49g F * 9) = 1333 kcal. Verification: Matches total estimate.'
+          : 'Reasoning: Large skillet portion (approx. 800g). Components: Plenty of lean chicken, broccoli, dark sauce. High in protein (~160g), moderate carbs from sauce (~60g), fat mostly from oil (~50g). Total estimate: ~1330 kcal.';
+      final example2NoteEn = useGrams
+          ? 'Reasoning: Analyzed as a standard 300g serving. [White Rice]: 100g -> 130 kcal, 28g carbs, 2.7g protein, 0.3g fat. [Shredded Chicken Breast]: 85g -> 140 kcal, 0g carbs, 26g protein, 3g fat. [Broccoli Florets]: 60g -> 20 kcal, 4g carbs, 2g protein, 0.2g fat. [Cheese & Cream Sauce]: 45g -> 120 kcal, 4g carbs, 4g protein, 9g fat. [Crispy Topping]: 10g -> 50 kcal, 6g carbs, 1g protein, 3.5g fat. Total calculated: 460 kcal. Verification: (35.7*4) + (42*4) + (16*9) = 454.8 kcal (matches closely).'
+          : 'Reasoning: Typical single serving (approx. 300-350g). Main ingredients: rice, shredded chicken, broccoli, cheese sauce. Moderate calorie density due to sauce. Macros: 35g P, 40g C, 15g F. Total: ~450 kcal.';
 
-THINKING PROCESS (Internal Analysis):
-1. WHAT DO I SEE? (Meal on plate/pan, nutrition label?)
-2. PORTION LOGIC: 
-   - A photo usually shows EXACTLY what the user wants to track.
-   - BOTH a plate AND a pan or bowl usually correspond to 1.0 portion (detected_quantity: 1.0).
-   - Estimate calories for the ENTIRE visible content of the container.
-3. QUANTITY MATH:
-   - If nutrition label visible: Extract values for 100g/ml. Set detected_quantity to 100.0.
+      return '''You are a master AI Nutritionist. Analyze the attached image with scientific precision.
 
-EXAMPLES:
-- Plate of pasta -> 1.0 portion.
-- Small pan with chicken -> 1.0 portion.
-- 2 whole bananas -> 2.0 portions (discrete items).
+LOGIC RULES:
+1.  **Think First (Chain of Thought)**: Use the "analysis_note" field to show your reasoning step-by-step.
+    - Identify every ingredient.
+    ${useGrams ? '- Estimate weights realistically in grams.' : '- Estimate the number of servings (usually 1.0 for a single plate, or more for shared pans/pots).'}
+    - Use scientific reference densities:
+        * Chicken Breast (cooked): ~31g Protein / 100g.
+        * Rice (cooked): ~28g Carbs / 100g.
+        * Oil/Fat: ~90-100% Fat.
+    - Calculate macros per ingredient.
+    - Sum them up and verify with the Atwater formula: (P*4 + C*4 + F*9) ≈ Calories.
+2.  **Standardize**: ALWAYS use "$unitStringEn" for the `detected_unit`.
+3.  **Precision & Volume**: Be objective. ${useGrams ? 'A full 10-12 inch skillet weighs approx. 800-1200g. A single plate weighs approx. 300-500g.' : 'A standard plate is usually 1.0 servings. A full pan might be 2-4 servings.'}
 
-RULES FOR RESPONSE:
-1. IDENTIFICATION & PORTIONING:
-   - The default for a meal photo (regardless of plate, pan, bowl) is ALWAYS 1.0 portion.
-   - Only estimate more than 1.0 if there are clearly multiple separate units (e.g., "3 apples") or a massive bulk container/tray.
-   - Nutrition label visible -> ALWAYS 100.0 (detected_quantity) and 'gram'/'ml' (detected_unit).
-   - Only use decimals (e.g. 0.5) if only a fraction of a portion is visible.
-   - Nutrition label visible -> ALWAYS 100.0 (detected_quantity) and 'gram'/'ml' (detected_unit).
-2. VALIDATION (Atwater System):
-   - Mathematically verify your estimate! Calories ≈ (Protein * 4) + (Carbs * 4) + (Fat * 9).
-   - "calories" MUST be the TOTAL calories for the "detected_quantity".
-3. FORMAT:
-   - ONLY respond with JSON, NO Markdown.
-
-FORMAT:
+EXAMPLE 1:
 {
-  "meal_name": "Precise name",
-  "calories": 0.0,
-  "protein": 0.0,
-  "carbs": 0.0,
-  "fats": 0.0,
-  "detected_quantity": 0.0,
-  "detected_unit": "serving" | "gram" | "ml",
-  "confidence_score": 0.0,
-  "analysis_note": "Short reason (e.g., 'One plate detected = 1.0 portion. Estimated calories for the entire plate content.')"
-}''';
+  "analysis_note": "$example1NoteEn",
+  "meal_name": "$example1Name",
+  "calories": 1333.0,
+  "protein": 161.0,
+  "carbs": 62.0,
+  "fats": 49.0,
+  "detected_quantity": $example1Qty,
+  "detected_unit": "$unitStringEn",
+  "confidence_score": 0.95
+}
+
+EXAMPLE 2:
+{
+  "analysis_note": "$example2NoteEn",
+  "meal_name": "Chicken Broccoli Rice Casserole",
+  "calories": 460.0,
+  "protein": 35.7,
+  "carbs": 42.0,
+  "fats": 16.0,
+  "detected_quantity": $example2Qty,
+  "detected_unit": "$unitStringEn",
+  "confidence_score": 0.9
+}
+
+RESPONSE FORMAT: JSON ONLY. The field 'analysis_note' MUST appear first.
+''';
     }
   }
 }

@@ -88,7 +88,10 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
 
     try {
       final gemini = GeminiService(apiKey: apiKey, language: language);
-      final result = await gemini.analyzeMeal(_meal.photoPaths);
+      final result = await gemini.analyzeMeal(
+        _meal.photoPaths,
+        useGrams: provider.user?.useGramsByDefault ?? false,
+      );
 
       if (result != null) {
         if (result.containsKey('error') &&

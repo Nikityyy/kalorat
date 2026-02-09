@@ -18,7 +18,11 @@ class OfflineQueueService {
   Stream<List<ConnectivityResult>> get connectivityStream =>
       _connectivity.onConnectivityChanged;
 
-  Future<void> processQueue(String apiKey, String language) async {
+  Future<void> processQueue(
+    String apiKey,
+    String language, {
+    bool useGrams = false,
+  }) async {
     if (!await isOnline()) return;
 
     final pendingMeals = _databaseService.getPendingMeals();
@@ -28,7 +32,10 @@ class OfflineQueueService {
 
     for (final meal in pendingMeals) {
       try {
-        final result = await geminiService.analyzeMeal(meal.photoPaths);
+        final result = await geminiService.analyzeMeal(
+          meal.photoPaths,
+          useGrams: useGrams,
+        );
         if (result != null) {
           final updatedMeal = meal.copyWith(
             mealName: result['meal_name'] ?? '',

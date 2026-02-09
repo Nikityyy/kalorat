@@ -169,6 +169,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
               activeThumbColor: AppColors.primary,
               onChanged: (v) => provider.updateUser(weightRemindersEnabled: v),
             ),
+            SwitchListTile(
+              title: const Text(
+                'Präzisions-Modus (Gramm)',
+                style: TextStyle(color: AppColors.slate),
+              ),
+              subtitle: const Text(
+                'Analyse zeigt Gramm statt Portionen',
+                style: TextStyle(fontSize: 12),
+              ),
+              value: user.useGramsByDefault,
+              activeThumbColor: AppColors.primary,
+              onChanged: (v) => provider.updateUser(useGramsByDefault: v),
+            ),
           ]),
           const SizedBox(height: 24),
           _buildHealthSection(provider, user),

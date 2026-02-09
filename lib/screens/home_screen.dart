@@ -213,7 +213,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
     try {
       final gemini = GeminiService(apiKey: apiKey, language: language);
-      final result = await gemini.analyzeMeal(_capturedPhotos);
+      final result = await gemini.analyzeMeal(
+        _capturedPhotos,
+        useGrams: provider.user?.useGramsByDefault ?? false,
+      );
 
       if (result != null) {
         debugPrint('Analysis result received. Checking content...');

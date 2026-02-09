@@ -143,6 +143,7 @@ class AppProvider extends ChangeNotifier {
     String? email,
     DateTime? lastSyncTimestamp,
     String? photoUrl,
+    bool? useGramsByDefault,
   }) async {
     // If user is null (e.g. during onboarding before first save), create a new one
     // Use device language for new users instead of hardcoded 'en'
@@ -168,6 +169,7 @@ class AppProvider extends ChangeNotifier {
           syncMealsToHealth: false,
           syncWeightToHealth: false,
           isGuest: true,
+          useGramsByDefault: false,
         );
 
     _user = currentUser.copyWith(
@@ -193,6 +195,7 @@ class AppProvider extends ChangeNotifier {
       email: email ?? currentUser.email,
       lastSyncTimestamp: lastSyncTimestamp ?? currentUser.lastSyncTimestamp,
       photoUrl: photoUrl ?? currentUser.photoUrl,
+      useGramsByDefault: useGramsByDefault ?? currentUser.useGramsByDefault,
     );
 
     await _databaseService.saveUser(_user!);
@@ -233,7 +236,11 @@ class AppProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      await _offlineQueueService.processQueue(apiKey, language);
+      await _offlineQueueService.processQueue(
+        apiKey,
+        language,
+        useGrams: _user?.useGramsByDefault ?? false,
+      );
     } finally {
       _isProcessingQueue = false;
       notifyListeners();

@@ -61,6 +61,9 @@ class UserModel extends HiveObject {
   @HiveField(18)
   String? photoUrl;
 
+  @HiveField(19)
+  bool useGramsByDefault;
+
   UserModel({
     required this.name,
     required this.birthdate,
@@ -81,6 +84,7 @@ class UserModel extends HiveObject {
     this.email,
     this.lastSyncTimestamp,
     this.photoUrl,
+    this.useGramsByDefault = false,
   });
 
   int get age {
@@ -157,6 +161,7 @@ class UserModel extends HiveObject {
     String? email,
     DateTime? lastSyncTimestamp,
     String? photoUrl,
+    bool? useGramsByDefault,
   }) {
     return UserModel(
       name: name ?? this.name,
@@ -179,6 +184,7 @@ class UserModel extends HiveObject {
       email: email ?? this.email,
       lastSyncTimestamp: lastSyncTimestamp ?? this.lastSyncTimestamp,
       photoUrl: photoUrl ?? this.photoUrl,
+      useGramsByDefault: useGramsByDefault ?? this.useGramsByDefault,
     );
   }
 
@@ -202,6 +208,7 @@ class UserModel extends HiveObject {
     'email': email,
     'lastSyncTimestamp': lastSyncTimestamp?.toIso8601String(),
     'photoUrl': photoUrl,
+    'useGramsByDefault': useGramsByDefault,
   };
 
   factory UserModel.fromJson(Map<String, dynamic> json) => UserModel(
@@ -226,5 +233,6 @@ class UserModel extends HiveObject {
         ? DateTime.parse(json['lastSyncTimestamp'])
         : null,
     photoUrl: json['photoUrl'],
+    useGramsByDefault: json['useGramsByDefault'] ?? false,
   );
 }
