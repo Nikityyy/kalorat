@@ -1,4 +1,6 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import '../utils/platform_utils.dart';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -172,6 +174,19 @@ class MeScreen extends StatelessWidget {
     );
   }
 
+  Widget _buildInitialsPlaceholder(UserModel user) {
+    return Center(
+      child: Text(
+        user.name.isNotEmpty ? user.name[0].toUpperCase() : '?',
+        style: const TextStyle(
+          fontSize: 40,
+          color: AppColors.pebble,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
+
   Widget _buildCenteredProfile(BuildContext context, UserModel user) {
     final l10n = context.l10n;
     return Column(
@@ -183,25 +198,23 @@ class MeScreen extends StatelessWidget {
             color: AppColors.styrianForest,
             shape: BoxShape.circle,
             border: Border.all(color: AppColors.pebble, width: 1),
-            image: user.photoUrl != null
-                ? DecorationImage(
-                    image: NetworkImage(user.photoUrl!),
-                    fit: BoxFit.cover,
-                  )
-                : null,
           ),
-          child: user.photoUrl == null
-              ? Center(
-                  child: Text(
-                    user.name.isNotEmpty ? user.name[0] : '?',
-                    style: const TextStyle(
-                      fontSize: 40,
-                      color: AppColors.pebble,
-                      fontWeight: FontWeight.bold,
+          child: ClipOval(
+            child: user.photoUrl != null
+                ? CachedNetworkImage(
+                    imageUrl: user.photoUrl!,
+                    fit: BoxFit.cover,
+                    placeholder: (context, url) => const Center(
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: AppColors.pebble,
+                      ),
                     ),
-                  ),
-                )
-              : null,
+                    errorWidget: (context, url, error) =>
+                        _buildInitialsPlaceholder(user),
+                  )
+                : _buildInitialsPlaceholder(user),
+          ),
         ),
         const SizedBox(height: 16),
         Text(

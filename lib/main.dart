@@ -10,10 +10,14 @@ import 'theme/app_colors.dart';
 import 'theme/app_theme.dart';
 import 'utils/platform_utils.dart';
 
+import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Hide system navigation bar for immersive experience on mobile
+  SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
 
   await Supabase.initialize(
     url: 'https://likdthixmzuugbtgrdqz.supabase.co',
@@ -79,7 +83,7 @@ class KaloratApp extends StatelessWidget {
               title: 'Kalorat',
               theme: AppTheme.lightTheme,
               darkTheme: AppTheme.darkTheme,
-              themeMode: ThemeMode.system,
+              themeMode: ThemeMode.light, // Force light mode
               locale: Locale(provider.language),
               localizationsDelegates: AppLocalizations.localizationsDelegates,
               supportedLocales: AppLocalizations.supportedLocales,

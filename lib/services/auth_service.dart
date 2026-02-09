@@ -26,10 +26,14 @@ class AuthService {
   Future<(AuthResponse, String?)> signInWithGoogle() async {
     // Web-specific handling: Use Supabase OAuth redirect flow
     if (PlatformUtils.isWeb) {
+      // Get current URL origin dynamically (works for localhost, Vercel, any host)
+      final currentUrl = Uri.base;
+      final redirectUrl =
+          '${currentUrl.scheme}://${currentUrl.host}${currentUrl.hasPort ? ':${currentUrl.port}' : ''}';
+
       await _client.auth.signInWithOAuth(
         OAuthProvider.google,
-        redirectTo:
-            'http://localhost:3000', // Ensure this matches your Supabase redirect URL
+        redirectTo: redirectUrl,
       );
       // On web, this triggers a redirect, so we never strictly "return" a signed-in user here
       // in the same session before the page reload.
@@ -42,9 +46,15 @@ class AuthService {
     // Set to null if not using iOS or if relying on Firebase/GoogleService-Info.plist
     const String? iosClientId = null;
 
+    // Web Client ID from Google Cloud Console - REQUIRED for Android to receive ID token
+    // This is the OAuth 2.0 Client ID of type "Web application" (same one used for Supabase)
+    // Get this from: Google Cloud Console > APIs & Services > Credentials > OAuth 2.0 Client IDs
+    const String webClientId =
+        '858277632380-p1juadqdn8pph9aipa6ju6esusi3f9f4.apps.googleusercontent.com';
+
     final googleSignIn = GoogleSignIn(
       clientId: PlatformUtils.isIOS ? iosClientId : null,
-      serverClientId: null,
+      serverClientId: webClientId, // Required for ID token on Android
       scopes: ['openid', 'email', 'profile'],
     );
 

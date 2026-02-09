@@ -1,7 +1,8 @@
 {
     "name": "Kalorat",
     "short_name": "Kalorat",
-    "start_url": ".",
+    "id": "/",
+    "start_url": "/",
     "display": "standalone",
     "background_color": "#0F5838",
     "theme_color": "#0F5838",

@@ -251,7 +251,32 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 : null,
             isPending: false,
           );
-          debugPrint('Meal parsed successfully: ${finalMeal.mealName}');
+
+          // Calculate portion data
+          double detectedQty = (result['detected_quantity'] ?? 1.0).toDouble();
+          String detectedUnit = result['detected_unit'] ?? 'serving';
+
+          double baseQuantityPerUnit = (detectedUnit == 'serving')
+              ? 1.0
+              : 100.0;
+          double detectedMultiplier = (detectedUnit == 'serving')
+              ? detectedQty
+              : (detectedQty / baseQuantityPerUnit);
+
+          // Ensure we don't divide by zero
+          if (detectedMultiplier <= 0) detectedMultiplier = 1.0;
+
+          final mealWithPortion = finalMeal.copyWith(
+            calories: finalMeal.calories / detectedMultiplier,
+            protein: finalMeal.protein / detectedMultiplier,
+            carbs: finalMeal.carbs / detectedMultiplier,
+            fats: finalMeal.fats / detectedMultiplier,
+            portionMultiplier: detectedMultiplier,
+            portionUnit: detectedUnit,
+            quantityPerUnit: baseQuantityPerUnit,
+          );
+
+          debugPrint('Meal parsed successfully: ${mealWithPortion.mealName}');
 
           if (mounted) {
             debugPrint('Pushing MealDetailScreen...');
@@ -259,7 +284,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               context,
               MaterialPageRoute(
                 builder: (_) =>
-                    MealDetailScreen(meal: finalMeal, isNewEntry: true),
+                    MealDetailScreen(meal: mealWithPortion, isNewEntry: true),
               ),
             );
             debugPrint('Returned from MealDetailScreen');
@@ -726,7 +751,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                               ),
                               image: DecorationImage(
                                 image: PlatformUtils.isWeb
-                                    ? NetworkImage(_capturedPhotos.last)
+                                    ? MemoryImage(
+                                        base64Decode(_capturedPhotos.last),
+                                      )
                                     : FileImage(File(_capturedPhotos.last))
                                           as ImageProvider,
                                 fit: BoxFit.cover,

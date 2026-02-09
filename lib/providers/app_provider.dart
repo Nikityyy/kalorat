@@ -3,11 +3,13 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import '../models/models.dart';
 import '../services/services.dart';
+import '../services/sync_service.dart';
 
 class AppProvider extends ChangeNotifier {
   final DatabaseService _databaseService = DatabaseService();
   late final OfflineQueueService _offlineQueueService;
   late final ExportImportService _exportImportService;
+  late final SyncService _syncService;
   final NotificationService _notificationService = NotificationService();
   final HealthService _healthService = HealthService();
 
@@ -55,6 +57,7 @@ class AppProvider extends ChangeNotifier {
   DatabaseService get databaseService => _databaseService;
   OfflineQueueService get offlineQueueService => _offlineQueueService;
   ExportImportService get exportImportService => _exportImportService;
+  SyncService get syncService => _syncService;
   NotificationService get notificationService => _notificationService;
   HealthService get healthService => _healthService;
 
@@ -62,6 +65,7 @@ class AppProvider extends ChangeNotifier {
     await _databaseService.init();
     _offlineQueueService = OfflineQueueService(_databaseService);
     _exportImportService = ExportImportService(_databaseService);
+    _syncService = SyncService(_databaseService);
     await _notificationService.init();
 
     _user = _databaseService.getUser();
@@ -96,6 +100,9 @@ class AppProvider extends ChangeNotifier {
 
   Future<void> deleteWeight(DateTime date) async {
     await _databaseService.deleteWeight(date);
+
+    // Sync deletion to cloud (fire-and-forget)
+    _syncService.deleteWeightFromCloud(date);
 
     // Refresh user weight if we deleted the current weight
     if (_user != null) {
@@ -190,6 +197,11 @@ class AppProvider extends ChangeNotifier {
 
     await _databaseService.saveUser(_user!);
 
+    // Sync profile to cloud (fire-and-forget, only if not guest)
+    if (!(_user!.isGuest)) {
+      _syncService.syncProfile();
+    }
+
     // Update notifications if reminder settings changed
     if (mealRemindersEnabled != null || weightRemindersEnabled != null) {
       await _notificationService.scheduleMealReminders(
@@ -267,6 +279,11 @@ class AppProvider extends ChangeNotifier {
     await _databaseService.saveMeal(meal);
     _invalidateStatsCache(); // Invalidate on meal change
 
+    // Sync meal to cloud (fire-and-forget, only if not pending and not guest)
+    if (!meal.isPending && !(_user?.isGuest ?? true)) {
+      _syncService.syncMeal(meal);
+    }
+
     // Sync to health platform if enabled
     if (_user?.healthSyncEnabled == true &&
         _user?.syncMealsToHealth == true &&
@@ -280,6 +297,12 @@ class AppProvider extends ChangeNotifier {
   Future<void> deleteMeal(String mealId) async {
     await _databaseService.deleteMeal(mealId);
     _invalidateStatsCache(); // Invalidate on meal change
+
+    // Sync deletion to cloud (fire-and-forget)
+    if (!(_user?.isGuest ?? true)) {
+      _syncService.deleteMealFromCloud(mealId);
+    }
+
     notifyListeners();
   }
 
@@ -301,6 +324,11 @@ class AppProvider extends ChangeNotifier {
 
   Future<void> saveWeight(WeightModel weight) async {
     await _databaseService.saveWeight(weight);
+
+    // Sync weight to cloud (fire-and-forget)
+    if (!(_user?.isGuest ?? true)) {
+      _syncService.syncWeight(weight);
+    }
 
     // Update user's current weight ONLY if this is the most recent entry
     if (_user != null) {

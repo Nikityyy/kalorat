@@ -85,6 +85,11 @@ class _LoginStepState extends State<LoginStep> {
           isGuest: false,
           photoUrl: photoUrl,
         );
+
+        // Sync data from cloud (restore user's meals, weights, profile)
+        // Uses merge to combine cloud data with any local data
+        await provider.syncService.mergeLocalToCloud();
+
         widget.onNext();
       }
     } catch (e) {

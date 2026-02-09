@@ -9,7 +9,6 @@ import '../extensions/l10n_extension.dart';
 import '../models/models.dart';
 import '../providers/app_provider.dart';
 import '../services/auth_service.dart';
-import '../services/sync_service.dart';
 
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
@@ -658,7 +657,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget _buildAccountSection(AppProvider provider, UserModel user) {
     final l10n = context.l10n;
     final authService = AuthService();
-    final syncService = SyncService(provider.databaseService);
     final isGuest = user.isGuest;
 
     return _buildSection(l10n.account, [
@@ -706,7 +704,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   isGuest: false,
                   photoUrl: photoUrl,
                 );
-                await syncService.mergeLocalToCloud();
+                await provider.syncService.mergeLocalToCloud();
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
@@ -748,7 +746,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 )
               : null,
           onTap: () async {
-            await syncService.syncToCloud();
+            await provider.syncService.syncToCloud();
             await provider.updateUser(lastSyncTimestamp: DateTime.now());
             if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
@@ -768,7 +766,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           onTap: () async {
             try {
-              final jsonString = await syncService.exportUserData();
+              final jsonString = await provider.syncService.exportUserData();
 
               // Write to temp file for sharing
               final directory = await getTemporaryDirectory();

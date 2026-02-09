@@ -84,6 +84,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
   }
 
   void _nextPage() {
+    FocusScope.of(context).unfocus();
     final nextStep = _currentPage + 1;
     // Save progress
     context.read<AppProvider>().databaseService.saveOnboardingStep(nextStep);
@@ -95,6 +96,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
   }
 
   void _previousPage() {
+    FocusScope.of(context).unfocus();
     _pageController.previousPage(
       duration: const Duration(milliseconds: 300),
       curve: Curves.easeInOut,

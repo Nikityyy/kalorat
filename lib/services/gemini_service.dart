@@ -74,15 +74,13 @@ class GeminiService {
         await box.put(_lastModelIndexKey, currentIndex);
         return result;
       } catch (e) {
-        // Check for rate limit (429) or other errors to decide whether to continue
-        // We'll proceed to next model on 429.
-        if (e.toString().contains('429')) {
-          continue; // Try next primary model
+        // If one model fails (rate limit, empty response, etc.), try the next one
+        print('Model $model failed: $e. Trying next...');
+        if (i == _primaryModels.length - 1) {
+          // If this was the last primary model, we don't 'continue',
+          // we exit the loop and move to fallback.
         } else {
-          // For other errors, we might want to fail fast or try others.
-          // Given the requirement is specifically about rate limits, we'll rethrow others for now
-          // unless we want to be very resilient.
-          rethrow;
+          continue;
         }
       }
     }
@@ -148,13 +146,13 @@ class GeminiService {
 
       // Build config
       final Map<String, dynamic> generationConfig = {
-        'temperature': 0.4,
+        'temperature': 0.1,
         'topK': 32,
         'topP': 1,
         'maxOutputTokens': 1280,
       };
 
-      // Apply thinking config only for Gemini models
+      // Apply thinking config only for specific reasoning models
       if (modelName.contains('gemini')) {
         generationConfig['thinkingConfig'] = {'thinkingBudget': 1024};
       }
@@ -254,6 +252,7 @@ class GeminiService {
         }
       } else {
         // Throw exception with status code to catch it in analyzeMeal
+        print('Gemini API Error (${response.statusCode}): ${response.body}');
         throw Exception('API error: ${response.statusCode} - ${response.body}');
       }
     } catch (e) {
@@ -310,57 +309,89 @@ class GeminiService {
 
   String _getPrompt(String language) {
     if (language == 'de') {
-      return '''Du bist ein professioneller Ernährungsberater (AI Nutritionist). Analysiere dieses Bild (Essen oder Nährwerttabelle) und antworte NUR mit einem validen JSON-Objekt ohne Markdown-Formatierung.
+      return '''Du bist ein professioneller Ernährungsberater (AI Nutritionist) und Kalorien-Experte. Analysiere dieses Bild mit höchster Präzision.
 
-REGELN:
-1. KEIN Markdown (kein ```json ... ```), nur das reine JSON-Objekt.
-2. Wenn KEIN Essen/Nährwerttabelle zu sehen ist: {"error": "no_food_detected"}
-3. VALIDIERUNG (Atwater-System): Prüfe deine Schätzung mathematisch!
-   Kalorien ≈ (Protein * 4) + (Kohlenhydrate * 4) + (Fett * 9).
-   Stelle sicher, dass die "calories" Summe zu den Makros passt (Toleranz ±10%).
-4. MENGENSCHÄTZUNG:
-   - Verpackung: Extrahiere exakte Werte für 100g oder Portion.
-   - Gericht: Schätze das VOLUMEN basierend auf Standard-Portionsgrößen (Tellergröße, Besteck als Referenz). Berechne das Gewicht: Masse = Volumen * Dichte.
-5. SPRACHE:
-   - Der "meal_name" MUSS auf DEUTSCH sein, auch wenn das Essen international ist (z.B. "Gebratenes Hühnchen" statt "Fried Chicken").
-   - "analysis_note" MUSS auf DEUTSCH sein.
+DENKPROZESS (Interne Analyse):
+1. WAS SEHE ICH? (Mahlzeit auf Teller/Pfanne, Nährwerttabelle?)
+2. PORTIONS-LOGIK: 
+   - Ein Foto zeigt meistens GENAU das, was der Nutzer tracken möchte.
+   - SOWOHL ein Teller, als AUCH eine Pfanne oder Bowl entsprechen in der Regel 1.0 Portion (detected_quantity: 1.0).
+   - Schätze die Kalorien für den GESAMTEN sichtbaren Inhalt des Behältners.
+3. MENGEN-MATHEMATIK:
+   - Wenn Nährwerttabelle sichtbar: Werte für 100g/ml extrahieren. detected_quantity = 100.0.
+
+BEISPIELE:
+- Teller Nudeln -> 1.0 Portion.
+- Kleine Pfanne mit Hähnchen -> 1.0 Portion.
+- 2 ganze Bananen -> 2.0 Portionen (Stückgut).
+
+REGELN FÜR DIE ANTWORT:
+1. IDENTIFIKATION & PORTIONIERUNG:
+   - Der Standardwert für ein Foto einer Mahlzeit (egal ob Teller, Pfanne, Bowl) ist IMMER 1.0 Portion.
+   - Nur mehr als 1.0 schätzen, wenn offensichtlich mehrere separate Einheiten/Stücke (z.B. "3 Äpfel") oder ein riesiges Blech/Vorratstopf zu sehen ist.
+   - Nährwerttabelle sichtbar -> IMMER 100.0 (detected_quantity) und 'gram'/'ml' (detected_unit).
+   - Benutze nur dann Dezimalzahlen (z.B. 0.5), wenn wirklich nur ein Bruchteil einer Portion zu sehen ist.
+   - Nährwerttabelle sichtbar -> IMMER 100.0 (detected_quantity) und 'gram'/'ml' (detected_unit).
+2. VALIDIERUNG (Atwater-System):
+   - Prüfe deine Schätzung mathematisch! Kalorien ≈ (Protein * 4) + (Kohlenhydrate * 4) + (Fett * 9).
+   - Die "calories" müssen die GESAMT-Kalorien für die "detected_quantity" sein.
+3. SPRACHE & FORMAT:
+   - "meal_name" und "analysis_note" auf DEUTSCH.
+   - NUR JSON antworten, KEIN Markdown.
 
 FORMAT:
 {
-  "meal_name": "Präziser Name des Gerichts",
-  "calories": 0.0 (Zahl, valide Kalorien),
-  "protein": 0.0 (Zahl in Gramm),
-  "carbs": 0.0 (Zahl in Gramm),
-  "fats": 0.0 (Zahl in Gramm),
-  "vitamins": {"A": 0.0, "C": 0.0},
-  "minerals": {"Calcium": 0.0},
-  "confidence_score": 0.0 (0.0 bis 1.0, wie sicher bist du?),
-  "analysis_note": "Kurze Notiz zur Schätzung (z.B. 'Basierend auf 400g Lasagne')"
+  "meal_name": "Präziser Name",
+  "calories": 0.0,
+  "protein": 0.0,
+  "carbs": 0.0,
+  "fats": 0.0,
+  "detected_quantity": 0.0,
+  "detected_unit": "serving" | "gram" | "ml",
+  "confidence_score": 0.0,
+  "analysis_note": "Kurze Begründung (z.B. 'Ein Teller erkannt = 1.0 Portion. Kalorien für den gesamten Inhalt geschätzt.')"
 }''';
     } else {
-      return '''You are a professional AI Nutritionist. Analyze this image (food or nutrition label) and respond ONLY with a valid JSON object without Markdown formatting.
+      return '''You are a professional AI Nutritionist and calorie expert. Analyze this image with extreme precision.
 
-RULES:
-1. NO Markdown (no ```json ... ```), just the raw JSON object.
-2. If NO food/label is detected: {"error": "no_food_detected"}
-3. VALIDATION (Atwater System): Mathematically verify your estimate!
-   Calories ≈ (Protein * 4) + (Carbs * 4) + (Fat * 9).
-   Ensure "calories" sum aligns with macros (Tolerance ±10%).
-4. VOLUMETRIC ESTIMATION:
-   - Packaging: Extract exact values for 100g or serving.
-   - Plated Meal: Estimate VOLUME based on standard serving sizes (plate size, cutlery as reference). Calculate weight: Mass = Volume * Density.
+THINKING PROCESS (Internal Analysis):
+1. WHAT DO I SEE? (Meal on plate/pan, nutrition label?)
+2. PORTION LOGIC: 
+   - A photo usually shows EXACTLY what the user wants to track.
+   - BOTH a plate AND a pan or bowl usually correspond to 1.0 portion (detected_quantity: 1.0).
+   - Estimate calories for the ENTIRE visible content of the container.
+3. QUANTITY MATH:
+   - If nutrition label visible: Extract values for 100g/ml. Set detected_quantity to 100.0.
+
+EXAMPLES:
+- Plate of pasta -> 1.0 portion.
+- Small pan with chicken -> 1.0 portion.
+- 2 whole bananas -> 2.0 portions (discrete items).
+
+RULES FOR RESPONSE:
+1. IDENTIFICATION & PORTIONING:
+   - The default for a meal photo (regardless of plate, pan, bowl) is ALWAYS 1.0 portion.
+   - Only estimate more than 1.0 if there are clearly multiple separate units (e.g., "3 apples") or a massive bulk container/tray.
+   - Nutrition label visible -> ALWAYS 100.0 (detected_quantity) and 'gram'/'ml' (detected_unit).
+   - Only use decimals (e.g. 0.5) if only a fraction of a portion is visible.
+   - Nutrition label visible -> ALWAYS 100.0 (detected_quantity) and 'gram'/'ml' (detected_unit).
+2. VALIDATION (Atwater System):
+   - Mathematically verify your estimate! Calories ≈ (Protein * 4) + (Carbs * 4) + (Fat * 9).
+   - "calories" MUST be the TOTAL calories for the "detected_quantity".
+3. FORMAT:
+   - ONLY respond with JSON, NO Markdown.
 
 FORMAT:
 {
-  "meal_name": "Precise name of the meal",
-  "calories": 0.0 (number, valid calories),
-  "protein": 0.0 (number in grams),
-  "carbs": 0.0 (number in grams),
-  "fats": 0.0 (number in grams),
-  "vitamins": {"A": 0.0, "C": 0.0},
-  "minerals": {"Calcium": 0.0},
-  "confidence_score": 0.0 (0.0 to 1.0, how confident are you?),
-  "analysis_note": "Short note on estimation (e.g., 'Based on 400g Lasagne')"
+  "meal_name": "Precise name",
+  "calories": 0.0,
+  "protein": 0.0,
+  "carbs": 0.0,
+  "fats": 0.0,
+  "detected_quantity": 0.0,
+  "detected_unit": "serving" | "gram" | "ml",
+  "confidence_score": 0.0,
+  "analysis_note": "Short reason (e.g., 'One plate detected = 1.0 portion. Estimated calories for the entire plate content.')"
 }''';
     }
   }

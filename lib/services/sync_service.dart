@@ -244,4 +244,83 @@ class SyncService {
       weight: (data['weight'] as num).toDouble(),
     );
   }
+
+  // --- Public individual sync methods for incremental updates ---
+
+  /// Sync a single meal to cloud (create or update).
+  /// Returns true if successful, false otherwise.
+  Future<bool> syncMeal(MealModel meal) async {
+    final userId = _userId;
+    if (userId == null) return false;
+
+    try {
+      await _upsertMeal(userId, meal);
+      return true;
+    } catch (e) {
+      // Log error but don't throw - local operation should succeed
+      print('SyncService: Failed to sync meal ${meal.id}: $e');
+      return false;
+    }
+  }
+
+  /// Sync a single weight entry to cloud (create or update).
+  Future<bool> syncWeight(WeightModel weight) async {
+    final userId = _userId;
+    if (userId == null) return false;
+
+    try {
+      await _upsertWeight(userId, weight);
+      return true;
+    } catch (e) {
+      print('SyncService: Failed to sync weight: $e');
+      return false;
+    }
+  }
+
+  /// Sync profile changes to cloud.
+  Future<bool> syncProfile() async {
+    final userId = _userId;
+    if (userId == null) return false;
+
+    try {
+      final user = _db.getUser();
+      if (user != null) {
+        await _upsertProfile(userId, user);
+        return true;
+      }
+      return false;
+    } catch (e) {
+      print('SyncService: Failed to sync profile: $e');
+      return false;
+    }
+  }
+
+  /// Delete a meal from cloud storage.
+  Future<bool> deleteMealFromCloud(String mealId) async {
+    final userId = _userId;
+    if (userId == null) return false;
+
+    try {
+      await _client.from('meals').delete().eq('id', mealId);
+      return true;
+    } catch (e) {
+      print('SyncService: Failed to delete meal $mealId from cloud: $e');
+      return false;
+    }
+  }
+
+  /// Delete a weight entry from cloud storage.
+  Future<bool> deleteWeightFromCloud(DateTime date) async {
+    final userId = _userId;
+    if (userId == null) return false;
+
+    try {
+      final dateKey = date.toIso8601String().split('T')[0];
+      await _client.from('weights').delete().eq('id', '${userId}_$dateKey');
+      return true;
+    } catch (e) {
+      print('SyncService: Failed to delete weight from cloud: $e');
+      return false;
+    }
+  }
 }

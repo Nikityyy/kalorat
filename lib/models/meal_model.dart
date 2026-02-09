@@ -46,6 +46,12 @@ class MealModel extends HiveObject {
   @HiveField(13)
   double portionMultiplier;
 
+  @HiveField(14)
+  String portionUnit; // 'serving', 'gram', 'ml'
+
+  @HiveField(15)
+  double quantityPerUnit; // e.g., 1.0 for serving, 100.0 for grams
+
   MealModel({
     required this.id,
     required this.timestamp,
@@ -61,6 +67,8 @@ class MealModel extends HiveObject {
     this.isManualEntry = false,
     this.isCalorieOverride = false,
     this.portionMultiplier = 1.0,
+    this.portionUnit = 'serving',
+    this.quantityPerUnit = 1.0,
   });
 
   MealModel copyWith({
@@ -78,6 +86,8 @@ class MealModel extends HiveObject {
     bool? isManualEntry,
     bool? isCalorieOverride,
     double? portionMultiplier,
+    String? portionUnit,
+    double? quantityPerUnit,
   }) {
     return MealModel(
       id: id ?? this.id,
@@ -94,6 +104,8 @@ class MealModel extends HiveObject {
       isManualEntry: isManualEntry ?? this.isManualEntry,
       isCalorieOverride: isCalorieOverride ?? this.isCalorieOverride,
       portionMultiplier: portionMultiplier ?? this.portionMultiplier,
+      portionUnit: portionUnit ?? this.portionUnit,
+      quantityPerUnit: quantityPerUnit ?? this.quantityPerUnit,
     );
   }
 
@@ -112,6 +124,8 @@ class MealModel extends HiveObject {
     'isManualEntry': isManualEntry,
     'isCalorieOverride': isCalorieOverride,
     'portionMultiplier': portionMultiplier,
+    'portionUnit': portionUnit,
+    'quantityPerUnit': quantityPerUnit,
   };
 
   factory MealModel.fromJson(Map<String, dynamic> json) => MealModel(
@@ -133,5 +147,7 @@ class MealModel extends HiveObject {
     isManualEntry: json['isManualEntry'] ?? false,
     isCalorieOverride: json['isCalorieOverride'] ?? false,
     portionMultiplier: (json['portionMultiplier'] ?? 1.0).toDouble(),
+    portionUnit: json['portionUnit'] ?? 'serving',
+    quantityPerUnit: (json['quantityPerUnit'] ?? 1.0).toDouble(),
   );
 }

@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
 import 'package:provider/provider.dart';
 
+import '../services/gemini_service.dart';
 import '../extensions/l10n_extension.dart';
 import '../models/meal_model.dart';
 import '../providers/app_provider.dart';
@@ -32,6 +33,7 @@ class MealDetailScreen extends StatefulWidget {
 class _MealDetailScreenState extends State<MealDetailScreen> {
   late MealModel _meal;
   late double _portionMultiplier;
+  bool _isAnalyzing = false;
 
   @override
   void initState() {
@@ -56,8 +58,139 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
   void _updatePortion(double change) {
     setState(() {
       _portionMultiplier += change;
-      if (_portionMultiplier < 1.0) _portionMultiplier = 1.0;
+      if (_portionMultiplier < 0.1) _portionMultiplier = 0.1;
     });
+  }
+
+  void _updatePortionByValue(double newValue) {
+    setState(() {
+      if (widget.meal.portionUnit == 'serving') {
+        _portionMultiplier = newValue;
+      } else {
+        // For grams/ml, the user enters e.g., 250.
+        // Multiplier = 250 / 100
+        _portionMultiplier = newValue / widget.meal.quantityPerUnit;
+      }
+      if (_portionMultiplier < 0.1) _portionMultiplier = 0.1;
+    });
+  }
+
+  Future<void> _retryAnalysis() async {
+    final provider = context.read<AppProvider>();
+    final apiKey = provider.apiKey;
+    final language = provider.language;
+
+    if (apiKey.isEmpty) return;
+
+    setState(() {
+      _isAnalyzing = true;
+    });
+
+    try {
+      final gemini = GeminiService(apiKey: apiKey, language: language);
+      final result = await gemini.analyzeMeal(_meal.photoPaths);
+
+      if (result != null) {
+        if (result.containsKey('error') &&
+            result['error'] == 'no_food_detected') {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(context.l10n.noFoodDetected)),
+            );
+          }
+          return;
+        }
+
+        double detectedQty = (result['detected_quantity'] ?? 1.0).toDouble();
+        String detectedUnit = result['detected_unit'] ?? 'serving';
+        double baseQuantityPerUnit = (detectedUnit == 'serving') ? 1.0 : 100.0;
+        double detectedMultiplier = (detectedUnit == 'serving')
+            ? detectedQty
+            : (detectedQty / baseQuantityPerUnit);
+        if (detectedMultiplier <= 0) detectedMultiplier = 1.0;
+
+        setState(() {
+          _meal = _meal.copyWith(
+            mealName: result['meal_name'] ?? '',
+            calories: (result['calories'] ?? 0).toDouble() / detectedMultiplier,
+            protein: (result['protein'] ?? 0).toDouble() / detectedMultiplier,
+            carbs: (result['carbs'] ?? 0).toDouble() / detectedMultiplier,
+            fats: (result['fats'] ?? 0).toDouble() / detectedMultiplier,
+            portionUnit: detectedUnit,
+            quantityPerUnit: baseQuantityPerUnit,
+          );
+          _portionMultiplier = detectedMultiplier;
+        });
+
+        if (mounted) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('Analysis updated!')));
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Retry failed: $e')));
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isAnalyzing = false;
+        });
+      }
+    }
+  }
+
+  void _showEditPortionDialog() {
+    double currentValue = (widget.meal.portionUnit == 'serving')
+        ? _portionMultiplier
+        : (_portionMultiplier * widget.meal.quantityPerUnit);
+
+    final controller = TextEditingController(
+      text: currentValue.toStringAsFixed(1),
+    );
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppColors.glacialWhite,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppTheme.borderRadius),
+        ),
+        title: Text(
+          widget.meal.portionUnit == 'serving' ? 'Portion' : 'Menge',
+          style: AppTypography.displayMedium.copyWith(fontSize: 24),
+        ),
+        content: TextField(
+          controller: controller,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          style: AppTypography.bodyMedium,
+          decoration: InputDecoration(
+            suffixText: widget.meal.portionUnit == 'serving'
+                ? 'x'
+                : widget.meal.portionUnit,
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(context.l10n.cancel),
+          ),
+          TextButton(
+            onPressed: () {
+              final val = double.tryParse(controller.text.replaceAll(',', '.'));
+              if (val != null) {
+                _updatePortionByValue(val);
+                Navigator.pop(context);
+              }
+            },
+            child: Text(context.l10n.save),
+          ),
+        ],
+      ),
+    );
   }
 
   void _saveMeal() {
@@ -285,12 +418,26 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
           Positioned(
             top: MediaQuery.of(context).padding.top + 8,
             left: 16,
-            child: CircleAvatar(
-              backgroundColor: Colors.black26,
-              child: IconButton(
-                icon: const Icon(Icons.arrow_back, color: Colors.white),
-                onPressed: () => Navigator.pop(context),
-              ),
+            right: 16,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                CircleAvatar(
+                  backgroundColor: Colors.black26,
+                  child: IconButton(
+                    icon: const Icon(Icons.arrow_back, color: Colors.white),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ),
+                CircleAvatar(
+                  backgroundColor: Colors.black26,
+                  child: IconButton(
+                    icon: const Icon(Icons.refresh, color: Colors.white),
+                    onPressed: _retryAnalysis,
+                    tooltip: 'Analyse neu starten',
+                  ),
+                ),
+              ],
             ),
           ),
 
@@ -360,29 +507,62 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
                                 child: Row(
                                   children: [
                                     IconButton(
-                                      onPressed: _portionMultiplier > 1.0
-                                          ? () => _updatePortion(-1.0)
+                                      onPressed: _portionMultiplier > 0.1
+                                          ? () {
+                                              if (widget.meal.portionUnit ==
+                                                  'serving') {
+                                                _updatePortion(-0.5);
+                                              } else {
+                                                _updatePortion(
+                                                  -50.0 /
+                                                      widget
+                                                          .meal
+                                                          .quantityPerUnit,
+                                                );
+                                              }
+                                            }
                                           : null,
                                       icon: Icon(
                                         Icons.remove,
-                                        color: _portionMultiplier > 1.0
+                                        color: _portionMultiplier > 0.1
                                             ? AppColors.styrianForest
                                             : AppColors.borderGrey,
                                       ),
                                       padding: EdgeInsets.zero,
                                       constraints: const BoxConstraints(),
                                     ),
-                                    const SizedBox(width: 16),
-                                    Text(
-                                      '${_portionMultiplier}x',
-                                      style: AppTypography.bodyMedium.copyWith(
-                                        fontWeight: FontWeight.bold,
-                                        color: AppColors.styrianForest,
+                                    const SizedBox(width: 8),
+                                    GestureDetector(
+                                      onTap: _showEditPortionDialog,
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 12,
+                                          vertical: 4,
+                                        ),
+                                        child: Text(
+                                          widget.meal.portionUnit == 'serving'
+                                              ? '${_portionMultiplier.toStringAsFixed(1)}x'
+                                              : '${(_portionMultiplier * widget.meal.quantityPerUnit).toInt()} ${widget.meal.portionUnit}',
+                                          style: AppTypography.bodyMedium
+                                              .copyWith(
+                                                fontWeight: FontWeight.bold,
+                                                color: AppColors.styrianForest,
+                                              ),
+                                        ),
                                       ),
                                     ),
-                                    const SizedBox(width: 16),
+                                    const SizedBox(width: 8),
                                     IconButton(
-                                      onPressed: () => _updatePortion(1.0),
+                                      onPressed: () {
+                                        if (widget.meal.portionUnit ==
+                                            'serving') {
+                                          _updatePortion(0.5);
+                                        } else {
+                                          _updatePortion(
+                                            50.0 / widget.meal.quantityPerUnit,
+                                          );
+                                        }
+                                      },
                                       icon: const Icon(
                                         Icons.add,
                                         color: AppColors.styrianForest,
@@ -598,6 +778,46 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
                       ),
                     ),
                   ],
+                ),
+              ),
+            ),
+
+          // 5. Skeleton Loader Overlay
+          if (_isAnalyzing)
+            Positioned.fill(
+              child: Container(
+                color: Colors.black.withValues(alpha: 0.1),
+                child: Center(
+                  child: Container(
+                    padding: const EdgeInsets.all(32),
+                    decoration: BoxDecoration(
+                      color: AppColors.glacialWhite,
+                      borderRadius: BorderRadius.circular(24),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.1),
+                          blurRadius: 20,
+                          offset: const Offset(0, 10),
+                        ),
+                      ],
+                    ),
+                    child: const Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        CircularProgressIndicator(
+                          color: AppColors.styrianForest,
+                        ),
+                        SizedBox(height: 24),
+                        Text(
+                          'AI analysiert...',
+                          style: TextStyle(
+                            color: AppColors.styrianForest,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ),
             ),

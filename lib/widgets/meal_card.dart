@@ -17,10 +17,57 @@ class MealCard extends StatelessWidget {
 
   const MealCard({super.key, required this.meal, this.onTap, this.onDelete});
 
-  String _formatTime(DateTime timestamp) {
+  String _formatDateTime(DateTime timestamp) {
+    // Format: dd.MM.yyyy HH:mm
+    final day = timestamp.day.toString().padLeft(2, '0');
+    final month = timestamp.month.toString().padLeft(2, '0');
+    final year = timestamp.year.toString();
     final hour = timestamp.hour.toString().padLeft(2, '0');
     final minute = timestamp.minute.toString().padLeft(2, '0');
-    return '$hour:$minute';
+    return '$day.$month.$year $hour:$minute';
+  }
+
+  Widget _buildMealImage(String? imagePath) {
+    if (imagePath == null || imagePath.isEmpty) {
+      return _buildPlaceholder();
+    }
+
+    if (PlatformUtils.isWeb) {
+      try {
+        // Prepare bytes
+        final bytes = base64Decode(imagePath);
+        return Image.memory(
+          bytes,
+          width: 60,
+          height: 60,
+          fit: BoxFit.cover,
+          errorBuilder: (_, _, _) => _buildPlaceholder(),
+        );
+      } catch (e) {
+        // If it fails (e.g. it's a file path from mobile sync), show placeholder
+        return _buildPlaceholder();
+      }
+    } else {
+      return Image.file(
+        File(imagePath),
+        width: 60,
+        height: 60,
+        fit: BoxFit.cover,
+        errorBuilder: (_, _, _) => _buildPlaceholder(),
+      );
+    }
+  }
+
+  Widget _buildPlaceholder() {
+    return Container(
+      width: 60,
+      height: 60,
+      decoration: BoxDecoration(
+        color: AppColors.steel.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(AppTheme.borderRadius),
+      ),
+      child: const Icon(Icons.restaurant, color: AppColors.frost),
+    );
   }
 
   @override
@@ -41,53 +88,12 @@ class MealCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // --- 1. Image Section ---
-                if (meal.photoPaths.isNotEmpty)
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(AppTheme.borderRadius),
-                    child: PlatformUtils.isWeb
-                        ? Image.memory(
-                            base64Decode(meal.photoPaths.first),
-                            width: 60,
-                            height: 60,
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, _, _) => Container(
-                              width: 60,
-                              height: 60,
-                              color: AppColors.steel.withValues(alpha: 0.5),
-                              child: const Icon(
-                                Icons.image,
-                                color: AppColors.frost,
-                              ),
-                            ),
-                          )
-                        : Image.file(
-                            File(meal.photoPaths.first),
-                            width: 60,
-                            height: 60,
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, _, _) => Container(
-                              width: 60,
-                              height: 60,
-                              color: AppColors.steel.withValues(alpha: 0.5),
-                              child: const Icon(
-                                Icons.image,
-                                color: AppColors.frost,
-                              ),
-                            ),
-                          ),
-                  )
-                else
-                  Container(
-                    width: 60,
-                    height: 60,
-                    decoration: BoxDecoration(
-                      color: AppColors.steel.withValues(alpha: 0.5),
-                      borderRadius: BorderRadius.circular(
-                        AppTheme.borderRadius,
-                      ),
-                    ),
-                    child: const Icon(Icons.restaurant, color: AppColors.frost),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(AppTheme.borderRadius),
+                  child: _buildMealImage(
+                    meal.photoPaths.isNotEmpty ? meal.photoPaths.first : null,
                   ),
+                ),
                 const SizedBox(width: 16),
 
                 // --- 2. Content Section ---
@@ -96,7 +102,7 @@ class MealCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      // --- Top Row: Name and Time ---
+                      // --- Top Row: Name and Date/Time ---
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -120,7 +126,7 @@ class MealCard extends StatelessWidget {
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            _formatTime(meal.timestamp),
+                            _formatDateTime(meal.timestamp),
                             style: AppTypography.bodyMedium.copyWith(
                               fontSize: 12,
                               color: AppColors.frost.withValues(alpha: 0.6),
@@ -175,7 +181,7 @@ class MealCard extends StatelessWidget {
                               height: 32,
                               child: IconButton(
                                 padding: EdgeInsets.zero,
-                                alignment: Alignment.centerRight,
+                                // Removed alignment: Alignment.centerRight to center icon
                                 icon: Icon(
                                   PlatformUtils.isIOS
                                       ? CupertinoIcons.delete
