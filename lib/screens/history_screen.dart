@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../extensions/l10n_extension.dart';
 import '../models/models.dart';
@@ -19,6 +20,7 @@ class HistoryScreen extends StatefulWidget {
 
 class _HistoryScreenState extends State<HistoryScreen> {
   int _selectedPeriod = 0; // 0=Day, 1=Week, 2=Month, 3=Year
+  DateTime _selectedDate = DateTime.now();
 
   @override
   Widget build(BuildContext context) {
@@ -28,24 +30,35 @@ class _HistoryScreenState extends State<HistoryScreen> {
     List<MealModel> filteredMeals = [];
     final now = DateTime.now();
 
+    DateTime start = now;
+    DateTime end = now;
+
     switch (_selectedPeriod) {
       case 0: // Day
-        filteredMeals = provider.getMealsByDate(now);
+        start = _selectedDate;
+        end = _selectedDate;
+        filteredMeals = provider.getMealsByDate(_selectedDate);
         break;
       case 1: // Week
-        final start = now.subtract(Duration(days: now.weekday - 1));
-        final startOfWeek = DateTime(start.year, start.month, start.day);
-        final endOfWeek = startOfWeek.add(const Duration(days: 7));
-        filteredMeals = provider.getMealsByDateRange(startOfWeek, endOfWeek);
+        // Start of week (Monday)
+        start = now.subtract(Duration(days: now.weekday - 1));
+        start = DateTime(start.year, start.month, start.day);
+        end = start.add(const Duration(days: 7));
+        filteredMeals = provider.getMealsByDateRange(start, end);
         break;
       case 2: // Month
-        final start = DateTime(now.year, now.month, 1);
-        final end = DateTime(now.year, now.month + 1, 1);
+        start = DateTime(now.year, now.month, 1);
+        // Start of next month
+        if (now.month == 12) {
+          end = DateTime(now.year + 1, 1, 1);
+        } else {
+          end = DateTime(now.year, now.month + 1, 1);
+        }
         filteredMeals = provider.getMealsByDateRange(start, end);
         break;
       case 3: // Year
-        final start = DateTime(now.year, 1, 1);
-        final end = DateTime(now.year + 1, 1, 1);
+        start = DateTime(now.year, 1, 1);
+        end = DateTime(now.year + 1, 1, 1);
         filteredMeals = provider.getMealsByDateRange(start, end);
         break;
     }
@@ -63,15 +76,55 @@ class _HistoryScreenState extends State<HistoryScreen> {
             // Custom Header
             Padding(
               padding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
-              child: Text(
-                l10n.myHistory,
-                style: AppTypography.displayMedium.copyWith(fontSize: 24),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    l10n.myHistory,
+                    style: AppTypography.displayMedium.copyWith(fontSize: 24),
+                  ),
+                  Visibility(
+                    visible: _selectedPeriod == 0,
+                    maintainSize: true,
+                    maintainAnimation: true,
+                    maintainState: true,
+                    child: TextButton.icon(
+                      onPressed: () => _showDatePicker(provider.language),
+                      icon: const Icon(
+                        Icons.calendar_today,
+                        size: 18,
+                        color: AppColors.primary,
+                      ),
+                      label: Text(
+                        DateFormat.yMMMd(
+                          provider.language,
+                        ).format(_selectedDate),
+                        style: const TextStyle(
+                          color: AppColors.primary,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
+                        backgroundColor: AppColors.pebble,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(
+                            AppTheme.borderRadius,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
 
             // Custom Period Switcher
             Container(
-              margin: const EdgeInsets.all(24),
+              margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
               padding: const EdgeInsets.all(6),
               decoration: BoxDecoration(
                 color: AppColors.limestone,
@@ -83,7 +136,14 @@ class _HistoryScreenState extends State<HistoryScreen> {
                   final isSelected = _selectedPeriod == index;
                   return Expanded(
                     child: GestureDetector(
-                      onTap: () => setState(() => _selectedPeriod = index),
+                      onTap: () {
+                        setState(() {
+                          _selectedPeriod = index;
+                          // Reset selected date to today when switching periods,
+                          // EXCEPT when switching TO Day view, keep the selected date?
+                          // Or always reset? Let's keep selected date as is.
+                        });
+                      },
                       child: Container(
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         decoration: BoxDecoration(
@@ -113,8 +173,9 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 }),
               ),
             ),
-            _buildPeriodStats(provider, context),
-            const Divider(color: AppColors.pebble),
+
+            _buildPeriodStats(provider, context, start, end),
+
             Expanded(
               child: filteredMeals.isEmpty
                   ? Center(
@@ -154,106 +215,175 @@ class _HistoryScreenState extends State<HistoryScreen> {
     );
   }
 
-  Widget _buildPeriodStats(AppProvider provider, BuildContext context) {
+  Widget _buildPeriodStats(
+    AppProvider provider,
+    BuildContext context,
+    DateTime start,
+    DateTime end,
+  ) {
     final l10n = context.l10n;
     Map<String, double> stats;
-    final now = DateTime.now();
+    int daysElapsed = 1;
 
-    switch (_selectedPeriod) {
-      case 1:
-        stats = provider.getWeekStats();
-        break;
-      case 2:
-        stats = provider.getMonthStats();
-        break;
-      case 3:
-        final start = DateTime(now.year, 1, 1);
-        final end = DateTime(now.year + 1, 1, 1);
-        stats = provider.getStatsForDateRange(start, end);
-        break;
-      default:
-        stats = provider.getTodayStats();
+    if (_selectedPeriod == 0) {
+      stats = provider.getTodayStats(); // Actually needs specific date stats
+      // Correcting to use stats for the selected date
+      final meals = provider.getMealsByDate(_selectedDate);
+      double cals = 0, prot = 0, carbs = 0, fats = 0;
+      for (var m in meals) {
+        if (!m.isPending) {
+          cals += m.calories;
+          prot += m.protein;
+          carbs += m.carbs;
+          fats += m.fats;
+        }
+      }
+      stats = {'calories': cals, 'protein': prot, 'carbs': carbs, 'fats': fats};
+    } else {
+      stats = provider.getStatsForDateRange(start, end);
+
+      // Calculate days elapsed in period for averaging
+      final now = DateTime.now();
+      final periodEnd = end.isBefore(now) ? end : now;
+      final periodStart = start;
+
+      if (periodEnd.isAfter(periodStart)) {
+        daysElapsed = periodEnd.difference(periodStart).inDays;
+        if (daysElapsed == 0 && periodEnd.day == periodStart.day) {
+          daysElapsed = 1;
+        }
+        // Cap at 1 to avoid division by zero, though logic above prevents it mostly
+        if (daysElapsed < 1) {
+          daysElapsed = 1;
+        }
+      }
     }
+
+    final isDailyPeriod = _selectedPeriod == 0;
 
     return AppCard(
       margin: const EdgeInsets.symmetric(horizontal: 16),
       padding: const EdgeInsets.all(16),
       backgroundColor: AppColors.pebble,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
+      child: Column(
         children: [
-          Column(
-            children: [
-              Text(
-                '${stats['calories']?.toInt() ?? 0}',
-                style: AppTypography.heroNumber.copyWith(
-                  fontSize: 24,
-                  color: AppColors.slate,
+          _buildStatRow(stats, l10n),
+          if (!isDailyPeriod) ...[
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 12),
+              child: Divider(
+                height: 1,
+                color: AppColors.slate,
+                indent: 20,
+                endIndent: 20,
+              ),
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  l10n.dailyAvg.toUpperCase(),
+                  style: AppTypography.labelLarge.copyWith(
+                    color: AppColors.slate.withValues(alpha: 0.5),
+                    fontSize: 10,
+                  ),
                 ),
-              ),
-              Text(
-                l10n.kcal,
-                style: TextStyle(color: AppColors.slate.withValues(alpha: 0.6)),
-              ),
-            ],
-          ),
-          Container(width: 1, height: 40, color: AppColors.slate),
-          Column(
-            children: [
-              Text(
-                '${stats['protein']?.toInt() ?? 0}${l10n.grams}',
-                style: AppTypography.heroNumber.copyWith(
-                  fontSize: 18,
-                  color: AppColors.styrianForest,
-                ),
-              ),
-              Text(
-                l10n.protein,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: AppColors.slate.withValues(alpha: 0.6),
-                ),
-              ),
-            ],
-          ),
-          Column(
-            children: [
-              Text(
-                '${stats['carbs']?.toInt() ?? 0}${l10n.grams}',
-                style: AppTypography.heroNumber.copyWith(
-                  fontSize: 18,
-                  color: AppColors.styrianForest,
-                ),
-              ),
-              Text(
-                l10n.carbs,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: AppColors.slate.withValues(alpha: 0.6),
-                ),
-              ),
-            ],
-          ),
-          Column(
-            children: [
-              Text(
-                '${stats['fats']?.toInt() ?? 0}${l10n.grams}',
-                style: AppTypography.heroNumber.copyWith(
-                  fontSize: 18,
-                  color: AppColors.styrianForest,
-                ),
-              ),
-              Text(
-                l10n.fats,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: AppColors.slate.withValues(alpha: 0.6),
-                ),
-              ),
-            ],
-          ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            _buildStatRow(stats, l10n, divisor: daysElapsed),
+          ],
         ],
       ),
+    );
+  }
+
+  Widget _buildStatRow(
+    Map<String, double> stats,
+    dynamic l10n, {
+    int divisor = 1,
+  }) {
+    // Helper to divide and format
+    String fmt(double? val) => ((val ?? 0) / divisor).toStringAsFixed(0);
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceAround,
+      children: [
+        Column(
+          children: [
+            Text(
+              fmt(stats['calories']),
+              style: AppTypography.heroNumber.copyWith(
+                fontSize: 24,
+                color: AppColors.slate,
+              ),
+            ),
+            Text(
+              l10n.kcal,
+              style: TextStyle(color: AppColors.slate.withValues(alpha: 0.6)),
+            ),
+          ],
+        ),
+        Container(
+          width: 1,
+          height: 40,
+          color: AppColors.slate.withValues(alpha: 0.2),
+        ),
+        Column(
+          children: [
+            Text(
+              '${fmt(stats['protein'])}${l10n.grams}',
+              style: AppTypography.heroNumber.copyWith(
+                fontSize: 18,
+                color: AppColors.styrianForest,
+              ),
+            ),
+            Text(
+              l10n.protein,
+              style: TextStyle(
+                fontSize: 12,
+                color: AppColors.slate.withValues(alpha: 0.6),
+              ),
+            ),
+          ],
+        ),
+        Column(
+          children: [
+            Text(
+              '${fmt(stats['carbs'])}${l10n.grams}',
+              style: AppTypography.heroNumber.copyWith(
+                fontSize: 18,
+                color: AppColors.styrianForest,
+              ),
+            ),
+            Text(
+              l10n.carbs,
+              style: TextStyle(
+                fontSize: 12,
+                color: AppColors.slate.withValues(alpha: 0.6),
+              ),
+            ),
+          ],
+        ),
+        Column(
+          children: [
+            Text(
+              '${fmt(stats['fats'])}${l10n.grams}',
+              style: AppTypography.heroNumber.copyWith(
+                fontSize: 18,
+                color: AppColors.styrianForest,
+              ),
+            ),
+            Text(
+              l10n.fats,
+              style: TextStyle(
+                fontSize: 12,
+                color: AppColors.slate.withValues(alpha: 0.6),
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 
@@ -283,5 +413,36 @@ class _HistoryScreenState extends State<HistoryScreen> {
         ],
       ),
     );
+  }
+
+  Future<void> _showDatePicker(String language) async {
+    final now = DateTime.now();
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate,
+      firstDate: DateTime(2020),
+      lastDate: now,
+      locale: language == 'de' ? const Locale('de') : const Locale('en'),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: ColorScheme.light(
+              primary: AppColors.primary,
+              onPrimary: AppColors.pebble,
+              surface: AppColors.limestone,
+              onSurface: AppColors.slate,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (picked != null && mounted) {
+      setState(() {
+        _selectedDate = picked;
+        _selectedPeriod = 0; // Force Day view when date is picked
+      });
+    }
   }
 }

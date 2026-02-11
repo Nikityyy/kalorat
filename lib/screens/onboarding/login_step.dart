@@ -49,12 +49,10 @@ class _LoginStepState extends State<LoginStep> {
     setState(() => _isLoading = true);
     try {
       final provider = context.read<AppProvider>();
-      // Sync Supabase user to AppProvider
-      await provider.updateUser(
-        supabaseUserId: user.id,
-        email: user.email,
-        isGuest: false,
-        // photoUrl might need to be fetched from metadata if available
+      // Sync Supabase user to AppProvider and fetch cloud data
+      await provider.loginWithSupabase(
+        userId: user.id,
+        email: user.email ?? '',
         photoUrl: user.userMetadata?['avatar_url'] as String?,
       );
       // Wait a tick to ensure UI updates before moving on
@@ -79,16 +77,11 @@ class _LoginStepState extends State<LoginStep> {
       if (response.user != null && mounted) {
         // Update provider with auth info
         final provider = context.read<AppProvider>();
-        await provider.updateUser(
-          supabaseUserId: response.user!.id,
-          email: response.user!.email,
-          isGuest: false,
+        await provider.loginWithSupabase(
+          userId: response.user!.id,
+          email: response.user!.email ?? '',
           photoUrl: photoUrl,
         );
-
-        // Sync data from cloud (restore user's meals, weights, profile)
-        // Uses merge to combine cloud data with any local data
-        await provider.syncService.mergeLocalToCloud();
 
         widget.onNext();
       }

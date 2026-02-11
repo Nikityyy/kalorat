@@ -64,6 +64,9 @@ class UserModel extends HiveObject {
   @HiveField(19)
   bool useGramsByDefault;
 
+  @HiveField(20)
+  int activityLevel; // 0: Sedentary, 1: Light, 2: Moderate, 3: Active, 4: Very Active
+
   UserModel({
     required this.name,
     required this.birthdate,
@@ -85,6 +88,7 @@ class UserModel extends HiveObject {
     this.lastSyncTimestamp,
     this.photoUrl,
     this.useGramsByDefault = false,
+    this.activityLevel = 0,
   });
 
   int get age {
@@ -118,8 +122,9 @@ class UserModel extends HiveObject {
       bmr -= 161;
     }
 
-    // Activity Multiplier (Sedentary default for now)
-    double tdee = bmr * 1.2;
+    // Activity Multiplier based on user's activity level
+    const multipliers = [1.2, 1.375, 1.55, 1.725, 1.9];
+    double tdee = bmr * multipliers[activityLevel.clamp(0, 4)];
 
     // Goal Adjustment
     // 0: Lose (-500), 1: Maintain (0), 2: Gain (+500)
@@ -139,6 +144,26 @@ class UserModel extends HiveObject {
     if (goal == 2) multiplier = 2.0;
 
     return weight * multiplier;
+  }
+
+  double get dailyCarbTarget {
+    // ~50% of remaining calories after protein → divide by 4 kcal/g
+    final proteinCals = dailyProteinTarget * 4;
+    final remaining = (dailyCalorieTarget - proteinCals).clamp(
+      0,
+      double.infinity,
+    );
+    return (remaining * 0.55) / 4; // 55% of remaining → carbs
+  }
+
+  double get dailyFatTarget {
+    // ~25-30% of total calories → divide by 9 kcal/g
+    final proteinCals = dailyProteinTarget * 4;
+    final remaining = (dailyCalorieTarget - proteinCals).clamp(
+      0,
+      double.infinity,
+    );
+    return (remaining * 0.45) / 9; // 45% of remaining → fats
   }
 
   UserModel copyWith({
@@ -162,6 +187,7 @@ class UserModel extends HiveObject {
     DateTime? lastSyncTimestamp,
     String? photoUrl,
     bool? useGramsByDefault,
+    int? activityLevel,
   }) {
     return UserModel(
       name: name ?? this.name,
@@ -185,6 +211,7 @@ class UserModel extends HiveObject {
       lastSyncTimestamp: lastSyncTimestamp ?? this.lastSyncTimestamp,
       photoUrl: photoUrl ?? this.photoUrl,
       useGramsByDefault: useGramsByDefault ?? this.useGramsByDefault,
+      activityLevel: activityLevel ?? this.activityLevel,
     );
   }
 
@@ -209,6 +236,7 @@ class UserModel extends HiveObject {
     'lastSyncTimestamp': lastSyncTimestamp?.toIso8601String(),
     'photoUrl': photoUrl,
     'useGramsByDefault': useGramsByDefault,
+    'activityLevel': activityLevel,
   };
 
   factory UserModel.fromJson(Map<String, dynamic> json) => UserModel(
@@ -234,5 +262,6 @@ class UserModel extends HiveObject {
         : null,
     photoUrl: json['photoUrl'],
     useGramsByDefault: json['useGramsByDefault'] ?? false,
+    activityLevel: json['activityLevel'] ?? 0,
   );
 }

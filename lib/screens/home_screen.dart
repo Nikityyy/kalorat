@@ -223,7 +223,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         if (result.containsKey('error') &&
             result['error'] == 'no_food_detected') {
           _showMessage(l10n.noFoodDetected);
-          _clearPhotos();
+          _resetCaptureState();
           return;
         }
 
@@ -291,7 +291,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               ),
             );
             debugPrint('Returned from MealDetailScreen');
-            _clearPhotos();
+            _resetCaptureState();
           }
         } catch (e, stack) {
           debugPrint('Error parsing/pushing: $e\n$stack');
@@ -331,10 +331,45 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     }
   }
 
-  void _clearPhotos() {
+  void _resetCaptureState() {
     setState(() {
       _capturedPhotos = [];
+      _isTakingMore = false;
     });
+  }
+
+  Future<void> _clearPhotos() async {
+    final l10n = context.l10n;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(l10n.discardPhotos),
+        content: Text(l10n.discardPhotosConfirm),
+        backgroundColor: AppColors.limestone,
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(
+              l10n.cancel,
+              style: const TextStyle(color: AppColors.slate),
+            ),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: Text(
+              l10n.discard,
+              style: const TextStyle(color: AppColors.error),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      _resetCaptureState();
+    }
   }
 
   @override

@@ -267,6 +267,19 @@ class AppLocalizationsDe extends AppLocalizations {
   String get grantPermission => 'Berechtigung erteilen';
 
   @override
+  String get startOnboarding => 'Onboarding starten';
+
+  @override
+  String get meTitle => 'Profil';
+
+  @override
+  String get deleteWeight => 'Gewicht löschen?';
+
+  @override
+  String get deleteWeightConfirm =>
+      'Möchtest du diesen Eintrag wirklich löschen?';
+
+  @override
   String get name => 'Name';
 
   @override
@@ -711,4 +724,62 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get healthNotAvailableWeb =>
       'Die Gesundheitsintegration erfordert die native App';
+
+  @override
+  String get activityLevel => 'Aktivitätslevel';
+
+  @override
+  String get sedentary => 'Sitzend';
+
+  @override
+  String get lightlyActive => 'Leicht aktiv';
+
+  @override
+  String get moderatelyActive => 'Moderat aktiv';
+
+  @override
+  String get activeLevel => 'Aktiv';
+
+  @override
+  String get veryActive => 'Sehr aktiv';
+
+  @override
+  String get activityLevelSubtitle =>
+      'Für die Berechnung deines Kalorienbedarfs.';
+
+  @override
+  String get sedentarySubtitle => 'Büroarbeit, wenig Bewegung';
+
+  @override
+  String get lightlyActiveSubtitle => 'Leichte Aktivität, 1-3x pro Woche';
+
+  @override
+  String get moderatelyActiveSubtitle => 'Sport 3-5x pro Woche';
+
+  @override
+  String get activeSubtitle => 'Sport 6-7x pro Woche';
+
+  @override
+  String get veryActiveSubtitle => 'Schwere körperliche Arbeit';
+
+  @override
+  String get dailyAvg => 'ø / Tag';
+
+  @override
+  String get streak => 'Serie';
+
+  @override
+  String streakDays(int count) {
+    return '$count Tage';
+  }
+
+  @override
+  String get discardPhotos => 'Fotos verwerfen?';
+
+  @override
+  String get discardPhotosConfirm =>
+      'Deine aufgenommenen Fotos gehen verloren.';
+
+  @override
+  String get selectDate => 'Datum wählen';
 }

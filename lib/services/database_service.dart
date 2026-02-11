@@ -96,8 +96,7 @@ class DatabaseService {
 
   List<MealModel> getMealsByDateRange(DateTime start, DateTime end) {
     return _mealsBox.values.where((meal) {
-      return meal.timestamp.isAfter(start.subtract(const Duration(days: 1))) &&
-          meal.timestamp.isBefore(end.add(const Duration(days: 1)));
+      return !meal.timestamp.isBefore(start) && meal.timestamp.isBefore(end);
     }).toList();
   }
 
@@ -197,8 +196,7 @@ class DatabaseService {
 
   List<WeightModel> getWeightsByDateRange(DateTime start, DateTime end) {
     return _weightsBox.values.where((w) {
-      return w.date.isAfter(start.subtract(const Duration(days: 1))) &&
-          w.date.isBefore(end.add(const Duration(days: 1)));
+      return !w.date.isBefore(start) && w.date.isBefore(end);
     }).toList()..sort((a, b) => a.date.compareTo(b.date));
   }
 

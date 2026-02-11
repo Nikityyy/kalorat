@@ -95,6 +95,10 @@
   "confirmDeleteMeal": "Möchtest du diese Mahlzeit wirklich löschen?",
   "cameraPermission": "Kamera-Berechtigung wird benötigt",
   "grantPermission": "Berechtigung erteilen",
+  "startOnboarding": "Onboarding starten",
+  "meTitle": "Profil",
+  "deleteWeight": "Gewicht löschen?",
+  "deleteWeightConfirm": "Möchtest du diesen Eintrag wirklich löschen?",
 
   "name": "Name",
   "heightCm": "Größe (cm)",
@@ -269,6 +273,29 @@
   "termsOfService": "Nutzungsbedingungen",
 
   "featureOnlyInApp": "Nur in der App",
-  "healthNotAvailableWeb": "Die Gesundheitsintegration erfordert die native App"
-}
+  "healthNotAvailableWeb": "Die Gesundheitsintegration erfordert die native App",
 
+  "activityLevel": "Aktivitätslevel",
+  "sedentary": "Sitzend",
+  "lightlyActive": "Leicht aktiv",
+  "moderatelyActive": "Moderat aktiv",
+  "activeLevel": "Aktiv",
+  "veryActive": "Sehr aktiv",
+  "activityLevelSubtitle": "Für die Berechnung deines Kalorienbedarfs.",
+  "sedentarySubtitle": "Büroarbeit, wenig Bewegung",
+  "lightlyActiveSubtitle": "Leichte Aktivität, 1-3x pro Woche",
+  "moderatelyActiveSubtitle": "Sport 3-5x pro Woche",
+  "activeSubtitle": "Sport 6-7x pro Woche",
+  "veryActiveSubtitle": "Schwere körperliche Arbeit",
+  "dailyAvg": "ø / Tag",
+  "streak": "Serie",
+  "streakDays": "{count} Tage",
+  "@streakDays": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "discardPhotos": "Fotos verwerfen?",
+  "discardPhotosConfirm": "Deine aufgenommenen Fotos gehen verloren.",
+  "selectDate": "Datum wählen"
+}

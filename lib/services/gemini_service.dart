@@ -328,11 +328,11 @@ class GeminiService {
       final List<Map<String, dynamic>> parts = [];
 
       // Example 1
-      final firstBytes = await rootBundle.load('assets/examples/first.jpg');
+      final firstBytes = await rootBundle.load('assets/examples/first.png');
       parts.add({'text': 'EXAMPLE 1 IMAGE:'});
       parts.add({
         'inline_data': {
-          'mime_type': 'image/jpeg',
+          'mime_type': 'image/png',
           'data': base64Encode(firstBytes.buffer.asUint8List()),
         },
       });
@@ -340,11 +340,11 @@ class GeminiService {
       parts.add({'text': _getExample1Json()});
 
       // Example 2
-      final secondBytes = await rootBundle.load('assets/examples/second.avif');
+      final secondBytes = await rootBundle.load('assets/examples/second.png');
       parts.add({'text': 'EXAMPLE 2 IMAGE:'});
       parts.add({
         'inline_data': {
-          'mime_type': 'image/avif',
+          'mime_type': 'image/png',
           'data': base64Encode(secondBytes.buffer.asUint8List()),
         },
       });

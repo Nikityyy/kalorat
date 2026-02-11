@@ -23,7 +23,7 @@ class AppProvider extends ChangeNotifier {
   Map<String, double>? _cachedTodayStats;
   DateTime? _cachedTodayStatsDate;
   Map<String, double>? _cachedWeekStats;
-  int? _cachedWeekNumber;
+  DateTime? _cachedWeekStartDate;
   Map<String, double>? _cachedMonthStats;
   int? _cachedMonth;
 
@@ -41,6 +41,7 @@ class AppProvider extends ChangeNotifier {
   }
 
   String get apiKey => _user?.geminiApiKey ?? '';
+  List<WeightModel> get weights => getAllWeights();
   int get pendingMealsCount => _offlineQueueService.getPendingCount();
 
   bool get mealRemindersEnabled => _user?.mealRemindersEnabled ?? true;
@@ -123,6 +124,34 @@ class AppProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> loginWithSupabase({
+    required String userId,
+    required String email,
+    String? photoUrl,
+  }) async {
+    // 1. Sync FROM cloud first to check for existing profile/data
+    // This relies on the current auth session being active
+    await _syncService.syncFromCloud();
+
+    // 2. Refresh local user from DB (syncFromCloud may have created/updated it)
+    _user = _databaseService.getUser();
+
+    // 3. Update local user with current auth details
+    // If _user was null (fresh install, no cloud data), this creates a default user
+    // If _user exists, this updates email/photo/ID
+    await updateUser(
+      supabaseUserId: userId,
+      email: email,
+      isGuest: false,
+      photoUrl: photoUrl,
+    );
+
+    // 4. Force a full push to cloud to ensure everything is in sync
+    await _syncService.syncToCloud();
+
+    notifyListeners();
+  }
+
   Future<void> updateUser({
     String? name,
     DateTime? birthdate,
@@ -144,6 +173,7 @@ class AppProvider extends ChangeNotifier {
     DateTime? lastSyncTimestamp,
     String? photoUrl,
     bool? useGramsByDefault,
+    int? activityLevel,
   }) async {
     // If user is null (e.g. during onboarding before first save), create a new one
     // Use device language for new users instead of hardcoded 'en'
@@ -170,6 +200,7 @@ class AppProvider extends ChangeNotifier {
           syncWeightToHealth: false,
           isGuest: true,
           useGramsByDefault: false,
+          activityLevel: 0,
         );
 
     _user = currentUser.copyWith(
@@ -196,6 +227,7 @@ class AppProvider extends ChangeNotifier {
       lastSyncTimestamp: lastSyncTimestamp ?? currentUser.lastSyncTimestamp,
       photoUrl: photoUrl ?? currentUser.photoUrl,
       useGramsByDefault: useGramsByDefault ?? currentUser.useGramsByDefault,
+      activityLevel: activityLevel ?? currentUser.activityLevel,
     );
 
     await _databaseService.saveUser(_user!);
@@ -316,7 +348,9 @@ class AppProvider extends ChangeNotifier {
   /// Clears all cached stats - called when meals are modified
   void _invalidateStatsCache() {
     _cachedTodayStats = null;
+    _cachedTodayStatsDate = null;
     _cachedWeekStats = null;
+    _cachedWeekStartDate = null;
     _cachedMonthStats = null;
   }
 
@@ -414,18 +448,17 @@ class AppProvider extends ChangeNotifier {
 
   Map<String, double> getWeekStats() {
     final now = DateTime.now();
-    final weekNumber = ((now.day + now.month * 31 + now.year * 365) ~/ 7);
+    final start = now.subtract(Duration(days: now.weekday - 1));
+    final startOfWeek = DateTime(start.year, start.month, start.day);
 
-    // Check if cache is valid for this week
-    if (_cachedWeekStats != null && _cachedWeekNumber == weekNumber) {
+    // Check if cache is valid for this week (compare actual start date)
+    if (_cachedWeekStats != null && _cachedWeekStartDate == startOfWeek) {
       return _cachedWeekStats!;
     }
 
-    final start = now.subtract(Duration(days: now.weekday - 1));
-    final startOfWeek = DateTime(start.year, start.month, start.day);
     final endOfWeek = startOfWeek.add(const Duration(days: 7));
     _cachedWeekStats = getStatsForDateRange(startOfWeek, endOfWeek);
-    _cachedWeekNumber = weekNumber;
+    _cachedWeekStartDate = startOfWeek;
     return _cachedWeekStats!;
   }
 
@@ -443,5 +476,36 @@ class AppProvider extends ChangeNotifier {
     _cachedMonthStats = getStatsForDateRange(start, end);
     _cachedMonth = currentMonth;
     return _cachedMonthStats!;
+  }
+
+  /// Computes streak: consecutive days (ending today) with at least 1 meal
+  int get currentStreak {
+    int streak = 0;
+    final now = DateTime.now();
+    var day = DateTime(now.year, now.month, now.day);
+
+    while (true) {
+      final meals = _databaseService.getMealsByDate(day);
+      if (meals.where((m) => !m.isPending).isEmpty) break;
+      streak++;
+      day = day.subtract(const Duration(days: 1));
+    }
+    return streak;
+  }
+
+  /// Returns stats with daily averages for a date range
+  Map<String, double> getStatsWithDailyAvg(DateTime start, DateTime end) {
+    final stats = getStatsForDateRange(start, end);
+    final now = DateTime.now();
+    // Days elapsed = min(today, end) - start, at least 1
+    final effectiveEnd = end.isBefore(now) ? end : now;
+    int days = effectiveEnd.difference(start).inDays;
+    if (days < 1) days = 1;
+    stats['dailyAvgCalories'] = stats['calories']! / days;
+    stats['dailyAvgProtein'] = stats['protein']! / days;
+    stats['dailyAvgCarbs'] = stats['carbs']! / days;
+    stats['dailyAvgFats'] = stats['fats']! / days;
+    stats['days'] = days.toDouble();
+    return stats;
   }
 }

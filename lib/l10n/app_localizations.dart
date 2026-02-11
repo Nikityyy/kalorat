@@ -608,6 +608,30 @@ abstract class AppLocalizations {
   /// **'Berechtigung erteilen'**
   String get grantPermission;
 
+  /// No description provided for @startOnboarding.
+  ///
+  /// In de, this message translates to:
+  /// **'Onboarding starten'**
+  String get startOnboarding;
+
+  /// No description provided for @meTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Profil'**
+  String get meTitle;
+
+  /// No description provided for @deleteWeight.
+  ///
+  /// In de, this message translates to:
+  /// **'Gewicht löschen?'**
+  String get deleteWeight;
+
+  /// No description provided for @deleteWeightConfirm.
+  ///
+  /// In de, this message translates to:
+  /// **'Möchtest du diesen Eintrag wirklich löschen?'**
+  String get deleteWeightConfirm;
+
   /// No description provided for @name.
   ///
   /// In de, this message translates to:
@@ -1453,6 +1477,114 @@ abstract class AppLocalizations {
   /// In de, this message translates to:
   /// **'Die Gesundheitsintegration erfordert die native App'**
   String get healthNotAvailableWeb;
+
+  /// No description provided for @activityLevel.
+  ///
+  /// In de, this message translates to:
+  /// **'Aktivitätslevel'**
+  String get activityLevel;
+
+  /// No description provided for @sedentary.
+  ///
+  /// In de, this message translates to:
+  /// **'Sitzend'**
+  String get sedentary;
+
+  /// No description provided for @lightlyActive.
+  ///
+  /// In de, this message translates to:
+  /// **'Leicht aktiv'**
+  String get lightlyActive;
+
+  /// No description provided for @moderatelyActive.
+  ///
+  /// In de, this message translates to:
+  /// **'Moderat aktiv'**
+  String get moderatelyActive;
+
+  /// No description provided for @activeLevel.
+  ///
+  /// In de, this message translates to:
+  /// **'Aktiv'**
+  String get activeLevel;
+
+  /// No description provided for @veryActive.
+  ///
+  /// In de, this message translates to:
+  /// **'Sehr aktiv'**
+  String get veryActive;
+
+  /// No description provided for @activityLevelSubtitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Für die Berechnung deines Kalorienbedarfs.'**
+  String get activityLevelSubtitle;
+
+  /// No description provided for @sedentarySubtitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Büroarbeit, wenig Bewegung'**
+  String get sedentarySubtitle;
+
+  /// No description provided for @lightlyActiveSubtitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Leichte Aktivität, 1-3x pro Woche'**
+  String get lightlyActiveSubtitle;
+
+  /// No description provided for @moderatelyActiveSubtitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Sport 3-5x pro Woche'**
+  String get moderatelyActiveSubtitle;
+
+  /// No description provided for @activeSubtitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Sport 6-7x pro Woche'**
+  String get activeSubtitle;
+
+  /// No description provided for @veryActiveSubtitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Schwere körperliche Arbeit'**
+  String get veryActiveSubtitle;
+
+  /// No description provided for @dailyAvg.
+  ///
+  /// In de, this message translates to:
+  /// **'ø / Tag'**
+  String get dailyAvg;
+
+  /// No description provided for @streak.
+  ///
+  /// In de, this message translates to:
+  /// **'Serie'**
+  String get streak;
+
+  /// No description provided for @streakDays.
+  ///
+  /// In de, this message translates to:
+  /// **'{count} Tage'**
+  String streakDays(int count);
+
+  /// No description provided for @discardPhotos.
+  ///
+  /// In de, this message translates to:
+  /// **'Fotos verwerfen?'**
+  String get discardPhotos;
+
+  /// No description provided for @discardPhotosConfirm.
+  ///
+  /// In de, this message translates to:
+  /// **'Deine aufgenommenen Fotos gehen verloren.'**
+  String get discardPhotosConfirm;
+
+  /// No description provided for @selectDate.
+  ///
+  /// In de, this message translates to:
+  /// **'Datum wählen'**
+  String get selectDate;
 }
 
 class _AppLocalizationsDelegate

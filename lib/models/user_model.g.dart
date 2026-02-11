@@ -37,13 +37,14 @@ class UserModelAdapter extends TypeAdapter<UserModel> {
       lastSyncTimestamp: fields[17] as DateTime?,
       photoUrl: fields[18] as String?,
       useGramsByDefault: fields[19] as bool,
+      activityLevel: fields[20] as int,
     );
   }
 
   @override
   void write(BinaryWriter writer, UserModel obj) {
     writer
-      ..writeByte(20)
+      ..writeByte(21)
       ..writeByte(0)
       ..write(obj.name)
       ..writeByte(1)
@@ -83,7 +84,9 @@ class UserModelAdapter extends TypeAdapter<UserModel> {
       ..writeByte(18)
       ..write(obj.photoUrl)
       ..writeByte(19)
-      ..write(obj.useGramsByDefault);
+      ..write(obj.useGramsByDefault)
+      ..writeByte(20)
+      ..write(obj.activityLevel);
   }
 
   @override

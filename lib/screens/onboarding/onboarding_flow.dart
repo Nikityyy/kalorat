@@ -10,6 +10,7 @@ import 'age_step.dart';
 import 'height_step.dart';
 import 'weight_step.dart';
 import 'goal_step.dart';
+import 'activity_level_step.dart';
 import 'health_step.dart';
 import 'api_key_step.dart';
 import 'login_step.dart';
@@ -33,6 +34,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
   double _height = 170.0;
   double _weight = 70.0; // Double for precision
   int _goalIndex = 1; // 0: Lose, 1: Maintain, 2: Gain
+  int _activityLevel = 0; // 0: Sedentary ... 4: Very Active
   String _apiKey = '';
   bool _healthSyncEnabled = false;
 
@@ -57,6 +59,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
       _weight = user.weight;
       _goalIndex = user.goal;
       _genderIndex = user.gender ?? 0;
+      _activityLevel = user.activityLevel;
       _apiKey = user.geminiApiKey;
       _healthSyncEnabled = user.healthSyncEnabled;
     }
@@ -72,7 +75,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
   }
 
   // Total steps depends on platform: 11 on mobile (with health step), 10 on web (without)
-  int get _totalSteps => PlatformUtils.isWeb ? 10 : 11;
+  int get _totalSteps => PlatformUtils.isWeb ? 11 : 12;
 
   // The last step index (analysis) for hiding back button and progress
   int get _lastStepIndex => _totalSteps - 1;
@@ -166,6 +169,14 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
         onNext: (index) {
           setState(() => _goalIndex = index);
           context.read<AppProvider>().updateUser(goal: index);
+          _nextPage();
+        },
+      ),
+      ActivityLevelStep(
+        initialLevel: _activityLevel,
+        onNext: (level) {
+          setState(() => _activityLevel = level);
+          context.read<AppProvider>().updateUser(activityLevel: level);
           _nextPage();
         },
       ),

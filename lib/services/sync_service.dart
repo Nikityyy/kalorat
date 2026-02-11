@@ -61,11 +61,28 @@ class SyncService {
         .maybeSingle();
 
     if (profileData != null) {
-      final currentUser = _db.getUser();
-      if (currentUser != null) {
+      var currentUser = _db.getUser();
+
+      if (currentUser == null) {
+        // Create new local user from cloud profile
+        currentUser = UserModel(
+          name: profileData['name'] ?? '',
+          birthdate: DateTime.parse(profileData['birthdate']),
+          height: (profileData['height'] as num?)?.toDouble() ?? 170.0,
+          weight: (profileData['weight'] as num?)?.toDouble() ?? 70.0,
+          language: profileData['language'] ?? 'en',
+          geminiApiKey: '', // API Key not synced for security
+          onboardingCompleted:
+              true, // If they have a profile, they are onboarded
+          goal: profileData['goal'] ?? 0,
+          gender: profileData['gender'] ?? 0,
+          isGuest: false,
+          supabaseUserId: userId,
+          photoUrl: profileData['photo_url'],
+        );
+      } else {
         // Merge cloud profile into local (prefer cloud for non-local-only fields)
         // PROTECT LOCAL NAME: Only use cloud name if local is empty/default or we want to force sync
-        // User requested: "I dont want that, the Name I type in myself is enforced"
         if (currentUser.name.isEmpty) {
           currentUser.name = profileData['name'] ?? currentUser.name;
         }
@@ -79,8 +96,8 @@ class SyncService {
         currentUser.goal = profileData['goal'] ?? currentUser.goal;
         currentUser.gender = profileData['gender'] ?? currentUser.gender;
         currentUser.photoUrl = profileData['photo_url'] ?? currentUser.photoUrl;
-        await _db.saveUser(currentUser);
       }
+      await _db.saveUser(currentUser);
     }
 
     // Fetch and merge meals

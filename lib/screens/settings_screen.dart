@@ -12,6 +12,7 @@ import '../services/auth_service.dart';
 
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
+import '../theme/app_typography.dart';
 import '../widgets/common/app_card.dart';
 import '../widgets/common/primary_button.dart';
 
@@ -126,11 +127,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
             _buildBirthdatePicker(provider.language, user),
             _buildGenderSelector(provider, user),
             _buildGoalSelector(provider, user),
+            const SizedBox(height: 24),
+            _buildActivityLevelSelector(provider, user),
           ]),
-          const SizedBox(height: 24),
-          _buildSection(l10n.language, [
-            _buildLanguageSelector(provider, provider.language),
-          ]),
+          if (PlatformUtils.isWeb) ...[
+            const SizedBox(height: 24),
+            _buildHealthSection(provider, user),
+          ] else ...[
+            const SizedBox(height: 24),
+            _buildHealthSection(provider, user),
+          ],
           const SizedBox(height: 24),
           _buildSection(l10n.apiKey, [
             _buildTextField(
@@ -200,7 +206,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
               onTap: () async {
                 final path = await provider.exportData();
                 if (path != null && mounted) {
-                  // Use Share Plus to open system share sheet (Save to Files, Drive, etc.)
                   await SharePlus.instance.share(
                     ShareParams(files: [XFile(path)], text: 'Kalorat Backup'),
                   );
@@ -238,86 +243,62 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  Widget _buildLegalSection(AppProvider provider, dynamic l10n) {
-    return _buildSection(l10n.legal, [
-      ListTile(
-        leading: const Icon(
-          Icons.privacy_tip_outlined,
-          color: AppColors.primary,
-        ),
-        title: Text(
-          l10n.privacyPolicy,
-          style: const TextStyle(color: AppColors.slate),
-        ),
-        trailing: const Icon(Icons.open_in_new, size: 16),
-        onTap: () {
-          // Placeholder for actual URL
-          // In a real app, this would use url_launcher
-          showDialog(
-            context: context,
-            builder: (context) => AlertDialog(
-              title: Text(l10n.privacyPolicy),
-              content: const Text(
-                "Privacy Policy placeholder. Your data is stored locally and optionally synced to Supabase (if logged in). Meal photos are processed by Google's Gemini API.",
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text("OK"),
-                ),
-              ],
-            ),
-          );
-        },
-      ),
-      const Divider(height: 1, indent: 16, endIndent: 16),
-      ListTile(
-        leading: const Icon(
-          Icons.description_outlined,
-          color: AppColors.primary,
-        ),
-        title: Text(
-          l10n.termsOfService,
-          style: const TextStyle(color: AppColors.slate),
-        ),
-        trailing: const Icon(Icons.open_in_new, size: 16),
-        onTap: () {
-          showDialog(
-            context: context,
-            builder: (context) => AlertDialog(
-              title: Text(l10n.termsOfService),
-              content: const Text("Terms of Service placeholder."),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text("OK"),
-                ),
-              ],
-            ),
-          );
-        },
-      ),
-    ]);
-  }
+  Widget _buildActivityLevelSelector(AppProvider provider, UserModel user) {
+    final l10n = context.l10n;
+    final levels = [
+      l10n.sedentary,
+      l10n.lightlyActive,
+      l10n.moderatelyActive,
+      l10n.activeLevel,
+      l10n.veryActive,
+    ];
 
-  Widget _buildSection(String title, List<Widget> children) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          title,
-          style: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: AppColors.slate,
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+          child: Text(
+            l10n.activityLevel,
+            style: TextStyle(
+              fontSize: 16,
+              color: AppColors.slate.withValues(alpha: 0.6),
+            ),
           ),
         ),
-        const SizedBox(height: 12),
-        AppCard(
-          backgroundColor: AppColors.pebble.withValues(alpha: 0.3),
-          padding: EdgeInsets.zero,
-          child: Column(children: children),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            decoration: BoxDecoration(
+              color: AppColors.pebble.withValues(alpha: 0.3),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppColors.pebble),
+            ),
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<int>(
+                value: user.activityLevel,
+                isExpanded: true,
+                icon: const Icon(Icons.arrow_drop_down, color: AppColors.slate),
+                dropdownColor: AppColors.limestone,
+                borderRadius: BorderRadius.circular(12),
+                items: List.generate(levels.length, (index) {
+                  return DropdownMenuItem(
+                    value: index,
+                    child: Text(levels[index], style: AppTypography.bodyMedium),
+                  );
+                }),
+                onChanged: (value) {
+                  if (value != null) {
+                    provider.updateUser(activityLevel: value);
+                  }
+                },
+              ),
+            ),
+          ),
         ),
+        const SizedBox(height: 16),
       ],
     );
   }
@@ -345,28 +326,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
             borderSide: BorderSide(color: AppColors.primary),
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildLanguageSelector(AppProvider provider, String language) {
-    final l10n = context.l10n;
-    return RadioGroup<String>(
-      groupValue: language,
-      onChanged: (v) => provider.updateUser(language: v),
-      child: Column(
-        children: [
-          RadioListTile<String>(
-            title: Text(l10n.german),
-            value: 'de',
-            activeColor: AppColors.primary,
-          ),
-          RadioListTile<String>(
-            title: Text(l10n.english),
-            value: 'en',
-            activeColor: AppColors.primary,
-          ),
-        ],
       ),
     );
   }
@@ -914,5 +873,89 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
       ],
     ]);
+  }
+
+  Widget _buildLegalSection(AppProvider provider, dynamic l10n) {
+    return _buildSection(l10n.legal, [
+      ListTile(
+        leading: const Icon(
+          Icons.privacy_tip_outlined,
+          color: AppColors.primary,
+        ),
+        title: Text(
+          l10n.privacyPolicy,
+          style: const TextStyle(color: AppColors.slate),
+        ),
+        trailing: const Icon(Icons.open_in_new, size: 16),
+        onTap: () {
+          // Placeholder for actual URL
+          // In a real app, this would use url_launcher
+          showDialog(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: Text(l10n.privacyPolicy),
+              content: const Text(
+                "Privacy Policy placeholder. Your data is stored locally and optionally synced to Supabase (if logged in). Meal photos are processed by Google's Gemini API.",
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text("OK"),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+      const Divider(height: 1, indent: 16, endIndent: 16),
+      ListTile(
+        leading: const Icon(
+          Icons.description_outlined,
+          color: AppColors.primary,
+        ),
+        title: Text(
+          l10n.termsOfService,
+          style: const TextStyle(color: AppColors.slate),
+        ),
+        trailing: const Icon(Icons.open_in_new, size: 16),
+        onTap: () {
+          showDialog(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: Text(l10n.termsOfService),
+              content: const Text("Terms of Service placeholder."),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text("OK"),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    ]);
+  }
+
+  Widget _buildSection(String title, List<Widget> children) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: AppColors.slate,
+          ),
+        ),
+        const SizedBox(height: 12),
+        AppCard(
+          backgroundColor: AppColors.pebble.withValues(alpha: 0.3),
+          padding: EdgeInsets.zero,
+          child: Column(children: children),
+        ),
+      ],
+    );
   }
 }

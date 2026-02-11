@@ -95,6 +95,10 @@
   "confirmDeleteMeal": "Do you really want to delete this meal?",
   "cameraPermission": "Camera permission required",
   "grantPermission": "Grant permission",
+  "startOnboarding": "Start Onboarding",
+  "meTitle": "Profile",
+  "deleteWeight": "Delete weight?",
+  "deleteWeightConfirm": "Do you really want to delete this entry?",
 
   "name": "Name",
   "heightCm": "Height (cm)",
@@ -269,6 +273,29 @@
   "termsOfService": "Terms of Service",
 
   "featureOnlyInApp": "Only in app",
-  "healthNotAvailableWeb": "Health integration requires the native app"
-}
+  "healthNotAvailableWeb": "Health integration requires the native app",
 
+  "activityLevel": "Activity Level",
+  "sedentary": "Sedentary",
+  "lightlyActive": "Lightly Active",
+  "moderatelyActive": "Moderately Active",
+  "activeLevel": "Active",
+  "veryActive": "Very Active",
+  "activityLevelSubtitle": "To calculate your calorie needs.",
+  "sedentarySubtitle": "Desk job, little movement",
+  "lightlyActiveSubtitle": "Light activity, 1-3x per week",
+  "moderatelyActiveSubtitle": "Exercise 3-5x per week",
+  "activeSubtitle": "Exercise 6-7x per week",
+  "veryActiveSubtitle": "Heavy physical labor",
+  "dailyAvg": "ø / day",
+  "streak": "Streak",
+  "streakDays": "{count} days",
+  "@streakDays": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "discardPhotos": "Discard photos?",
+  "discardPhotosConfirm": "Your captured photos will be lost.",
+  "selectDate": "Select date"
+}
