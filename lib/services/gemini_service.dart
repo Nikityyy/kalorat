@@ -279,23 +279,15 @@ class GeminiService {
   Future<bool> validateApiKey(String key) async {
     if (key.isEmpty) return false;
 
-    // Use Flash Lite for validation as it's cheaper/quicker
-    final url = '${_baseUrlBase}gemma-3-27b-it:generateContent?key=$key';
+    // Use models list endpoint for validation as it's the fastest way to check key validity
+    // without triggering model inference.
+    final url =
+        'https://generativelanguage.googleapis.com/v1beta/models?key=$key';
 
     try {
-      final response = await http.post(
+      final response = await http.get(
         Uri.parse(url),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'contents': [
-            {
-              'parts': [
-                {'text': 'Ping'},
-              ],
-            },
-          ],
-          'generationConfig': {'maxOutputTokens': 1},
-        }),
       );
 
       return response.statusCode == 200;
