@@ -782,4 +782,11 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get selectDate => 'Datum wählen';
+
+  @override
+  String get cameraNotAvailableWeb => 'Kamera im Browser nicht verfügbar.';
+
+  @override
+  String get useGalleryInstead =>
+      'Nutze die Galerie unten, um Fotos auszuwählen.';
 }

@@ -30,7 +30,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   CameraController? _cameraController;
   List<CameraDescription>? _cameras;
   bool _isCameraInitialized = false;
-  String? _cameraError; // Track camera initialization errors
   bool _hasPermission = false;
   bool _isCapturing = false;
   bool _isAnalyzing = false;
@@ -68,13 +67,16 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   }
 
   Future<void> _initCamera() async {
-    // On web, we skip explicit permission request as browser handles it via camera access
-    if (!PlatformUtils.isWeb) {
-      final status = await Permission.camera.request();
-      if (!status.isGranted) {
-        if (mounted) setState(() => _hasPermission = false);
-        return;
-      }
+    // On web, camera APIs are not available - use image picker only
+    if (PlatformUtils.isWeb) {
+      if (mounted) setState(() => _hasPermission = true);
+      return;
+    }
+
+    final status = await Permission.camera.request();
+    if (!status.isGranted) {
+      if (mounted) setState(() => _hasPermission = false);
+      return;
     }
 
     if (mounted) setState(() => _hasPermission = true);
@@ -84,12 +86,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     } catch (e) {
       debugPrint('Error accessing cameras: $e');
       _cameras = [];
-      if (mounted) {
-        setState(
-          () => _cameraError =
-              'Failed to find cameras. Please check permissions.',
-        );
-      }
     }
 
     if (_cameras == null || _cameras!.isEmpty) {
@@ -104,37 +100,29 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       await _cameraController!.dispose();
     }
 
-    // Use lower resolution on web to avoid hardware access errors
-    final preset = PlatformUtils.isWeb
-        ? ResolutionPreset.medium
-        : ResolutionPreset.high;
-
     _cameraController = CameraController(
       _cameras!.first,
-      preset,
+      ResolutionPreset.high,
       enableAudio: false,
     );
 
     try {
       await _cameraController!.initialize();
       if (mounted) {
-        setState(() {
-          _isCameraInitialized = true;
-          _cameraError = null;
-        });
+        setState(() => _isCameraInitialized = true);
       }
     } catch (e) {
       debugPrint('Camera init error: $e');
       if (mounted) {
-        setState(() {
-          _isCameraInitialized = false;
-          _cameraError = 'Failed to initialize camera: $e';
-        });
+        setState(() => _isCameraInitialized = false);
       }
     }
   }
 
   Future<void> _capturePhoto() async {
+    // Camera capture not available on web
+    if (PlatformUtils.isWeb) return;
+
     if (_cameraController == null ||
         !_cameraController!.value.isInitialized ||
         _isCapturing) {
@@ -146,25 +134,16 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     try {
       final XFile photo = await _cameraController!.takePicture();
 
-      if (PlatformUtils.isWeb) {
-        // On web, read bytes and convert to base64
-        final bytes = await photo.readAsBytes();
-        final base64Image = base64Encode(bytes);
-        setState(() {
-          _capturedPhotos.add(base64Image);
-        });
-      } else {
-        // On mobile, save to app documents directory
-        final appDir = await getApplicationDocumentsDirectory();
-        final fileName =
-            'meal_${DateTime.now().millisecondsSinceEpoch}_${_capturedPhotos.length}.jpg';
-        final savedPath = '${appDir.path}/$fileName';
-        await File(photo.path).copy(savedPath);
+      // Save to app documents directory
+      final appDir = await getApplicationDocumentsDirectory();
+      final fileName =
+          'meal_${DateTime.now().millisecondsSinceEpoch}_${_capturedPhotos.length}.jpg';
+      final savedPath = '${appDir.path}/$fileName';
+      await File(photo.path).copy(savedPath);
 
-        setState(() {
-          _capturedPhotos.add(savedPath);
-        });
-      }
+      setState(() {
+        _capturedPhotos.add(savedPath);
+      });
     } catch (e) {
       debugPrint('Capture error: $e');
     } finally {
@@ -663,7 +642,49 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
     return Stack(
       children: [
-        if (canShowCamera)
+        if (PlatformUtils.isWeb)
+          Container(
+            color: Colors.black,
+            child: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      color: AppColors.styrianForest.withValues(alpha: 0.2),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.photo_library_outlined,
+                      size: 64,
+                      color: AppColors.pebble,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  Text(
+                    l10n.cameraNeeded,
+                    style: AppTypography.displayMedium.copyWith(
+                      color: AppColors.pebble,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 12),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 48),
+                    child: Text(
+                      '${l10n.cameraNotAvailableWeb}\n${l10n.useGalleryInstead}',
+                      textAlign: TextAlign.center,
+                      style: AppTypography.bodyMedium.copyWith(
+                        color: AppColors.pebble.withValues(alpha: 0.7),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          )
+        else if (canShowCamera)
           Positioned.fill(
             child: AspectRatio(
               aspectRatio: _cameraController!.value.aspectRatio,
@@ -677,32 +698,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  if (_cameraError != null) ...[
-                    const Icon(
-                      Icons.error_outline,
-                      color: AppColors.error,
-                      size: 48,
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      'Camera Error',
-                      style: AppTypography.displayMedium.copyWith(
-                        color: AppColors.error,
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Text(
-                        _cameraError!,
-                        textAlign: TextAlign.center,
-                        style: AppTypography.bodyMedium.copyWith(
-                          color: AppColors.pebble,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    ActionButton(text: 'Retry', onPressed: _initCamera),
-                  ] else if (_cameras != null && _cameras!.isEmpty)
+                  if (_cameras != null && _cameras!.isEmpty)
                     Padding(
                       padding: const EdgeInsets.all(32.0),
                       child: Text(
@@ -770,29 +766,30 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             child: Stack(
               alignment: Alignment.center,
               children: [
-                // Left: Gallery
-                Positioned(
-                  left: 40,
-                  child: GestureDetector(
-                    onTap: _pickFromGallery,
-                    child: Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: AppColors.pebble.withValues(alpha: 0.2),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.photo_library_outlined,
-                        color: AppColors.pebble,
-                        size: 28,
+                // Left: Gallery (only shown on native, on web the center button is gallery)
+                if (!PlatformUtils.isWeb)
+                  Positioned(
+                    left: 40,
+                    child: GestureDetector(
+                      onTap: _pickFromGallery,
+                      child: Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: AppColors.pebble.withValues(alpha: 0.2),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.photo_library_outlined,
+                          color: AppColors.pebble,
+                          size: 28,
+                        ),
                       ),
                     ),
                   ),
-                ),
 
-                // Center: Capture
+                // Center: Capture (native) or Gallery (web)
                 GestureDetector(
-                  onTap: _capturePhoto,
+                  onTap: PlatformUtils.isWeb ? _pickFromGallery : _capturePhoto,
                   child: Container(
                     width: 84,
                     height: 84,
@@ -808,7 +805,13 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                           color: AppColors.pebble,
                           shape: BoxShape.circle,
                         ),
-                        child: _isCapturing
+                        child: PlatformUtils.isWeb
+                            ? const Icon(
+                                Icons.photo_library_rounded,
+                                color: AppColors.styrianForest,
+                                size: 32,
+                              )
+                            : _isCapturing
                             ? const Center(
                                 child: CircularProgressIndicator(
                                   color: AppColors.styrianForest,

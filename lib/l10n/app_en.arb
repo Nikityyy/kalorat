@@ -297,5 +297,7 @@
   },
   "discardPhotos": "Discard photos?",
   "discardPhotosConfirm": "Your captured photos will be lost.",
-  "selectDate": "Select date"
+  "selectDate": "Select date",
+  "cameraNotAvailableWeb": "Camera is not available in the browser.",
+  "useGalleryInstead": "Use the gallery button below to pick photos."
 }

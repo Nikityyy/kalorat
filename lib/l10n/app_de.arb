@@ -297,5 +297,7 @@
   },
   "discardPhotos": "Fotos verwerfen?",
   "discardPhotosConfirm": "Deine aufgenommenen Fotos gehen verloren.",
-  "selectDate": "Datum wählen"
+  "selectDate": "Datum wählen",
+  "cameraNotAvailableWeb": "Kamera im Browser nicht verfügbar.",
+  "useGalleryInstead": "Nutze die Galerie unten, um Fotos auszuwählen."
 }

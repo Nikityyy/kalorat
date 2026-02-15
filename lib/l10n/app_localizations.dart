@@ -1585,6 +1585,18 @@ abstract class AppLocalizations {
   /// In de, this message translates to:
   /// **'Datum wählen'**
   String get selectDate;
+
+  /// No description provided for @cameraNotAvailableWeb.
+  ///
+  /// In de, this message translates to:
+  /// **'Kamera im Browser nicht verfügbar.'**
+  String get cameraNotAvailableWeb;
+
+  /// No description provided for @useGalleryInstead.
+  ///
+  /// In de, this message translates to:
+  /// **'Nutze die Galerie unten, um Fotos auszuwählen.'**
+  String get useGalleryInstead;
 }
 
 class _AppLocalizationsDelegate

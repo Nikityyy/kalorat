@@ -775,4 +775,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get selectDate => 'Select date';
+
+  @override
+  String get cameraNotAvailableWeb => 'Camera is not available in the browser.';
+
+  @override
+  String get useGalleryInstead =>
+      'Use the gallery button below to pick photos.';
 }
