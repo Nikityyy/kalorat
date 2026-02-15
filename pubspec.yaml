@@ -85,7 +85,7 @@ flutter_launcher_icons:
   ios: true
   web:
     generate: true
-    image_path: "assets/kalorat-favicon-web.png"
+    image_path: "assets/kalorat-favicon-ios.png"
     background_color: "#0F5838"
     theme_color: "#0F5838"
   theme_color: "#0F5838" 
