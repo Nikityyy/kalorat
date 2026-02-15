@@ -26,10 +26,8 @@ class AuthService {
   Future<(AuthResponse, String?)> signInWithGoogle() async {
     // Web-specific handling: Use Supabase OAuth redirect flow
     if (PlatformUtils.isWeb) {
-      // Get current URL origin dynamically (works for localhost, Vercel, any host)
-      final currentUrl = Uri.base;
-      final redirectUrl =
-          '${currentUrl.scheme}://${currentUrl.host}${currentUrl.hasPort ? ':${currentUrl.port}' : ''}';
+      // Get current URL dynamically (works for localhost, GitHub Pages, any host)
+      final redirectUrl = Uri.base.toString();
 
       await _client.auth.signInWithOAuth(
         OAuthProvider.google,
