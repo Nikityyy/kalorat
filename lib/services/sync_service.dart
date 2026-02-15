@@ -78,7 +78,10 @@ class SyncService {
         // Create new local user from cloud profile
         currentUser = UserModel(
           name: profileData['name'] ?? '',
-          birthdate: DateTime.parse(profileData['birthdate']),
+          birthdate: profileData['birthdate'] != null
+              ? (DateTime.tryParse(profileData['birthdate']) ??
+                    DateTime(2000, 1, 1))
+              : DateTime(2000, 1, 1),
           height: (profileData['height'] as num?)?.toDouble() ?? 170.0,
           weight: (profileData['weight'] as num?)?.toDouble() ?? 70.0,
           language: profileData['language'] ?? 'en',
@@ -92,19 +95,28 @@ class SyncService {
           photoUrl: profileData['photo_url'],
         );
       } else {
-        // Merge cloud profile into local (prefer cloud for non-local-only fields)
+        // Merge cloud profile into local (cloud is source of truth for profile fields).
+        // Always prefer cloud values when they exist; only keep local value as fallback.
+        final cloudName = profileData['name'] as String?;
+        final cloudHeight = (profileData['height'] as num?)?.toDouble();
+        final cloudWeight = (profileData['weight'] as num?)?.toDouble();
+        final cloudGoal = profileData['goal'] as int?;
+        final cloudGender = profileData['gender'] as int?;
+        final cloudBirthdate = profileData['birthdate'] != null
+            ? DateTime.tryParse(profileData['birthdate'])
+            : null;
+        final cloudPhoto = profileData['photo_url'] as String?;
+
         currentUser = currentUser.copyWith(
-          name: currentUser.name.isEmpty
-              ? (profileData['name'] ?? currentUser.name)
-              : null,
-          birthdate: profileData['birthdate'] != null
-              ? DateTime.parse(profileData['birthdate'])
-              : null,
-          height: (profileData['height'] as num?)?.toDouble(),
-          weight: (profileData['weight'] as num?)?.toDouble(),
-          goal: profileData['goal'] as int?,
-          gender: profileData['gender'] as int?,
-          photoUrl: profileData['photo_url'] as String?,
+          name: (cloudName != null && cloudName.isNotEmpty)
+              ? cloudName
+              : currentUser.name,
+          birthdate: cloudBirthdate ?? currentUser.birthdate,
+          height: cloudHeight ?? currentUser.height,
+          weight: cloudWeight ?? currentUser.weight,
+          goal: cloudGoal ?? currentUser.goalIndex,
+          gender: cloudGender ?? currentUser.genderIndex,
+          photoUrl: cloudPhoto ?? currentUser.photoUrl,
         );
       }
       await _db.saveUser(currentUser);

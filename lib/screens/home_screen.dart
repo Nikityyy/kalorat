@@ -204,7 +204,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       });
 
       if (mounted) {
-        _showMessage(l10n.offlineMessage);
+        final message = !isOnline ? l10n.offlineMessage : l10n.enterApiKeyError;
+        _showMessage(message);
       }
       return;
     }
@@ -379,13 +380,17 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
     return Scaffold(
       backgroundColor: Colors.black,
-      body: SafeArea(
-        child: Column(
-          children: [
-            if (!isOnline) const OfflineBanner(),
-            Expanded(child: _buildContent()),
-          ],
-        ),
+      body: Stack(
+        children: [
+          Positioned.fill(child: _buildContent()),
+          if (!isOnline)
+            Positioned(
+              top: MediaQuery.of(context).padding.top,
+              left: 0,
+              right: 0,
+              child: const OfflineBanner(),
+            ),
+        ],
       ),
     );
   }
@@ -674,7 +679,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         // Simple Top Bar
         if (_capturedPhotos.isNotEmpty)
           Positioned(
-            top: 20,
+            top: MediaQuery.of(context).padding.top + 16,
             left: 20,
             child: GestureDetector(
               onTap: () => setState(() => _isTakingMore = false),
@@ -830,6 +835,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
     return Container(
       color: AppColors.glacialWhite,
+      padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top),
       child: Column(
         children: [
           const SizedBox(height: 16),

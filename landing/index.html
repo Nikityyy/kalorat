@@ -1,0 +1,1286 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- SEO -->
+    <title>Kalorat — Companion for the Climb</title>
+    <meta name="description"
+        content="Kalorat is your companion for the climb. Honest, precise, and human nutrition tracking designed with the clarity of the Alps. No noise, just the path ahead.">
+    <meta name="keywords"
+        content="kalorat, calorie tracker, nutrition tracking, meal logger, health companion, austrian design, alpine wellness">
+    <meta name="author" content="Kalorat Team">
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Kalorat — Companion for the Climb">
+    <meta property="og:description"
+        content="Honest, precise, and human nutrition tracking designed with the clarity of the Alps.">
+    <meta property="og:image" content="assets/kalorat-favicon-web.png">
+    <meta property="og:url" content="https://nikity.is-a.dev/kalorat/">
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Kalorat — Companion for the Climb">
+    <meta name="twitter:description"
+        content="Honest, precise, and human nutrition tracking designed with the clarity of the Alps.">
+
+    <!-- Theme -->
+    <meta name="theme-color" content="#0F5838">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="assets/kalorat-favicon-web.png">
+    <link rel="apple-touch-icon" href="assets/kalorat-favicon-web.png">
+
+    <!-- Fonts: Outfit (Brand Primary) + JetBrains Mono (Data) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap"
+        rel="stylesheet">
+
+    <!-- Remix Icon -->
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+
+    <style>
+        /* ============================================
+       KALORAT DESIGN SYSTEM
+       Digital Alpinism — The Glacial Kit
+       ============================================ */
+
+        *,
+        *::before,
+        *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            /* The Glacial Kit */
+            --styrian-forest: #0F5838;
+            --styrian-forest-rgb: 15, 88, 56;
+            --glacial-white: #FAFAFC;
+            --steel-frost: #F0F2F5;
+            --dark-surface: #1A1F1F;
+            --kaiser-red: #ED2939;
+            --glacier-mint: #3ED685;
+            --border: #D1D5DB;
+            --text-primary: #1A1F1F;
+            --text-secondary: #4A5568;
+            --white: #FFFFFF;
+
+            /* System */
+            --radius: 12px;
+            --radius-lg: 20px;
+            --radius-xl: 28px;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--glacial-white);
+            color: var(--text-primary);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            overflow-x: hidden;
+        }
+
+        /* Headings: Bold, -1px tracking (Bodenständig) */
+        h1,
+        h2,
+        h3,
+        h4 {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 700;
+            letter-spacing: -1px;
+            line-height: 1.1;
+        }
+
+        .mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        img {
+            max-width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        a {
+            text-decoration: none;
+            color: inherit;
+        }
+
+        /* ============================================
+       NAV
+       ============================================ */
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            padding: 0 2rem;
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(250, 250, 252, 0.8);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .nav-left {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .nav-logo-img {
+            height: 28px;
+            width: auto;
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            transition: color 0.2s;
+        }
+
+        .nav-links a:hover {
+            color: var(--styrian-forest);
+        }
+
+        .nav-cta {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1.25rem;
+            background: var(--styrian-forest);
+            color: var(--white);
+            border-radius: 100px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .nav-cta:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+        /* ============================================
+       HERO
+       ============================================ */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 8rem 2rem 4rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Subtle radial glow */
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: -200px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 900px;
+            height: 900px;
+            background: radial-gradient(circle, rgba(var(--styrian-forest-rgb), 0.04) 0%, transparent 65%);
+            pointer-events: none;
+        }
+
+        .hero h1 {
+            font-size: clamp(2.75rem, 7vw, 5rem);
+            font-weight: 800;
+            color: var(--text-primary);
+            letter-spacing: -2px;
+            max-width: 800px;
+            margin-bottom: 1.5rem;
+            opacity: 0;
+            animation: fadeInUp 0.6s ease-out 0.2s forwards;
+        }
+
+        .hero h1 .accent {
+            color: var(--styrian-forest);
+        }
+
+        .hero-sub {
+            font-size: clamp(1rem, 2vw, 1.2rem);
+            color: var(--text-secondary);
+            max-width: 500px;
+            margin-bottom: 2.5rem;
+            font-weight: 400;
+            opacity: 0;
+            animation: fadeInUp 0.6s ease-out 0.3s forwards;
+        }
+
+        .hero-badges {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 2.5rem;
+            opacity: 0;
+            animation: fadeInUp 0.6s ease-out 0.35s forwards;
+        }
+
+        .badge-opensource {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.35rem 0.85rem;
+            background: rgba(var(--styrian-forest-rgb), 0.06);
+            border: 1px solid rgba(var(--styrian-forest-rgb), 0.12);
+            border-radius: 100px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--styrian-forest);
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-bottom: 4rem;
+            opacity: 0;
+            animation: fadeInUp 0.6s ease-out 0.4s forwards;
+            scroll-margin-top: 100px;
+            /* Fix for fixed header overlap */
+        }
+
+        .btn-download {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            padding: 0.85rem 1.75rem;
+            border-radius: var(--radius);
+            font-size: 0.95rem;
+            font-weight: 600;
+            font-family: 'Outfit', sans-serif;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid var(--border);
+            line-height: 1.2;
+        }
+
+        .btn-android {
+            background: var(--styrian-forest);
+            color: var(--white);
+            border-color: var(--styrian-forest);
+        }
+
+        .btn-android:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(var(--styrian-forest-rgb), 0.3);
+        }
+
+        .btn-ios {
+            background: var(--white);
+            color: var(--text-primary);
+            border-color: var(--border);
+        }
+
+        .btn-ios:hover {
+            border-color: var(--text-primary);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+        }
+
+        .btn-icon {
+            font-size: 1.4rem;
+            line-height: 1;
+            display: block;
+        }
+
+        /* Phone mockups in hero */
+        .hero-phones {
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            gap: 1.5rem;
+            max-width: 900px;
+            width: 100%;
+            opacity: 0;
+            animation: fadeInUp 0.8s ease-out 0.5s forwards;
+        }
+
+        .phone-mockup {
+            flex: 0 1 260px;
+            overflow: hidden;
+            transition: transform 0.3s;
+        }
+
+        .phone-mockup:hover {
+            transform: translateY(-8px);
+        }
+
+        .phone-mockup.center {
+            flex: 0 1 280px;
+        }
+
+        .phone-mockup img {
+            width: 100%;
+            aspect-ratio: 9/19.5;
+            object-fit: cover;
+        }
+
+        /* ============================================
+       SECTION BASE
+       ============================================ */
+        section {
+            padding: 7rem 2rem;
+        }
+
+        .section-container {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        .section-eyebrow {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--styrian-forest);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 1rem;
+        }
+
+        .section-title {
+            font-size: clamp(2rem, 4vw, 3rem);
+            color: var(--text-primary);
+            letter-spacing: -1.5px;
+            margin-bottom: 1rem;
+        }
+
+        .section-desc {
+            font-size: 1.05rem;
+            color: var(--text-secondary);
+            max-width: 520px;
+        }
+
+        /* ============================================
+       FEATURE SHOWCASE (Cal AI style — alternating)
+       ============================================ */
+        .feature-row {
+            display: flex;
+            align-items: center;
+            gap: 4rem;
+            margin-bottom: 6rem;
+        }
+
+        .feature-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .feature-row.reverse {
+            flex-direction: row-reverse;
+        }
+
+        .feature-content {
+            flex: 1;
+        }
+
+        .feature-visual {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+        }
+
+        .feature-phone {
+            max-width: 280px;
+            overflow: hidden;
+        }
+
+        .feature-phone img {
+            width: 100%;
+            aspect-ratio: 9/19.5;
+            object-fit: cover;
+        }
+
+        .feature-tag {
+            display: inline-block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: var(--styrian-forest);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            padding: 0.35rem 0.85rem;
+            background: rgba(var(--styrian-forest-rgb), 0.06);
+            border: 1px solid rgba(var(--styrian-forest-rgb), 0.12);
+            border-radius: 100px;
+            margin-bottom: 1.25rem;
+        }
+
+        .feature-content h2 {
+            font-size: clamp(1.75rem, 3.5vw, 2.5rem);
+            margin-bottom: 1rem;
+        }
+
+        .feature-content p {
+            font-size: 1.05rem;
+            color: var(--text-secondary);
+            line-height: 1.7;
+            max-width: 440px;
+        }
+
+        .feature-list {
+            list-style: none;
+            margin-top: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .feature-list li {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 0.95rem;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .feature-list .check {
+            width: 20px;
+            height: 20px;
+            background: var(--glacier-mint);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .feature-list .check svg {
+            width: 12px;
+            height: 12px;
+        }
+
+        /* ============================================
+       VALUES GRID
+       ============================================ */
+        .values-section {
+            background: var(--white);
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .values-header {
+            text-align: center;
+            margin-bottom: 4rem;
+        }
+
+        .values-header .section-desc {
+            margin: 0.5rem auto 0;
+        }
+
+        .values-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1px;
+            background: var(--border);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+        }
+
+        .value-card {
+            background: var(--white);
+            padding: 2.25rem;
+            transition: background 0.2s;
+        }
+
+        .value-card:hover {
+            background: var(--steel-frost);
+        }
+
+        .value-card h3 {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--styrian-forest);
+            margin-bottom: 0.15rem;
+            letter-spacing: -0.5px;
+        }
+
+        .value-german {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            opacity: 0.7;
+            display: block;
+            margin-bottom: 0.75rem;
+        }
+
+        .value-card p {
+            font-size: 0.88rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        /* ============================================
+       iOS TUTORIAL MODAL
+       ============================================ */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 1000;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            opacity: 0;
+            transition: opacity 0.25s;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+            opacity: 1;
+        }
+
+        .modal {
+            background: var(--white);
+            border-radius: var(--radius-xl);
+            max-width: 480px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            border: 1px solid var(--border);
+            position: relative;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: 1px solid var(--border);
+            background: var(--white);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            transition: all 0.15s;
+            z-index: 10;
+        }
+
+        .modal-close:hover {
+            background: var(--steel-frost);
+            color: var(--text-primary);
+        }
+
+        .modal-header {
+            padding: 2.5rem 2.5rem 1.5rem;
+        }
+
+        .modal-header h2 {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .modal-header p {
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+        }
+
+        .tutorial-steps {
+            padding: 0 2.5rem 2.5rem;
+        }
+
+        .tutorial-step {
+            display: flex;
+            gap: 1rem;
+            padding: 1.25rem 0;
+            border-top: 1px solid var(--border);
+            opacity: 0;
+            transform: translateY(10px);
+            animation: stepIn 0.4s ease-out forwards;
+        }
+
+        .tutorial-step:nth-child(1) {
+            animation-delay: 0.1s;
+        }
+
+        .tutorial-step:nth-child(2) {
+            animation-delay: 0.25s;
+        }
+
+        .tutorial-step:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        .tutorial-step:nth-child(4) {
+            animation-delay: 0.55s;
+        }
+
+        .step-number {
+            width: 32px;
+            height: 32px;
+            background: var(--styrian-forest);
+            color: var(--white);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            font-weight: 600;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .step-content h4 {
+            font-size: 0.95rem;
+            font-weight: 600;
+            letter-spacing: -0.3px;
+            margin-bottom: 0.25rem;
+        }
+
+        .step-content p {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        .step-visual {
+            margin-top: 0.75rem;
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            overflow: hidden;
+            background: var(--steel-frost);
+        }
+
+        .step-visual img {
+            width: 100%;
+            background: var(--steel-frost);
+        }
+
+        .modal-footer {
+            padding: 1.5rem 2.5rem;
+            border-top: 1px solid var(--border);
+            text-align: center;
+        }
+
+        .btn-open-app {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 2rem;
+            background: var(--styrian-forest);
+            color: var(--white);
+            border-radius: var(--radius);
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            width: 100%;
+            justify-content: center;
+        }
+
+        .btn-open-app:hover {
+            opacity: 0.9;
+        }
+
+        /* ============================================
+       CTA SECTION
+       ============================================ */
+        .cta-section {
+            padding: 7rem 2rem;
+        }
+
+        .cta-box {
+            max-width: 900px;
+            margin: 0 auto;
+            background: var(--dark-surface);
+            border-radius: var(--radius-xl);
+            padding: 5rem 3rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .cta-box::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(var(--styrian-forest-rgb), 0.2) 0%, transparent 65%);
+            pointer-events: none;
+        }
+
+        .cta-box::after {
+            content: '';
+            position: absolute;
+            bottom: -50%;
+            left: -20%;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(62, 214, 133, 0.08) 0%, transparent 65%);
+            pointer-events: none;
+        }
+
+        .cta-box .section-eyebrow {
+            color: var(--glacier-mint);
+        }
+
+        .cta-box h2 {
+            font-size: clamp(2rem, 4vw, 3rem);
+            color: var(--white);
+            max-width: 600px;
+            margin: 0 auto 1rem;
+        }
+
+        .cta-box p {
+            color: rgba(255, 255, 255, 0.55);
+            font-size: 1.05rem;
+            max-width: 450px;
+            margin: 0 auto 2.5rem;
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            position: relative;
+            z-index: 1;
+        }
+
+        .btn-cta-android {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            padding: 0.85rem 1.75rem;
+            background: var(--white);
+            color: var(--text-primary);
+            border-radius: var(--radius);
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            line-height: 1.2;
+        }
+
+        .btn-cta-android:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-cta-ios {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            padding: 0.85rem 1.75rem;
+            background: transparent;
+            color: var(--white);
+            border-radius: var(--radius);
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 600;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            cursor: pointer;
+            transition: all 0.2s;
+            line-height: 1.2;
+        }
+
+        .btn-cta-ios:hover {
+            border-color: rgba(255, 255, 255, 0.5);
+            transform: translateY(-2px);
+        }
+
+        /* ============================================
+       FOOTER
+       ============================================ */
+        footer {
+            padding: 2.5rem 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-top: 1px solid var(--border);
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        .footer-left {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            opacity: 0.7;
+        }
+
+        .footer-left a {
+            color: var(--styrian-forest);
+            font-weight: 700;
+            opacity: 1;
+            text-decoration: underline;
+            text-decoration-thickness: 2px;
+            text-underline-offset: 2px;
+        }
+
+        .footer-left a:hover {
+            opacity: 0.8;
+        }
+
+        .footer-links {
+            display: flex;
+            gap: 1.5rem;
+            list-style: none;
+        }
+
+        .footer-links a {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            opacity: 0.7;
+            transition: opacity 0.2s;
+        }
+
+        .footer-links a:hover {
+            opacity: 1;
+        }
+
+        /* ============================================
+       ANIMATIONS
+       ============================================ */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(24px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes stepIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ============================================
+       RESPONSIVE
+       ============================================ */
+        @media (max-width: 900px) {
+
+            .feature-row,
+            .feature-row.reverse {
+                flex-direction: column;
+                gap: 2.5rem;
+                text-align: center;
+            }
+
+            .feature-content p,
+            .feature-content {
+                max-width: 100%;
+            }
+
+            .feature-list {
+                align-items: center;
+            }
+
+            .values-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 640px) {
+            nav {
+                padding: 0 1.25rem;
+            }
+
+            .nav-links {
+                display: none;
+            }
+
+            .hero {
+                padding: 7rem 1.5rem 3rem;
+            }
+
+            .hero-phones {
+                gap: 0.75rem;
+            }
+
+            .phone-mockup {
+                flex: 0 1 160px;
+            }
+
+            .phone-mockup.center {
+                flex: 0 1 180px;
+            }
+
+            section {
+                padding: 4rem 1.5rem;
+            }
+
+            .values-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .cta-box {
+                padding: 3rem 1.5rem;
+            }
+
+            footer {
+                flex-direction: column;
+                gap: 1rem;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- ==================== NAV ==================== -->
+    <nav>
+        <div class="nav-left">
+            <img src="assets/kalorat-textlogo.png" alt="Kalorat text logo in Styrian Forest green" class="nav-logo-img">
+        </div>
+        <ul class="nav-links">
+            <li><a href="#features">Features</a></li>
+            <li><a href="#values">Our Code</a></li>
+        </ul>
+        <a href="#downloads" class="nav-cta">Download
+            App</a>
+    </nav>
+
+    <!-- ==================== HERO ==================== -->
+    <section class="hero">
+        <h1>Track your nutrition <br><span class="accent">with just a photo.</span></h1>
+        <p class="hero-sub">Honest, precise, and human nutrition tracking. Your companion for the climb, built with the
+            clarity of the Alps.</p>
+        <div class="hero-badges">
+            <span class="badge-opensource"><i class="ri-open-source-line"></i> 100% Open Source</span>
+        </div>
+        <div class="hero-buttons" id="downloads">
+            <a href="https://github.com/Nikityyy/kalorat/releases/latest/download/kalorat.apk"
+                class="btn-download btn-android">
+                <i class="ri-android-fill btn-icon"></i>
+                Download for Android
+            </a>
+            <button class="btn-download btn-ios" onclick="openIOSTutorial()">
+                <i class="ri-apple-fill btn-icon"></i>
+                Install on iPhone
+            </button>
+        </div>
+
+        <!-- Three phone mockups side by side -->
+        <div class="hero-phones">
+            <div class="phone-mockup">
+                <img src="assets/mockups/analyze.png" alt="Kalorat app screenshot — meal logging view">
+            </div>
+            <div class="phone-mockup center">
+                <img src="assets/mockups/profile.png" alt="Kalorat app screenshot — profile">
+            </div>
+            <div class="phone-mockup">
+                <img src="assets/mockups/history.png" alt="Kalorat app screenshot — history">
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== FEATURES ==================== -->
+    <section id="features">
+        <div class="section-container">
+
+            <!-- Feature 1: Snap & Track -->
+            <div class="feature-row">
+                <div class="feature-content">
+                    <span class="feature-tag">Snap &amp; Track</span>
+                    <h2>Take a photo. <br>We handle the rest.</h2>
+                    <p>Point your camera at any meal and get instant calorie and nutrient information. No manual entry,
+                        no barcode scanning, no guesswork.</p>
+                    <ul class="feature-list">
+                        <li>
+                            <span class="check"><svg viewBox="0 0 12 12" fill="none" stroke="#fff" stroke-width="2">
+                                    <polyline points="2,6 5,9 10,3" />
+                                </svg></span>
+                            AI-powered food recognition
+                        </li>
+                        <li>
+                            <span class="check"><svg viewBox="0 0 12 12" fill="none" stroke="#fff" stroke-width="2">
+                                    <polyline points="2,6 5,9 10,3" />
+                                </svg></span>
+                            Full macro breakdown in seconds
+                        </li>
+                        <li>
+                            <span class="check"><svg viewBox="0 0 12 12" fill="none" stroke="#fff" stroke-width="2">
+                                    <polyline points="2,6 5,9 10,3" />
+                                </svg></span>
+                            Works with any cuisine
+                        </li>
+                    </ul>
+                </div>
+                <div class="feature-visual">
+                    <div class="feature-phone">
+                        <img src="assets/mockups/analyze.png"
+                            alt="Kalorat app screenshot — camera view analyzing a plate of food with detected items and calorie overlay">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Feature 2: Honest Insights -->
+            <div class="feature-row reverse">
+                <div class="feature-content">
+                    <span class="feature-tag">Honest Insights</span>
+                    <h2>See the truth. <br>Clearly.</h2>
+                    <p>No gamification tricks, no streaks to maintain. Just clear, honest data about your nutrition
+                        presented the way a trusted guide would explain it.</p>
+                    <ul class="feature-list">
+                        <li>
+                            <span class="check"><svg viewBox="0 0 12 12" fill="none" stroke="#fff" stroke-width="2">
+                                    <polyline points="2,6 5,9 10,3" />
+                                </svg></span>
+                            Weekly and monthly trend charts
+                        </li>
+                        <li>
+                            <span class="check"><svg viewBox="0 0 12 12" fill="none" stroke="#fff" stroke-width="2">
+                                    <polyline points="2,6 5,9 10,3" />
+                                </svg></span>
+                            Personalized daily summaries
+                        </li>
+                        <li>
+                            <span class="check"><svg viewBox="0 0 12 12" fill="none" stroke="#fff" stroke-width="2">
+                                    <polyline points="2,6 5,9 10,3" />
+                                </svg></span>
+                            Calorie and macro goals
+                        </li>
+                    </ul>
+                </div>
+                <div class="feature-visual">
+                    <div class="feature-phone">
+                        <img src="assets/mockups/analysis.png"
+                            alt="Kalorat app screenshot — statistics view with weekly calorie chart, macro progress bars, and daily average">
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- ==================== VALUES ==================== -->
+    <section class="values-section" id="values">
+        <div class="section-container">
+            <div class="values-header">
+                <p class="section-eyebrow">Our Code</p>
+                <h2 class="section-title">Built on Alpine Values</h2>
+                <p class="section-desc">Four principles forged from the philosophy of Digital Alpinism.</p>
+            </div>
+            <div class="values-grid">
+                <div class="value-card">
+                    <h3>Comradery</h3>
+                    <span class="value-german">Kameradschaft</span>
+                    <p>We are in this together. The app is a partner, not a judge. We celebrate the wins and stay calm
+                        during the losses.</p>
+                </div>
+                <div class="value-card">
+                    <h3>Precision</h3>
+                    <span class="value-german">Pr&auml;zision</span>
+                    <p>A guide must be accurate. We show the math clearly so you always know where you stand on the
+                        mountain.</p>
+                </div>
+                <div class="value-card">
+                    <h3>Reduction</h3>
+                    <span class="value-german">Reduktion</span>
+                    <p>Less, but better. We remove the noise so you can focus on the walk. Every pixel must serve the
+                        user.</p>
+                </div>
+                <div class="value-card">
+                    <h3>Craftsmanship</h3>
+                    <span class="value-german">Handwerk</span>
+                    <p>Built with the care of an Alpine carpenter. Our software should feel like a physical tool —
+                        solid, fast, and timeless.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== CTA ==================== -->
+    <section class="cta-section">
+        <div class="cta-box">
+            <p class="section-eyebrow">Start Your Climb</p>
+            <h2>Your companion is ready.</h2>
+            <p>Download for Android or install from your browser. No account required to get started.</p>
+            <div class="cta-buttons">
+                <a href="https://github.com/Nikityyy/kalorat/releases/latest/download/kalorat.apk"
+                    class="btn-cta-android">
+                    <i class="ri-android-fill btn-icon"></i>
+                    Download for Android
+                </a>
+                <button class="btn-cta-ios" onclick="openIOSTutorial()">
+                    <i class="ri-apple-fill btn-icon"></i>
+                    Install on iPhone
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== FOOTER ==================== -->
+    <footer>
+        <p class="footer-left">2026 Kalorat. Built with precision in Austria. By <a href="https://nikity.is-a.dev/"
+                target="_blank">Nikita Berger</a>.</p>
+        <ul class="footer-links">
+            <li><a href="https://github.com/Nikityyy/kalorat" target="_blank">GitHub</a></li>
+        </ul>
+    </footer>
+
+    <!-- ==================== iOS TUTORIAL MODAL ==================== -->
+    <div class="modal-overlay" id="iosModal">
+        <div class="modal">
+            <button class="modal-close" onclick="closeIOSTutorial()">&times;</button>
+            <div class="modal-header">
+                <h2>Install Kalorat on iPhone</h2>
+                <p>Add the web app to your home screen in four steps. It works just like a native app.</p>
+            </div>
+            <div class="tutorial-steps">
+                <div class="tutorial-step">
+                    <span class="step-number">1</span>
+                    <div class="step-content">
+                        <h4>Open in Safari</h4>
+                        <p>Open the Kalorat web app in Safari. This only works in Safari, not Chrome or other browsers.
+                        </p>
+                        <div class="step-visual">
+                            <img src=""
+                                alt="Screenshot showing Safari browser navigating to nikity.is-a.dev/kalorat/app with the URL bar visible">
+                        </div>
+                    </div>
+                </div>
+                <div class="tutorial-step">
+                    <span class="step-number">2</span>
+                    <div class="step-content">
+                        <h4>Tap the Share button</h4>
+                        <p>Tap the share icon (square with an arrow pointing up) at the bottom of Safari.</p>
+                        <div class="step-visual">
+                            <img src=""
+                                alt="Screenshot highlighting the Safari share button (square with upward arrow) at the bottom toolbar">
+                        </div>
+                    </div>
+                </div>
+                <div class="tutorial-step">
+                    <span class="step-number">3</span>
+                    <div class="step-content">
+                        <h4>Select "Add to Home Screen"</h4>
+                        <p>Scroll down in the share sheet and tap "Add to Home Screen."</p>
+                        <div class="step-visual">
+                            <img src=""
+                                alt="Screenshot of Safari share sheet with 'Add to Home Screen' option highlighted with a plus icon">
+                        </div>
+                    </div>
+                </div>
+                <div class="tutorial-step">
+                    <span class="step-number">4</span>
+                    <div class="step-content">
+                        <h4>Tap "Add"</h4>
+                        <p>Confirm the name and tap Add. Kalorat will appear on your home screen as a standalone app.
+                        </p>
+                        <div class="step-visual">
+                            <img src=""
+                                alt="Screenshot of the 'Add to Home Screen' confirmation dialog showing Kalorat name and icon with 'Add' button highlighted">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <a href="app/" class="btn-open-app">Open Kalorat Web App</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // iOS Tutorial Modal
+        function openIOSTutorial() {
+            const modal = document.getElementById('iosModal');
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeIOSTutorial() {
+            const modal = document.getElementById('iosModal');
+            modal.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        // Close on overlay click
+        document.getElementById('iosModal').addEventListener('click', function (e) {
+            if (e.target === this) closeIOSTutorial();
+        });
+
+        // Close on Escape
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') closeIOSTutorial();
+        });
+
+        // Reveal on scroll (features + values)
+        const observerOptions = { threshold: 0.15, rootMargin: '0px 0px -50px 0px' };
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.feature-row').forEach(el => {
+            el.style.opacity = '0';
+            el.style.transition = 'opacity 0.6s ease-out, transform 0.6s ease-out';
+            observer.observe(el);
+        });
+    </script>
+
+</body>
+
+</html>

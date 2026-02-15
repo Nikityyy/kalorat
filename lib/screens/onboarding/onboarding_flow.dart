@@ -60,7 +60,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
       _goalIndex = user.goalIndex;
       _genderIndex = user.genderIndex ?? 0;
       _activityLevel = user.activityLevelIndex;
-      _apiKey = user.geminiApiKey;
+      _apiKey = provider.apiKey;
       _healthSyncEnabled = user.healthSyncEnabled;
     }
 

@@ -17,10 +17,15 @@ class OfflineQueueService {
     AppLogger.info('OfflineQueueService', 'Connectivity status: $result');
 
     if (result.contains(ConnectivityResult.none)) {
-      // Double check with actual lookup just in case plugin is wrong on Windows
-      return await _checkConnection();
+      return false;
     }
 
+    // On web, connectivity_plus uses navigator.onLine which is reliable.
+    // We cannot do an HTTP HEAD check due to CORS restrictions.
+    if (kIsWeb) return true;
+
+    // On native, double-check with an actual HTTP request
+    // in case the plugin reports a network but there's no internet.
     return await _checkConnection();
   }
 

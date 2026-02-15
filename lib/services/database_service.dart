@@ -1,5 +1,6 @@
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:path_provider/path_provider.dart';
+import '../utils/app_logger.dart';
 import '../models/models.dart';
 import '../utils/platform_utils.dart';
 
@@ -38,30 +39,55 @@ class DatabaseService {
     }
 
     // Open boxes
-    _userBox = await Hive.openBox<UserModel>(userBoxName);
-    _mealsBox = await Hive.openBox<MealModel>(mealsBoxName);
-    _weightsBox = await Hive.openBox<WeightModel>(weightsBoxName);
-    await Hive.openBox('settings_box');
+    // Open boxes with error handling
+    _userBox = await _openBoxWithFallback<UserModel>(userBoxName);
+    _mealsBox = await _openBoxWithFallback<MealModel>(mealsBoxName);
+    _weightsBox = await _openBoxWithFallback<WeightModel>(weightsBoxName);
+    await _openBoxWithFallback('settings_box');
 
-    _buildIndices();
+    await _buildIndices();
   }
 
-  void _buildIndices() {
+  Future<Box<T>> _openBoxWithFallback<T>(String boxName) async {
+    try {
+      return await Hive.openBox<T>(boxName);
+    } catch (e) {
+      AppLogger.error('DatabaseService', 'Failed to open box $boxName', e);
+      // Delete box and try again
+      await Hive.deleteBoxFromDisk(boxName);
+      return await Hive.openBox<T>(boxName);
+    }
+  }
+
+  Future<void> _buildIndices() async {
     _mealsDateIndex.clear();
     _daysWithMeals.clear();
 
-    for (final meal in _mealsBox.values) {
-      final dateKey = _getDateKey(meal.timestamp);
-      if (!_mealsDateIndex.containsKey(dateKey)) {
-        _mealsDateIndex[dateKey] = [];
+    try {
+      for (final meal in _mealsBox.values) {
+        final dateKey = _getDateKey(meal.timestamp);
+        if (!_mealsDateIndex.containsKey(dateKey)) {
+          _mealsDateIndex[dateKey] = [];
+        }
+        _mealsDateIndex[dateKey]!.add(meal);
+        _daysWithMeals.add(dateKey);
       }
-      _mealsDateIndex[dateKey]!.add(meal);
-      _daysWithMeals.add(dateKey);
-    }
 
-    // Sort lists by timestamp desc
-    for (final key in _mealsDateIndex.keys) {
-      _mealsDateIndex[key]!.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+      // Sort lists by timestamp desc
+      for (final key in _mealsDateIndex.keys) {
+        _mealsDateIndex[key]!.sort(
+          (a, b) => b.timestamp.compareTo(a.timestamp),
+        );
+      }
+    } catch (e) {
+      AppLogger.error(
+        'DatabaseService',
+        'Failed to build indices (corruption?)',
+        e,
+      );
+      // Attempt to clear corrupted box
+      await _mealsBox.clear();
+      // Indices safe to leave empty
     }
   }
 

@@ -43,7 +43,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
     _weightController = TextEditingController(
       text: user?.weight.toString() ?? '',
     );
-    _apiKeyController = TextEditingController(text: user?.geminiApiKey ?? '');
+    _apiKeyController = TextEditingController(
+      text: context.read<AppProvider>().apiKey,
+    );
     _selectedBirthdate = user?.birthdate;
   }
 

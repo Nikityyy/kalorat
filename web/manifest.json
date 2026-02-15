@@ -1,8 +1,9 @@
 {
     "name": "Kalorat",
     "short_name": "Kalorat",
-    "id": "/",
-    "start_url": "/",
+    "id": "/kalorat/app/",
+    "start_url": ".",
+    "scope": ".",
     "display": "standalone",
     "background_color": "#0F5838",
     "theme_color": "#0F5838",

@@ -3,7 +3,6 @@ import 'package:cross_file/cross_file.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:flutter/services.dart';
 import '../utils/app_logger.dart';
 import '../utils/platform_utils.dart';
 
@@ -50,10 +49,6 @@ class GeminiService {
 
   final String apiKey;
   final String language;
-
-  // Cache for example image parts to avoid repeated asset loading
-  // Cache for example image parts to avoid repeated asset loading
-  List<Map<String, dynamic>>? _cachedExampleParts;
 
   final http.Client _client;
 
@@ -120,9 +115,6 @@ class GeminiService {
     List<String> imagePaths, {
     bool useGrams = false,
   }) async {
-    // Use injected client
-    // final client = http.Client(); // Removed local instantiation
-
     try {
       // Prepare image parts in background to avoid UI jank
       final List<Map<String, dynamic>> imageParts = [];
@@ -178,15 +170,11 @@ class GeminiService {
         generationConfig['thinkingConfig'] = {'thinkingBudget': 1024};
       }
 
-      // Load multimodal examples if not already cached
-      _cachedExampleParts ??= await _loadExampleParts();
-
       // Build request body
       final requestBody = {
         'system_instruction': {
           'parts': [
             {'text': prompt},
-            ...?_cachedExampleParts,
           ],
         },
         'contents': [
@@ -351,69 +339,6 @@ class GeminiService {
       default:
         return 'image/jpeg';
     }
-  }
-
-  Future<List<Map<String, dynamic>>> _loadExampleParts() async {
-    try {
-      final List<Map<String, dynamic>> parts = [];
-
-      // Example 1
-      final firstBytes = await rootBundle.load('assets/examples/first.png');
-      parts.add({'text': 'EXAMPLE 1 IMAGE:'});
-      parts.add({
-        'inline_data': {
-          'mime_type': 'image/png',
-          'data': base64Encode(firstBytes.buffer.asUint8List()),
-        },
-      });
-      parts.add({'text': 'EXAMPLE 1 ANALYSIS (GOLD STANDARD):'});
-      parts.add({'text': _getExample1Json()});
-
-      // Example 2
-      final secondBytes = await rootBundle.load('assets/examples/second.png');
-      parts.add({'text': 'EXAMPLE 2 IMAGE:'});
-      parts.add({
-        'inline_data': {
-          'mime_type': 'image/png',
-          'data': base64Encode(secondBytes.buffer.asUint8List()),
-        },
-      });
-      parts.add({'text': 'EXAMPLE 2 ANALYSIS (GOLD STANDARD):'});
-      parts.add({'text': _getExample2Json()});
-
-      return parts;
-    } catch (e) {
-      AppLogger.error('GeminiService', 'Failed to load example assets', e);
-      return [];
-    }
-  }
-
-  String _getExample1Json() {
-    return '''{
-  "analysis_note": "Reasoning: [Chicken Breast, cooked]: The pan contains approx. 35-40 bite-sized cubes. Estimating ~500g cooked weight -> ~155g Protein, ~18g Fat, 0g Carbs. [Broccoli, cooked]: Approx. ~250g -> ~6g Protein, ~17g Carbs, ~1g Fat. [Sauce & Oil]: Glossy sheen indicates oil/sugar glaze. 2 tbsp oil (30g Fat) and ~45g sugars/starch (45g Carbs). Total calculated: (161g P * 4) + (62g C * 4) + (49g F * 9) = 1333 kcal. Verification: Matches total estimate.",
-  "meal_name": "Honey Garlic Chicken and Broccoli Skillet",
-  "calories": 1333.0,
-  "protein": 161.0,
-  "carbs": 62.0,
-  "fats": 49.0,
-  "detected_quantity": 825.0,
-  "detected_unit": "gram",
-  "confidence_score": 0.95
-}''';
-  }
-
-  String _getExample2Json() {
-    return '''{
-  "analysis_note": "Reasoning: Analyzed as a standard 300g serving. [White Rice]: 100g -> 130 kcal, 28g carbs, 2.7g protein, 0.3g fat. [Shredded Chicken Breast]: 85g -> 140 kcal, 0g carbs, 26g protein, 3g fat. [Broccoli Florets]: 60g -> 20 kcal, 4g carbs, 2g protein, 0.2g fat. [Cheese & Cream Sauce]: 45g -> 120 kcal, 4g carbs, 4g protein, 9g fat. [Crispy Topping]: 10g -> 50 kcal, 6g carbs, 1g protein, 3.5g fat. Total calculated: 460 kcal. Verification: (35.7*4) + (42*4) + (16*9) = 454.8 kcal (matches closely).",
-  "meal_name": "Chicken Broccoli Rice Casserole",
-  "calories": 460.0,
-  "protein": 35.7,
-  "carbs": 42.0,
-  "fats": 16.0,
-  "detected_quantity": 300.0,
-  "detected_unit": "gram",
-  "confidence_score": 0.9
-}''';
   }
 
   String _getPrompt(String language, {bool useGrams = false}) {

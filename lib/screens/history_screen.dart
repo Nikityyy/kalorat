@@ -79,9 +79,12 @@ class _HistoryScreenState extends State<HistoryScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    l10n.myHistory,
-                    style: AppTypography.displayMedium.copyWith(fontSize: 24),
+                  Flexible(
+                    child: Text(
+                      l10n.myHistory,
+                      style: AppTypography.displayMedium.copyWith(fontSize: 24),
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
                   Visibility(
                     visible: _selectedPeriod == 0,

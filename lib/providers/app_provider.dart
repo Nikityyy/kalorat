@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:ui' as ui;
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/models.dart';
 import '../services/services.dart';
 import '../utils/app_logger.dart';
@@ -88,6 +89,16 @@ class AppProvider extends ChangeNotifier {
 
     _isOnline = await _offlineQueueService.isOnline();
     _secureApiKey = await _storageService.getApiKey();
+
+    // Load user from DB
+    _user = _databaseService.getUser();
+
+    // If session exists, sync from cloud to restore data
+    final session = Supabase.instance.client.auth.currentSession;
+    if (session != null && _isOnline) {
+      await _syncService.syncFromCloud();
+      _user = _databaseService.getUser(); // Refresh after sync
+    }
 
     // Migration: If key exists in insecure storage but not secure storage, migrate it
     if (_user != null &&

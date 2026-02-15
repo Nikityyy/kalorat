@@ -1,4 +1,4 @@
-name: Flutter CI
+name: Deploy to GitHub Pages
 
 on:
   push:
@@ -6,10 +6,21 @@ on:
   pull_request:
     branches: [ "main" ]
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
+# Allow only one concurrent deployment, cancel in-progress runs
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
 
+# Permissions for GitHub Pages deployment
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  # — Job 1: Test —
+  test:
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
 
@@ -25,3 +36,76 @@ jobs:
 
     - name: Run tests
       run: flutter test
+
+  # — Job 2: Build & Deploy —
+  deploy:
+    needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - uses: subosito/flutter-action@v2
+      with:
+        channel: 'stable'
+
+    - name: Install dependencies
+      run: flutter pub get
+
+    - name: Build Flutter web (PWA)
+      run: flutter build web --release --base-href /kalorat/app/
+
+    - name: Assemble site structure
+      run: |
+        mkdir -p _site/app
+        # Landing page → root
+        cp landing/index.html _site/index.html
+        # Flutter build → /app/
+        cp -r build/web/* _site/app/
+        # Custom domain
+        echo "nikity.is-a.dev" > _site/CNAME
+        # Prevent Jekyll processing (important for Flutter assets)
+        touch _site/.nojekyll
+
+    - name: Setup Pages
+      uses: actions/configure-pages@v5
+
+    - name: Upload artifact
+      uses: actions/upload-pages-artifact@v3
+      with:
+        path: '_site'
+
+    - name: Deploy to GitHub Pages
+      id: deployment
+      uses: actions/deploy-pages@v4
+
+  # — Job 3: Build & Release APK —
+  build-apk:
+    needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build APK
+        run: flutter build apk --release
+
+      - name: Release APK
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: latest
+          name: "Latest Build (Automated)"
+          files: build/app/outputs/flutter-apk/app-release.apk

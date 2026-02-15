@@ -50,6 +50,21 @@
 </head>
 
 <body>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function () {
+        navigator.serviceWorker.register('flutter_service_worker.js?v=' + new Date().getTime());
+      });
+    }
+    // Auto-reload on controller change (new version activated)
+    let refreshing = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (!refreshing) {
+        window.location.reload();
+        refreshing = true;
+      }
+    });
+  </script>
   <script src="flutter_bootstrap.js" async></script>
 </body>
 
