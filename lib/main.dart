@@ -1,5 +1,5 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+
 import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
 import 'package:provider/provider.dart';
 import 'l10n/app_localizations.dart';
@@ -8,7 +8,6 @@ import 'screens/main_screen.dart';
 import 'screens/onboarding/onboarding_flow.dart';
 import 'theme/app_colors.dart';
 import 'theme/app_theme.dart';
-import 'utils/platform_utils.dart';
 
 import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -16,8 +15,16 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Hide system navigation bar for immersive experience on mobile
-  SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+  // Enable edge-to-edge for modern UI
+  await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+  SystemChrome.setSystemUIOverlayStyle(
+    const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      systemNavigationBarColor: Colors.transparent,
+      statusBarIconBrightness: Brightness.dark,
+      systemNavigationBarIconBrightness: Brightness.dark,
+    ),
+  );
 
   await Supabase.initialize(
     url: 'https://likdthixmzuugbtgrdqz.supabase.co',
@@ -66,28 +73,24 @@ class KaloratApp extends StatelessWidget {
               homeWidget = const OnboardingFlow();
             }
 
-            if (PlatformUtils.isIOS) {
-              return CupertinoApp(
-                debugShowCheckedModeBanner: false,
-                title: 'Kalorat',
-                theme: AppTheme.iosTheme,
-                locale: Locale(provider.language),
-                localizationsDelegates: AppLocalizations.localizationsDelegates,
-                supportedLocales: AppLocalizations.supportedLocales,
-                home: homeWidget,
-              );
-            }
-
             return MaterialApp(
               debugShowCheckedModeBanner: false,
               title: 'Kalorat',
               theme: AppTheme.lightTheme,
-              darkTheme: AppTheme.darkTheme,
               themeMode: ThemeMode.light, // Force light mode
               locale: Locale(provider.language),
               localizationsDelegates: AppLocalizations.localizationsDelegates,
               supportedLocales: AppLocalizations.supportedLocales,
               home: homeWidget,
+              builder: (context, child) {
+                // Ensure text scale factor is capped for consistency
+                return MediaQuery(
+                  data: MediaQuery.of(
+                    context,
+                  ).copyWith(textScaler: TextScaler.noScaling),
+                  child: child!,
+                );
+              },
             );
           },
         ),

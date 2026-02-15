@@ -30,6 +30,7 @@ dependencies:
   hive: ^2.2.3
   hive_flutter: ^1.1.0
   path_provider: ^2.1.4
+  flutter_secure_storage: ^9.0.0
 
   # State Management
   provider: ^6.1.2

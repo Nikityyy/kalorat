@@ -278,7 +278,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             child: DropdownButtonHideUnderline(
               child: DropdownButton<int>(
-                value: user.activityLevel,
+                value: user.activityLevelIndex,
                 isExpanded: true,
                 icon: const Icon(Icons.arrow_drop_down, color: AppColors.slate),
                 dropdownColor: AppColors.limestone,
@@ -403,7 +403,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
         ),
         RadioGroup<int>(
-          groupValue: user.gender,
+          groupValue: user.genderIndex,
           onChanged: (val) {
             if (val != null) {
               provider.updateUser(gender: val);
@@ -446,7 +446,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
         ),
         RadioGroup<int>(
-          groupValue: user.goal,
+          groupValue: user.goalIndex,
           onChanged: (val) {
             if (val != null) {
               provider.updateUser(goal: val);

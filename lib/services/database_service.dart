@@ -12,6 +12,10 @@ class DatabaseService {
   late Box<MealModel> _mealsBox;
   late Box<WeightModel> _weightsBox;
 
+  // In-memory indices for O(1) lookup
+  final Map<String, List<MealModel>> _mealsDateIndex = {};
+  final Set<String> _daysWithMeals = {};
+
   Future<void> init() async {
     // On web, Hive uses IndexedDB and doesn't need a path
     // On mobile, use the documents directory
@@ -38,6 +42,31 @@ class DatabaseService {
     _mealsBox = await Hive.openBox<MealModel>(mealsBoxName);
     _weightsBox = await Hive.openBox<WeightModel>(weightsBoxName);
     await Hive.openBox('settings_box');
+
+    _buildIndices();
+  }
+
+  void _buildIndices() {
+    _mealsDateIndex.clear();
+    _daysWithMeals.clear();
+
+    for (final meal in _mealsBox.values) {
+      final dateKey = _getDateKey(meal.timestamp);
+      if (!_mealsDateIndex.containsKey(dateKey)) {
+        _mealsDateIndex[dateKey] = [];
+      }
+      _mealsDateIndex[dateKey]!.add(meal);
+      _daysWithMeals.add(dateKey);
+    }
+
+    // Sort lists by timestamp desc
+    for (final key in _mealsDateIndex.keys) {
+      _mealsDateIndex[key]!.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+    }
+  }
+
+  String _getDateKey(DateTime date) {
+    return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
   }
 
   // Settings operations
@@ -87,17 +116,41 @@ class DatabaseService {
   }
 
   List<MealModel> getMealsByDate(DateTime date) {
-    return _mealsBox.values.where((meal) {
-      return meal.timestamp.year == date.year &&
-          meal.timestamp.month == date.month &&
-          meal.timestamp.day == date.day;
-    }).toList();
+    final dateKey = _getDateKey(date);
+    return _mealsDateIndex[dateKey] ?? [];
+  }
+
+  bool hasMealsOnDate(DateTime date) {
+    return _daysWithMeals.contains(_getDateKey(date));
   }
 
   List<MealModel> getMealsByDateRange(DateTime start, DateTime end) {
-    return _mealsBox.values.where((meal) {
-      return !meal.timestamp.isBefore(start) && meal.timestamp.isBefore(end);
-    }).toList();
+    final meals = <MealModel>[];
+
+    // Normalize start to beginning of day
+    var current = DateTime(start.year, start.month, start.day);
+    // End date check needs to include the last day if 'end' falls on it
+    // But typical usage is start of day to start of next day
+
+    // Safety break for infinite loops or massive ranges (e.g. > 5 years)
+    int daysChecked = 0;
+
+    while (current.isBefore(end) && daysChecked < 2000) {
+      final dateKey = _getDateKey(current);
+      if (_mealsDateIndex.containsKey(dateKey)) {
+        final dailyMeals = _mealsDateIndex[dateKey]!;
+        // Filter by exact timestamp range
+        for (final meal in dailyMeals) {
+          if (!meal.timestamp.isBefore(start) && meal.timestamp.isBefore(end)) {
+            meals.add(meal);
+          }
+        }
+      }
+      current = current.add(const Duration(days: 1));
+      daysChecked++;
+    }
+
+    return meals;
   }
 
   /// Get paginated meals for infinite scroll / lazy loading
@@ -147,8 +200,34 @@ class DatabaseService {
   }
 
   Future<void> saveMeal(MealModel meal) async {
-    // Use meal.id as Hive key for O(1) lookup
     final existingKey = _findMealKey(meal.id);
+
+    // Update Indices
+    // If updating, remove old version from index
+    if (existingKey != null) {
+      final oldMeal = _mealsBox.get(existingKey);
+      if (oldMeal != null) {
+        final oldDateKey = _getDateKey(oldMeal.timestamp);
+        _mealsDateIndex[oldDateKey]?.removeWhere((m) => m.id == meal.id);
+        if ((_mealsDateIndex[oldDateKey]?.isEmpty ?? true)) {
+          _daysWithMeals.remove(oldDateKey);
+        }
+      }
+    }
+
+    // Add new version to index
+    final newDateKey = _getDateKey(meal.timestamp);
+    if (!_mealsDateIndex.containsKey(newDateKey)) {
+      _mealsDateIndex[newDateKey] = [];
+    }
+    _mealsDateIndex[newDateKey]!.add(meal);
+    // Sort to keep order
+    _mealsDateIndex[newDateKey]!.sort(
+      (a, b) => b.timestamp.compareTo(a.timestamp),
+    );
+    _daysWithMeals.add(newDateKey);
+
+    // Save to Hive
     if (existingKey != null) {
       await _mealsBox.put(existingKey, meal);
     } else {
@@ -157,8 +236,18 @@ class DatabaseService {
   }
 
   Future<void> deleteMeal(String mealId) async {
-    // O(1) delete using key
-    await _mealsBox.delete(mealId);
+    final key = _findMealKey(mealId) ?? mealId;
+    final meal = _mealsBox.get(key);
+
+    if (meal != null) {
+      final dateKey = _getDateKey(meal.timestamp);
+      _mealsDateIndex[dateKey]?.removeWhere((m) => m.id == mealId);
+      if ((_mealsDateIndex[dateKey]?.isEmpty ?? true)) {
+        _daysWithMeals.remove(dateKey);
+      }
+    }
+
+    await _mealsBox.delete(key);
   }
 
   bool hasMeal(String mealId) {
@@ -253,16 +342,27 @@ class DatabaseService {
     // Import meals
     if (data['meals'] != null) {
       for (final mealJson in data['meals']) {
-        final meal = MealModel.fromJson(mealJson);
-        await _mealsBox.add(meal);
+        try {
+          final meal = MealModel.fromJson(mealJson);
+          await _mealsBox.put(meal.id, meal); // Use ID as key
+        } catch (e) {
+          // Skip invalid meal
+          continue;
+        }
       }
     }
+    _buildIndices();
 
     // Import weights
     if (data['weights'] != null) {
       for (final weightJson in data['weights']) {
-        final weight = WeightModel.fromJson(weightJson);
-        await _weightsBox.add(weight);
+        try {
+          final weight = WeightModel.fromJson(weightJson);
+          await _weightsBox.add(weight);
+        } catch (e) {
+          // Skip invalid weight
+          continue;
+        }
       }
     }
   }
@@ -272,5 +372,6 @@ class DatabaseService {
     await _userBox.clear();
     await _mealsBox.clear();
     await _weightsBox.clear();
+    _buildIndices();
   }
 }

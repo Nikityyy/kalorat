@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kalorat/models/user_model.dart';
+import 'package:kalorat/models/enums.dart';
 
 void main() {
   group('UserModel', () {
@@ -19,7 +20,7 @@ void main() {
         expect(user.language, 'de'); // default
         expect(user.geminiApiKey, ''); // default
         expect(user.onboardingCompleted, false); // default
-        expect(user.goal, 1); // default: Maintain
+        expect(user.goal, Goal.maintain); // default: Maintain
       });
 
       test('creates valid UserModel with all fields', () {
@@ -44,8 +45,8 @@ void main() {
         expect(user.geminiApiKey, 'test-api-key');
         expect(user.onboardingCompleted, true);
         expect(user.mealRemindersEnabled, false);
-        expect(user.goal, 0);
-        expect(user.gender, 1);
+        expect(user.goal, Goal.lose);
+        expect(user.gender, Gender.female);
         expect(user.healthSyncEnabled, true);
       });
     });
@@ -313,8 +314,8 @@ void main() {
         expect(user.name, 'Test User');
         expect(user.height, 175.0);
         expect(user.weight, 70.0);
-        expect(user.goal, 0);
-        expect(user.gender, 1);
+        expect(user.goal, Goal.lose);
+        expect(user.gender, Gender.female);
       });
 
       test('handles missing fields with defaults', () {
@@ -326,8 +327,8 @@ void main() {
         expect(user.height, 170.0); // default
         expect(user.weight, 70.0); // default
         expect(user.language, 'de'); // default
-        expect(user.goal, 1); // default: Maintain
-        expect(user.gender, 0); // default: Male
+        expect(user.goal, Goal.maintain); // default: Maintain
+        expect(user.gender, Gender.male); // default: Male
       });
 
       test('handles integer height/weight by converting to double', () {

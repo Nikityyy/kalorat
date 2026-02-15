@@ -1,4 +1,6 @@
+import 'package:http/http.dart' as http;
 import 'package:connectivity_plus/connectivity_plus.dart';
+import '../utils/app_logger.dart';
 import 'database_service.dart';
 import 'gemini_service.dart';
 
@@ -12,7 +14,37 @@ class OfflineQueueService {
 
   Future<bool> isOnline() async {
     final result = await _connectivity.checkConnectivity();
-    return !result.contains(ConnectivityResult.none);
+    AppLogger.info('OfflineQueueService', 'Connectivity status: $result');
+
+    if (result.contains(ConnectivityResult.none)) {
+      // Double check with actual lookup just in case plugin is wrong on Windows
+      return await _checkConnection();
+    }
+
+    return await _checkConnection();
+  }
+
+  Future<bool> _checkConnection() async {
+    try {
+      // Standard captive portal check (Android default) or high availability site
+      // Using http HEAD is cleaner than raw socket/DNS
+      final response = await http
+          .head(Uri.parse('https://www.google.com'))
+          .timeout(const Duration(seconds: 3));
+
+      final isConnected = response.statusCode == 200;
+      AppLogger.info(
+        'OfflineQueueService',
+        'Internet access (HTTP): $isConnected',
+      );
+      return isConnected;
+    } catch (e) {
+      AppLogger.warning(
+        'OfflineQueueService',
+        'No internet access (HTTP failed): $e',
+      );
+      return false;
+    }
   }
 
   Stream<List<ConnectivityResult>> get connectivityStream =>

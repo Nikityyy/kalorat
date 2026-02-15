@@ -20,19 +20,23 @@ class WeightModelAdapter extends TypeAdapter<WeightModel> {
       date: fields[0] as DateTime,
       weight: fields[1] as double,
       note: fields[2] as String?,
+      isPending: fields[3] as bool? ?? false,
     );
   }
 
   @override
   void write(BinaryWriter writer, WeightModel obj) {
     writer
-      ..writeByte(3)
+      ..writeByte(4)
       ..writeByte(0)
       ..write(obj.date)
       ..writeByte(1)
       ..write(obj.weight)
+      ..write(obj.weight)
       ..writeByte(2)
-      ..write(obj.note);
+      ..write(obj.note)
+      ..writeByte(3)
+      ..write(obj.isPending);
   }
 
   @override

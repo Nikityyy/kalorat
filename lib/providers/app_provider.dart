@@ -1,31 +1,48 @@
+import 'dart:async';
 import 'dart:ui' as ui;
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import '../models/models.dart';
 import '../services/services.dart';
-import '../services/sync_service.dart';
+import '../utils/app_logger.dart';
 
 class AppProvider extends ChangeNotifier {
-  final DatabaseService _databaseService = DatabaseService();
+  final DatabaseService _databaseService;
   late final OfflineQueueService _offlineQueueService;
   late final ExportImportService _exportImportService;
   late final SyncService _syncService;
-  final NotificationService _notificationService = NotificationService();
-  final HealthService _healthService = HealthService();
+  final NotificationService _notificationService;
+  final HealthService _healthService;
+  final StorageService _storageService;
+
+  StreamSubscription? _connectivitySubscription;
 
   UserModel? _user;
+  String? _secureApiKey;
   String? _languageOverride;
   bool _isOnline = true;
   bool _isInitialized = false;
   bool _isProcessingQueue = false;
 
-  // Stats cache for performance (invalidated on meal changes)
+  // Stats cache for performance (invalidated via version counter)
+  int _statsCacheVersion = 0;
   Map<String, double>? _cachedTodayStats;
-  DateTime? _cachedTodayStatsDate;
+  int _cachedTodayVersion = -1;
   Map<String, double>? _cachedWeekStats;
-  DateTime? _cachedWeekStartDate;
+  int _cachedWeekVersion = -1;
   Map<String, double>? _cachedMonthStats;
-  int? _cachedMonth;
+  int _cachedMonthVersion = -1;
+
+  /// Constructor with optional DI for testing.
+  AppProvider({
+    DatabaseService? databaseService,
+    NotificationService? notificationService,
+    HealthService? healthService,
+    StorageService? storageService,
+  }) : _databaseService = databaseService ?? DatabaseService(),
+       _notificationService = notificationService ?? NotificationService(),
+       _healthService = healthService ?? HealthService(),
+       _storageService = storageService ?? StorageService();
 
   UserModel? get user => _user;
   bool get isOnline => _isOnline;
@@ -40,7 +57,7 @@ class AppProvider extends ChangeNotifier {
     return systemLocale == 'de' ? 'de' : 'en';
   }
 
-  String get apiKey => _user?.geminiApiKey ?? '';
+  String get apiKey => _secureApiKey ?? _user?.geminiApiKey ?? '';
   List<WeightModel> get weights => getAllWeights();
   int get pendingMealsCount => _offlineQueueService.getPendingCount();
 
@@ -69,13 +86,34 @@ class AppProvider extends ChangeNotifier {
     _syncService = SyncService(_databaseService);
     await _notificationService.init();
 
-    _user = _databaseService.getUser();
     _isOnline = await _offlineQueueService.isOnline();
+    _secureApiKey = await _storageService.getApiKey();
+
+    // Migration: If key exists in insecure storage but not secure storage, migrate it
+    if (_user != null &&
+        _user!.geminiApiKey.isNotEmpty &&
+        (_secureApiKey == null || _secureApiKey!.isEmpty)) {
+      await _storageService.saveApiKey(_user!.geminiApiKey);
+      _secureApiKey = _user!.geminiApiKey;
+
+      // Clear from insecure storage
+      final updatedUser = _user!.copyWith(geminiApiKey: '');
+      await _databaseService.saveUser(updatedUser);
+      _user = updatedUser;
+      AppLogger.info('AppProvider', 'Migrated API key to secure storage');
+    }
 
     // Listen to connectivity changes
-    _offlineQueueService.connectivityStream.listen((result) async {
+    _connectivitySubscription = _offlineQueueService.connectivityStream.listen((
+      result,
+    ) async {
       final wasOffline = !_isOnline;
-      _isOnline = !result.contains(ConnectivityResult.none);
+      // Use robust check instead of raw plugin result
+      if (result.contains(ConnectivityResult.none)) {
+        _isOnline = false;
+      } else {
+        _isOnline = await _offlineQueueService.isOnline();
+      }
       notifyListeners();
 
       // Process queue when coming back online
@@ -91,6 +129,12 @@ class AppProvider extends ChangeNotifier {
 
     _isInitialized = true;
     notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    _connectivitySubscription?.cancel();
+    super.dispose();
   }
 
   Future<void> saveUser(UserModel user) async {
@@ -209,15 +253,14 @@ class AppProvider extends ChangeNotifier {
       height: height ?? currentUser.height,
       weight: weight ?? currentUser.weight,
       language: language ?? currentUser.language,
-      geminiApiKey: apiKey ?? currentUser.geminiApiKey,
       onboardingCompleted:
           onboardingCompleted ?? currentUser.onboardingCompleted,
       mealRemindersEnabled:
           mealRemindersEnabled ?? currentUser.mealRemindersEnabled,
       weightRemindersEnabled:
           weightRemindersEnabled ?? currentUser.weightRemindersEnabled,
-      goal: goal ?? currentUser.goal,
-      gender: gender ?? currentUser.gender,
+      goal: goal ?? currentUser.goalIndex,
+      gender: gender ?? currentUser.genderIndex,
       healthSyncEnabled: healthSyncEnabled ?? currentUser.healthSyncEnabled,
       syncMealsToHealth: syncMealsToHealth ?? currentUser.syncMealsToHealth,
       syncWeightToHealth: syncWeightToHealth ?? currentUser.syncWeightToHealth,
@@ -227,8 +270,17 @@ class AppProvider extends ChangeNotifier {
       lastSyncTimestamp: lastSyncTimestamp ?? currentUser.lastSyncTimestamp,
       photoUrl: photoUrl ?? currentUser.photoUrl,
       useGramsByDefault: useGramsByDefault ?? currentUser.useGramsByDefault,
-      activityLevel: activityLevel ?? currentUser.activityLevel,
+      activityLevel: activityLevel ?? currentUser.activityLevelIndex,
+      // If new API key provided, save to secure storage and clear here.
+      // If not, keep existing empty string (or whatever is there).
+      // We don't want to overwrite with empty string if apiKey wasn't passed.
+      geminiApiKey: apiKey != null ? '' : currentUser.geminiApiKey,
     );
+
+    if (apiKey != null) {
+      await _storageService.saveApiKey(apiKey);
+      _secureApiKey = apiKey;
+    }
 
     await _databaseService.saveUser(_user!);
 
@@ -347,11 +399,7 @@ class AppProvider extends ChangeNotifier {
 
   /// Clears all cached stats - called when meals are modified
   void _invalidateStatsCache() {
-    _cachedTodayStats = null;
-    _cachedTodayStatsDate = null;
-    _cachedWeekStats = null;
-    _cachedWeekStartDate = null;
-    _cachedMonthStats = null;
+    _statsCacheVersion++;
   }
 
   // Weight operations
@@ -431,50 +479,44 @@ class AppProvider extends ChangeNotifier {
   }
 
   Map<String, double> getTodayStats() {
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-
-    // Check if cache is valid for today
-    if (_cachedTodayStats != null && _cachedTodayStatsDate == today) {
+    if (_cachedTodayStats != null &&
+        _cachedTodayVersion == _statsCacheVersion) {
       return _cachedTodayStats!;
     }
 
-    final start = today;
-    final end = start.add(const Duration(days: 1));
-    _cachedTodayStats = getStatsForDateRange(start, end);
-    _cachedTodayStatsDate = today;
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final end = today.add(const Duration(days: 1));
+    _cachedTodayStats = getStatsForDateRange(today, end);
+    _cachedTodayVersion = _statsCacheVersion;
     return _cachedTodayStats!;
   }
 
   Map<String, double> getWeekStats() {
-    final now = DateTime.now();
-    final start = now.subtract(Duration(days: now.weekday - 1));
-    final startOfWeek = DateTime(start.year, start.month, start.day);
-
-    // Check if cache is valid for this week (compare actual start date)
-    if (_cachedWeekStats != null && _cachedWeekStartDate == startOfWeek) {
+    if (_cachedWeekStats != null && _cachedWeekVersion == _statsCacheVersion) {
       return _cachedWeekStats!;
     }
 
+    final now = DateTime.now();
+    final start = now.subtract(Duration(days: now.weekday - 1));
+    final startOfWeek = DateTime(start.year, start.month, start.day);
     final endOfWeek = startOfWeek.add(const Duration(days: 7));
     _cachedWeekStats = getStatsForDateRange(startOfWeek, endOfWeek);
-    _cachedWeekStartDate = startOfWeek;
+    _cachedWeekVersion = _statsCacheVersion;
     return _cachedWeekStats!;
   }
 
   Map<String, double> getMonthStats() {
-    final now = DateTime.now();
-    final currentMonth = now.year * 12 + now.month;
-
-    // Check if cache is valid for this month
-    if (_cachedMonthStats != null && _cachedMonth == currentMonth) {
+    if (_cachedMonthStats != null &&
+        _cachedMonthVersion == _statsCacheVersion) {
       return _cachedMonthStats!;
     }
 
+    final now = DateTime.now();
     final start = DateTime(now.year, now.month, 1);
     final end = DateTime(now.year, now.month + 1, 1);
     _cachedMonthStats = getStatsForDateRange(start, end);
-    _cachedMonth = currentMonth;
+    _cachedMonthVersion = _statsCacheVersion;
     return _cachedMonthStats!;
   }
 

@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../models/models.dart';
+import '../utils/app_logger.dart';
 import 'database_service.dart';
 
 /// Cloud sync service using Supabase PostgreSQL.
@@ -34,16 +35,26 @@ class SyncService {
       await _upsertMeal(userId, meal);
     }
 
-    // Sync weights
+    // Sync weights (Delta sync)
     final weights = _db.getAllWeights();
-    for (final weight in weights) {
-      await _upsertWeight(userId, weight);
+    for (final weight in weights.where((w) => w.isPending)) {
+      try {
+        await _upsertWeight(userId, weight);
+        // Mark as synced locally
+        await _db.saveWeight(weight.copyWith(isPending: false));
+      } catch (e) {
+        AppLogger.error(
+          'SyncService',
+          'Failed to sync weight ${weight.date}',
+          e,
+        );
+      }
     }
 
     // Update last sync timestamp
     if (user != null) {
-      user.lastSyncTimestamp = DateTime.now();
-      await _db.saveUser(user);
+      final updated = user.copyWith(lastSyncTimestamp: DateTime.now());
+      await _db.saveUser(updated);
     }
   }
 
@@ -82,20 +93,19 @@ class SyncService {
         );
       } else {
         // Merge cloud profile into local (prefer cloud for non-local-only fields)
-        // PROTECT LOCAL NAME: Only use cloud name if local is empty/default or we want to force sync
-        if (currentUser.name.isEmpty) {
-          currentUser.name = profileData['name'] ?? currentUser.name;
-        }
-        currentUser.birthdate = DateTime.parse(
-          profileData['birthdate'] ?? currentUser.birthdate.toIso8601String(),
+        currentUser = currentUser.copyWith(
+          name: currentUser.name.isEmpty
+              ? (profileData['name'] ?? currentUser.name)
+              : null,
+          birthdate: profileData['birthdate'] != null
+              ? DateTime.parse(profileData['birthdate'])
+              : null,
+          height: (profileData['height'] as num?)?.toDouble(),
+          weight: (profileData['weight'] as num?)?.toDouble(),
+          goal: profileData['goal'] as int?,
+          gender: profileData['gender'] as int?,
+          photoUrl: profileData['photo_url'] as String?,
         );
-        currentUser.height =
-            (profileData['height'] as num?)?.toDouble() ?? currentUser.height;
-        currentUser.weight =
-            (profileData['weight'] as num?)?.toDouble() ?? currentUser.weight;
-        currentUser.goal = profileData['goal'] ?? currentUser.goal;
-        currentUser.gender = profileData['gender'] ?? currentUser.gender;
-        currentUser.photoUrl = profileData['photo_url'] ?? currentUser.photoUrl;
       }
       await _db.saveUser(currentUser);
     }
@@ -125,8 +135,8 @@ class SyncService {
     // Update last sync timestamp
     final user = _db.getUser();
     if (user != null) {
-      user.lastSyncTimestamp = DateTime.now();
-      await _db.saveUser(user);
+      final updated = user.copyWith(lastSyncTimestamp: DateTime.now());
+      await _db.saveUser(updated);
     }
   }
 
@@ -194,8 +204,8 @@ class SyncService {
       'height': user.height,
       'weight': user.weight,
       'language': user.language,
-      'goal': user.goal,
-      'gender': user.gender,
+      'goal': user.goalIndex,
+      'gender': user.genderIndex,
       'updated_at': DateTime.now().toIso8601String(),
       'photo_url': user.photoUrl,
     });
@@ -259,6 +269,7 @@ class SyncService {
     return WeightModel(
       date: DateTime.parse(data['date']),
       weight: (data['weight'] as num).toDouble(),
+      isPending: false, // Content from cloud is by definition synced
     );
   }
 
@@ -275,7 +286,7 @@ class SyncService {
       return true;
     } catch (e) {
       // Log error but don't throw - local operation should succeed
-      print('SyncService: Failed to sync meal ${meal.id}: $e');
+      AppLogger.error('SyncService', 'Failed to sync meal ${meal.id}', e);
       return false;
     }
   }
@@ -287,9 +298,10 @@ class SyncService {
 
     try {
       await _upsertWeight(userId, weight);
+      await _db.saveWeight(weight.copyWith(isPending: false));
       return true;
     } catch (e) {
-      print('SyncService: Failed to sync weight: $e');
+      AppLogger.error('SyncService', 'Failed to sync weight', e);
       return false;
     }
   }
@@ -307,7 +319,7 @@ class SyncService {
       }
       return false;
     } catch (e) {
-      print('SyncService: Failed to sync profile: $e');
+      AppLogger.error('SyncService', 'Failed to sync profile', e);
       return false;
     }
   }
@@ -321,7 +333,11 @@ class SyncService {
       await _client.from('meals').delete().eq('id', mealId);
       return true;
     } catch (e) {
-      print('SyncService: Failed to delete meal $mealId from cloud: $e');
+      AppLogger.error(
+        'SyncService',
+        'Failed to delete meal $mealId from cloud',
+        e,
+      );
       return false;
     }
   }
@@ -336,7 +352,7 @@ class SyncService {
       await _client.from('weights').delete().eq('id', '${userId}_$dateKey');
       return true;
     } catch (e) {
-      print('SyncService: Failed to delete weight from cloud: $e');
+      AppLogger.error('SyncService', 'Failed to delete weight from cloud', e);
       return false;
     }
   }

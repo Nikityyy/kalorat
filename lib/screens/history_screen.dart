@@ -191,15 +191,17 @@ class _HistoryScreenState extends State<HistoryScreen> {
                         padding: const EdgeInsets.only(bottom: 12.0),
                         child: MealCard(
                           meal: filteredMeals[i],
-                          onTap: () => Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => MealDetailScreen(
-                                meal: filteredMeals[i],
-                                isNewEntry: false,
-                              ),
-                            ),
-                          ),
+                          onTap: filteredMeals[i].isPending
+                              ? null
+                              : () => Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => MealDetailScreen(
+                                      meal: filteredMeals[i],
+                                      isNewEntry: false,
+                                    ),
+                                  ),
+                                ),
                           onDelete: () => _confirmDelete(
                             context,
                             filteredMeals[i],

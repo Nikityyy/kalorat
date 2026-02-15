@@ -5,52 +5,52 @@ part 'meal_model.g.dart';
 @HiveType(typeId: 1)
 class MealModel extends HiveObject {
   @HiveField(0)
-  String id;
+  final String id;
 
   @HiveField(1)
-  DateTime timestamp;
+  final DateTime timestamp;
 
   @HiveField(2)
-  List<String> photoPaths;
+  final List<String> photoPaths;
 
   @HiveField(3)
-  String mealName;
+  final String mealName;
 
   @HiveField(4)
-  double calories;
+  final double calories;
 
   @HiveField(5)
-  double protein;
+  final double protein;
 
   @HiveField(6)
-  double carbs;
+  final double carbs;
 
   @HiveField(7)
-  double fats;
+  final double fats;
 
   @HiveField(8)
-  Map<String, double>? vitamins;
+  final Map<String, double>? vitamins;
 
   @HiveField(9)
-  Map<String, double>? minerals;
+  final Map<String, double>? minerals;
 
   @HiveField(10)
-  bool isPending; // true if waiting for AI analysis (offline)
+  final bool isPending; // true if waiting for AI analysis (offline)
 
   @HiveField(11)
-  bool isManualEntry;
+  final bool isManualEntry;
 
   @HiveField(12)
-  bool isCalorieOverride;
+  final bool isCalorieOverride;
 
   @HiveField(13)
-  double portionMultiplier;
+  final double portionMultiplier;
 
   @HiveField(14)
-  String portionUnit; // 'serving', 'gram', 'ml'
+  final String portionUnit; // 'serving', 'gram', 'ml'
 
   @HiveField(15)
-  double quantityPerUnit; // e.g., 1.0 for serving, 100.0 for grams
+  final double quantityPerUnit; // e.g., 1.0 for serving, 100.0 for grams
 
   MealModel({
     required this.id,

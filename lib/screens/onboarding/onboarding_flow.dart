@@ -57,9 +57,9 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
       }
       _height = user.height;
       _weight = user.weight;
-      _goalIndex = user.goal;
-      _genderIndex = user.gender ?? 0;
-      _activityLevel = user.activityLevel;
+      _goalIndex = user.goalIndex;
+      _genderIndex = user.genderIndex ?? 0;
+      _activityLevel = user.activityLevelIndex;
       _apiKey = user.geminiApiKey;
       _healthSyncEnabled = user.healthSyncEnabled;
     }

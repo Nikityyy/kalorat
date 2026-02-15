@@ -64,9 +64,9 @@ class UserModelAdapter extends TypeAdapter<UserModel> {
       ..writeByte(8)
       ..write(obj.weightRemindersEnabled)
       ..writeByte(9)
-      ..write(obj.goal)
+      ..write(obj.goalIndex)
       ..writeByte(10)
-      ..write(obj.gender)
+      ..write(obj.genderIndex)
       ..writeByte(11)
       ..write(obj.healthSyncEnabled)
       ..writeByte(12)
@@ -86,7 +86,7 @@ class UserModelAdapter extends TypeAdapter<UserModel> {
       ..writeByte(19)
       ..write(obj.useGramsByDefault)
       ..writeByte(20)
-      ..write(obj.activityLevel);
+      ..write(obj.activityLevelIndex);
   }
 
   @override

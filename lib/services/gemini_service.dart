@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:flutter/services.dart';
+import '../utils/app_logger.dart';
 import '../utils/platform_utils.dart';
 
 /// Encodes image bytes to base64 in a background isolate
@@ -51,16 +52,23 @@ class GeminiService {
   final String language;
 
   // Cache for example image parts to avoid repeated asset loading
+  // Cache for example image parts to avoid repeated asset loading
   List<Map<String, dynamic>>? _cachedExampleParts;
 
-  GeminiService({required this.apiKey, this.language = 'de'});
+  final http.Client _client;
+
+  GeminiService({
+    required this.apiKey,
+    this.language = 'de',
+    http.Client? client,
+  }) : _client = client ?? http.Client();
 
   Future<Map<String, dynamic>?> analyzeMeal(
     List<String> imagePaths, {
     bool useGrams = false,
   }) async {
     if (apiKey.isEmpty) {
-      throw Exception('API key is not set');
+      throw GeminiError(GeminiErrorType.invalidApiKey, 'API key is not set');
     }
 
     final box = await Hive.openBox(_settingsBoxName);
@@ -86,7 +94,10 @@ class GeminiService {
         return result;
       } catch (e) {
         // If one model fails (rate limit, empty response, etc.), try the next one
-        print('Model $model failed: $e. Trying next...');
+        AppLogger.warning(
+          'GeminiService',
+          'Model $model failed: $e. Trying next...',
+        );
         if (i == _primaryModels.length - 1) {
           // If this was the last primary model, we don't 'continue',
           // we exit the loop and move to fallback.
@@ -109,8 +120,8 @@ class GeminiService {
     List<String> imagePaths, {
     bool useGrams = false,
   }) async {
-    // Use standard client which works on both mobile and web
-    final client = http.Client();
+    // Use injected client
+    // final client = http.Client(); // Removed local instantiation
 
     try {
       // Prepare image parts in background to avoid UI jank
@@ -145,12 +156,12 @@ class GeminiService {
             });
           }
         } catch (e) {
-          print('Error reading image $path: $e');
+          AppLogger.error('GeminiService', 'Error reading image $path', e);
         }
       }
 
       if (imageParts.isEmpty) {
-        throw Exception('No valid images found');
+        throw GeminiError(GeminiErrorType.noFood, 'No valid images found');
       }
 
       // Build prompt based on language
@@ -186,7 +197,7 @@ class GeminiService {
 
       final url = '$_baseUrlBase$modelName:generateContent?key=$apiKey';
 
-      final response = await client
+      final response = await _client
           .post(
             Uri.parse(url),
             headers: {'Content-Type': 'application/json'},
@@ -201,7 +212,10 @@ class GeminiService {
                 as String?;
 
         if (text != null) {
-          print('Gemini Response ($modelName): $text');
+          AppLogger.debug(
+            'GeminiService',
+            'Gemini Response ($modelName): ${text.substring(0, text.length.clamp(0, 200))}...',
+          );
           String cleanedText = text.trim();
           if (cleanedText.startsWith('```json')) {
             cleanedText = cleanedText.substring(7);
@@ -237,18 +251,21 @@ class GeminiService {
                   final double calculated = (p * 4) + (c * 4) + (f * 9);
                   final double diff = (cal - calculated).abs();
 
-                  print(
+                  AppLogger.info(
+                    'GeminiService',
                     'Atwater Check: Reported=$cal, Calculated=$calculated, Diff=$diff',
                   );
                   if (diff > (cal * 0.15)) {
-                    print(
-                      'WARNING: Significant discrepancy in macro calculation!',
+                    AppLogger.warning(
+                      'GeminiService',
+                      'Significant discrepancy in macro calculation!',
                     );
                   }
                 }
 
                 if (jsonResponse.containsKey('confidence_score')) {
-                  print(
+                  AppLogger.info(
+                    'GeminiService',
                     'Confidence Score: ${jsonResponse['confidence_score']}',
                   );
                 }
@@ -256,23 +273,44 @@ class GeminiService {
 
                 return jsonResponse;
               } catch (e2) {
-                throw Exception('Failed to decode extracted JSON: $e2');
+                throw GeminiError(
+                  GeminiErrorType.parseError,
+                  'Failed to decode extracted JSON',
+                  technicalDetails: e2.toString(),
+                );
               }
             }
-            throw Exception('Failed to parse JSON response. Raw text: $text');
+            throw GeminiError(
+              GeminiErrorType.parseError,
+              'Failed to parse JSON response',
+              technicalDetails:
+                  'Raw: ${text.substring(0, text.length.clamp(0, 200))}',
+            );
           }
         } else {
-          throw Exception('Empty response from Gemini');
+          throw GeminiError(
+            GeminiErrorType.unknown,
+            'Empty response from Gemini',
+          );
         }
       } else {
         // Throw exception with status code to catch it in analyzeMeal
-        print('Gemini API Error (${response.statusCode}): ${response.body}');
-        throw Exception('API error: ${response.statusCode} - ${response.body}');
+        AppLogger.error('GeminiService', 'API error ${response.statusCode}');
+        final errorType = response.statusCode == 429
+            ? GeminiErrorType.rateLimited
+            : response.statusCode == 401 || response.statusCode == 403
+            ? GeminiErrorType.invalidApiKey
+            : GeminiErrorType.networkError;
+        throw GeminiError(
+          errorType,
+          'API error: ${response.statusCode}',
+          technicalDetails: response.body,
+        );
       }
     } catch (e) {
       rethrow;
     } finally {
-      client.close();
+      // client.close(); // Do not close injected client
     }
   }
 
@@ -285,7 +323,7 @@ class GeminiService {
         'https://generativelanguage.googleapis.com/v1beta/models?key=$key';
 
     try {
-      final response = await http.get(
+      final response = await _client.get(
         Uri.parse(url),
         headers: {'Content-Type': 'application/json'},
       );
@@ -345,7 +383,7 @@ class GeminiService {
 
       return parts;
     } catch (e) {
-      print('Error loading example assets: $e');
+      AppLogger.error('GeminiService', 'Failed to load example assets', e);
       return [];
     }
   }

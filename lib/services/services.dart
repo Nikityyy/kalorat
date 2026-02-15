@@ -4,3 +4,5 @@ export 'gemini_service.dart';
 export 'health_service.dart';
 export 'notification_service.dart';
 export 'offline_queue_service.dart';
+export 'storage_service.dart';
+export 'sync_service.dart';

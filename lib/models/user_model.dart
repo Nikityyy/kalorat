@@ -1,84 +1,100 @@
+import 'dart:math';
 import 'package:hive/hive.dart';
+import 'enums.dart';
 
 part 'user_model.g.dart';
 
 @HiveType(typeId: 0)
 class UserModel extends HiveObject {
   @HiveField(0)
-  String name;
+  final String name;
 
   @HiveField(1)
-  DateTime birthdate;
+  final DateTime birthdate;
 
   @HiveField(2)
-  double height; // in cm
+  final double height; // in cm, clamped 50–300
 
   @HiveField(3)
-  double weight; // in kg
+  final double weight; // in kg, clamped 1–500
 
   @HiveField(4)
-  String language; // 'de' or 'en'
+  final String language; // 'de' or 'en'
 
   @HiveField(5)
-  String geminiApiKey;
+  final String geminiApiKey;
 
   @HiveField(6)
-  bool onboardingCompleted;
+  final bool onboardingCompleted;
 
   @HiveField(7)
-  bool mealRemindersEnabled;
+  final bool mealRemindersEnabled;
 
   @HiveField(8)
-  bool weightRemindersEnabled;
+  final bool weightRemindersEnabled;
 
+  // Stored as int for Hive backward compat; use `goal` getter for enum.
   @HiveField(9)
-  int goal; // 0: Lose, 1: Maintain, 2: Gain
+  final int goalIndex;
 
+  // Stored as int? for Hive backward compat; use `gender` getter for enum.
   @HiveField(10)
-  int? gender; // 0: Male, 1: Female
+  final int? genderIndex;
 
   @HiveField(11)
-  bool healthSyncEnabled;
+  final bool healthSyncEnabled;
 
   @HiveField(12)
-  bool syncMealsToHealth;
+  final bool syncMealsToHealth;
 
   @HiveField(13)
-  bool syncWeightToHealth;
+  final bool syncWeightToHealth;
 
   @HiveField(14)
-  String? supabaseUserId;
+  final String? supabaseUserId;
 
   @HiveField(15)
-  bool isGuest;
+  final bool isGuest;
 
   @HiveField(16)
-  String? email;
+  final String? email;
 
   @HiveField(17)
-  DateTime? lastSyncTimestamp;
+  final DateTime? lastSyncTimestamp;
 
   @HiveField(18)
-  String? photoUrl;
+  final String? photoUrl;
 
   @HiveField(19)
-  bool useGramsByDefault;
+  final bool useGramsByDefault;
 
+  // Stored as int for Hive backward compat; use `activityLevel` getter.
   @HiveField(20)
-  int activityLevel; // 0: Sedentary, 1: Light, 2: Moderate, 3: Active, 4: Very Active
+  final int activityLevelIndex;
+
+  // --------------- Enum accessors ---------------
+
+  Goal get goal => Goal.fromIndex(goalIndex);
+  Gender get gender => Gender.fromIndex(genderIndex ?? 0);
+  Gender? get genderNullable =>
+      genderIndex != null ? Gender.fromIndex(genderIndex!) : null;
+  ActivityLevel get activityLevel =>
+      ActivityLevel.fromIndex(activityLevelIndex);
+
+  // --------------- Constructor ---------------
 
   UserModel({
     required this.name,
     required this.birthdate,
-    required this.height,
-    required this.weight,
+    required double height,
+    required double weight,
     this.language = 'de',
     this.geminiApiKey = '',
     this.onboardingCompleted = false,
     this.mealRemindersEnabled = true,
     this.weightRemindersEnabled = true,
-    this.goal = 1,
-    this.gender,
+    int goal = 1,
+    int? gender,
     this.healthSyncEnabled = false,
     this.syncMealsToHealth = true,
     this.syncWeightToHealth = true,
@@ -88,20 +104,79 @@ class UserModel extends HiveObject {
     this.lastSyncTimestamp,
     this.photoUrl,
     this.useGramsByDefault = false,
-    this.activityLevel = 0,
-  });
+    int activityLevel = 0,
+  }) : height = height.clamp(50.0, 300.0),
+       weight = weight.clamp(1.0, 500.0),
+       goalIndex = goal.clamp(0, Goal.values.length - 1),
+       genderIndex = gender?.clamp(0, Gender.values.length - 1),
+       activityLevelIndex = activityLevel.clamp(
+         0,
+         ActivityLevel.values.length - 1,
+       );
+
+  /// Named constructor for enum-typed callers.
+  UserModel.withEnums({
+    required String name,
+    required DateTime birthdate,
+    required double height,
+    required double weight,
+    String language = 'de',
+    String geminiApiKey = '',
+    bool onboardingCompleted = false,
+    bool mealRemindersEnabled = true,
+    bool weightRemindersEnabled = true,
+    Goal goal = Goal.maintain,
+    Gender? gender,
+    bool healthSyncEnabled = false,
+    bool syncMealsToHealth = true,
+    bool syncWeightToHealth = true,
+    String? supabaseUserId,
+    bool isGuest = true,
+    String? email,
+    DateTime? lastSyncTimestamp,
+    String? photoUrl,
+    bool useGramsByDefault = false,
+    ActivityLevel activityLevel = ActivityLevel.sedentary,
+  }) : this(
+         name: name,
+         birthdate: birthdate,
+         height: height,
+         weight: weight,
+         language: language,
+         geminiApiKey: geminiApiKey,
+         onboardingCompleted: onboardingCompleted,
+         mealRemindersEnabled: mealRemindersEnabled,
+         weightRemindersEnabled: weightRemindersEnabled,
+         goal: goal.index,
+         gender: gender?.index,
+         healthSyncEnabled: healthSyncEnabled,
+         syncMealsToHealth: syncMealsToHealth,
+         syncWeightToHealth: syncWeightToHealth,
+         supabaseUserId: supabaseUserId,
+         isGuest: isGuest,
+         email: email,
+         lastSyncTimestamp: lastSyncTimestamp,
+         photoUrl: photoUrl,
+         useGramsByDefault: useGramsByDefault,
+         activityLevel: activityLevel.index,
+       );
+
+  // --------------- Computed properties ---------------
 
   int get age {
     final now = DateTime.now();
-    int age = now.year - birthdate.year;
+    int a = now.year - birthdate.year;
     if (now.month < birthdate.month ||
         (now.month == birthdate.month && now.day < birthdate.day)) {
-      age--;
+      a--;
     }
-    return age;
+    return max(0, a);
   }
 
-  double get bmi => weight / ((height / 100) * (height / 100));
+  double get bmi {
+    if (height <= 0) return 0;
+    return weight / ((height / 100) * (height / 100));
+  }
 
   String get bmiCategory {
     if (bmi < 18.5) return 'underweight';
@@ -114,57 +189,48 @@ class UserModel extends HiveObject {
     // Mifflin-St Jeor Equation
     double bmr = (10 * weight) + (6.25 * height) - (5 * age);
 
-    // Gender adjustment (Male: +5, Female: -161)
-    // Default to Male (0) if gender is null (legacy data)
-    if ((gender ?? 0) == 0) {
+    // Gender adjustment
+    if (gender == Gender.male) {
       bmr += 5;
     } else {
       bmr -= 161;
     }
 
-    // Activity Multiplier based on user's activity level
-    const multipliers = [1.2, 1.375, 1.55, 1.725, 1.9];
-    double tdee = bmr * multipliers[activityLevel.clamp(0, 4)];
+    // Activity multiplier
+    double tdee = bmr * activityLevel.multiplier;
 
-    // Goal Adjustment
-    // 0: Lose (-500), 1: Maintain (0), 2: Gain (+500)
-    if (goal == 0) return tdee - 500;
-    if (goal == 2) return tdee + 500;
+    // Goal adjustment
+    if (goal == Goal.lose) return tdee - 500;
+    if (goal == Goal.gain) return tdee + 500;
     return tdee;
   }
 
   double get dailyProteinTarget {
-    // Protein Goals (g/kg bodyweight)
-    // 0: Lose -> 1.8g (spare muscle in deficit)
-    // 1: Maintain -> 1.5g (standard active)
-    // 2: Gain -> 2.0g (muscle synthesis)
-
-    double multiplier = 1.5;
-    if (goal == 0) multiplier = 1.8;
-    if (goal == 2) multiplier = 2.0;
-
-    return weight * multiplier;
+    double mult = 1.5;
+    if (goal == Goal.lose) mult = 1.8;
+    if (goal == Goal.gain) mult = 2.0;
+    return weight * mult;
   }
 
   double get dailyCarbTarget {
-    // ~50% of remaining calories after protein → divide by 4 kcal/g
     final proteinCals = dailyProteinTarget * 4;
     final remaining = (dailyCalorieTarget - proteinCals).clamp(
       0,
       double.infinity,
     );
-    return (remaining * 0.55) / 4; // 55% of remaining → carbs
+    return (remaining * 0.55) / 4;
   }
 
   double get dailyFatTarget {
-    // ~25-30% of total calories → divide by 9 kcal/g
     final proteinCals = dailyProteinTarget * 4;
     final remaining = (dailyCalorieTarget - proteinCals).clamp(
       0,
       double.infinity,
     );
-    return (remaining * 0.45) / 9; // 45% of remaining → fats
+    return (remaining * 0.45) / 9;
   }
+
+  // --------------- copyWith ---------------
 
   UserModel copyWith({
     String? name,
@@ -200,8 +266,8 @@ class UserModel extends HiveObject {
       mealRemindersEnabled: mealRemindersEnabled ?? this.mealRemindersEnabled,
       weightRemindersEnabled:
           weightRemindersEnabled ?? this.weightRemindersEnabled,
-      goal: goal ?? this.goal,
-      gender: gender ?? this.gender,
+      goal: goal ?? goalIndex,
+      gender: gender ?? genderIndex,
       healthSyncEnabled: healthSyncEnabled ?? this.healthSyncEnabled,
       syncMealsToHealth: syncMealsToHealth ?? this.syncMealsToHealth,
       syncWeightToHealth: syncWeightToHealth ?? this.syncWeightToHealth,
@@ -211,9 +277,11 @@ class UserModel extends HiveObject {
       lastSyncTimestamp: lastSyncTimestamp ?? this.lastSyncTimestamp,
       photoUrl: photoUrl ?? this.photoUrl,
       useGramsByDefault: useGramsByDefault ?? this.useGramsByDefault,
-      activityLevel: activityLevel ?? this.activityLevel,
+      activityLevel: activityLevel ?? activityLevelIndex,
     );
   }
+
+  // --------------- Serialization ---------------
 
   Map<String, dynamic> toJson() => {
     'name': name,
@@ -225,8 +293,8 @@ class UserModel extends HiveObject {
     'onboardingCompleted': onboardingCompleted,
     'mealRemindersEnabled': mealRemindersEnabled,
     'weightRemindersEnabled': weightRemindersEnabled,
-    'goal': goal,
-    'gender': gender,
+    'goal': goalIndex,
+    'gender': genderIndex,
     'healthSyncEnabled': healthSyncEnabled,
     'syncMealsToHealth': syncMealsToHealth,
     'syncWeightToHealth': syncWeightToHealth,
@@ -236,7 +304,7 @@ class UserModel extends HiveObject {
     'lastSyncTimestamp': lastSyncTimestamp?.toIso8601String(),
     'photoUrl': photoUrl,
     'useGramsByDefault': useGramsByDefault,
-    'activityLevel': activityLevel,
+    'activityLevel': activityLevelIndex,
   };
 
   factory UserModel.fromJson(Map<String, dynamic> json) => UserModel(
