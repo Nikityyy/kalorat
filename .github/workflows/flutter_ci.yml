@@ -68,8 +68,10 @@ jobs:
         cp landing/index.html _site/index.html
         # Flutter build → /app/
         cp -r build/web/* _site/app/
-        # Assets (images, mockups, etc.)
-        cp -r assets _site/
+        # Merge Assets (from both root and landing)
+        mkdir -p _site/assets
+        cp -r assets/* _site/assets/ 2>/dev/null || true
+        cp -r landing/assets/* _site/assets/ 2>/dev/null || true
         # Custom domain
         echo "nikity.is-a.dev" > _site/CNAME
         # Prevent Jekyll processing (important for Flutter assets)
