@@ -1,3 +1,6 @@
+import java.util.Properties
+import java.io.FileInputStream
+
 plugins {
     id("com.android.application")
     id("kotlin-android")
@@ -32,9 +35,9 @@ android {
     }
 
     val keystorePropertiesFile = rootProject.file("key.properties")
-    val keystoreProperties = java.util.Properties()
+    val keystoreProperties = Properties()
     if (keystorePropertiesFile.exists()) {
-        keystoreProperties.load(java.io.FileInputStream(keystorePropertiesFile))
+        keystoreProperties.load(FileInputStream(keystorePropertiesFile))
     }
 
     signingConfigs {
@@ -42,23 +45,25 @@ android {
             val keyAliasVar = System.getenv("KEY_ALIAS") ?: keystoreProperties.getProperty("keyAlias")
             val keyPasswordVar = System.getenv("KEY_PASSWORD") ?: keystoreProperties.getProperty("keyPassword")
             val storePasswordVar = System.getenv("STORE_PASSWORD") ?: keystoreProperties.getProperty("storePassword")
-            val keystorePathVar = System.getenv("KEYSTORE_PATH") ?: keystoreProperties.getProperty("storeFile") ?: "upload-keystore.jks"
+            val keystorePathVar = System.getenv("KEYSTORE_PATH") ?: keystoreProperties.getProperty("storeFile")
 
-            if (keyAliasVar != null && keyPasswordVar != null && storePasswordVar != null) {
+            if (keyAliasVar != null && keyPasswordVar != null && storePasswordVar != null && keystorePathVar != null) {
                 keyAlias = keyAliasVar
                 keyPassword = keyPasswordVar
                 storeFile = file(keystorePathVar)
                 storePassword = storePasswordVar
-            } else {
-                // Fallback to debug if not in CI or secrets not set
-                signingConfig = signingConfigs.getByName("debug")
             }
         }
     }
 
     buildTypes {
         release {
-            signingConfig = signingConfigs.getByName("release")
+            val releaseSigningConfig = signingConfigs.getByName("release")
+            if (releaseSigningConfig.storeFile != null) {
+                signingConfig = releaseSigningConfig
+            } else {
+                signingConfig = signingConfigs.getByName("debug")
+            }
         }
     }
 }
