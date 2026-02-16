@@ -167,7 +167,7 @@ class GeminiService {
 
       // Apply thinking config only for specific reasoning models
       if (modelName.contains('gemini')) {
-        generationConfig['thinkingConfig'] = {'thinkingBudget': 1024};
+        generationConfig['thinkingConfig'] = {'thinkingBudget': 0};
       }
 
       // Build request body
