@@ -36,16 +36,20 @@ class GeminiError implements Exception {
 
 class GeminiService {
   static const String _baseUrlBase =
-      'https://generativelanguage.googleapis.com/v1beta/models/';
+      'https://generativelanguage.googleapis.com/v1beta/models';
 
-  static const List<String> _primaryModels = [
-    'gemini-flash-lite-latest',
-    'gemini-flash-latest',
-  ];
+  // Cache for available models to avoid fetching on every request
+  List<String>? _cachedModels;
+  DateTime? _lastModelFetchTime;
 
-  static const String _fallbackModel = 'gemma-3-27b-it';
+  // Track rate limited models: Model Name -> Time when it will be available again
+  final Map<String, DateTime> _rateLimitedModels = {};
+
+  // Cooldown duration for a rate-limited model
+  static const Duration _rateLimitCooldown = Duration(minutes: 1);
+
   static const String _settingsBoxName = 'gemini_settings_box';
-  static const String _lastModelIndexKey = 'last_used_model_index';
+  static const String _lastModelKey = 'last_used_model_name';
 
   final String apiKey;
   final String language;
@@ -58,6 +62,62 @@ class GeminiService {
     http.Client? client,
   }) : _client = client ?? http.Client();
 
+  /// Fetches available models from the API, filtering for Flash.
+  Future<List<String>> _getAvailableModels() async {
+    // Return cached models if valid (e.g., fetched within last hour)
+    if (_cachedModels != null &&
+        _lastModelFetchTime != null &&
+        DateTime.now().difference(_lastModelFetchTime!) <
+            const Duration(hours: 1)) {
+      return _cachedModels!;
+    }
+
+    try {
+      final url = '$_baseUrlBase?key=$apiKey';
+      final response = await _client.get(Uri.parse(url));
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        final modelsList = data['models'] as List<dynamic>?;
+
+        if (modelsList == null) return [];
+
+        final supportedModels = modelsList
+            .map((m) => m['name'] as String)
+            // Filter only names, remove 'models/' prefix if present for clean comparison
+            .map(
+              (name) => name.startsWith('models/') ? name.substring(7) : name,
+            )
+            // Filter for Flash models
+            .where((name) {
+              final lower = name.toLowerCase();
+              return lower.contains('flash');
+            })
+            .toList();
+
+        // Sort to prefer newer/better models if possible (optional, but good for consistency)
+        supportedModels.sort(
+          (a, b) => b.compareTo(a),
+        ); // Z->A purely heuristic or customize
+
+        _cachedModels = supportedModels;
+        _lastModelFetchTime = DateTime.now();
+
+        AppLogger.info('GeminiService', 'Discovered models: $_cachedModels');
+        return _cachedModels!;
+      } else {
+        AppLogger.error(
+          'GeminiService',
+          'Failed to list models: ${response.statusCode}',
+        );
+        return [];
+      }
+    } catch (e) {
+      AppLogger.error('GeminiService', 'Error fetching models', e);
+      return [];
+    }
+  }
+
   Future<Map<String, dynamic>?> analyzeMeal(
     List<String> imagePaths, {
     bool useGrams = false,
@@ -66,17 +126,42 @@ class GeminiService {
       throw GeminiError(GeminiErrorType.invalidApiKey, 'API key is not set');
     }
 
+    // Get fresh list of models
+    List<String> candidates = await _getAvailableModels();
+
+    // Filter out currently rate-limited models
+    final now = DateTime.now();
+    final availableModels = candidates.where((model) {
+      if (_rateLimitedModels.containsKey(model)) {
+        if (now.isBefore(_rateLimitedModels[model]!)) {
+          return false; // Still in cooldown
+        } else {
+          _rateLimitedModels.remove(model); // Cooldown expired
+          return true;
+        }
+      }
+      return true;
+    }).toList();
+
+    if (availableModels.isEmpty) {
+      // If all models are rate limited, clear one to try anyway or throw specific error
+      throw GeminiError(
+        GeminiErrorType.rateLimited,
+        'All available models are currently rate limited. Please try again later.',
+      );
+    }
+
+    // Prioritize the last successfully used model if it's in the available list
     final box = await Hive.openBox(_settingsBoxName);
-    int lastIndex = box.get(_lastModelIndexKey, defaultValue: 0) as int;
+    final lastUsedModel = box.get(_lastModelKey) as String?;
 
-    // Start with the model AFTER the last used one to ensure rotation
-    int startIndex = (lastIndex + 1) % _primaryModels.length;
+    if (lastUsedModel != null && availableModels.contains(lastUsedModel)) {
+      availableModels.remove(lastUsedModel);
+      availableModels.insert(0, lastUsedModel);
+    }
 
-    // Try primary models in sequence
-    for (int i = 0; i < _primaryModels.length; i++) {
-      int currentIndex = (startIndex + i) % _primaryModels.length;
-      String model = _primaryModels[currentIndex];
-
+    // Try models in sequence
+    for (final model in availableModels) {
       try {
         final result = await _makeRequest(
           model,
@@ -84,30 +169,35 @@ class GeminiService {
           useGrams: useGrams,
         );
 
-        // If successful, save this index as the last used one
-        await box.put(_lastModelIndexKey, currentIndex);
+        // Success! Save this model as preferred
+        await box.put(_lastModelKey, model);
         return result;
       } catch (e) {
-        // If one model fails (rate limit, empty response, etc.), try the next one
+        // Check if this was a rate limit error
+        if (e is GeminiError && e.type == GeminiErrorType.rateLimited) {
+          AppLogger.warning(
+            'GeminiService',
+            'Model $model rate limited. Backing off for ${_rateLimitCooldown.inSeconds}s.',
+          );
+          _rateLimitedModels[model] = DateTime.now().add(_rateLimitCooldown);
+          // Continue to next model
+          continue;
+        }
+
+        // For other errors (network, parsing), we might want to retry or just log
         AppLogger.warning(
           'GeminiService',
           'Model $model failed: $e. Trying next...',
         );
-        if (i == _primaryModels.length - 1) {
-          // If this was the last primary model, we don't 'continue',
-          // we exit the loop and move to fallback.
-        } else {
-          continue;
-        }
+        continue;
       }
     }
 
-    // specific fallback
-    try {
-      return await _makeRequest(_fallbackModel, imagePaths, useGrams: useGrams);
-    } catch (e) {
-      rethrow;
-    }
+    // If we get here, all models failed
+    throw GeminiError(
+      GeminiErrorType.unknown,
+      'Failed to analyze image with any available model.',
+    );
   }
 
   Future<Map<String, dynamic>?> _makeRequest(
@@ -166,12 +256,11 @@ class GeminiService {
       };
 
       // Apply thinking config only for specific reasoning models
-      if (modelName.contains('gemini')) {
-        generationConfig['thinkingConfig'] = {'thinkingBudget': 0};
-      }
-
       // Build request body
-      final requestBody = {
+      final Map<String, dynamic> requestBody;
+
+      // Standard Gemini models support system_instruction
+      requestBody = {
         'system_instruction': {
           'parts': [
             {'text': prompt},
@@ -183,7 +272,7 @@ class GeminiService {
         'generationConfig': generationConfig,
       };
 
-      final url = '$_baseUrlBase$modelName:generateContent?key=$apiKey';
+      final url = '$_baseUrlBase/$modelName:generateContent?key=$apiKey';
 
       final response = await _client
           .post(
@@ -243,12 +332,6 @@ class GeminiService {
                     'GeminiService',
                     'Atwater Check: Reported=$cal, Calculated=$calculated, Diff=$diff',
                   );
-                  if (diff > (cal * 0.15)) {
-                    AppLogger.warning(
-                      'GeminiService',
-                      'Significant discrepancy in macro calculation!',
-                    );
-                  }
                 }
 
                 if (jsonResponse.containsKey('confidence_score')) {
@@ -307,8 +390,7 @@ class GeminiService {
 
     // Use models list endpoint for validation as it's the fastest way to check key validity
     // without triggering model inference.
-    final url =
-        'https://generativelanguage.googleapis.com/v1beta/models?key=$key';
+    final url = '$_baseUrlBase?key=$key';
 
     try {
       final response = await _client.get(
