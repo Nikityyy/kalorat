@@ -146,6 +146,13 @@
   "other": "Divers",
 
   "yourBmi": "DEIN BMI",
+  "healthyRange": "Gesunder Bereich: {min} - {max} kg",
+  "@healthyRange": {
+    "placeholders": {
+      "min": {"type": "String"},
+      "max": {"type": "String"}
+    }
+  },
   "status": "STATUS",
   "weightProgress": "Gewichtsverlauf",
   "caloriesConsumed": "KALORIEN AUFGENOMMEN",
@@ -198,7 +205,7 @@
   "cm": "cm",
   "kg": "kg",
   "kcal": "kcal",
-  "grams": "g",
+  "grams": "gramm",
   "weightSaved": "Gewicht gespeichert!",
   "goalWeightLoss": "Gewicht verlieren",
   "goalMaintainWeight": "Gewicht halten",

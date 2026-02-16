@@ -30,6 +30,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
   String _name = '';
 
   int _genderIndex = 0; // 0: Male, 1: Female, 2: Other
+  DateTime _birthdate = DateTime(2000, 1, 1);
   int _age = 25;
   double _height = 170.0;
   double _weight = 70.0; // Double for precision
@@ -48,6 +49,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
     final user = provider.user;
     if (user != null) {
       _name = user.name;
+      _birthdate = user.birthdate;
       // Calculate age from birthdate
       final now = DateTime.now();
       _age = now.year - user.birthdate.year;
@@ -138,9 +140,14 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
         initialValue: _age,
         onNext: (value) {
           setState(() => _age = value);
-          // Approximate birthdate from age
+          setState(() => _age = value);
+          // Approximate birthdate from age ONLY if we don't have a more precise one set
+          // Or simpler: always approximate if user changes age manually here,
+          // but if they login later with a real birthdate, we'll overwrite it.
           final now = DateTime.now();
           final birthdate = DateTime(now.year - value, now.month, now.day);
+          setState(() => _birthdate = birthdate);
+
           context.read<AppProvider>().updateUser(birthdate: birthdate);
           _nextPage();
         },
@@ -207,12 +214,40 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
           _nextPage();
         },
       ),
-      LoginStep(language: _language, onNext: _nextPage),
+      LoginStep(
+        language: _language,
+        onNext: _nextPage,
+        onLoginSuccess: () {
+          // Refresh local state from provider after login
+          final user = context.read<AppProvider>().user;
+          if (user != null) {
+            setState(() {
+              _name = user.name;
+              _birthdate = user.birthdate;
+              _height = user.height;
+              _weight = user.weight;
+              _goalIndex = user.goalIndex;
+              _genderIndex = user.genderIndex ?? 0;
+              _activityLevel = user.activityLevelIndex;
+              _healthSyncEnabled = user.healthSyncEnabled;
+
+              // Recalculate age for display consistency
+              final now = DateTime.now();
+              _age = now.year - user.birthdate.year;
+              if (now.month < user.birthdate.month ||
+                  (now.month == user.birthdate.month &&
+                      now.day < user.birthdate.day)) {
+                _age--;
+              }
+            });
+          }
+        },
+      ),
       AnalysisStep(
         language: _language,
         name: _name,
         genderIndex: _genderIndex,
-        age: _age,
+        birthdate: _birthdate,
         height: _height,
         weight: _weight,
         goalIndex: _goalIndex,

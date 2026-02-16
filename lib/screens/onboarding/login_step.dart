@@ -15,9 +15,15 @@ import 'package:flutter_svg/flutter_svg.dart';
 /// "Continue as guest" option available but discouraged.
 class LoginStep extends StatefulWidget {
   final VoidCallback onNext;
+  final VoidCallback? onLoginSuccess;
   final String language;
 
-  const LoginStep({super.key, required this.onNext, required this.language});
+  const LoginStep({
+    super.key,
+    required this.onNext,
+    this.onLoginSuccess,
+    required this.language,
+  });
 
   @override
   State<LoginStep> createState() => _LoginStepState();
@@ -58,6 +64,10 @@ class _LoginStepState extends State<LoginStep> {
       // Wait a tick to ensure UI updates before moving on
       if (mounted) {
         setState(() => _isLoading = false);
+
+        // Notify parent that login succeeded (to refresh data)
+        widget.onLoginSuccess?.call();
+
         // Optional: Auto-advance
         widget.onNext();
       }
@@ -82,6 +92,9 @@ class _LoginStepState extends State<LoginStep> {
           email: response.user!.email ?? '',
           photoUrl: photoUrl,
         );
+
+        // Notify parent that login succeeded (to refresh data)
+        widget.onLoginSuccess?.call();
 
         widget.onNext();
       }

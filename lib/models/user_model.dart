@@ -185,6 +185,19 @@ class UserModel extends HiveObject {
     return 'obese';
   }
 
+  double get minHealthyWeight {
+    if (height <= 0) return 0;
+    // BMI 18.5 is lower bound of normal
+    // weight = BMI * (height/100)^2
+    return 18.5 * ((height / 100) * (height / 100));
+  }
+
+  double get maxHealthyWeight {
+    if (height <= 0) return 0;
+    // BMI 24.9 is upper bound of normal
+    return 24.9 * ((height / 100) * (height / 100));
+  }
+
   double get dailyCalorieTarget {
     // Mifflin-St Jeor Equation
     double bmr = (10 * weight) + (6.25 * height) - (5 * age);

@@ -812,6 +812,12 @@ abstract class AppLocalizations {
   /// **'DEIN BMI'**
   String get yourBmi;
 
+  /// No description provided for @healthyRange.
+  ///
+  /// In de, this message translates to:
+  /// **'Gesunder Bereich: {min} - {max} kg'**
+  String healthyRange(String min, String max);
+
   /// No description provided for @status.
   ///
   /// In de, this message translates to:
@@ -1127,7 +1133,7 @@ abstract class AppLocalizations {
   /// No description provided for @grams.
   ///
   /// In de, this message translates to:
-  /// **'g'**
+  /// **'gramm'**
   String get grams;
 
   /// No description provided for @weightSaved.

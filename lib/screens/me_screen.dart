@@ -76,6 +76,8 @@ class _MeScreenState extends State<MeScreen> {
           children: [
             _buildProfileHeader(user, provider.currentStreak),
             const SizedBox(height: 24),
+            _buildBMISection(user),
+            const SizedBox(height: 24),
             _buildSectionHeader(l10n.today),
             const SizedBox(height: 12),
             const TodayStatsGrid(),
@@ -186,6 +188,164 @@ class _MeScreenState extends State<MeScreen> {
       style: AppTypography.displayMedium.copyWith(
         fontSize: 18,
         color: AppColors.slate,
+      ),
+    );
+  }
+
+  Widget _buildBMISection(UserModel user) {
+    final l10n = context.l10n;
+    final bmi = user.bmi;
+    final bmiCategory = user.bmiCategory; // 'underweight', 'normal', etc.
+
+    // Map category to display text and color
+    String categoryText;
+    Color categoryColor;
+
+    // Note: You might want to update UserModel.bmiCategory to return enum or
+    // just map strings here. Assuming strings from UserModel:
+    switch (bmiCategory) {
+      case 'underweight':
+        categoryText = l10n.bmiUnderweight;
+        categoryColor = Colors.blueGrey;
+        break;
+      case 'normal':
+        categoryText = l10n.bmiNormal;
+        categoryColor = AppColors.primary; // Deep Green
+        break;
+      case 'overweight':
+        categoryText = l10n.bmiOverweight;
+        categoryColor = AppColors.amber;
+        break;
+      case 'obese':
+      default:
+        categoryText = l10n.bmiObese;
+        categoryColor = AppColors.error; // Kaiser Red
+        break;
+    }
+
+    final minWeight = user.minHealthyWeight.toStringAsFixed(1);
+    final maxWeight = user.maxHealthyWeight.toStringAsFixed(1);
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.glacialWhite, // Glacial White (crisp)
+        borderRadius: BorderRadius.circular(12), // 12px Radius
+        border: Border.all(
+          color: AppColors.slate.withValues(alpha: 0.15), // 1px Gray Border
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                l10n.yourBmi.toUpperCase(),
+                style: AppTypography.labelLarge.copyWith(
+                  color: AppColors.slate.withValues(alpha: 0.6),
+                  letterSpacing: 1.0,
+                  fontWeight: FontWeight.w600,
+                  fontFamily: 'Outfit',
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: categoryColor.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: categoryColor.withValues(alpha: 0.3),
+                  ),
+                ),
+                child: Text(
+                  categoryText,
+                  style: AppTypography.labelLarge.copyWith(
+                    color: categoryColor,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                bmi.toStringAsFixed(1),
+                style: const TextStyle(
+                  fontFamily: 'JetBrains Mono', // Data Font
+                  fontSize: 32,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.slate,
+                  height: 1.0,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          // Visual Gauge
+          // Scale: 10 to 40 (Total span: 30)
+          // Underweight (<18.5): 10 to 18.5 -> Span 8.5
+          // Normal (18.5-25): 18.5 to 25 -> Span 6.5
+          // Overweight (25-30): 25 to 30 -> Span 5.0
+          // Obese (>30): 30 to 40 -> Span 10.0
+          SizedBox(
+            height: 8,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(4),
+              child: Row(
+                children: [
+                  Expanded(
+                    flex: 85,
+                    child: Container(
+                      color: Colors.blueGrey.withValues(alpha: 0.3),
+                    ),
+                  ), // 10-18.5
+                  Expanded(
+                    flex: 65,
+                    child: Container(color: AppColors.primary),
+                  ), // 18.5-25
+                  Expanded(
+                    flex: 50,
+                    child: Container(color: AppColors.amber),
+                  ), // 25-30
+                  Expanded(
+                    flex: 100,
+                    child: Container(color: AppColors.error),
+                  ), // 30-40
+                ],
+              ),
+            ),
+          ),
+          // Needle / Marker
+          LayoutBuilder(
+            builder: (context, constraints) {
+              // Calculate position: Max BMI 40 for display purposes
+              final double clampedBmi = bmi.clamp(10.0, 40.0);
+              final double percent = (clampedBmi - 10.0) / (40.0 - 10.0);
+              return Align(
+                alignment: Alignment(percent * 2 - 1, 0), // -1 to 1 range
+                child: Column(
+                  children: [
+                    const SizedBox(height: 4),
+                    Icon(Icons.arrow_drop_up, color: AppColors.slate, size: 20),
+                  ],
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: 8),
+          Text(
+            l10n.healthyRange(minWeight, maxWeight),
+            style: AppTypography.bodySmall.copyWith(
+              color: AppColors.slate.withValues(alpha: 0.7),
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -10,7 +10,7 @@ import '../main_screen.dart';
 class AnalysisStep extends StatefulWidget {
   final String name;
   final int genderIndex;
-  final int age;
+  final DateTime birthdate;
   final double height;
   final double weight;
   final int goalIndex;
@@ -22,7 +22,7 @@ class AnalysisStep extends StatefulWidget {
     super.key,
     required this.name,
     required this.genderIndex,
-    required this.age,
+    required this.birthdate,
     required this.height,
     required this.weight,
     required this.goalIndex,
@@ -51,7 +51,7 @@ class _AnalysisStepState extends State<AnalysisStep> {
     // Save User
     await context.read<AppProvider>().updateUser(
       name: widget.name,
-      birthdate: DateTime(DateTime.now().year - widget.age),
+      birthdate: widget.birthdate,
       height: widget.height.toDouble(),
       weight: widget.weight,
       language: widget.language,

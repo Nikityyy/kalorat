@@ -374,6 +374,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get yourBmi => 'YOUR BMI';
 
   @override
+  String healthyRange(String min, String max) {
+    return 'Healthy range: $min - $max kg';
+  }
+
+  @override
   String get status => 'STATUS';
 
   @override
@@ -533,7 +538,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get kcal => 'kcal';
 
   @override
-  String get grams => 'g';
+  String get grams => 'grams';
 
   @override
   String get weightSaved => 'Weight saved!';
