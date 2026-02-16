@@ -787,4 +787,17 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get useGalleryInstead =>
       'Use the gallery button below to pick photos.';
+
+  @override
+  String get updateAvailable => 'Update Available';
+
+  @override
+  String get updateReady =>
+      'A new version of Kalorat is ready. Update now to get the latest features.';
+
+  @override
+  String get reloadButton => 'Reload';
+
+  @override
+  String get laterButton => 'Later';
 }

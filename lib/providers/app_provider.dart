@@ -15,6 +15,7 @@ class AppProvider extends ChangeNotifier {
   final NotificationService _notificationService;
   final HealthService _healthService;
   final StorageService _storageService;
+  final PwaService _pwaService;
 
   StreamSubscription? _connectivitySubscription;
 
@@ -43,7 +44,8 @@ class AppProvider extends ChangeNotifier {
   }) : _databaseService = databaseService ?? DatabaseService(),
        _notificationService = notificationService ?? NotificationService(),
        _healthService = healthService ?? HealthService(),
-       _storageService = storageService ?? StorageService();
+       _storageService = storageService ?? StorageService(),
+       _pwaService = PwaService();
 
   UserModel? get user => _user;
   bool get isOnline => _isOnline;
@@ -61,6 +63,7 @@ class AppProvider extends ChangeNotifier {
   String get apiKey => _secureApiKey ?? _user?.geminiApiKey ?? '';
   List<WeightModel> get weights => getAllWeights();
   int get pendingMealsCount => _offlineQueueService.getPendingCount();
+  bool get updateAvailable => _pwaService.updateAvailable;
 
   bool get mealRemindersEnabled => _user?.mealRemindersEnabled ?? true;
   bool get weightRemindersEnabled => _user?.weightRemindersEnabled ?? true;
@@ -81,6 +84,11 @@ class AppProvider extends ChangeNotifier {
   HealthService get healthService => _healthService;
 
   Future<void> init() async {
+    _pwaService.init();
+    _pwaService.updateAvailableStream.listen((available) {
+      if (available) notifyListeners();
+    });
+
     await _databaseService.init();
     _offlineQueueService = OfflineQueueService(_databaseService);
     _exportImportService = ExportImportService(_databaseService);
@@ -145,8 +153,11 @@ class AppProvider extends ChangeNotifier {
   @override
   void dispose() {
     _connectivitySubscription?.cancel();
+    _pwaService.dispose();
     super.dispose();
   }
+
+  void performUpdate() => _pwaService.performUpdate();
 
   Future<void> saveUser(UserModel user) async {
     await _databaseService.saveUser(user);

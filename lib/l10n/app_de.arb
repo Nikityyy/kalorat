@@ -306,5 +306,9 @@
   "discardPhotosConfirm": "Deine aufgenommenen Fotos gehen verloren.",
   "selectDate": "Datum wählen",
   "cameraNotAvailableWeb": "Kamera im Browser nicht verfügbar.",
-  "useGalleryInstead": "Nutze die Galerie unten, um Fotos auszuwählen."
+  "useGalleryInstead": "Nutze die Galerie unten, um Fotos auszuwählen.",
+  "updateAvailable": "Update verfügbar",
+  "updateReady": "Eine neue Version von Kalorat ist bereit. Jetzt aktualisieren für die neuesten Features.",
+  "reloadButton": "Neu laden",
+  "laterButton": "Später"
 }

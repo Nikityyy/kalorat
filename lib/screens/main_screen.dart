@@ -1,3 +1,5 @@
+import 'package:provider/provider.dart';
+import '../providers/app_provider.dart';
 import '../utils/platform_utils.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -66,7 +68,43 @@ class _MainScreenState extends State<MainScreen> {
     }
 
     return Scaffold(
-      body: IndexedStack(index: _currentIndex, children: _screens),
+      body: Column(
+        children: [
+          Consumer<AppProvider>(
+            builder: (context, provider, _) {
+              if (provider.updateAvailable) {
+                return MaterialBanner(
+                  backgroundColor: AppColors.styrianForest,
+                  content: Text(
+                    l10n.updateReady,
+                    style: const TextStyle(color: AppColors.pebble),
+                  ),
+                  leading: const Icon(
+                    Icons.system_update,
+                    color: AppColors.pebble,
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => provider.performUpdate(),
+                      child: Text(
+                        l10n.reloadButton,
+                        style: const TextStyle(
+                          color: AppColors.pebble,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              }
+              return const SizedBox.shrink();
+            },
+          ),
+          Expanded(
+            child: IndexedStack(index: _currentIndex, children: _screens),
+          ),
+        ],
+      ),
       bottomNavigationBar: NavigationBarTheme(
         data: NavigationBarThemeData(
           labelTextStyle: WidgetStateProperty.all(

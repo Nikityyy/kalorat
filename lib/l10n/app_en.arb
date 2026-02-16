@@ -306,5 +306,9 @@
   "discardPhotosConfirm": "Your captured photos will be lost.",
   "selectDate": "Select date",
   "cameraNotAvailableWeb": "Camera is not available in the browser.",
-  "useGalleryInstead": "Use the gallery button below to pick photos."
+  "useGalleryInstead": "Use the gallery button below to pick photos.",
+  "updateAvailable": "Update Available",
+  "updateReady": "A new version of Kalorat is ready. Update now to get the latest features.",
+  "reloadButton": "Reload",
+  "laterButton": "Later"
 }

@@ -1133,7 +1133,7 @@ abstract class AppLocalizations {
   /// No description provided for @grams.
   ///
   /// In de, this message translates to:
-  /// **'gramm'**
+  /// **'g'**
   String get grams;
 
   /// No description provided for @weightSaved.
@@ -1603,6 +1603,30 @@ abstract class AppLocalizations {
   /// In de, this message translates to:
   /// **'Nutze die Galerie unten, um Fotos auszuwählen.'**
   String get useGalleryInstead;
+
+  /// No description provided for @updateAvailable.
+  ///
+  /// In de, this message translates to:
+  /// **'Update verfügbar'**
+  String get updateAvailable;
+
+  /// No description provided for @updateReady.
+  ///
+  /// In de, this message translates to:
+  /// **'Eine neue Version von Kalorat ist bereit. Jetzt aktualisieren für die neuesten Features.'**
+  String get updateReady;
+
+  /// No description provided for @reloadButton.
+  ///
+  /// In de, this message translates to:
+  /// **'Neu laden'**
+  String get reloadButton;
+
+  /// No description provided for @laterButton.
+  ///
+  /// In de, this message translates to:
+  /// **'Später'**
+  String get laterButton;
 }
 
 class _AppLocalizationsDelegate

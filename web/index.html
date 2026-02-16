@@ -51,19 +51,66 @@
 
 <body>
   <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', function () {
-        navigator.serviceWorker.register('flutter_service_worker.js?v=' + new Date().getTime());
-      });
-    }
-    // Auto-reload on controller change (new version activated)
-    let refreshing = false;
-    navigator.serviceWorker.addEventListener('controllerchange', () => {
-      if (!refreshing) {
-        window.location.reload();
-        refreshing = true;
+    let serviceWorkerRegistration;
+    let isUpdatePending = false;
+
+    function registerServiceWorker() {
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function () {
+          navigator.serviceWorker.register('flutter_service_worker.js?v=' + new Date().getTime())
+            .then((reg) => {
+              serviceWorkerRegistration = reg;
+
+              // Check if there is already a waiting service worker
+              if (reg.waiting) {
+                notifyFlutterUpdateAvailable();
+              }
+
+              reg.onupdatefound = () => {
+                const installingWorker = reg.installing;
+                installingWorker.onstatechange = () => {
+                  if (installingWorker.state === 'installed') {
+                    if (navigator.serviceWorker.controller) {
+                      notifyFlutterUpdateAvailable();
+                    }
+                  }
+                };
+              };
+            });
+        });
+
+        // The controllerchange event fires when the service worker taking control changes
+        // (e.g. after skipWaiting is called)
+        let refreshing = false;
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+          if (!refreshing && isUpdatePending) {
+            window.location.reload();
+            refreshing = true;
+          }
+        });
       }
-    });
+    }
+
+    function notifyFlutterUpdateAvailable() {
+      if (!isUpdatePending) {
+        isUpdatePending = true;
+        window.dispatchEvent(new CustomEvent('flutter-pwa-update-available'));
+      }
+    }
+
+    window.skipWaitingAndReload = function () {
+      if (serviceWorkerRegistration && serviceWorkerRegistration.waiting) {
+        serviceWorkerRegistration.waiting.postMessage('skipWaiting');
+        // Handle fallback if controllerchange doesn't fire
+        setTimeout(() => {
+          window.location.reload();
+        }, 2000);
+      } else {
+        window.location.reload();
+      }
+    };
+
+    registerServiceWorker();
   </script>
   <script src="flutter_bootstrap.js" async></script>
 </body>
