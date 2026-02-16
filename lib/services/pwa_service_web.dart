@@ -1,8 +1,22 @@
 import 'dart:async';
-import 'dart:html' as html;
-import 'dart:js' as js;
+import 'dart:js_interop';
+
 import '../utils/app_logger.dart';
 import 'pwa_service.dart';
+
+@JS('window')
+external JSObject get _window;
+
+@JS('skipWaitingAndReload')
+external void _skipWaitingAndReload();
+
+extension type WindowExtension(JSObject _) implements JSObject {
+  @JS('addEventListener')
+  external void addEventListener(String type, JSFunction callback);
+
+  @JS('location.reload')
+  external void reload();
+}
 
 class WebPwaService implements PwaService {
   final _updateAvailableController = StreamController<bool>.broadcast();
@@ -16,12 +30,17 @@ class WebPwaService implements PwaService {
 
   @override
   void init() {
+    final window = _window as WindowExtension;
+
     // Listen for the custom event dispatched from index.html
-    html.window.addEventListener('flutter-pwa-update-available', (event) {
-      AppLogger.info('PwaService', 'Update available event received');
-      _updateAvailable = true;
-      _updateAvailableController.add(true);
-    });
+    window.addEventListener(
+      'flutter-pwa-update-available',
+      ((JSObject event) {
+        AppLogger.info('PwaService', 'Update available event received');
+        _updateAvailable = true;
+        _updateAvailableController.add(true);
+      }).toJS,
+    );
 
     AppLogger.info('PwaService', 'Web PwaService initialized');
   }
@@ -29,12 +48,15 @@ class WebPwaService implements PwaService {
   @override
   void performUpdate() {
     AppLogger.info('PwaService', 'Performing update (skipWaiting and reload)');
-    // Call the JavaScript function defined in index.html
-    if (js.context.hasProperty('skipWaitingAndReload')) {
-      js.context.callMethod('skipWaitingAndReload');
-    } else {
-      // Fallback: just reload
-      html.window.location.reload();
+
+    try {
+      _skipWaitingAndReload();
+    } catch (e) {
+      AppLogger.warning(
+        'PwaService',
+        'skipWaitingAndReload not found, falling back to reload',
+      );
+      (_window as WindowExtension).reload();
     }
   }
 
