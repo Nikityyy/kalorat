@@ -45,7 +45,7 @@ class WelcomeStep extends StatelessWidget {
 
           Spacer(),
           Image.asset(
-            'assets/kalorat-textlogo.png',
+            'assets/kalorat-textlogo.webp',
             width: 300,
             fit: BoxFit.contain,
           ),

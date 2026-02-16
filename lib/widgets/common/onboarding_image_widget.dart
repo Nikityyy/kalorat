@@ -8,7 +8,7 @@ class OnboardingImageWidget extends StatelessWidget {
 
   const OnboardingImageWidget({
     super.key,
-    this.assetName = 'assets/onboarding_placeholder.png',
+    this.assetName = 'assets/onboarding_placeholder.webp',
     this.height = 300,
   });
 

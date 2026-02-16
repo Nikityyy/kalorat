@@ -54,7 +54,7 @@ class KaloratApp extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Image.asset(
-                        'assets/kalorat-favicon-android.png',
+                        'assets/kalorat-favicon-android.webp',
                         width: 100,
                         height: 100,
                         fit: BoxFit.contain,

@@ -85,12 +85,12 @@ flutter_launcher_icons:
   ios: true
   web:
     generate: true
-    image_path: "assets/kalorat-favicon-ios.png"
+    image_path: "assets/kalorat-favicon-ios.webp"
     background_color: "#0F5838"
     theme_color: "#0F5838"
   theme_color: "#0F5838" 
-  image_path: "assets/kalorat-favicon-ios.png"
+  image_path: "assets/kalorat-favicon-ios.webp"
   adaptive_icon_background: "#F0F2F5"
-  adaptive_icon_foreground: "assets/kalorat-favicon-android.png"
+  adaptive_icon_foreground: "assets/kalorat-favicon-android.webp"
   remove_alpha_ios: true 
   background_color_ios: "#F0F2F5"

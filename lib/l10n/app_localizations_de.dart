@@ -542,7 +542,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get kcal => 'kcal';
 
   @override
-  String get grams => 'gramm';
+  String get grams => 'g';
 
   @override
   String get weightSaved => 'Gewicht gespeichert!';
