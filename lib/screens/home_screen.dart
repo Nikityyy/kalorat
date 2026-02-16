@@ -102,7 +102,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
     _cameraController = CameraController(
       _cameras!.first,
-      ResolutionPreset.high,
+      ResolutionPreset.medium,
       enableAudio: false,
     );
 
@@ -153,7 +153,12 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
   Future<void> _pickFromGallery() async {
     final picker = ImagePicker();
-    final List<XFile> images = await picker.pickMultiImage();
+    final List<XFile> images = await picker.pickMultiImage(
+      imageQuality: 40,
+      maxWidth: 1024,
+      maxHeight: 1024,
+      requestFullMetadata: false,
+    );
 
     if (images.isNotEmpty) {
       // On web, use Base64 string

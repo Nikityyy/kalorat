@@ -191,7 +191,7 @@ class GeminiService {
             headers: {'Content-Type': 'application/json'},
             body: jsonEncode(requestBody),
           )
-          .timeout(const Duration(minutes: 3));
+          .timeout(const Duration(seconds: 3));
 
       if (response.statusCode == 200) {
         final responseData = jsonDecode(response.body);
