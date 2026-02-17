@@ -141,6 +141,18 @@ class AppProvider extends ChangeNotifier {
       }
     });
 
+    // Schedule notifications for existing users with reminders enabled
+    if (_user != null) {
+      await _notificationService.scheduleMealReminders(
+        enabled: _user!.mealRemindersEnabled,
+        language: _user!.language,
+      );
+      await _notificationService.scheduleWeightReminder(
+        enabled: _user!.weightRemindersEnabled,
+        language: _user!.language,
+      );
+    }
+
     // Process any pending meals on startup if online
     if (_isOnline) {
       await processOfflineQueue();
@@ -313,6 +325,10 @@ class AppProvider extends ChangeNotifier {
 
     // Update notifications if reminder settings changed
     if (mealRemindersEnabled != null || weightRemindersEnabled != null) {
+      // Request permissions when a reminder is being enabled
+      if ((mealRemindersEnabled == true) || (weightRemindersEnabled == true)) {
+        await _notificationService.requestPermissions();
+      }
       await _notificationService.scheduleMealReminders(
         enabled: _user!.mealRemindersEnabled,
         language: _user!.language,

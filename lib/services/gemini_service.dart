@@ -6,6 +6,8 @@ import 'package:hive_flutter/hive_flutter.dart';
 import '../utils/app_logger.dart';
 import '../utils/platform_utils.dart';
 
+// import 'dart:ui' as ui; // Unused since we removed _resizeImage
+
 /// Encodes image bytes to base64 in a background isolate
 /// This prevents UI jank when processing large images
 String _encodeImageBytes(List<int> bytes) {
@@ -95,10 +97,18 @@ class GeminiService {
             })
             .toList();
 
-        // Sort to prefer newer/better models if possible (optional, but good for consistency)
-        supportedModels.sort(
-          (a, b) => b.compareTo(a),
-        ); // Z->A purely heuristic or customize
+        // Sort to prefer lite models first (fastest), then newer models
+        supportedModels.sort((a, b) {
+          final aLower = a.toLowerCase();
+          final bLower = b.toLowerCase();
+          final aIsLite = aLower.contains('lite');
+          final bIsLite = bLower.contains('lite');
+          // Lite models first
+          if (aIsLite && !bIsLite) return -1;
+          if (!aIsLite && bIsLite) return 1;
+          // Within same category, prefer newer (Z->A heuristic)
+          return b.compareTo(a);
+        });
 
         _cachedModels = supportedModels;
         _lastModelFetchTime = DateTime.now();
@@ -207,22 +217,19 @@ class GeminiService {
   }) async {
     try {
       // Prepare image parts in background to avoid UI jank
-      final List<Map<String, dynamic>> imageParts = [];
-      for (final path in imagePaths) {
-        // Use XFile for cross-platform file reading (works with paths and blob URLs)
+      // Prepare image parts in parallel
+      final futures = imagePaths.map((path) async {
         try {
           final List<int> bytes;
           String mimeType = 'image/jpeg';
 
           if (PlatformUtils.isWeb) {
-            // On Web, imagePaths are Base64 strings (unless blob URL from old session)
             if (path.startsWith('blob:')) {
               final file = XFile(path);
               bytes = await file.readAsBytes();
               mimeType = _getMimeType(path);
             } else {
               bytes = base64Decode(path);
-              // Default to jpeg for base64
             }
           } else {
             final file = XFile(path);
@@ -231,16 +238,25 @@ class GeminiService {
           }
 
           if (bytes.isNotEmpty) {
-            // Encode in background isolate for large images
+            // Resize if possible to reduce payload
+            // final resizedBytes = await _resizeImage(bytes);
+            // NOTE: dart:ui usage in background isolate is tricky/unsupported in some Flutter versions
+            // For now, relies on HomeScreen imageQuality: 40.
+
+            // Encode in background isolate
             final base64Image = await compute(_encodeImageBytes, bytes);
-            imageParts.add({
+            return {
               'inline_data': {'mime_type': mimeType, 'data': base64Image},
-            });
+            };
           }
         } catch (e) {
           AppLogger.error('GeminiService', 'Error reading image $path', e);
         }
-      }
+        return null;
+      });
+
+      final results = await Future.wait(futures);
+      final imageParts = results.whereType<Map<String, dynamic>>().toList();
 
       if (imageParts.isEmpty) {
         throw GeminiError(GeminiErrorType.noFood, 'No valid images found');
@@ -252,7 +268,34 @@ class GeminiService {
       // Build config
       final Map<String, dynamic> generationConfig = {
         'temperature': 0.0,
-        'maxOutputTokens': 1536,
+        'maxOutputTokens':
+            1024, // Reduced from 1536 since we removed verbose examples
+        'responseMimeType': 'application/json',
+        'responseSchema': {
+          'type': 'OBJECT',
+          'properties': {
+            'analysis_note': {'type': 'STRING'},
+            'meal_name': {'type': 'STRING'},
+            'calories': {'type': 'NUMBER'},
+            'protein': {'type': 'NUMBER'},
+            'carbs': {'type': 'NUMBER'},
+            'fats': {'type': 'NUMBER'},
+            'detected_quantity': {'type': 'NUMBER'},
+            'detected_unit': {'type': 'STRING'},
+            'confidence_score': {'type': 'NUMBER'},
+          },
+          'required': [
+            'analysis_note',
+            'meal_name',
+            'calories',
+            'protein',
+            'carbs',
+            'fats',
+            'detected_quantity',
+            'detected_unit',
+            'confidence_score',
+          ],
+        },
       };
 
       // Apply thinking config only for specific reasoning models
@@ -280,7 +323,7 @@ class GeminiService {
             headers: {'Content-Type': 'application/json'},
             body: jsonEncode(requestBody),
           )
-          .timeout(const Duration(seconds: 3));
+          .timeout(const Duration(seconds: 45));
 
       if (response.statusCode == 200) {
         final responseData = jsonDecode(response.body);
@@ -425,115 +468,36 @@ class GeminiService {
 
   String _getPrompt(String language, {bool useGrams = false}) {
     final unitString = useGrams ? 'gram' : 'serving';
-    final example1Note = useGrams
-        ? 'Reasoning: [Hähnchenbrust, gegart]: Ca. 35-40 Stücke. Schätzung ~500g gegart -> ~155g Protein, ~18g Fett, 0g KH. [Brokkoli]: Nimmt die Hälfte der Pfanne ein. Schätzung ~250g -> ~6g Protein, ~17g KH, ~1g Fett. [Sauce & Öl]: Glanz deutet auf Öl/Zucker-Glasur hin. 2 EL Öl (30g Fett) und ~45g Zucker/Stärke (45g KH). Gesamt: (161g P * 4) + (62g C * 4) + (49g F * 9) = 1333 kcal. Verifikation: Passt zur Gesamtschätzung.'
-        : 'Reasoning: Analyse einer großen Pfannenportion (ca. 800g). Komponenten: Viel mageres Hähnchen, Brokkoli, dunkle Sauce. Proteinreich (~160g), mäßig Kohlenhydrate aus der Sauce (~60g), Fett hauptsächlich durch Öl (~50g). Gesamtschätzung: ~1330 kcal.';
-
-    final example1Name = useGrams
-        ? 'Honey Garlic Chicken Brokkoli Pfanne'
-        : 'Große Hähnchen-Brokkoli Pfanne';
-    final example1Qty = useGrams ? 825.0 : 1.0;
-
-    final example2Note = useGrams
-        ? 'Reasoning: Analyse einer Standardportion (300g). [Weißer Reis]: 100g -> 130 kcal, 28g KH, 2.7g P, 0.3g F. [Hähnchen]: 85g -> 140 kcal, 0g KH, 26g P, 3g F. [Brokkoli]: 60g -> 20 kcal, 4g KH, 2g P, 0.2g F. [Saucenbasis]: 45g (Cheddar/Creme) -> 120 kcal, 4g KH, 4g P, 9g F. [Topping]: 10g -> 50 kcal, 6g KH, 1g P, 3.5g F. Gesamt: 460 kcal. Verifikation: (35.7*4) + (42*4) + (16*9) = 454.8 kcal (nahezu identisch).'
-        : 'Reasoning: Typische Einzelportion (ca. 300-350g). Hauptbestandteile: Reis, gezupftes Hähnchen, Brokkoli, Käsesauce. Moderate Kaloriendichte durch Sauce. Makroberteilung: 35g P, 40g C, 15g F. Gesamt: ~450 kcal.';
-    final example2Qty = useGrams ? 300.0 : 1.0;
+    // Removed verbose examples to save tokens as requested
 
     if (language == 'de') {
-      return '''Du bist ein fachkundiger KI-Ernährungsberater. Deine Aufgabe ist die hochpräzise Analyse von Mahlzeiten-Bildern.
+      return '''Du bist KI-Ernährungsberater. Analysiere das Bild präzise.
 
-LOGIK-REGELN:
-1.  **Zuerst Denken (Chain of Thought)**: Beschreibe im Feld "analysis_note" zuerst deine Analyse.
-    - Identifiziere jede Zutat.
-    ${useGrams ? '- Schätze das Gewicht in Gramm (sei realistisch!).' : '- Schätze die Anzahl der Portionen (meist 1.0 für einen Teller, oder mehr für Pfannen/Töpfe).'}
-    - Benutze wissenschaftliche Referenzwerte:
-        * Hähnchenbrust (gegart): ~31g Protein / 100g.
-        * Reis (gekocht): ~28g KH / 100g.
-        * Öl/Fett: ~90-100% Fettanteil.
-    - Berechne die Makros pro Zutat.
-    - Summiere alles auf und verifiziere mit der Atwater-Formel: (P*4 + C*4 + F*9) ≈ Kalorien.
-2.  **Standard-Einheit**: Verwende IMMER "$unitString" für die `detected_unit`.
-3.  **Genauigkeit & Volumen**: Sei objektiv. ${useGrams ? 'Eine volle Pfanne (10-12 inch) wiegt meist 800-1200g. Ein Einzelteller wiegt meist 300-500g.' : 'Ein Standardteller ist normalerweise 1.0 Portionen. Eine volle Pfanne kann 2-4 Portionen sein.'}
+LOGIK:
+1. **Kurze Analyse ("analysis_note")**:
+   - Identifiziere Zutaten.
+   ${useGrams ? '- Schätze Gewicht in Gramm.' : '- Schätze Portionen (Teller=1.0).'}
+   - Nutze Referenzwerte (Reis ~28g KH/100g, Hähnchen ~31g P/100g).
+   - Verifiziere: (P*4 + C*4 + F*9) ≈ kcal.
+2. **Einheit**: IMMER "$unitString" für `detected_unit`.
+3. **Objektivität**: ${useGrams ? 'Volle Pfanne ~800-1200g. Teller ~300-500g.' : 'Teller ~1.0 Portionen. Pfanne ~2-4.'}
 
-BEISPIEL 1 (Pfanne/Große Portion):
-{
-  "analysis_note": "$example1Note",
-  "meal_name": "$example1Name",
-  "calories": 1333.0,
-  "protein": 161.0,
-  "carbs": 62.0,
-  "fats": 49.0,
-  "detected_quantity": $example1Qty,
-  "detected_unit": "$unitString",
-  "confidence_score": 0.95
-}
-
-BEISPIEL 2 (Teller/Einzelportion):
-{
-  "analysis_note": "$example2Note",
-  "meal_name": "Chicken Brokkoli Reis Auflauf",
-  "calories": 460.0,
-  "protein": 35.7,
-  "carbs": 42.0,
-  "fats": 16.0,
-  "detected_quantity": $example2Qty,
-  "detected_unit": "$unitString",
-  "confidence_score": 0.9
-}
-
-ANTWORTE NUR ALS JSON. DAS FELD 'analysis_note' MUSS ZUERST ERSCHEINEN.
+ANTWORTE NUR ALS JSON. 'analysis_note' ZUERST.
 ''';
     } else {
       final unitStringEn = useGrams ? 'gram' : 'serving';
-      final example1NoteEn = useGrams
-          ? 'Reasoning: [Chicken Breast, cooked]: The pan contains approx. 35-40 bite-sized cubes. Estimating ~500g cooked weight -> ~155g Protein, ~18g Fat, 0g Carbs. [Broccoli, cooked]: Approx. ~250g -> ~6g Protein, ~17g Carbs, ~1g Fat. [Sauce & Oil]: Glossy sheen indicates oil/sugar glaze. 2 tbsp oil (30g Fat) and ~45g sugars/starch (45g Carbs). Total calculated: (161g P * 4) + (62g C * 4) + (49g F * 9) = 1333 kcal. Verification: Matches total estimate.'
-          : 'Reasoning: Large skillet portion (approx. 800g). Components: Plenty of lean chicken, broccoli, dark sauce. High in protein (~160g), moderate carbs from sauce (~60g), fat mostly from oil (~50g). Total estimate: ~1330 kcal.';
-      final example2NoteEn = useGrams
-          ? 'Reasoning: Analyzed as a standard 300g serving. [White Rice]: 100g -> 130 kcal, 28g carbs, 2.7g protein, 0.3g fat. [Shredded Chicken Breast]: 85g -> 140 kcal, 0g carbs, 26g protein, 3g fat. [Broccoli Florets]: 60g -> 20 kcal, 4g carbs, 2g protein, 0.2g fat. [Cheese & Cream Sauce]: 45g -> 120 kcal, 4g carbs, 4g protein, 9g fat. [Crispy Topping]: 10g -> 50 kcal, 6g carbs, 1g protein, 3.5g fat. Total calculated: 460 kcal. Verification: (35.7*4) + (42*4) + (16*9) = 454.8 kcal (matches closely).'
-          : 'Reasoning: Typical single serving (approx. 300-350g). Main ingredients: rice, shredded chicken, broccoli, cheese sauce. Moderate calorie density due to sauce. Macros: 35g P, 40g C, 15g F. Total: ~450 kcal.';
+      return '''You are an AI Nutritionist. Analyze the image precisely.
 
-      return '''You are a master AI Nutritionist. Analyze the attached image with scientific precision.
+LOGIC:
+1. **Short Analysis ("analysis_note")**:
+   - Identify ingredients.
+   ${useGrams ? '- Estimate weight in grams.' : '- Estimate servings (plate=1.0).'}
+   - Use references (Rice ~28g C/100g, Chicken ~31g P/100g).
+   - Verify: (P*4 + C*4 + F*9) ≈ Calories.
+2. **Unit**: ALWAYS use "$unitStringEn" for `detected_unit`.
+3. **Volume**: ${useGrams ? 'Full pan ~800-1200g. Plate ~300-500g.' : 'Standard plate ~1.0. Full pan ~2-4.'}
 
-LOGIC RULES:
-1.  **Think First (Chain of Thought)**: Use the "analysis_note" field to show your reasoning step-by-step.
-    - Identify every ingredient.
-    ${useGrams ? '- Estimate weights realistically in grams.' : '- Estimate the number of servings (usually 1.0 for a single plate, or more for shared pans/pots).'}
-    - Use scientific reference densities:
-        * Chicken Breast (cooked): ~31g Protein / 100g.
-        * Rice (cooked): ~28g Carbs / 100g.
-        * Oil/Fat: ~90-100% Fat.
-    - Calculate macros per ingredient.
-    - Sum them up and verify with the Atwater formula: (P*4 + C*4 + F*9) ≈ Calories.
-2.  **Standardize**: ALWAYS use "$unitStringEn" for the `detected_unit`.
-3.  **Precision & Volume**: Be objective. ${useGrams ? 'A full 10-12 inch skillet weighs approx. 800-1200g. A single plate weighs approx. 300-500g.' : 'A standard plate is usually 1.0 servings. A full pan might be 2-4 servings.'}
-
-EXAMPLE 1:
-{
-  "analysis_note": "$example1NoteEn",
-  "meal_name": "$example1Name",
-  "calories": 1333.0,
-  "protein": 161.0,
-  "carbs": 62.0,
-  "fats": 49.0,
-  "detected_quantity": $example1Qty,
-  "detected_unit": "$unitStringEn",
-  "confidence_score": 0.95
-}
-
-EXAMPLE 2:
-{
-  "analysis_note": "$example2NoteEn",
-  "meal_name": "Chicken Broccoli Rice Casserole",
-  "calories": 460.0,
-  "protein": 35.7,
-  "carbs": 42.0,
-  "fats": 16.0,
-  "detected_quantity": $example2Qty,
-  "detected_unit": "$unitStringEn",
-  "confidence_score": 0.9
-}
-
-RESPONSE FORMAT: JSON ONLY. The field 'analysis_note' MUST appear first.
+RESPONSE FORMAT: JSON ONLY. 'analysis_note' MUST BE FIRST.
 ''';
     }
   }

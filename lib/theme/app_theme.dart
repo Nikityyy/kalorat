@@ -62,6 +62,12 @@ class AppTheme {
           padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
         ),
       ),
+      pageTransitionsTheme: const PageTransitionsTheme(
+        builders: {
+          TargetPlatform.android: CupertinoPageTransitionsBuilder(),
+          TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+        },
+      ),
     );
   }
 
@@ -115,6 +121,12 @@ class AppTheme {
         labelLarge: AppTypography.labelLarge.copyWith(
           color: AppColors.glacialWhite,
         ),
+      ),
+      pageTransitionsTheme: const PageTransitionsTheme(
+        builders: {
+          TargetPlatform.android: CupertinoPageTransitionsBuilder(),
+          TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+        },
       ),
     );
   }

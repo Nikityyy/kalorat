@@ -19,6 +19,11 @@ class NotificationService {
   Future<void> init() async {
     tz.initializeTimeZones();
 
+    if (PlatformUtils.isWeb) {
+      // Web initialization
+      return;
+    }
+
     const androidSettings = AndroidInitializationSettings(
       '@mipmap/ic_launcher',
     );
@@ -37,6 +42,13 @@ class NotificationService {
   }
 
   Future<bool> requestPermissions() async {
+    if (PlatformUtils.isWeb) {
+      // On Web, we can't easily request permissions via this plugin in the same way
+      // without more setup, or we use the browser API directly if needed.
+      // Let's stick to safe defaults: return false for now unless we implement full web support.
+      return false;
+    }
+
     if (PlatformUtils.isAndroid) {
       final androidPlugin = _notifications
           .resolvePlatformSpecificImplementation<
@@ -62,6 +74,11 @@ class NotificationService {
     required bool enabled,
     required String language,
   }) async {
+    if (PlatformUtils.isWeb) {
+      // Local scheduled notifications are not supported on Web.
+      // We return early to strictly avoid crashes.
+      return;
+    }
     await _notifications.cancel(id: mealReminderId);
     await _notifications.cancel(id: mealReminderId + 10);
     await _notifications.cancel(id: mealReminderId + 20);
@@ -86,6 +103,9 @@ class NotificationService {
     required bool enabled,
     required String language,
   }) async {
+    if (PlatformUtils.isWeb) {
+      return;
+    }
     await _notifications.cancel(id: weightReminderId);
 
     if (!enabled) return;
@@ -106,6 +126,9 @@ class NotificationService {
     required String body,
     required int hour,
   }) async {
+    // Double check for web safety, though public methods should have caught it.
+    if (PlatformUtils.isWeb) return;
+
     final now = tz.TZDateTime.now(tz.local);
     var scheduledDate = tz.TZDateTime(
       tz.local,
@@ -150,6 +173,9 @@ class NotificationService {
   }
 
   Future<void> cancelAll() async {
+    if (PlatformUtils.isWeb) {
+      return;
+    }
     await _notifications.cancelAll();
   }
 }

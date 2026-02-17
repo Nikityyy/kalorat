@@ -7,15 +7,33 @@ import '../../widgets/inputs/action_button.dart';
 class NameStep extends StatefulWidget {
   final Function(String) onNext;
   final String language;
+  final String? initialValue;
 
-  const NameStep({super.key, required this.onNext, required this.language});
+  const NameStep({
+    super.key,
+    required this.onNext,
+    required this.language,
+    this.initialValue,
+  });
 
   @override
   State<NameStep> createState() => _NameStepState();
 }
 
 class _NameStepState extends State<NameStep> {
-  final TextEditingController _controller = TextEditingController();
+  late TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.initialValue);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {

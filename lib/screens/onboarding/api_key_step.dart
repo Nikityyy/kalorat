@@ -10,17 +10,35 @@ import '../../services/services.dart';
 class ApiKeyStep extends StatefulWidget {
   final Function(String) onNext;
   final String language;
+  final String? initialValue;
 
-  const ApiKeyStep({super.key, required this.onNext, required this.language});
+  const ApiKeyStep({
+    super.key,
+    required this.onNext,
+    required this.language,
+    this.initialValue,
+  });
 
   @override
   State<ApiKeyStep> createState() => _ApiKeyStepState();
 }
 
 class _ApiKeyStepState extends State<ApiKeyStep> {
-  final TextEditingController _controller = TextEditingController();
+  late TextEditingController _controller;
   bool _isValidating = false;
   String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.initialValue);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   Future<void> _validateAndProceed() async {
     final key = _controller.text.trim();

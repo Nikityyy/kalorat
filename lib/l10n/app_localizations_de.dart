@@ -517,7 +517,16 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get createKeyInstruction =>
-      ' und erstelle einen kostenlosen Key. Kopiere ihn, füge ihn hier ein und tracke deine Kalorien.';
+      ' und erstelle einen kostenlosen Key. Kopiere ihn, füge ihn hier ein und starte das Tracking.';
+
+  @override
+  String get preferences => 'Einstellungen';
+
+  @override
+  String get integrations => 'Integrationen';
+
+  @override
+  String get accountAndData => 'Konto & Daten';
 
   @override
   String get enterApiKeyError => 'Bitte gib einen API-Key ein';

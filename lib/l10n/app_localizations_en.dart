@@ -501,7 +501,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get maintainSubtitle => 'Stay healthy & fit';
 
   @override
-  String get buildMassSubtitle => 'Build mass & strength';
+  String get buildMassSubtitle => 'Building Strength';
 
   @override
   String get createPlan => 'Create Plan';
@@ -515,6 +515,15 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get createKeyInstruction =>
       ' and create a free key. Copy it, paste it here, and start tracking.';
+
+  @override
+  String get preferences => 'Preferences';
+
+  @override
+  String get integrations => 'Integrations';
+
+  @override
+  String get accountAndData => 'Account & Data';
 
   @override
   String get enterApiKeyError => 'Please enter an API Key';

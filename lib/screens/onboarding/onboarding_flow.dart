@@ -14,6 +14,7 @@ import 'activity_level_step.dart';
 import 'health_step.dart';
 import 'api_key_step.dart';
 import 'login_step.dart';
+import 'notification_step.dart';
 import 'analysis_step.dart';
 
 class OnboardingFlow extends StatefulWidget {
@@ -76,8 +77,8 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
     });
   }
 
-  // Total steps depends on platform: 11 on mobile (with health step), 10 on web (without)
-  int get _totalSteps => PlatformUtils.isWeb ? 11 : 12;
+  // Total steps depends on platform: 11 on web, 13 on mobile (with health + notification)
+  int get _totalSteps => PlatformUtils.isWeb ? 11 : 13;
 
   // The last step index (analysis) for hiding back button and progress
   int get _lastStepIndex => _totalSteps - 1;
@@ -120,6 +121,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
       ),
       NameStep(
         language: _language,
+        initialValue: _name,
         onNext: (name) {
           setState(() => _name = name);
           context.read<AppProvider>().updateUser(name: name);
@@ -208,6 +210,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
     steps.addAll([
       ApiKeyStep(
         language: _language,
+        initialValue: _apiKey,
         onNext: (key) {
           setState(() => _apiKey = key);
           context.read<AppProvider>().updateUser(apiKey: key);
@@ -243,6 +246,24 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
           }
         },
       ),
+    ]);
+
+    if (!PlatformUtils.isWeb) {
+      steps.add(
+        NotificationStep(
+          language: _language,
+          onNext: (enabled) {
+            context.read<AppProvider>().updateUser(
+              mealRemindersEnabled: enabled,
+              weightRemindersEnabled: enabled,
+            );
+            _nextPage();
+          },
+        ),
+      );
+    }
+
+    steps.add(
       AnalysisStep(
         language: _language,
         name: _name,
@@ -254,7 +275,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
         apiKey: _apiKey,
         healthSyncEnabled: _healthSyncEnabled,
       ),
-    ]);
+    );
 
     return steps;
   }
@@ -315,11 +336,24 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
             ),
 
             Expanded(
-              child: PageView(
-                controller: _pageController,
-                physics: const NeverScrollableScrollPhysics(), // Disable swipe
-                onPageChanged: (index) => setState(() => _currentPage = index),
-                children: _buildOnboardingSteps(),
+              child: GestureDetector(
+                onHorizontalDragEnd: (details) {
+                  // Swipe Right (velocity > 0) -> Previous Page
+                  // Restrict swipe left (forward) to force valid input via buttons
+                  if (details.primaryVelocity! > 200) {
+                    if (_currentPage > 0) {
+                      _previousPage();
+                    }
+                  }
+                },
+                child: PageView(
+                  controller: _pageController,
+                  physics:
+                      const NeverScrollableScrollPhysics(), // Disable native swipe
+                  onPageChanged: (index) =>
+                      setState(() => _currentPage = index),
+                  children: _buildOnboardingSteps(),
+                ),
               ),
             ),
           ],

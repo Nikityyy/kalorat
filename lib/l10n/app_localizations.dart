@@ -1085,8 +1085,26 @@ abstract class AppLocalizations {
   /// No description provided for @createKeyInstruction.
   ///
   /// In de, this message translates to:
-  /// **' und erstelle einen kostenlosen Key. Kopiere ihn, füge ihn hier ein und tracke deine Kalorien.'**
+  /// **' und erstelle einen kostenlosen Key. Kopiere ihn, füge ihn hier ein und starte das Tracking.'**
   String get createKeyInstruction;
+
+  /// No description provided for @preferences.
+  ///
+  /// In de, this message translates to:
+  /// **'Einstellungen'**
+  String get preferences;
+
+  /// No description provided for @integrations.
+  ///
+  /// In de, this message translates to:
+  /// **'Integrationen'**
+  String get integrations;
+
+  /// No description provided for @accountAndData.
+  ///
+  /// In de, this message translates to:
+  /// **'Konto & Daten'**
+  String get accountAndData;
 
   /// No description provided for @enterApiKeyError.
   ///

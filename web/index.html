@@ -40,16 +40,89 @@
   <title>Kalorat | Companion for the Climb</title>
   <link rel="manifest" href="manifest.json">
 
+  <!-- Preconnect to Gemini API for faster first request -->
+  <link rel="preconnect" href="https://generativelanguage.googleapis.com">
+  <link rel="dns-prefetch" href="https://generativelanguage.googleapis.com">
+
   <style>
     body {
       background-color: #FAFAFC;
       margin: 0;
       padding: 0;
+      height: 100vh;
+      width: 100vw;
+      overflow: hidden;
+    }
+
+    /* Splash Screen Styles */
+    #splash {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: #0F5838;
+      /* Styrian Forest Green */
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      transition: opacity 0.5s ease-out;
+    }
+
+    #splash.fade-out {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .splash-logo {
+      width: 120px;
+      height: 120px;
+      background-image: url('icons/Icon-masked-192.png');
+      /* Fallback */
+      background-image: url('icons/Icon-192.png');
+      background-size: contain;
+      background-position: center;
+      background-repeat: no-repeat;
+      margin-bottom: 24px;
+      animation: pulse 2s infinite ease-in-out;
+    }
+
+    .splash-text {
+      color: #FAFAFC;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-size: 24px;
+      font-weight: 300;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      opacity: 0.9;
+    }
+
+    @keyframes pulse {
+      0% {
+        transform: scale(1);
+        opacity: 1;
+      }
+
+      50% {
+        transform: scale(1.05);
+        opacity: 0.8;
+      }
+
+      100% {
+        transform: scale(1);
+        opacity: 1;
+      }
     }
   </style>
 </head>
 
 <body>
+  <div id="splash">
+    <div class="splash-logo"></div>
+    <div class="splash-text">Kalorat</div>
+  </div>
   <script>
     let serviceWorkerRegistration;
     let isUpdatePending = false;
@@ -111,8 +184,52 @@
     };
 
     registerServiceWorker();
+
+    // Auto-hide splash when Flutter engine is ready
+    window.addEventListener('load', function () {
+      // Create a timeout fallback just in case Flutter takes too long or fails silently
+      // But typically _flutter.loader.loadEntrypoint will handle this.
+      // Since we use flutter_bootstrap.js, we should hook into the app running.
+
+      // Ideally we'd use onEntrypointLoaded, but with the default index.html structure
+      // we can just listen for the first frame or set a reasonable timeout if we don't have hooks.
+    });
   </script>
-  <script src="flutter_bootstrap.js" async></script>
+  <script src="flutter_bootstrap.js" async onEntrypointLoaded="onEntrypointLoaded"></script>
+  <script>
+    // Hook into Flutter bootstrap to remove splash
+    // Note: The actual flutter_bootstrap.js might not expose onEntrypointLoaded as a global callback attribute directly depending on version,
+    // but usually we can customize the loader. 
+    // For standard Flutter Web, typically we inject the app runner.
+
+    // Simplest robust method for PWA: Remove splash when the app is "ready".
+    // Flutter Web apps usually remove the splash automatically if it's configured in manifest/index, 
+    // but here we did a custom one.
+
+    // Let's modify the flutter_bootstrap.js loading slightly to handle the splash removal.
+    // Since we can't easily modify the pre-compiled logic, we'll use a MutationObserver 
+    // to detect when Flutter injects the canvas/semantics.
+
+    const observer = new MutationObserver((mutations) => {
+      for (const mutation of mutations) {
+        for (const node of mutation.addedNodes) {
+          if (node.tagName === 'FLUTTER-VIEW') {
+            // Flutter view added, fade out splash
+            setTimeout(() => {
+              const splash = document.getElementById('splash');
+              if (splash) {
+                splash.classList.add('fade-out');
+                setTimeout(() => splash.remove(), 500);
+              }
+            }, 200); // Slight delay to ensure first frame render
+            observer.disconnect();
+          }
+        }
+      }
+    });
+
+    observer.observe(document.body, { childList: true, subtree: true });
+  </script>
 </body>
 
 </html>

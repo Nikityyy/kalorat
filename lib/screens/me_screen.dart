@@ -9,7 +9,6 @@ import '../widgets/common/primary_button.dart';
 import '../widgets/me/today_stats_grid.dart';
 import '../widgets/me/weight_chart.dart';
 import '../widgets/me/weight_list.dart';
-import '../widgets/me/reminders_section.dart';
 import 'onboarding/onboarding_flow.dart';
 import 'settings_screen.dart';
 import 'add_weight_screen.dart';
@@ -103,8 +102,6 @@ class _MeScreenState extends State<MeScreen> {
                 onDelete: (weight) => _confirmDeleteWeight(weight),
               ),
             ],
-            const SizedBox(height: 32),
-            const RemindersSection(),
             const SizedBox(height: 40),
           ],
         ),

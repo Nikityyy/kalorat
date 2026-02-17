@@ -9,6 +9,7 @@ import 'screens/onboarding/onboarding_flow.dart';
 import 'theme/app_colors.dart';
 import 'theme/app_theme.dart';
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -76,6 +77,14 @@ class KaloratApp extends StatelessWidget {
             return MaterialApp(
               debugShowCheckedModeBanner: false,
               title: 'Kalorat',
+              scrollBehavior: const MaterialScrollBehavior().copyWith(
+                dragDevices: {
+                  PointerDeviceKind.mouse,
+                  PointerDeviceKind.touch,
+                  PointerDeviceKind.stylus,
+                  PointerDeviceKind.unknown,
+                },
+              ),
               theme: AppTheme.lightTheme,
               themeMode: ThemeMode.light, // Force light mode
               locale: Locale(provider.language),

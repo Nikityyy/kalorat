@@ -1,14 +1,13 @@
-import 'dart:io';
 import '../utils/platform_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:path_provider/path_provider.dart';
 import '../extensions/l10n_extension.dart';
 import '../models/models.dart';
 import '../providers/app_provider.dart';
 import '../services/auth_service.dart';
+import '../services/notification_service.dart';
 
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
@@ -114,6 +113,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
+          // 1. Profile
           _buildSection(l10n.profile, [
             _buildTextField(l10n.name, _nameController),
             _buildTextField(
@@ -132,115 +132,274 @@ class _SettingsScreenState extends State<SettingsScreen> {
             const SizedBox(height: 24),
             _buildActivityLevelSelector(provider, user),
           ]),
-          if (PlatformUtils.isWeb) ...[
-            const SizedBox(height: 24),
-            _buildHealthSection(provider, user),
-          ] else ...[
-            const SizedBox(height: 24),
-            _buildHealthSection(provider, user),
-          ],
           const SizedBox(height: 24),
-          _buildSection(l10n.apiKey, [
-            _buildTextField(
-              l10n.geminiApiKeyLabel,
-              _apiKeyController,
-              obscureText: true,
-            ),
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Text(
-                l10n.apiKeyInfo,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: AppColors.slate.withValues(alpha: 0.6),
-                ),
-              ),
-            ),
-          ]),
+
+          // 2. Preferences (Precision Mode)
+          _buildPreferencesSection(provider, user, l10n),
           const SizedBox(height: 24),
-          _buildSection(l10n.notifications, [
-            SwitchListTile(
-              title: Text(
-                l10n.mealReminders,
-                style: const TextStyle(color: AppColors.slate),
-              ),
-              value: user.mealRemindersEnabled,
-              activeThumbColor: AppColors.primary,
-              onChanged: (v) => provider.updateUser(mealRemindersEnabled: v),
-            ),
-            SwitchListTile(
-              title: Text(
-                l10n.weightReminders,
-                style: const TextStyle(color: AppColors.slate),
-              ),
-              value: user.weightRemindersEnabled,
-              activeThumbColor: AppColors.primary,
-              onChanged: (v) => provider.updateUser(weightRemindersEnabled: v),
-            ),
-            SwitchListTile(
-              title: const Text(
-                'Präzisions-Modus (Gramm)',
-                style: TextStyle(color: AppColors.slate),
-              ),
-              subtitle: const Text(
-                'Analyse zeigt Gramm statt Portionen',
-                style: TextStyle(fontSize: 12),
-              ),
-              value: user.useGramsByDefault,
-              activeThumbColor: AppColors.primary,
-              onChanged: (v) => provider.updateUser(useGramsByDefault: v),
-            ),
-          ]),
+
+          // 3. Notifications
+          _buildNotificationsSection(provider, user, l10n),
           const SizedBox(height: 24),
-          _buildHealthSection(provider, user),
+
+          // 4. Integrations (API Key + Health)
+          _buildIntegrationsSection(provider, user, l10n),
+          const SizedBox(height: 24),
+
+          // 5. Account & Data
+          _buildAccountDataSection(provider, user, l10n),
+
           const SizedBox(height: 24),
           _buildLegalSection(provider, l10n),
-          const SizedBox(height: 24),
-          _buildAccountSection(provider, user),
-          const SizedBox(height: 24),
-          _buildSection(l10n.data, [
-            ListTile(
-              leading: const Icon(Icons.upload, color: AppColors.primary),
-              title: Text(
-                l10n.exportData,
-                style: const TextStyle(color: AppColors.slate),
-              ),
-              onTap: () async {
-                final path = await provider.exportData();
-                if (path != null && mounted) {
-                  await SharePlus.instance.share(
-                    ShareParams(files: [XFile(path)], text: 'Kalorat Backup'),
-                  );
-                }
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.download, color: AppColors.primary),
-              title: Text(
-                l10n.importData,
-                style: const TextStyle(color: AppColors.slate),
-              ),
-              onTap: () async {
-                final success = await provider.importData();
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        success ? l10n.importSuccessful : l10n.importFailed,
-                      ),
-                      backgroundColor: success
-                          ? AppColors.success
-                          : AppColors.error,
-                    ),
-                  );
-                }
-              },
-            ),
-          ]),
           const SizedBox(height: 32),
           PrimaryButton(text: l10n.saveChanges, onPressed: _saveChanges),
           const SizedBox(height: 32),
         ],
+      ),
+    );
+  }
+
+  Widget _buildPreferencesSection(
+    AppProvider provider,
+    UserModel user,
+    dynamic l10n,
+  ) {
+    return _buildSection(l10n.preferences, [
+      SwitchListTile(
+        title: const Text(
+          'Präzisions-Modus (Gramm)',
+          style: TextStyle(color: AppColors.slate),
+        ),
+        subtitle: const Text(
+          'Analyse zeigt Gramm statt Portionen',
+          style: TextStyle(fontSize: 12),
+        ),
+        value: user.useGramsByDefault,
+        activeThumbColor: AppColors.primary,
+        onChanged: (v) => provider.updateUser(useGramsByDefault: v),
+      ),
+    ]);
+  }
+
+  Widget _buildNotificationsSection(
+    AppProvider provider,
+    UserModel user,
+    dynamic l10n,
+  ) {
+    return _buildSection(l10n.notifications, [
+      if (PlatformUtils.isWeb) ...[
+        // Web: Show disabled options with "Only in app" badge
+        Opacity(
+          opacity: 0.5,
+          child: ListTile(
+            title: Text(
+              l10n.mealReminders,
+              style: const TextStyle(color: AppColors.slate),
+            ),
+            trailing: _buildOnlyInAppBadge(l10n),
+          ),
+        ),
+        Opacity(
+          opacity: 0.5,
+          child: ListTile(
+            title: Text(
+              l10n.weightReminders,
+              style: const TextStyle(color: AppColors.slate),
+            ),
+            trailing: _buildOnlyInAppBadge(l10n),
+          ),
+        ),
+      ] else ...[
+        // Mobile: Functional switches with permission check
+        SwitchListTile(
+          title: Text(
+            l10n.mealReminders,
+            style: const TextStyle(color: AppColors.slate),
+          ),
+          value: user.mealRemindersEnabled,
+          activeThumbColor: AppColors.primary,
+          onChanged: (v) async {
+            if (v) {
+              final granted = await NotificationService().requestPermissions();
+              if (granted) {
+                provider.updateUser(mealRemindersEnabled: true);
+              } else {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(l10n.grantPermission),
+                      backgroundColor: AppColors.error,
+                    ),
+                  );
+                }
+              }
+            } else {
+              provider.updateUser(mealRemindersEnabled: false);
+            }
+          },
+        ),
+        SwitchListTile(
+          title: Text(
+            l10n.weightReminders,
+            style: const TextStyle(color: AppColors.slate),
+          ),
+          value: user.weightRemindersEnabled,
+          activeThumbColor: AppColors.primary,
+          onChanged: (v) async {
+            if (v) {
+              final granted = await NotificationService().requestPermissions();
+              if (granted) {
+                provider.updateUser(weightRemindersEnabled: true);
+              } else {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(l10n.grantPermission),
+                      backgroundColor: AppColors.error,
+                    ),
+                  );
+                }
+              }
+            } else {
+              provider.updateUser(weightRemindersEnabled: false);
+            }
+          },
+        ),
+      ],
+    ]);
+  }
+
+  Widget _buildIntegrationsSection(
+    AppProvider provider,
+    UserModel user,
+    dynamic l10n,
+  ) {
+    return _buildSection(l10n.integrations, [
+      // 1. Gemini API Key
+      _buildTextField(
+        l10n.geminiApiKeyLabel,
+        _apiKeyController,
+        obscureText: true,
+      ),
+      Padding(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+        child: Text(
+          l10n.apiKeyInfo,
+          style: TextStyle(
+            fontSize: 12,
+            color: AppColors.slate.withValues(alpha: 0.6),
+          ),
+        ),
+      ),
+      const Divider(height: 1, indent: 16, endIndent: 16),
+
+      // 2. Health Integration
+      if (PlatformUtils.isWeb) ...[
+        Opacity(
+          opacity: 0.5,
+          child: ListTile(
+            leading: Icon(
+              Icons.favorite_border,
+              color: AppColors.slate.withValues(alpha: 0.5),
+            ),
+            title: Text(
+              l10n.syncWith(PlatformUtils.healthAppName),
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                color: AppColors.slate.withValues(alpha: 0.7),
+              ),
+            ),
+            trailing: _buildOnlyInAppBadge(l10n),
+          ),
+        ),
+      ] else ...[
+        SwitchListTile(
+          title: Text(
+            l10n.syncWith(PlatformUtils.healthAppName),
+            style: const TextStyle(
+              fontWeight: FontWeight.w600,
+              color: AppColors.slate,
+            ),
+          ),
+          subtitle: Text(
+            user.healthSyncEnabled ? l10n.connected : l10n.disconnected,
+            style: TextStyle(
+              fontSize: 12,
+              color: user.healthSyncEnabled
+                  ? AppColors.success
+                  : AppColors.slate.withValues(alpha: 0.6),
+            ),
+          ),
+          value: user.healthSyncEnabled,
+          activeThumbColor: AppColors.primary,
+          onChanged: (val) async {
+            if (val) {
+              final success = await provider.healthService.requestPermissions();
+              if (success) {
+                provider.updateUser(healthSyncEnabled: true);
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(l10n.healthConnected),
+                      backgroundColor: AppColors.success,
+                    ),
+                  );
+                }
+              } else {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(l10n.healthConnectionFailed),
+                      backgroundColor: AppColors.error,
+                    ),
+                  );
+                }
+              }
+            } else {
+              provider.updateUser(healthSyncEnabled: false);
+            }
+          },
+        ),
+        if (user.healthSyncEnabled) ...[
+          const Divider(height: 1, indent: 16, endIndent: 16),
+          SwitchListTile(
+            title: Text(
+              l10n.syncMeals,
+              style: const TextStyle(fontSize: 14, color: AppColors.slate),
+            ),
+            value: user.syncMealsToHealth,
+            activeThumbColor: AppColors.primary,
+            onChanged: (val) => provider.updateUser(syncMealsToHealth: val),
+          ),
+          SwitchListTile(
+            title: Text(
+              l10n.syncWeight,
+              style: const TextStyle(fontSize: 14, color: AppColors.slate),
+            ),
+            value: user.syncWeightToHealth,
+            activeThumbColor: AppColors.primary,
+            onChanged: (val) => provider.updateUser(syncWeightToHealth: val),
+          ),
+        ],
+      ],
+    ]);
+  }
+
+  Widget _buildOnlyInAppBadge(dynamic l10n) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: AppColors.pebble.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(AppTheme.borderRadius / 2),
+        border: Border.all(color: AppColors.slate.withValues(alpha: 0.2)),
+      ),
+      child: Text(
+        l10n.featureOnlyInApp,
+        style: TextStyle(
+          fontSize: 11,
+          color: AppColors.slate.withValues(alpha: 0.6),
+          fontWeight: FontWeight.w500,
+        ),
       ),
     );
   }
@@ -508,133 +667,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
-  Widget _buildHealthSection(AppProvider provider, UserModel user) {
-    final l10n = context.l10n;
-    final healthAppName = PlatformUtils.healthAppName;
-
-    // On web, show grayed-out section with "only available in app" message
-    if (PlatformUtils.isWeb) {
-      return _buildSection(l10n.healthIntegration, [
-        Opacity(
-          opacity: 0.5,
-          child: ListTile(
-            leading: Icon(
-              Icons.favorite_border,
-              color: AppColors.slate.withValues(alpha: 0.5),
-            ),
-            title: Text(
-              l10n.syncWith(healthAppName),
-              style: TextStyle(
-                fontWeight: FontWeight.w600,
-                color: AppColors.slate.withValues(alpha: 0.7),
-              ),
-            ),
-            trailing: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: AppColors.pebble.withValues(alpha: 0.5),
-                borderRadius: BorderRadius.circular(AppTheme.borderRadius / 2),
-                border: Border.all(
-                  color: AppColors.slate.withValues(alpha: 0.2),
-                ),
-              ),
-              child: Text(
-                l10n.featureOnlyInApp,
-                style: TextStyle(
-                  fontSize: 11,
-                  color: AppColors.slate.withValues(alpha: 0.6),
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ),
-          ),
-        ),
-      ]);
-    }
-
-    // Native platform: show full health integration options
-    return _buildSection(l10n.healthIntegration, [
-      SwitchListTile(
-        title: Text(
-          l10n.syncWith(healthAppName),
-          style: const TextStyle(
-            fontWeight: FontWeight.w600,
-            color: AppColors.slate,
-          ),
-        ),
-        subtitle: Text(
-          user.healthSyncEnabled ? l10n.connected : l10n.disconnected,
-          style: TextStyle(
-            fontSize: 12,
-            color: user.healthSyncEnabled
-                ? AppColors.success
-                : AppColors.slate.withValues(alpha: 0.6),
-          ),
-        ),
-        value: user.healthSyncEnabled,
-        activeThumbColor: AppColors.primary,
-        onChanged: (val) async {
-          if (val) {
-            // Try to connect
-            final success = await provider.healthService.requestPermissions();
-            if (success) {
-              provider.updateUser(healthSyncEnabled: true);
-              if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(l10n.healthConnected),
-                    backgroundColor: AppColors.success,
-                  ),
-                );
-              }
-            } else {
-              // Failed
-              if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(l10n.healthConnectionFailed),
-                    backgroundColor: AppColors.error,
-                  ),
-                );
-              }
-            }
-          } else {
-            // Disconnect
-            provider.updateUser(healthSyncEnabled: false);
-          }
-        },
-      ),
-      if (user.healthSyncEnabled) ...[
-        const Divider(height: 1, indent: 16, endIndent: 16),
-        SwitchListTile(
-          title: Text(
-            l10n.syncMeals,
-            style: const TextStyle(fontSize: 14, color: AppColors.slate),
-          ),
-          value: user.syncMealsToHealth,
-          activeThumbColor: AppColors.primary,
-          onChanged: (val) => provider.updateUser(syncMealsToHealth: val),
-        ),
-        SwitchListTile(
-          title: Text(
-            l10n.syncWeight,
-            style: const TextStyle(fontSize: 14, color: AppColors.slate),
-          ),
-          value: user.syncWeightToHealth,
-          activeThumbColor: AppColors.primary,
-          onChanged: (val) => provider.updateUser(syncWeightToHealth: val),
-        ),
-      ],
-    ]);
-  }
-
-  Widget _buildAccountSection(AppProvider provider, UserModel user) {
-    final l10n = context.l10n;
+  Widget _buildAccountDataSection(
+    AppProvider provider,
+    UserModel user,
+    dynamic l10n,
+  ) {
     final authService = AuthService();
     final isGuest = user.isGuest;
 
-    return _buildSection(l10n.account, [
-      // Show current account status
+    return _buildSection(l10n.accountAndData, [
+      // Account Status
       ListTile(
         leading: Icon(
           isGuest ? Icons.person_outline : Icons.person,
@@ -660,7 +702,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
       const Divider(height: 1, indent: 16, endIndent: 16),
 
       if (isGuest) ...[
-        // Guest: Show login option
         ListTile(
           leading: const Icon(Icons.login, color: AppColors.primary),
           title: Text(
@@ -701,7 +742,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
           },
         ),
       ] else ...[
-        // Logged in: Show account options
         ListTile(
           leading: const Icon(Icons.sync, color: AppColors.primary),
           title: Text(
@@ -721,7 +761,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
               : null,
           onTap: () async {
             await provider.syncService.syncToCloud();
-            await provider.updateUser(lastSyncTimestamp: DateTime.now());
             if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
@@ -733,49 +772,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
           },
         ),
         ListTile(
-          leading: const Icon(Icons.download, color: AppColors.primary),
-          title: Text(
-            l10n.requestData,
-            style: const TextStyle(color: AppColors.slate),
-          ),
-          onTap: () async {
-            try {
-              final jsonString = await provider.syncService.exportUserData();
-
-              // Write to temp file for sharing
-              final directory = await getTemporaryDirectory();
-              final fileName =
-                  'kalorat_user_data_${DateTime.now().toIso8601String().replaceAll(':', '-')}.json';
-              final file = File('${directory.path}/$fileName');
-              await file.writeAsString(jsonString);
-
-              if (mounted) {
-                await SharePlus.instance.share(
-                  ShareParams(
-                    files: [XFile(file.path)],
-                    text: 'Kalorat User Data',
-                  ),
-                );
-              }
-            } catch (e) {
-              if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      l10n.error,
-                    ), // Use generic error or specific message
-                    backgroundColor: AppColors.error,
-                  ),
-                );
-              }
-            }
-          },
-        ),
-        ListTile(
-          leading: const Icon(Icons.logout, color: AppColors.slate),
+          leading: const Icon(Icons.logout, color: AppColors.error),
           title: Text(
             l10n.logOut,
-            style: const TextStyle(color: AppColors.slate),
+            style: const TextStyle(color: AppColors.error),
           ),
           onTap: () async {
             final confirm = await showDialog<bool>(
@@ -874,6 +874,44 @@ class _SettingsScreenState extends State<SettingsScreen> {
           },
         ),
       ],
+      const Divider(height: 1, indent: 16, endIndent: 16),
+
+      // Data Export/Import
+      ListTile(
+        leading: const Icon(Icons.upload, color: AppColors.primary),
+        title: Text(
+          l10n.exportData,
+          style: const TextStyle(color: AppColors.slate),
+        ),
+        onTap: () async {
+          final path = await provider.exportData();
+          if (path != null && mounted) {
+            await SharePlus.instance.share(
+              ShareParams(files: [XFile(path)], text: 'Kalorat Backup'),
+            );
+          }
+        },
+      ),
+      ListTile(
+        leading: const Icon(Icons.download, color: AppColors.primary),
+        title: Text(
+          l10n.importData,
+          style: const TextStyle(color: AppColors.slate),
+        ),
+        onTap: () async {
+          final success = await provider.importData();
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  success ? l10n.importSuccessful : l10n.importFailed,
+                ),
+                backgroundColor: success ? AppColors.success : AppColors.error,
+              ),
+            );
+          }
+        },
+      ),
     ]);
   }
 
