@@ -93,6 +93,7 @@ class SyncService {
           isGuest: false,
           supabaseUserId: userId,
           photoUrl: profileData['photo_url'],
+          dayStartHour: profileData['day_start_hour'] ?? 0,
         );
       } else {
         // Merge cloud profile into local (cloud is source of truth for profile fields).
@@ -106,6 +107,7 @@ class SyncService {
             ? DateTime.tryParse(profileData['birthdate'])
             : null;
         final cloudPhoto = profileData['photo_url'] as String?;
+        final cloudDayStart = profileData['day_start_hour'] as int?;
 
         currentUser = currentUser.copyWith(
           name: (cloudName != null && cloudName.isNotEmpty)
@@ -117,6 +119,7 @@ class SyncService {
           goal: cloudGoal ?? currentUser.goalIndex,
           gender: cloudGender ?? currentUser.genderIndex,
           photoUrl: cloudPhoto ?? currentUser.photoUrl,
+          dayStartHour: cloudDayStart ?? currentUser.dayStartHour,
         );
       }
       await _db.saveUser(currentUser);
@@ -218,6 +221,7 @@ class SyncService {
       'language': user.language,
       'goal': user.goalIndex,
       'gender': user.genderIndex,
+      'day_start_hour': user.dayStartHour,
       'updated_at': DateTime.now().toIso8601String(),
       'photo_url': user.photoUrl,
     });

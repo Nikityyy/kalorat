@@ -35,6 +35,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   bool _isAnalyzing = false;
   List<String> _capturedPhotos = [];
   bool _isTakingMore = false;
+  String? _mealContext;
 
   @override
   void initState() {
@@ -183,7 +184,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     }
   }
 
-  Future<void> _analyzeMeal() async {
+  Future<void> _analyzeMeal({String? mealContext}) async {
     if (_capturedPhotos.isEmpty) return;
 
     final provider = context.read<AppProvider>();
@@ -222,6 +223,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       final result = await gemini.analyzeMeal(
         _capturedPhotos,
         useGrams: provider.user?.useGramsByDefault ?? false,
+        mealContext: mealContext,
       );
 
       if (result != null) {
@@ -341,6 +343,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     setState(() {
       _capturedPhotos = [];
       _isTakingMore = false;
+      _mealContext = null;
     });
   }
 
@@ -1033,7 +1036,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   ActionButton(
                     text: l10n.startAnalysis,
                     isLoading: _isAnalyzing,
-                    onPressed: _analyzeMeal,
+                    onPressed: _showContextAndAnalyze,
                   ),
                 ],
               ),
@@ -1042,5 +1045,128 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         ],
       ),
     );
+  }
+
+  Future<void> _showContextAndAnalyze() async {
+    final l10n = context.l10n;
+    final contextController = TextEditingController(text: _mealContext);
+    String? submittedContext;
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) => Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(sheetContext).viewInsets.bottom,
+        ),
+        child: Container(
+          decoration: const BoxDecoration(
+            color: AppColors.glacialWhite,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Drag handle
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: AppColors.borderGrey,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                l10n.mealContextTitle,
+                style: AppTypography.displayMedium.copyWith(fontSize: 22),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: contextController,
+                autofocus: true,
+                maxLines: 3,
+                style: AppTypography.bodyMedium,
+                decoration: InputDecoration(
+                  hintText: l10n.mealContextHint,
+                  hintStyle: AppTypography.bodyMedium.copyWith(
+                    color: AppColors.slate.withValues(alpha: 0.5),
+                  ),
+                  filled: true,
+                  fillColor: AppColors.pebble,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(AppTheme.borderRadius),
+                    borderSide: BorderSide.none,
+                  ),
+                  contentPadding: const EdgeInsets.all(16),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () {
+                        submittedContext = null;
+                        Navigator.pop(sheetContext);
+                      },
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: AppColors.pebble),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(
+                            AppTheme.borderRadius,
+                          ),
+                        ),
+                      ),
+                      child: Text(
+                        l10n.mealContextSkip,
+                        style: const TextStyle(color: AppColors.slate),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    flex: 2,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        final text = contextController.text.trim();
+                        submittedContext = text.isNotEmpty ? text : null;
+                        Navigator.pop(sheetContext);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.styrianForest,
+                        foregroundColor: AppColors.glacialWhite,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(
+                            AppTheme.borderRadius,
+                          ),
+                        ),
+                        elevation: 0,
+                      ),
+                      child: Text(
+                        l10n.mealContextAnalyze,
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    if (mounted) {
+      setState(() => _mealContext = submittedContext);
+      await _analyzeMeal(mealContext: submittedContext);
+    }
   }
 }

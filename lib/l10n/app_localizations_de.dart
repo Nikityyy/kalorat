@@ -816,4 +816,36 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get laterButton => 'Später';
+
+  @override
+  String get mealContextTitle => 'Noch etwas hinzufügen?';
+
+  @override
+  String get mealContextHint =>
+      'z.B. Vanillepudding, 200g, Angaben von der Packung...';
+
+  @override
+  String get mealContextSkip => 'Überspringen';
+
+  @override
+  String get mealContextAnalyze => 'Analysieren';
+
+  @override
+  String get ml => 'ml';
+
+  @override
+  String get saveToGallery => 'Foto speichern';
+
+  @override
+  String get saveToGallerySuccess => 'Foto in Galerie gespeichert!';
+
+  @override
+  String get saveToGalleryError => 'Foto konnte nicht gespeichert werden.';
+
+  @override
+  String get dayStartsAt => 'Tag beginnt um';
+
+  @override
+  String get dayStartsAtHint =>
+      'Mahlzeiten, die vor dieser Uhrzeit gespeichert werden, zählen zum Vortag';
 }

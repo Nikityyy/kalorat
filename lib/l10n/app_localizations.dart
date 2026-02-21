@@ -1645,6 +1645,66 @@ abstract class AppLocalizations {
   /// In de, this message translates to:
   /// **'Später'**
   String get laterButton;
+
+  /// No description provided for @mealContextTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Noch etwas hinzufügen?'**
+  String get mealContextTitle;
+
+  /// No description provided for @mealContextHint.
+  ///
+  /// In de, this message translates to:
+  /// **'z.B. Vanillepudding, 200g, Angaben von der Packung...'**
+  String get mealContextHint;
+
+  /// No description provided for @mealContextSkip.
+  ///
+  /// In de, this message translates to:
+  /// **'Überspringen'**
+  String get mealContextSkip;
+
+  /// No description provided for @mealContextAnalyze.
+  ///
+  /// In de, this message translates to:
+  /// **'Analysieren'**
+  String get mealContextAnalyze;
+
+  /// No description provided for @ml.
+  ///
+  /// In de, this message translates to:
+  /// **'ml'**
+  String get ml;
+
+  /// No description provided for @saveToGallery.
+  ///
+  /// In de, this message translates to:
+  /// **'Foto speichern'**
+  String get saveToGallery;
+
+  /// No description provided for @saveToGallerySuccess.
+  ///
+  /// In de, this message translates to:
+  /// **'Foto in Galerie gespeichert!'**
+  String get saveToGallerySuccess;
+
+  /// No description provided for @saveToGalleryError.
+  ///
+  /// In de, this message translates to:
+  /// **'Foto konnte nicht gespeichert werden.'**
+  String get saveToGalleryError;
+
+  /// No description provided for @dayStartsAt.
+  ///
+  /// In de, this message translates to:
+  /// **'Tag beginnt um'**
+  String get dayStartsAt;
+
+  /// No description provided for @dayStartsAtHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Mahlzeiten, die vor dieser Uhrzeit gespeichert werden, zählen zum Vortag'**
+  String get dayStartsAtHint;
 }
 
 class _AppLocalizationsDelegate

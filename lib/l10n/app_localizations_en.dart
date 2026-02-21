@@ -809,4 +809,36 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get laterButton => 'Later';
+
+  @override
+  String get mealContextTitle => 'Anything to add?';
+
+  @override
+  String get mealContextHint =>
+      'e.g. Vanilla pudding, 200g, info from label...';
+
+  @override
+  String get mealContextSkip => 'Skip';
+
+  @override
+  String get mealContextAnalyze => 'Analyze';
+
+  @override
+  String get ml => 'ml';
+
+  @override
+  String get saveToGallery => 'Save photo';
+
+  @override
+  String get saveToGallerySuccess => 'Photo saved to gallery!';
+
+  @override
+  String get saveToGalleryError => 'Could not save photo.';
+
+  @override
+  String get dayStartsAt => 'Day starts at';
+
+  @override
+  String get dayStartsAtHint =>
+      'Meals logged before this time count towards the previous day';
 }

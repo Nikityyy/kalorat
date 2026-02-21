@@ -72,6 +72,12 @@ class UserModel extends HiveObject {
   @HiveField(20)
   final int activityLevelIndex;
 
+  /// The hour (0–6) at which a new "day" begins. Meals logged after midnight
+  /// but before this hour are attributed to the previous calendar day.
+  /// Default 0 = midnight = standard behaviour.
+  @HiveField(21)
+  final int dayStartHour;
+
   // --------------- Enum accessors ---------------
 
   Goal get goal => Goal.fromIndex(goalIndex);
@@ -105,6 +111,7 @@ class UserModel extends HiveObject {
     this.photoUrl,
     this.useGramsByDefault = false,
     int activityLevel = 0,
+    this.dayStartHour = 0,
   }) : height = height.clamp(50.0, 300.0),
        weight = weight.clamp(1.0, 500.0),
        goalIndex = goal.clamp(0, Goal.values.length - 1),
@@ -159,6 +166,7 @@ class UserModel extends HiveObject {
          photoUrl: photoUrl,
          useGramsByDefault: useGramsByDefault,
          activityLevel: activityLevel.index,
+         dayStartHour: 0,
        );
 
   // --------------- Computed properties ---------------
@@ -267,6 +275,7 @@ class UserModel extends HiveObject {
     String? photoUrl,
     bool? useGramsByDefault,
     int? activityLevel,
+    int? dayStartHour,
   }) {
     return UserModel(
       name: name ?? this.name,
@@ -291,6 +300,7 @@ class UserModel extends HiveObject {
       photoUrl: photoUrl ?? this.photoUrl,
       useGramsByDefault: useGramsByDefault ?? this.useGramsByDefault,
       activityLevel: activityLevel ?? activityLevelIndex,
+      dayStartHour: dayStartHour ?? this.dayStartHour,
     );
   }
 
@@ -318,6 +328,7 @@ class UserModel extends HiveObject {
     'photoUrl': photoUrl,
     'useGramsByDefault': useGramsByDefault,
     'activityLevel': activityLevelIndex,
+    'dayStartHour': dayStartHour,
   };
 
   factory UserModel.fromJson(Map<String, dynamic> json) => UserModel(
@@ -344,5 +355,6 @@ class UserModel extends HiveObject {
     photoUrl: json['photoUrl'],
     useGramsByDefault: json['useGramsByDefault'] ?? false,
     activityLevel: json['activityLevel'] ?? 0,
+    dayStartHour: (json['dayStartHour'] as int?) ?? 0,
   );
 }

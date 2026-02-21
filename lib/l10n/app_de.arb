@@ -313,5 +313,16 @@
   "updateAvailable": "Update verfügbar",
   "updateReady": "Eine neue Version von Kalorat ist bereit. Jetzt aktualisieren für die neuesten Features.",
   "reloadButton": "Neu laden",
-  "laterButton": "Später"
+  "laterButton": "Später",
+
+  "mealContextTitle": "Noch etwas hinzufügen?",
+  "mealContextHint": "z.B. Vanillepudding, 200g, Angaben von der Packung...",
+  "mealContextSkip": "Überspringen",
+  "mealContextAnalyze": "Analysieren",
+  "ml": "ml",
+  "saveToGallery": "Foto speichern",
+  "saveToGallerySuccess": "Foto in Galerie gespeichert!",
+  "saveToGalleryError": "Foto konnte nicht gespeichert werden.",
+  "dayStartsAt": "Tag beginnt um",
+  "dayStartsAtHint": "Mahlzeiten, die vor dieser Uhrzeit gespeichert werden, zählen zum Vortag"
 }

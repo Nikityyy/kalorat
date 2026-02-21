@@ -17,6 +17,18 @@ class DatabaseService {
   final Map<String, List<MealModel>> _mealsDateIndex = {};
   final Set<String> _daysWithMeals = {};
 
+  /// Hour (0–6) at which a new calendar day starts for meal attribution.
+  /// 0 = midnight (default). 4 = meals logged 00:00–03:59 count as previous day.
+  int _dayStartHour = 0;
+
+  int get dayStartHour => _dayStartHour;
+
+  /// Update the day-start offset and rebuild indices so history reflects it.
+  Future<void> setDayStartHour(int hour) async {
+    _dayStartHour = hour.clamp(0, 6);
+    await _buildIndices();
+  }
+
   Future<void> init() async {
     // On web, Hive uses IndexedDB and doesn't need a path
     // On mobile, use the documents directory
@@ -91,8 +103,11 @@ class DatabaseService {
     }
   }
 
+  /// Returns the date key for a given timestamp, adjusted by [_dayStartHour].
+  /// A meal at 02:30 with dayStartHour=4 is attributed to the previous day.
   String _getDateKey(DateTime date) {
-    return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+    final adjusted = date.subtract(Duration(hours: _dayStartHour));
+    return '${adjusted.year}-${adjusted.month.toString().padLeft(2, '0')}-${adjusted.day.toString().padLeft(2, '0')}';
   }
 
   // Settings operations

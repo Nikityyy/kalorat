@@ -100,6 +100,9 @@ class AppProvider extends ChangeNotifier {
 
     // Load user from DB
     _user = _databaseService.getUser();
+    if (_user != null) {
+      await _databaseService.setDayStartHour(_user!.dayStartHour);
+    }
 
     // If session exists, sync from cloud to restore data
     final session = Supabase.instance.client.auth.currentSession;
@@ -252,6 +255,7 @@ class AppProvider extends ChangeNotifier {
     String? photoUrl,
     bool? useGramsByDefault,
     int? activityLevel,
+    int? dayStartHour,
   }) async {
     // If user is null (e.g. during onboarding before first save), create a new one
     // Use device language for new users instead of hardcoded 'en'
@@ -279,6 +283,7 @@ class AppProvider extends ChangeNotifier {
           isGuest: true,
           useGramsByDefault: false,
           activityLevel: 0,
+          dayStartHour: 0,
         );
 
     _user = currentUser.copyWith(
@@ -305,11 +310,16 @@ class AppProvider extends ChangeNotifier {
       photoUrl: photoUrl ?? currentUser.photoUrl,
       useGramsByDefault: useGramsByDefault ?? currentUser.useGramsByDefault,
       activityLevel: activityLevel ?? currentUser.activityLevelIndex,
+      dayStartHour: dayStartHour ?? currentUser.dayStartHour,
       // If new API key provided, save to secure storage and clear here.
       // If not, keep existing empty string (or whatever is there).
       // We don't want to overwrite with empty string if apiKey wasn't passed.
       geminiApiKey: apiKey != null ? '' : currentUser.geminiApiKey,
     );
+
+    if (dayStartHour != null) {
+      await _databaseService.setDayStartHour(dayStartHour);
+    }
 
     if (apiKey != null) {
       await _storageService.saveApiKey(apiKey);

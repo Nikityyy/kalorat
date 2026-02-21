@@ -178,6 +178,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
         activeThumbColor: AppColors.primary,
         onChanged: (v) => provider.updateUser(useGramsByDefault: v),
       ),
+      const Divider(height: 1, indent: 16, endIndent: 16),
+      _buildDayStartSelector(provider, user, l10n),
     ]);
   }
 
@@ -913,6 +915,67 @@ class _SettingsScreenState extends State<SettingsScreen> {
         },
       ),
     ]);
+  }
+
+  Widget _buildDayStartSelector(
+    AppProvider provider,
+    UserModel user,
+    dynamic l10n,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                l10n.dayStartsAt,
+                style: const TextStyle(fontSize: 16, color: AppColors.slate),
+              ),
+              DropdownButtonHideUnderline(
+                child: DropdownButton<int>(
+                  value: user.dayStartHour,
+                  alignment: Alignment.centerRight,
+                  icon: const Icon(
+                    Icons.arrow_drop_down,
+                    color: AppColors.primary,
+                  ),
+                  dropdownColor: AppColors.limestone,
+                  borderRadius: BorderRadius.circular(12),
+                  items: List.generate(7, (index) {
+                    final hourStr = index.toString().padLeft(2, '0');
+                    return DropdownMenuItem(
+                      value: index,
+                      child: Text(
+                        '$hourStr:00',
+                        style: AppTypography.bodyMedium,
+                      ),
+                    );
+                  }),
+                  onChanged: (value) {
+                    if (value != null) {
+                      provider.updateUser(dayStartHour: value);
+                    }
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          child: Text(
+            l10n.dayStartsAtHint,
+            style: TextStyle(
+              fontSize: 12,
+              color: AppColors.slate.withValues(alpha: 0.6),
+            ),
+          ),
+        ),
+      ],
+    );
   }
 
   Widget _buildLegalSection(AppProvider provider, dynamic l10n) {

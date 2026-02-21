@@ -313,5 +313,16 @@
   "updateAvailable": "Update Available",
   "updateReady": "A new version of Kalorat is ready. Update now to get the latest features.",
   "reloadButton": "Reload",
-  "laterButton": "Later"
+  "laterButton": "Later",
+
+  "mealContextTitle": "Anything to add?",
+  "mealContextHint": "e.g. Vanilla pudding, 200g, info from label...",
+  "mealContextSkip": "Skip",
+  "mealContextAnalyze": "Analyze",
+  "ml": "ml",
+  "saveToGallery": "Save photo",
+  "saveToGallerySuccess": "Photo saved to gallery!",
+  "saveToGalleryError": "Could not save photo.",
+  "dayStartsAt": "Day starts at",
+  "dayStartsAtHint": "Meals logged before this time count towards the previous day"
 }

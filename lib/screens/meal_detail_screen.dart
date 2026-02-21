@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import '../utils/platform_utils.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
@@ -14,6 +15,8 @@ import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 import '../theme/app_typography.dart';
 import '../widgets/inputs/action_button.dart';
+import 'package:gal/gal.dart';
+import 'package:share_plus/share_plus.dart';
 
 class MealDetailScreen extends StatefulWidget {
   final MealModel meal;
@@ -73,6 +76,50 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
       }
       if (_portionMultiplier < 0.1) _portionMultiplier = 0.1;
     });
+  }
+
+  Future<void> _saveToGallery() async {
+    final l10n = context.l10n;
+    if (_meal.photoPaths.isEmpty) return;
+    final path = _meal.photoPaths.first;
+
+    try {
+      if (kIsWeb) {
+        // On web: share/download the base64 image via share_plus
+        final bytes = base64Decode(path);
+        await SharePlus.instance.share(
+          ShareParams(
+            files: [
+              XFile.fromData(
+                bytes,
+                mimeType: 'image/jpeg',
+                name: 'kalorat_meal.jpg',
+              ),
+            ],
+          ),
+        );
+      } else {
+        // On mobile: save the file path directly to device gallery (camera roll)
+        await Gal.putImage(path, album: 'Kalorat');
+      }
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(l10n.saveToGallerySuccess),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(l10n.saveToGalleryError),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
   }
 
   Future<void> _retryAnalysis() async {
@@ -432,13 +479,27 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
                     onPressed: () => Navigator.pop(context),
                   ),
                 ),
-                CircleAvatar(
-                  backgroundColor: Colors.black26,
-                  child: IconButton(
-                    icon: const Icon(Icons.refresh, color: Colors.white),
-                    onPressed: _retryAnalysis,
-                    tooltip: 'Analyse neu starten',
-                  ),
+                Row(
+                  children: [
+                    if (_meal.photoPaths.isNotEmpty)
+                      CircleAvatar(
+                        backgroundColor: Colors.black26,
+                        child: IconButton(
+                          icon: const Icon(Icons.download, color: Colors.white),
+                          onPressed: _saveToGallery,
+                          tooltip: context.l10n.saveToGallery,
+                        ),
+                      ),
+                    const SizedBox(width: 8),
+                    CircleAvatar(
+                      backgroundColor: Colors.black26,
+                      child: IconButton(
+                        icon: const Icon(Icons.refresh, color: Colors.white),
+                        onPressed: _retryAnalysis,
+                        tooltip: 'Analyse neu starten',
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),

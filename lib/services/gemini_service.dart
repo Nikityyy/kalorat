@@ -131,6 +131,7 @@ class GeminiService {
   Future<Map<String, dynamic>?> analyzeMeal(
     List<String> imagePaths, {
     bool useGrams = false,
+    String? mealContext,
   }) async {
     if (apiKey.isEmpty) {
       throw GeminiError(GeminiErrorType.invalidApiKey, 'API key is not set');
@@ -177,6 +178,7 @@ class GeminiService {
           model,
           imagePaths,
           useGrams: useGrams,
+          mealContext: mealContext,
         );
 
         // Success! Save this model as preferred
@@ -214,6 +216,7 @@ class GeminiService {
     String modelName,
     List<String> imagePaths, {
     bool useGrams = false,
+    String? mealContext,
   }) async {
     try {
       // Prepare image parts in background to avoid UI jank
@@ -302,6 +305,12 @@ class GeminiService {
       // Build request body
       final Map<String, dynamic> requestBody;
 
+      // Build content parts: images + optional user context note
+      final List<Map<String, dynamic>> contentParts = [...imageParts];
+      if (mealContext != null && mealContext.trim().isNotEmpty) {
+        contentParts.add({'text': 'User note: ${mealContext.trim()}'});
+      }
+
       // Standard Gemini models support system_instruction
       requestBody = {
         'system_instruction': {
@@ -310,7 +319,7 @@ class GeminiService {
           ],
         },
         'contents': [
-          {'parts': imageParts},
+          {'parts': contentParts},
         ],
         'generationConfig': generationConfig,
       };
@@ -467,37 +476,61 @@ class GeminiService {
   }
 
   String _getPrompt(String language, {bool useGrams = false}) {
-    final unitString = useGrams ? 'gram' : 'serving';
-    // Removed verbose examples to save tokens as requested
-
     if (language == 'de') {
-      return '''Du bist KI-Ernährungsberater. Analysiere das Bild präzise.
+      final unitString = useGrams ? 'gram' : 'serving';
+      return '''Du bist KI-Ernährungsberater. Analysiere das Bild(er) und den Nutzerhinweis präzise.
 
 LOGIK:
-1. **Kurze Analyse ("analysis_note")**:
-   - Identifiziere Zutaten.
-   ${useGrams ? '- Schätze Gewicht in Gramm.' : '- Schätze Portionen (Teller=1.0).'}
+1. **Analyse ("analysis_note")**:
+   - Identifiziere Zutaten & Lebensmittel.
+   - Erkenne Flüssigkeiten automatisch (Getränke, Suppen, Smoothies → "ml" als Einheit).
+   ${useGrams ? '- Schätze Gewicht in Gramm bei festen Speisen.' : '- Schätze Portionen (Teller=1.0) bei festen Speisen.'}
    - Nutze Referenzwerte (Reis ~28g KH/100g, Hähnchen ~31g P/100g).
-   - Verifiziere: (P*4 + C*4 + F*9) ≈ kcal.
-2. **Einheit**: IMMER "$unitString" für `detected_unit`.
-3. **Objektivität**: ${useGrams ? 'Volle Pfanne ~800-1200g. Teller ~300-500g.' : 'Teller ~1.0 Portionen. Pfanne ~2-4.'}
+   - Verifiziere: (P×4 + KH×4 + F×9) ≈ kcal.
 
-ANTWORTE NUR ALS JSON. 'analysis_note' ZUERST.
+2. **SKALIERUNG – SEHR WICHTIG**:
+   - Wenn eine Verpackung Nährwerte "pro 100g" oder "pro 100ml" anzeigt, aber die sichtbare/gesamte Menge X ist: multipliziere ALLE Werte mit X/100.
+   - Beispiel: Pudding-Packung 200g, Etikett "pro 100g: 120 kcal, 3g P, 20g KH, 3g F" → liefere kcal=240, P=6, KH=40, F=6, detected_quantity=200, detected_unit="gram".
+   - Bevorzuge immer die Gesamtmenge, nicht die Portionsgröße auf dem Etikett.
+
+3. **Einheit (detected_unit)**:
+   - Flüssigkeiten/Getränke → "ml".
+   - Feste Speisen mit Gramm-Präferenz → "gram".
+   - Sonst → "$unitString".
+
+4. **Mahlzeitname**: `meal_name` IMMER auf Deutsch.
+
+5. **Mengen-Referenzen**: ${useGrams ? 'Volle Pfanne ~800-1200g. Teller ~300-500g. Glas ~200-300ml.' : 'Teller ~1.0 Portion. Pfanne ~2-4 Portionen. Getränk: Menge in ml.'}
+
+ANTWORTE NUR ALS JSON. "analysis_note" MUSS ZUERST KOMMEN.
 ''';
     } else {
-      final unitStringEn = useGrams ? 'gram' : 'serving';
-      return '''You are an AI Nutritionist. Analyze the image precisely.
+      final unitString = useGrams ? 'gram' : 'serving';
+      return '''You are an AI Nutritionist. Analyze the image(s) and any user note precisely.
 
 LOGIC:
-1. **Short Analysis ("analysis_note")**:
-   - Identify ingredients.
-   ${useGrams ? '- Estimate weight in grams.' : '- Estimate servings (plate=1.0).'}
+1. **Analysis ("analysis_note")**:
+   - Identify all ingredients and food items.
+   - Auto-detect liquids (drinks, soups, smoothies → use "ml" as unit).
+   ${useGrams ? '- Estimate weight in grams for solid foods.' : '- Estimate servings (plate=1.0) for solid foods.'}
    - Use references (Rice ~28g C/100g, Chicken ~31g P/100g).
-   - Verify: (P*4 + C*4 + F*9) ≈ Calories.
-2. **Unit**: ALWAYS use "$unitStringEn" for `detected_unit`.
-3. **Volume**: ${useGrams ? 'Full pan ~800-1200g. Plate ~300-500g.' : 'Standard plate ~1.0. Full pan ~2-4.'}
+   - Verify: (P×4 + C×4 + F×9) ≈ Calories.
 
-RESPONSE FORMAT: JSON ONLY. 'analysis_note' MUST BE FIRST.
+2. **SCALING – VERY IMPORTANT**:
+   - If a package label shows nutrition "per 100g" or "per 100ml" but the visible/total quantity is Xg or Xml, multiply ALL values by X/100.
+   - Example: 200g pudding, label says "per 100g: 120 kcal, 3g P, 20g C, 3g F" → return kcal=240, P=6, C=40, F=6, detected_quantity=200, detected_unit="gram".
+   - Always use total quantity, not the serving size shown on the label.
+
+3. **Unit (detected_unit)**:
+   - Liquids/drinks → "ml".
+   - Solid foods with gram preference → "gram".
+   - Otherwise → "$unitString".
+
+4. **Meal name**: `meal_name` ALWAYS in English.
+
+5. **Quantity references**: ${useGrams ? 'Full pan ~800-1200g. Plate ~300-500g. Glass ~200-300ml.' : 'Standard plate ~1.0. Full pan ~2-4. Drink: quantity in ml.'}
+
+RESPONSE FORMAT: JSON ONLY. "analysis_note" MUST BE FIRST.
 ''';
     }
   }
