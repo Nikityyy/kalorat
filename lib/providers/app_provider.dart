@@ -526,16 +526,26 @@ class AppProvider extends ChangeNotifier {
     };
   }
 
+  DateTime _getLogicalDayStart(DateTime date) {
+    final offset = _user?.dayStartHour ?? 0;
+    final logicalDate = date.subtract(Duration(hours: offset));
+    return DateTime(
+      logicalDate.year,
+      logicalDate.month,
+      logicalDate.day,
+      offset,
+    );
+  }
+
   Map<String, double> getTodayStats() {
     if (_cachedTodayStats != null &&
         _cachedTodayVersion == _statsCacheVersion) {
       return _cachedTodayStats!;
     }
 
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final end = today.add(const Duration(days: 1));
-    _cachedTodayStats = getStatsForDateRange(today, end);
+    final start = _getLogicalDayStart(DateTime.now());
+    final end = start.add(const Duration(days: 1));
+    _cachedTodayStats = getStatsForDateRange(start, end);
     _cachedTodayVersion = _statsCacheVersion;
     return _cachedTodayStats!;
   }
@@ -545,11 +555,20 @@ class AppProvider extends ChangeNotifier {
       return _cachedWeekStats!;
     }
 
-    final now = DateTime.now();
-    final start = now.subtract(Duration(days: now.weekday - 1));
-    final startOfWeek = DateTime(start.year, start.month, start.day);
-    final endOfWeek = startOfWeek.add(const Duration(days: 7));
-    _cachedWeekStats = getStatsForDateRange(startOfWeek, endOfWeek);
+    final offset = _user?.dayStartHour ?? 0;
+    final logicalNow = DateTime.now().subtract(Duration(hours: offset));
+    final startOfLogicalWeek = logicalNow.subtract(
+      Duration(days: logicalNow.weekday - 1),
+    );
+    final start = DateTime(
+      startOfLogicalWeek.year,
+      startOfLogicalWeek.month,
+      startOfLogicalWeek.day,
+      offset,
+    );
+    final end = start.add(const Duration(days: 7));
+
+    _cachedWeekStats = getStatsForDateRange(start, end);
     _cachedWeekVersion = _statsCacheVersion;
     return _cachedWeekStats!;
   }
@@ -560,9 +579,11 @@ class AppProvider extends ChangeNotifier {
       return _cachedMonthStats!;
     }
 
-    final now = DateTime.now();
-    final start = DateTime(now.year, now.month, 1);
-    final end = DateTime(now.year, now.month + 1, 1);
+    final offset = _user?.dayStartHour ?? 0;
+    final logicalNow = DateTime.now().subtract(Duration(hours: offset));
+    final start = DateTime(logicalNow.year, logicalNow.month, 1, offset);
+    final end = DateTime(logicalNow.year, logicalNow.month + 1, 1, offset);
+
     _cachedMonthStats = getStatsForDateRange(start, end);
     _cachedMonthVersion = _statsCacheVersion;
     return _cachedMonthStats!;
@@ -572,13 +593,22 @@ class AppProvider extends ChangeNotifier {
   int get currentStreak {
     int streak = 0;
     final now = DateTime.now();
-    var day = DateTime(now.year, now.month, now.day);
+    final offset = _user?.dayStartHour ?? 0;
+    final logicalNow = now.subtract(Duration(hours: offset));
+
+    // Check at 12:00 PM of each logical day to safely map to the correct bucket
+    var checkDay = DateTime(
+      logicalNow.year,
+      logicalNow.month,
+      logicalNow.day,
+      12 + offset,
+    );
 
     while (true) {
-      final meals = _databaseService.getMealsByDate(day);
+      final meals = _databaseService.getMealsByDate(checkDay);
       if (meals.where((m) => !m.isPending).isEmpty) break;
       streak++;
-      day = day.subtract(const Duration(days: 1));
+      checkDay = checkDay.subtract(const Duration(days: 1));
     }
     return streak;
   }

@@ -168,16 +168,29 @@ class DatabaseService {
   List<MealModel> getMealsByDateRange(DateTime start, DateTime end) {
     final meals = <MealModel>[];
 
-    // Normalize start to beginning of day
-    var current = DateTime(start.year, start.month, start.day);
-    // End date check needs to include the last day if 'end' falls on it
-    // But typical usage is start of day to start of next day
+    // Normalize to logical midnights to safely iterate over all possible buckets
+    var currentLogicalDate = start.subtract(Duration(hours: _dayStartHour));
+    currentLogicalDate = DateTime(
+      currentLogicalDate.year,
+      currentLogicalDate.month,
+      currentLogicalDate.day,
+    );
+
+    final endLogicalDate = end.subtract(Duration(hours: _dayStartHour));
+    final endLogicalMidnight = DateTime(
+      endLogicalDate.year,
+      endLogicalDate.month,
+      endLogicalDate.day,
+    );
 
     // Safety break for infinite loops or massive ranges (e.g. > 5 years)
     int daysChecked = 0;
 
-    while (current.isBefore(end) && daysChecked < 2000) {
-      final dateKey = _getDateKey(current);
+    while (!currentLogicalDate.isAfter(endLogicalMidnight) &&
+        daysChecked < 2000) {
+      final dateKey =
+          '${currentLogicalDate.year}-${currentLogicalDate.month.toString().padLeft(2, '0')}-${currentLogicalDate.day.toString().padLeft(2, '0')}';
+
       if (_mealsDateIndex.containsKey(dateKey)) {
         final dailyMeals = _mealsDateIndex[dateKey]!;
         // Filter by exact timestamp range
@@ -187,7 +200,7 @@ class DatabaseService {
           }
         }
       }
-      current = current.add(const Duration(days: 1));
+      currentLogicalDate = currentLogicalDate.add(const Duration(days: 1));
       daysChecked++;
     }
 

@@ -20,7 +20,14 @@ class HistoryScreen extends StatefulWidget {
 
 class _HistoryScreenState extends State<HistoryScreen> {
   int _selectedPeriod = 0; // 0=Day, 1=Week, 2=Month, 3=Year
-  DateTime _selectedDate = DateTime.now();
+  late DateTime _selectedDate;
+
+  @override
+  void initState() {
+    super.initState();
+    // Delay initialization until build to access provider for offset, or just use now
+    _selectedDate = DateTime.now();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -29,36 +36,56 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
     List<MealModel> filteredMeals = [];
     final now = DateTime.now();
+    final offset = provider.user?.dayStartHour ?? 0;
+    final logicalNow = now.subtract(Duration(hours: offset));
 
-    DateTime start = now;
-    DateTime end = now;
+    // Ensure _selectedDate is aligned with logical today if it was initialized to physical now
+    if (_selectedDate.year == now.year &&
+        _selectedDate.month == now.month &&
+        _selectedDate.day == now.day) {
+      _selectedDate = DateTime(
+        logicalNow.year,
+        logicalNow.month,
+        logicalNow.day,
+      );
+    }
+
+    DateTime start = logicalNow;
+    DateTime end = logicalNow;
 
     switch (_selectedPeriod) {
       case 0: // Day
-        start = _selectedDate;
-        end = _selectedDate;
-        filteredMeals = provider.getMealsByDate(_selectedDate);
+        start = DateTime(
+          _selectedDate.year,
+          _selectedDate.month,
+          _selectedDate.day,
+          offset,
+        );
+        end = start.add(const Duration(days: 1));
+        filteredMeals = provider.getMealsByDateRange(start, end);
         break;
       case 1: // Week
         // Start of week (Monday)
-        start = now.subtract(Duration(days: now.weekday - 1));
-        start = DateTime(start.year, start.month, start.day);
+        final startOfWeek = logicalNow.subtract(
+          Duration(days: logicalNow.weekday - 1),
+        );
+        start = DateTime(
+          startOfWeek.year,
+          startOfWeek.month,
+          startOfWeek.day,
+          offset,
+        );
         end = start.add(const Duration(days: 7));
         filteredMeals = provider.getMealsByDateRange(start, end);
         break;
       case 2: // Month
-        start = DateTime(now.year, now.month, 1);
-        // Start of next month
-        if (now.month == 12) {
-          end = DateTime(now.year + 1, 1, 1);
-        } else {
-          end = DateTime(now.year, now.month + 1, 1);
-        }
+        start = DateTime(logicalNow.year, logicalNow.month, 1, offset);
+        end = DateTime(logicalNow.year, logicalNow.month + 1, 1, offset);
         filteredMeals = provider.getMealsByDateRange(start, end);
         break;
       case 3: // Year
-        start = DateTime(now.year, 1, 1);
-        end = DateTime(now.year + 1, 1, 1);
+        start = DateTime(logicalNow.year, 1, 1, offset);
+        end = DateTime(logicalNow.year + 1, 1, 1, offset);
         filteredMeals = provider.getMealsByDateRange(start, end);
         break;
     }
