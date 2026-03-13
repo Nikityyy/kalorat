@@ -1,8 +1,10 @@
 import 'dart:convert';
-import 'dart:io';
 import 'package:file_picker/file_picker.dart';
-import 'package:path_provider/path_provider.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'database_service.dart';
+
+// Conditional imports for web vs mobile
+import 'export_import_web.dart' if (dart.library.io) 'export_import_native.dart';
 
 class ExportImportService {
   final DatabaseService _databaseService;
@@ -13,15 +15,16 @@ class ExportImportService {
     try {
       final data = _databaseService.exportAll();
       final jsonString = const JsonEncoder.withIndent('  ').convert(data);
-
-      // Get documents directory
-      final directory = await getApplicationDocumentsDirectory();
       final fileName =
           'kalorat_backup_${DateTime.now().toIso8601String().replaceAll(':', '-')}.json';
-      final file = File('${directory.path}/$fileName');
 
-      await file.writeAsString(jsonString);
-      return file.path;
+      if (kIsWeb) {
+        // On web: trigger a browser download directly
+        triggerWebDownload(jsonString, fileName);
+        return 'web_download'; // Non-null means success
+      } else {
+        return await writeNativeFile(jsonString, fileName);
+      }
     } catch (e) {
       return null;
     }
@@ -32,14 +35,23 @@ class ExportImportService {
       final result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['json'],
+        withData: kIsWeb, // On web, read bytes directly
       );
 
       if (result == null || result.files.isEmpty) {
         return false;
       }
 
-      final file = File(result.files.single.path!);
-      final jsonString = await file.readAsString();
+      String jsonString;
+      if (kIsWeb) {
+        // On web, use bytes from the result
+        final bytes = result.files.single.bytes;
+        if (bytes == null) return false;
+        jsonString = utf8.decode(bytes);
+      } else {
+        jsonString = await readNativeFile(result.files.single.path!);
+      }
+
       final data = jsonDecode(jsonString) as Map<String, dynamic>;
 
       // Validate data structure
@@ -55,18 +67,10 @@ class ExportImportService {
   }
 
   bool _validateImportData(Map<String, dynamic> data) {
-    // Check for required fields
     if (!data.containsKey('version')) return false;
-
-    // User is optional but must be valid if present
     if (data['user'] != null && data['user'] is! Map) return false;
-
-    // Meals must be a list if present
     if (data['meals'] != null && data['meals'] is! List) return false;
-
-    // Weights must be a list if present
     if (data['weights'] != null && data['weights'] is! List) return false;
-
     return true;
   }
 }

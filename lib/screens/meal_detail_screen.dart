@@ -398,7 +398,7 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
         ),
         content: TextField(
           controller: controller,
-          keyboardType: TextInputType.number,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
           style: AppTypography.bodyMedium,
           decoration: InputDecoration(
             suffixText: 'g',
@@ -418,7 +418,9 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
           ),
           TextButton(
             onPressed: () {
-              final newValue = double.tryParse(controller.text);
+              final newValue = double.tryParse(
+                controller.text.replaceAll(',', '.'),
+              );
               if (newValue != null) {
                 onSave(newValue);
                 Navigator.pop(context);

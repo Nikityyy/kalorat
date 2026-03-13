@@ -694,9 +694,15 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           )
         else if (canShowCamera)
           Positioned.fill(
-            child: AspectRatio(
-              aspectRatio: _cameraController!.value.aspectRatio,
-              child: CameraPreview(_cameraController!),
+            child: ClipRect(
+              child: FittedBox(
+                fit: BoxFit.cover,
+                child: SizedBox(
+                  width: _cameraController!.value.previewSize!.height,
+                  height: _cameraController!.value.previewSize!.width,
+                  child: CameraPreview(_cameraController!),
+                ),
+              ),
             ),
           )
         else
@@ -1050,12 +1056,15 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   Future<void> _showContextAndAnalyze() async {
     final l10n = context.l10n;
     final contextController = TextEditingController(text: _mealContext);
+    bool analyzeShouldRun = false;
     String? submittedContext;
 
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
+      // isDismissible: true means tapping outside closes sheet without setting analyzeShouldRun
+      isDismissible: true,
       builder: (sheetContext) => Padding(
         padding: EdgeInsets.only(
           bottom: MediaQuery.of(sheetContext).viewInsets.bottom,
@@ -1113,6 +1122,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                     child: OutlinedButton(
                       onPressed: () {
                         submittedContext = null;
+                        analyzeShouldRun = false;
                         Navigator.pop(sheetContext);
                       },
                       style: OutlinedButton.styleFrom(
@@ -1137,6 +1147,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                       onPressed: () {
                         final text = contextController.text.trim();
                         submittedContext = text.isNotEmpty ? text : null;
+                        analyzeShouldRun = true;
                         Navigator.pop(sheetContext);
                       },
                       style: ElevatedButton.styleFrom(
@@ -1164,7 +1175,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       ),
     );
 
-    if (mounted) {
+    // Only analyze if user explicitly tapped the Analyze button
+    if (analyzeShouldRun && mounted) {
       setState(() => _mealContext = submittedContext);
       await _analyzeMeal(mealContext: submittedContext);
     }

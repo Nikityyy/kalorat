@@ -10,7 +10,10 @@
 analyzer:
   errors:
     avoid_print: ignore
+    avoid_web_libraries_in_flutter: ignore
+    deprecated_member_use: ignore
 include: package:flutter_lints/flutter.yaml
+
 
 linter:
   # The lint rules applied to this project can be customized in the

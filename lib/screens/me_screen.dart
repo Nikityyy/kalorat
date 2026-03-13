@@ -58,52 +58,62 @@ class _MeScreenState extends State<MeScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.settings_outlined, color: AppColors.slate),
-            onPressed: () {
-              Navigator.push(
+            onPressed: () async {
+              await Navigator.push(
                 context,
                 MaterialPageRoute(builder: (_) => const SettingsScreen()),
               );
+              // After returning, the provider's notifyListeners() from settings
+              // has already been called, the Consumer will rebuild automatically.
             },
           ),
           const SizedBox(width: 8),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildProfileHeader(user, provider.currentStreak),
-            const SizedBox(height: 24),
-            _buildBMISection(user),
-            const SizedBox(height: 24),
-            _buildSectionHeader(l10n.today),
-            const SizedBox(height: 12),
-            const TodayStatsGrid(),
-            const SizedBox(height: 32),
-            _buildSectionHeader(l10n.weight),
-            const SizedBox(height: 12),
-            WeightChart(weights: sortedWeights),
-            const SizedBox(height: 16),
-            PrimaryButton(
-              text: l10n.logWeight,
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const AddWeightScreen()),
-                );
-              },
-            ),
-            if (sortedWeights.isNotEmpty) ...[
+      body: RefreshIndicator(
+        color: AppColors.primary,
+        onRefresh: () async {
+          await provider.syncService.syncFromCloud();
+          if (mounted) setState(() {});
+        },
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildProfileHeader(user, provider.currentStreak),
               const SizedBox(height: 24),
-              WeightList(
-                weights: sortedWeights,
-                language: provider.language,
-                onDelete: (weight) => _confirmDeleteWeight(weight),
+              _buildBMISection(user),
+              const SizedBox(height: 24),
+              _buildSectionHeader(l10n.today),
+              const SizedBox(height: 12),
+              const TodayStatsGrid(),
+              const SizedBox(height: 32),
+              _buildSectionHeader(l10n.weight),
+              const SizedBox(height: 12),
+              WeightChart(weights: sortedWeights),
+              const SizedBox(height: 16),
+              PrimaryButton(
+                text: l10n.logWeight,
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const AddWeightScreen()),
+                  );
+                },
               ),
+              if (sortedWeights.isNotEmpty) ...[
+                const SizedBox(height: 24),
+                WeightList(
+                  weights: sortedWeights,
+                  language: provider.language,
+                  onDelete: (weight) => _confirmDeleteWeight(weight),
+                ),
+              ],
+              const SizedBox(height: 40),
             ],
-            const SizedBox(height: 40),
-          ],
+          ),
         ),
       ),
     );

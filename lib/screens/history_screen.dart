@@ -204,7 +204,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
               ),
             ),
 
-            _buildPeriodStats(provider, context, start, end),
+            _buildPeriodStats(provider, context, filteredMeals, start, end),
 
             Expanded(
               child: filteredMeals.isEmpty
@@ -214,28 +214,37 @@ class _HistoryScreenState extends State<HistoryScreen> {
                         style: TextStyle(color: Colors.grey[600]),
                       ),
                     )
-                  : ListView.builder(
-                      padding: const EdgeInsets.all(16),
-                      itemCount: filteredMeals.length,
-                      itemBuilder: (ctx, i) => Padding(
-                        padding: const EdgeInsets.only(bottom: 12.0),
-                        child: MealCard(
-                          meal: filteredMeals[i],
-                          onTap: filteredMeals[i].isPending
-                              ? null
-                              : () => Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) => MealDetailScreen(
-                                      meal: filteredMeals[i],
-                                      isNewEntry: false,
+                  : RefreshIndicator(
+                      color: AppColors.primary,
+                      onRefresh: () async {
+                        final provider = context.read<AppProvider>();
+                        await provider.syncService.syncFromCloud();
+                        if (mounted) setState(() {});
+                      },
+                      child: ListView.builder(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        padding: const EdgeInsets.all(16),
+                        itemCount: filteredMeals.length,
+                        itemBuilder: (ctx, i) => Padding(
+                          padding: const EdgeInsets.only(bottom: 12.0),
+                          child: MealCard(
+                            meal: filteredMeals[i],
+                            onTap: filteredMeals[i].isPending
+                                ? null
+                                : () => Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => MealDetailScreen(
+                                        meal: filteredMeals[i],
+                                        isNewEntry: false,
+                                      ),
                                     ),
                                   ),
-                                ),
-                          onDelete: () => _confirmDelete(
-                            context,
-                            filteredMeals[i],
-                            provider,
+                            onDelete: () => _confirmDelete(
+                              context,
+                              filteredMeals[i],
+                              provider,
+                            ),
                           ),
                         ),
                       ),
@@ -250,6 +259,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
   Widget _buildPeriodStats(
     AppProvider provider,
     BuildContext context,
+    List<MealModel> meals,
     DateTime start,
     DateTime end,
   ) {
@@ -257,23 +267,19 @@ class _HistoryScreenState extends State<HistoryScreen> {
     Map<String, double> stats;
     int daysElapsed = 1;
 
-    if (_selectedPeriod == 0) {
-      stats = provider.getTodayStats(); // Actually needs specific date stats
-      // Correcting to use stats for the selected date
-      final meals = provider.getMealsByDate(_selectedDate);
-      double cals = 0, prot = 0, carbs = 0, fats = 0;
-      for (var m in meals) {
-        if (!m.isPending) {
-          cals += m.calories;
-          prot += m.protein;
-          carbs += m.carbs;
-          fats += m.fats;
-        }
+    // Compute stats directly from the already-filtered meals list
+    double cals = 0, prot = 0, carbs = 0, fats = 0;
+    for (var m in meals) {
+      if (!m.isPending) {
+        cals += m.calories;
+        prot += m.protein;
+        carbs += m.carbs;
+        fats += m.fats;
       }
-      stats = {'calories': cals, 'protein': prot, 'carbs': carbs, 'fats': fats};
-    } else {
-      stats = provider.getStatsForDateRange(start, end);
+    }
+    stats = {'calories': cals, 'protein': prot, 'carbs': carbs, 'fats': fats};
 
+    if (_selectedPeriod != 0) {
       // Calculate days elapsed in period for averaging
       final now = DateTime.now();
       final periodEnd = end.isBefore(now) ? end : now;
@@ -281,13 +287,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
       if (periodEnd.isAfter(periodStart)) {
         daysElapsed = periodEnd.difference(periodStart).inDays;
-        if (daysElapsed == 0 && periodEnd.day == periodStart.day) {
-          daysElapsed = 1;
-        }
-        // Cap at 1 to avoid division by zero, though logic above prevents it mostly
-        if (daysElapsed < 1) {
-          daysElapsed = 1;
-        }
+        if (daysElapsed < 1) daysElapsed = 1;
       }
     }
 

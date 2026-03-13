@@ -478,7 +478,7 @@ class GeminiService {
   String _getPrompt(String language, {bool useGrams = false}) {
     if (language == 'de') {
       final unitString = useGrams ? 'gram' : 'serving';
-      return '''Du bist KI-Ernährungsberater. Analysiere das Bild(er) und den Nutzerhinweis präzise.
+      return '''Du bist KI-Ernährungsberater. Analysiere das/die Bild(er) und den Nutzerhinweis präzise.
 
 LOGIK:
 1. **Analyse ("analysis_note")**:
@@ -489,21 +489,28 @@ LOGIK:
    - Verifiziere: (P×4 + KH×4 + F×9) ≈ kcal.
 
 2. **SKALIERUNG – SEHR WICHTIG**:
-   - Wenn eine Verpackung Nährwerte "pro 100g" oder "pro 100ml" anzeigt, aber die sichtbare/gesamte Menge X ist: multipliziere ALLE Werte mit X/100.
-   - Beispiel: Pudding-Packung 200g, Etikett "pro 100g: 120 kcal, 3g P, 20g KH, 3g F" → liefere kcal=240, P=6, KH=40, F=6, detected_quantity=200, detected_unit="gram".
-   - Bevorzuge immer die Gesamtmenge, nicht die Portionsgröße auf dem Etikett.
+   - Wenn ein Bild ein Produkt zeigt (z.B. Proteinshake 750g) und ein anderes Bild das Nährwertetikett zeigt (z.B. "pro 100g: 350 kcal"): MULTIPLIZIERE ALLE ETIKETTWERTE mit (Gesamtmenge / 100). Beispiel: 750g × (350/100) = 2625 kcal.
+   - `detected_quantity` = die GESAMTE Menge des Produkts (z.B. 750), NICHT die Portionsgröße.
+   - Alle Werte in der Antwort (calories, protein, carbs, fats) müssen bereits für die GESAMTE Menge skaliert sein.
+   - Bevorzuge IMMER die Gesamtmenge, nicht die Portionsgröße des Etiketts.
 
-3. **Einheit (detected_unit)**:
+3. **kJ vs. kcal – SEHR WICHTIG**:
+   - Europäische Etiketten zeigen oft BEIDE: kJ und kcal.
+   - Verwende IMMER den kcal-Wert. Ignoriere den kJ-Wert.
+   - 1 kcal ≈ 4,18 kJ. NIEMALS kJ-Werte als kcal übernehmen.
+
+4. **Einheit (detected_unit)**:
    - Flüssigkeiten/Getränke → "ml".
    - Feste Speisen mit Gramm-Präferenz → "gram".
    - Sonst → "$unitString".
 
-4. **Mahlzeitname**: `meal_name` IMMER auf Deutsch.
+5. **Mahlzeitname**: `meal_name` IMMER auf Deutsch.
 
-5. **Mengen-Referenzen**: ${useGrams ? 'Volle Pfanne ~800-1200g. Teller ~300-500g. Glas ~200-300ml.' : 'Teller ~1.0 Portion. Pfanne ~2-4 Portionen. Getränk: Menge in ml.'}
+6. **Mengen-Referenzen**: ${useGrams ? 'Volle Pfanne ~800-1200g. Teller ~300-500g. Glas ~200-300ml.' : 'Teller ~1.0 Portion. Pfanne ~2-4 Portionen. Getränk: Menge in ml.'}
 
-ANTWORTE NUR ALS JSON. "analysis_note" MUSS ZUERST KOMMEN.
+ANTWORETE NUR ALS JSON. "analysis_note" MUSS ZUERST KOMMEN.
 ''';
+
     } else {
       final unitString = useGrams ? 'gram' : 'serving';
       return '''You are an AI Nutritionist. Analyze the image(s) and any user note precisely.
@@ -517,21 +524,28 @@ LOGIC:
    - Verify: (P×4 + C×4 + F×9) ≈ Calories.
 
 2. **SCALING – VERY IMPORTANT**:
-   - If a package label shows nutrition "per 100g" or "per 100ml" but the visible/total quantity is Xg or Xml, multiply ALL values by X/100.
-   - Example: 200g pudding, label says "per 100g: 120 kcal, 3g P, 20g C, 3g F" → return kcal=240, P=6, C=40, F=6, detected_quantity=200, detected_unit="gram".
+   - If you see multiple images where one shows a product (e.g. a protein shake bottle with 750g label) and another shows the nutrition facts (e.g. "per 100g: 350 kcal"), MULTIPLY ALL label values by (total_quantity / 100). Example: 750g × (350/100) = 2625 kcal total.
+   - `detected_quantity` = the TOTAL quantity of the product (e.g. 750), NOT the serving size.
+   - All values in the response (calories, protein, carbs, fats) must already be scaled for the TOTAL quantity shown.
    - Always use total quantity, not the serving size shown on the label.
 
-3. **Unit (detected_unit)**:
+3. **kJ vs kcal – VERY IMPORTANT**:
+   - European food labels often show BOTH kJ and kcal on the same line.
+   - ALWAYS use the kcal value. Ignore the kJ value entirely.
+   - 1 kcal ≈ 4.18 kJ. NEVER use kJ values as if they were kcal.
+
+4. **Unit (detected_unit)**:
    - Liquids/drinks → "ml".
    - Solid foods with gram preference → "gram".
    - Otherwise → "$unitString".
 
-4. **Meal name**: `meal_name` ALWAYS in English.
+5. **Meal name**: `meal_name` ALWAYS in English.
 
-5. **Quantity references**: ${useGrams ? 'Full pan ~800-1200g. Plate ~300-500g. Glass ~200-300ml.' : 'Standard plate ~1.0. Full pan ~2-4. Drink: quantity in ml.'}
+6. **Quantity references**: ${useGrams ? 'Full pan ~800-1200g. Plate ~300-500g. Glass ~200-300ml.' : 'Standard plate ~1.0. Full pan ~2-4. Drink: quantity in ml.'}
 
 RESPONSE FORMAT: JSON ONLY. "analysis_note" MUST BE FIRST.
 ''';
+
     }
   }
 }

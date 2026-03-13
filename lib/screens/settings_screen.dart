@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../extensions/l10n_extension.dart';
 import '../models/models.dart';
 import '../providers/app_provider.dart';
@@ -28,6 +29,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   late TextEditingController _weightController;
   late TextEditingController _apiKeyController;
   DateTime? _selectedBirthdate;
+  bool _isSyncing = false;
 
   @override
   void initState() {
@@ -745,9 +747,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
       ] else ...[
         ListTile(
-          leading: const Icon(Icons.sync, color: AppColors.primary),
+          leading: _isSyncing
+              ? const SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: AppColors.primary,
+                  ),
+                )
+              : const Icon(Icons.sync, color: AppColors.primary),
           title: Text(
-            l10n.syncComplete,
+            'Sync Data',
             style: const TextStyle(color: AppColors.slate),
           ),
           subtitle: user.lastSyncTimestamp != null
@@ -761,17 +772,51 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                 )
               : null,
-          onTap: () async {
-            await provider.syncService.syncToCloud();
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(l10n.syncComplete),
-                  backgroundColor: AppColors.success,
-                ),
-              );
-            }
-          },
+          onTap: _isSyncing
+              ? null
+              : () async {
+                  setState(() => _isSyncing = true);
+                  try {
+                    // Refresh the session silently; if expired it will re-auth
+                    try {
+                      await Supabase.instance.client.auth.refreshSession();
+                    } catch (_) {
+                      // Session gone – sign in again
+                      final authService = AuthService();
+                      await authService.signOut();
+                      final (response, photoUrl) =
+                          await authService.signInWithGoogle();
+                      if (response.user != null && mounted) {
+                        await provider.updateUser(
+                          supabaseUserId: response.user!.id,
+                          email: response.user!.email,
+                          isGuest: false,
+                          photoUrl: photoUrl,
+                        );
+                      }
+                    }
+                    await provider.syncService.syncToCloud();
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(l10n.syncComplete),
+                          backgroundColor: AppColors.success,
+                        ),
+                      );
+                    }
+                  } catch (e) {
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(e.toString()),
+                          backgroundColor: AppColors.error,
+                        ),
+                      );
+                    }
+                  } finally {
+                    if (mounted) setState(() => _isSyncing = false);
+                  }
+                },
         ),
         ListTile(
           leading: const Icon(Icons.logout, color: AppColors.error),
@@ -888,9 +933,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
         onTap: () async {
           final path = await provider.exportData();
           if (path != null && mounted) {
-            await SharePlus.instance.share(
-              ShareParams(files: [XFile(path)], text: 'Kalorat Backup'),
-            );
+            if (path == 'web_download') {
+              // Web: file was downloaded via browser, just confirm
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Download started')),
+              );
+            } else {
+              await SharePlus.instance.share(
+                ShareParams(files: [XFile(path)], text: 'Kalorat Backup'),
+              );
+            }
           }
         },
       ),
