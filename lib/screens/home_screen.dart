@@ -3,6 +3,7 @@ import 'dart:io' show File;
 import 'package:camera/camera.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -37,17 +38,25 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   bool _isTakingMore = false;
   String? _mealContext;
 
+  // FocusNode for context textarea — avoids the autofocus keyboard-jump bug
+  final FocusNode _contextFocusNode = FocusNode();
+
+  static const String _pendingPhotosBox = 'pending_photos_box';
+  static const String _pendingPhotosKey = 'pending_photos';
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _initCamera();
+    _restorePersistedPhotos();
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _cameraController?.dispose();
+    _contextFocusNode.dispose();
     super.dispose();
   }
 
@@ -120,6 +129,37 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     }
   }
 
+  /// Restore photos that were captured but not yet analyzed (e.g. after PWA refresh).
+  Future<void> _restorePersistedPhotos() async {
+    try {
+      final box = await Hive.openBox<dynamic>(_pendingPhotosBox);
+      final stored = box.get(_pendingPhotosKey);
+      if (stored is List && stored.isNotEmpty && mounted) {
+        setState(() {
+          _capturedPhotos = List<String>.from(stored);
+        });
+      }
+    } catch (_) {
+      // Non-critical: ignore restore errors
+    }
+  }
+
+  /// Persist current photo list so it survives a PWA reload / app restart.
+  Future<void> _persistPhotos() async {
+    try {
+      final box = await Hive.openBox<dynamic>(_pendingPhotosBox);
+      await box.put(_pendingPhotosKey, List<String>.from(_capturedPhotos));
+    } catch (_) {}
+  }
+
+  /// Clear persisted photos after analysis or discard.
+  Future<void> _clearPersistedPhotos() async {
+    try {
+      final box = await Hive.openBox<dynamic>(_pendingPhotosBox);
+      await box.delete(_pendingPhotosKey);
+    } catch (_) {}
+  }
+
   Future<void> _capturePhoto() async {
     // Camera capture not available on web
     if (PlatformUtils.isWeb) return;
@@ -145,6 +185,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       setState(() {
         _capturedPhotos.add(savedPath);
       });
+      await _persistPhotos();
     } catch (e) {
       debugPrint('Capture error: $e');
     } finally {
@@ -181,6 +222,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         }
       }
       setState(() {});
+      await _persistPhotos();
     }
   }
 
@@ -294,8 +336,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             await Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (_) =>
-                    MealDetailScreen(meal: mealWithPortion, isNewEntry: true),
+                builder: (_) => MealDetailScreen(
+                  meal: mealWithPortion,
+                  isNewEntry: true,
+                  initialMealContext: mealContext,
+                ),
               ),
             );
             debugPrint('Returned from MealDetailScreen');
@@ -345,6 +390,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       _isTakingMore = false;
       _mealContext = null;
     });
+    _clearPersistedPhotos();
   }
 
   Future<void> _clearPhotos() async {
@@ -775,7 +821,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           left: 0,
           right: 0,
           child: Container(
-            padding: const EdgeInsets.only(bottom: 60, top: 40),
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).padding.bottom + 24,
+              top: 40,
+            ),
             decoration: const BoxDecoration(color: Colors.black45),
             child: Stack(
               alignment: Alignment.center,
@@ -1063,7 +1112,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      // isDismissible: true means tapping outside closes sheet without setting analyzeShouldRun
       isDismissible: true,
       builder: (sheetContext) => Padding(
         padding: EdgeInsets.only(
@@ -1098,7 +1146,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               const SizedBox(height: 12),
               TextField(
                 controller: contextController,
-                autofocus: true,
+                // NO autofocus here — we use a FocusNode + postFrameCallback
+                // to avoid the "textarea flies off screen" bug on mobile.
+                focusNode: _contextFocusNode,
                 maxLines: 3,
                 style: AppTypography.bodyMedium,
                 decoration: InputDecoration(

@@ -194,7 +194,7 @@ void main() {
         expect(user.dailyCalorieTarget, closeTo(1600, 10));
       });
 
-      test('applies surplus for gain goal', () {
+      test('applies lean bulk surplus (+250) for gain goal', () {
         final user = UserModel(
           name: 'Test',
           birthdate: DateTime(1990, 1, 1),
@@ -204,8 +204,30 @@ void main() {
           goal: 2, // Gain
         );
 
-        // TDEE + 500 = 2100 + 500 = 2600
-        expect(user.dailyCalorieTarget, closeTo(2600, 10));
+        // TDEE ~2100 + 250 = ~2350 (lean bulk, not dirty bulk +500)
+        expect(user.dailyCalorieTarget, closeTo(2350, 10));
+      });
+
+      test('lean bulk surplus is less than dirty bulk surplus', () {
+        final gainUser = UserModel(
+          name: 'Gain',
+          birthdate: DateTime(1990, 1, 1),
+          height: 180,
+          weight: 80,
+          gender: 0,
+          goal: 2,
+        );
+        final maintainUser = UserModel(
+          name: 'Maintain',
+          birthdate: DateTime(1990, 1, 1),
+          height: 180,
+          weight: 80,
+          gender: 0,
+          goal: 1,
+        );
+        // Surplus should be +250, not +500
+        final surplus = gainUser.dailyCalorieTarget - maintainUser.dailyCalorieTarget;
+        expect(surplus, closeTo(250, 5));
       });
 
       test('defaults to male when gender is null', () {
@@ -248,7 +270,7 @@ void main() {
         expect(user.dailyProteinTarget, 144); // 80 * 1.8
       });
 
-      test('calculates protein for gain goal (2.0g/kg)', () {
+      test('calculates protein for gain goal (2.2g/kg lean bulk)', () {
         final user = UserModel(
           name: 'Test',
           birthdate: DateTime(1990, 1, 1),
@@ -257,7 +279,26 @@ void main() {
           goal: 2, // Gain
         );
 
-        expect(user.dailyProteinTarget, 160); // 80 * 2.0
+        // 80kg * 2.2g/kg = 176g (higher than 2.0 for better muscle retention)
+        expect(user.dailyProteinTarget, closeTo(176, 0.1));
+      });
+
+      test('lean bulk protein is higher than maintain protein', () {
+        final gainUser = UserModel(
+          name: 'Gain',
+          birthdate: DateTime(1990, 1, 1),
+          height: 180,
+          weight: 80,
+          goal: 2,
+        );
+        final maintainUser = UserModel(
+          name: 'Maintain',
+          birthdate: DateTime(1990, 1, 1),
+          height: 180,
+          weight: 80,
+          goal: 1,
+        );
+        expect(gainUser.dailyProteinTarget, greaterThan(maintainUser.dailyProteinTarget));
       });
     });
 

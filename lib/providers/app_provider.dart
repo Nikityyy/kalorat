@@ -104,11 +104,22 @@ class AppProvider extends ChangeNotifier {
       await _databaseService.setDayStartHour(_user!.dayStartHour);
     }
 
-    // If session exists, sync from cloud to restore data
+    // Mark as initialized immediately after local DB load so the UI shows
+    // without waiting for the network. Cloud sync runs in the background.
+    _isInitialized = true;
+    notifyListeners();
+
+    // If session exists, sync from cloud in the background (fire-and-forget)
     final session = Supabase.instance.client.auth.currentSession;
     if (session != null && _isOnline) {
-      await _syncService.syncFromCloud();
-      _user = _databaseService.getUser(); // Refresh after sync
+      // Do NOT await — let the UI appear immediately
+      _syncService.syncFromCloud().then((_) {
+        _user = _databaseService.getUser(); // Refresh after background sync
+        _invalidateStatsCache();
+        notifyListeners();
+      }).catchError((e) {
+        AppLogger.error('AppProvider', 'Background cloud sync failed', e);
+      });
     }
 
     // Migration: If key exists in insecure storage but not secure storage, migrate it
@@ -160,9 +171,6 @@ class AppProvider extends ChangeNotifier {
     if (_isOnline) {
       await processOfflineQueue();
     }
-
-    _isInitialized = true;
-    notifyListeners();
   }
 
   @override

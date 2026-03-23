@@ -222,14 +222,14 @@ class UserModel extends HiveObject {
 
     // Goal adjustment
     if (goal == Goal.lose) return tdee - 500;
-    if (goal == Goal.gain) return tdee + 500;
+    if (goal == Goal.gain) return tdee + 250; // Lean bulk: moderate surplus
     return tdee;
   }
 
   double get dailyProteinTarget {
     double mult = 1.5;
     if (goal == Goal.lose) mult = 1.8;
-    if (goal == Goal.gain) mult = 2.0;
+    if (goal == Goal.gain) mult = 2.2; // Lean bulk: high protein for muscle retention
     return weight * mult;
   }
 

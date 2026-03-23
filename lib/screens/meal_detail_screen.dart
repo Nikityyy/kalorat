@@ -20,13 +20,14 @@ import 'package:share_plus/share_plus.dart';
 
 class MealDetailScreen extends StatefulWidget {
   final MealModel meal;
-  final bool
-  isNewEntry; // If true, we show "Discard" instead of "Delete" logic potentially, or just handled by caller
+  final bool isNewEntry;
+  final String? initialMealContext;
 
   const MealDetailScreen({
     super.key,
     required this.meal,
     this.isNewEntry = false,
+    this.initialMealContext,
   });
 
   @override
@@ -37,11 +38,16 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
   late MealModel _meal;
   late double _portionMultiplier;
   bool _isAnalyzing = false;
+  String? _mealContext;
+
+  // FocusNode for retry context sheet — avoids autofocus keyboard-jump bug
+  final FocusNode _contextFocusNode = FocusNode();
 
   @override
   void initState() {
     super.initState();
     _portionMultiplier = widget.meal.portionMultiplier;
+    _mealContext = widget.initialMealContext;
 
     // If the meal was saved with a multiplier (e.g. 2x), the stored calories
     // are already 2x. We need to divide by the multiplier to get the "base"
@@ -56,6 +62,12 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
     } else {
       _meal = widget.meal;
     }
+  }
+
+  @override
+  void dispose() {
+    _contextFocusNode.dispose();
+    super.dispose();
   }
 
   void _updatePortion(double change) {
@@ -122,27 +134,141 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
     }
   }
 
-  Future<void> _retryAnalysis() async {
+  /// Shows a context bottom sheet pre-filled with the previous context,
+  /// then re-runs analysis with the updated context.
+  Future<void> _showContextAndRetry() async {
     final provider = context.read<AppProvider>();
     final apiKey = provider.apiKey;
-    final language = provider.language;
-
     if (apiKey.isEmpty) return;
 
+    final contextController = TextEditingController(text: _mealContext);
+    bool shouldRetry = false;
+    String? submittedContext;
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      isDismissible: true,
+      builder: (sheetContext) => Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(sheetContext).viewInsets.bottom,
+        ),
+        child: Container(
+          decoration: const BoxDecoration(
+            color: AppColors.glacialWhite,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40, height: 4,
+                  decoration: BoxDecoration(
+                    color: AppColors.borderGrey,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                'Analyse wiederholen',
+                style: AppTypography.displayMedium.copyWith(fontSize: 22),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Kontext bearbeiten oder direkt neu analysieren',
+                style: AppTypography.bodySmall.copyWith(color: AppColors.slate),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: contextController,
+                focusNode: _contextFocusNode,
+                maxLines: 3,
+                style: AppTypography.bodyMedium,
+                decoration: InputDecoration(
+                  hintText: 'z.B. 2 Portionen, extra Sauce ...',
+                  filled: true,
+                  fillColor: AppColors.pebble,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(AppTheme.borderRadius),
+                    borderSide: BorderSide.none,
+                  ),
+                  contentPadding: const EdgeInsets.all(16),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(sheetContext),
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: AppColors.pebble),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(AppTheme.borderRadius),
+                        ),
+                      ),
+                      child: const Text('Abbrechen', style: TextStyle(color: AppColors.slate)),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    flex: 2,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        final text = contextController.text.trim();
+                        submittedContext = text.isNotEmpty ? text : null;
+                        shouldRetry = true;
+                        Navigator.pop(sheetContext);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.styrianForest,
+                        foregroundColor: AppColors.glacialWhite,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(AppTheme.borderRadius),
+                        ),
+                        elevation: 0,
+                      ),
+                      child: const Text('Neu analysieren', style: TextStyle(fontWeight: FontWeight.bold)),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    // Request focus AFTER sheet is displayed to avoid layout jump
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _contextFocusNode.requestFocus();
+    });
+
+    if (!shouldRetry || !mounted) return;
+
     setState(() {
+      _mealContext = submittedContext;
       _isAnalyzing = true;
     });
 
     try {
+      final language = provider.language;
       final gemini = GeminiService(apiKey: apiKey, language: language);
       final result = await gemini.analyzeMeal(
         _meal.photoPaths,
         useGrams: provider.user?.useGramsByDefault ?? false,
+        mealContext: submittedContext,
       );
 
       if (result != null) {
-        if (result.containsKey('error') &&
-            result['error'] == 'no_food_detected') {
+        if (result.containsKey('error') && result['error'] == 'no_food_detected') {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text(context.l10n.noFoodDetected)),
@@ -173,23 +299,19 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
         });
 
         if (mounted) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(const SnackBar(content: Text('Analysis updated!')));
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Analysis updated!')),
+          );
         }
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Retry failed: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Retry failed: $e')),
+        );
       }
     } finally {
-      if (mounted) {
-        setState(() {
-          _isAnalyzing = false;
-        });
-      }
+      if (mounted) setState(() => _isAnalyzing = false);
     }
   }
 
@@ -497,7 +619,7 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
                       backgroundColor: Colors.black26,
                       child: IconButton(
                         icon: const Icon(Icons.refresh, color: Colors.white),
-                        onPressed: _retryAnalysis,
+                        onPressed: _showContextAndRetry,
                         tooltip: 'Analyse neu starten',
                       ),
                     ),

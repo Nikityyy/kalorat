@@ -40,6 +40,10 @@ class GeminiService {
   static const String _baseUrlBase =
       'https://generativelanguage.googleapis.com/v1beta/models';
 
+  // Preferred model order: gemini-flash-latest first (auto-redirects to latest
+  // Flash), gemini-flash-lite-latest as fallback on rate limit.
+  static const String _preferredModel = 'gemini-flash-latest';
+
   // Cache for available models to avoid fetching on every request
   List<String>? _cachedModels;
   DateTime? _lastModelFetchTime;
@@ -97,18 +101,37 @@ class GeminiService {
             })
             .toList();
 
-        // Sort to prefer lite models first (fastest), then newer models
+        // Sort: non-lite (full Flash) before lite, then newer first within each group.
+        // This ensures gemini-2.0-flash is tried before gemini-2.0-flash-lite.
         supportedModels.sort((a, b) {
           final aLower = a.toLowerCase();
           final bLower = b.toLowerCase();
           final aIsLite = aLower.contains('lite');
           final bIsLite = bLower.contains('lite');
-          // Lite models first
-          if (aIsLite && !bIsLite) return -1;
-          if (!aIsLite && bIsLite) return 1;
+          // Non-lite (full Flash) first — higher quality
+          if (!aIsLite && bIsLite) return -1;
+          if (aIsLite && !bIsLite) return 1;
           // Within same category, prefer newer (Z->A heuristic)
           return b.compareTo(a);
         });
+
+        // Ensure our preferred model (gemini-flash-latest) is first,
+        // lite models (gemini-flash-lite-latest) are last as fallback.
+        final preferred = supportedModels
+            .where((m) => !m.toLowerCase().contains('lite'))
+            .toList();
+        final fallbackLite = supportedModels
+            .where((m) => m.toLowerCase().contains('lite'))
+            .toList();
+        supportedModels
+          ..clear()
+          ..addAll([...preferred, ...fallbackLite]);
+
+        // If the API doesn't list our alias models (they're discovery aliases),
+        // inject them explicitly at the front.
+        if (!supportedModels.contains(_preferredModel)) {
+          supportedModels.insert(0, _preferredModel);
+        }
 
         _cachedModels = supportedModels;
         _lastModelFetchTime = DateTime.now();
@@ -270,7 +293,7 @@ class GeminiService {
 
       // Build config
       final Map<String, dynamic> generationConfig = {
-        'temperature': 0.0,
+        'temperature': 0.1, // Slightly above 0 for better flexible food recognition
         'maxOutputTokens':
             1024, // Reduced from 1536 since we removed verbose examples
         'responseMimeType': 'application/json',
@@ -478,70 +501,78 @@ class GeminiService {
   String _getPrompt(String language, {bool useGrams = false}) {
     if (language == 'de') {
       final unitString = useGrams ? 'gram' : 'serving';
-      return '''Du bist KI-Ernährungsberater. Analysiere das/die Bild(er) und den Nutzerhinweis präzise.
+      return '''Du bist ein präziser KI-Ernährungsberater. Analysiere das/die Bild(er) und jeden Nutzerhinweis Schritt für Schritt.
 
-LOGIK:
-1. **Analyse ("analysis_note")**:
-   - Identifiziere Zutaten & Lebensmittel.
-   - Erkenne Flüssigkeiten automatisch (Getränke, Suppen, Smoothies → "ml" als Einheit).
-   ${useGrams ? '- Schätze Gewicht in Gramm bei festen Speisen.' : '- Schätze Portionen (Teller=1.0) bei festen Speisen.'}
-   - Nutze Referenzwerte (Reis ~28g KH/100g, Hähnchen ~31g P/100g).
-   - Verifiziere: (P×4 + KH×4 + F×9) ≈ kcal.
+DENKPROZESS (in analysis_note dokumentieren):
+1. Identifiziere ALLE sichtbaren Lebensmittel und Zutaten einzeln.
+2. Schätze Menge/Gewicht jeder Komponente anhand visueller Hinweise (Tellergröße, Verpackung, Vergleichsobjekte).
+3. Wende Referenzwerte an:
+   - Reis gekocht ~28g KH/100g, ~130 kcal/100g
+   - Hähnchenbrust ~31g P/100g, ~165 kcal/100g
+   - Nudeln gekocht ~25g KH/100g, ~130 kcal/100g
+   - Rindfleisch (mager) ~26g P/100g, ~215 kcal/100g
+   - Lachs ~20g P/100g, ~208 kcal/100g
+   - Ei (L) ~6g P, ~70 kcal
+   - Avocado ~15g F/100g, ~160 kcal/100g
+   - Broccoli ~2.8g P/100g, ~34 kcal/100g
+   - Olivenöl ~14g F/EL, ~120 kcal/EL
+4. Summiere alle Komponenten.
+5. Verifiziere: (Protein×4 + KH×4 + Fett×9) ≈ kcal (max. 10% Abweichung erlaubt).
 
-2. **SKALIERUNG – SEHR WICHTIG**:
-   - Wenn ein Bild ein Produkt zeigt (z.B. Proteinshake 750g) und ein anderes Bild das Nährwertetikett zeigt (z.B. "pro 100g: 350 kcal"): MULTIPLIZIERE ALLE ETIKETTWERTE mit (Gesamtmenge / 100). Beispiel: 750g × (350/100) = 2625 kcal.
-   - `detected_quantity` = die GESAMTE Menge des Produkts (z.B. 750), NICHT die Portionsgröße.
-   - Alle Werte in der Antwort (calories, protein, carbs, fats) müssen bereits für die GESAMTE Menge skaliert sein.
-   - Bevorzuge IMMER die Gesamtmenge, nicht die Portionsgröße des Etiketts.
+SKALIERUNG – KRITISCH:
+- Wenn Bilder ein Produkt UND sein Nährwertetikett zeigen: MULTIPLIZIERE Etikettwerte mit (Gesamtmenge/Referenzmenge).
+  Beispiel: 750g Produkt × (350 kcal/100g) = 2625 kcal.
+- `detected_quantity` = GESAMTE Produktmenge (z.B. 750), NICHT Portionsgröße.
+- Alle Ausgabewerte bereits für GESAMTE Menge skalieren.
 
-3. **kJ vs. kcal – SEHR WICHTIG**:
-   - Europäische Etiketten zeigen oft BEIDE: kJ und kcal.
-   - Verwende IMMER den kcal-Wert. Ignoriere den kJ-Wert.
-   - 1 kcal ≈ 4,18 kJ. NIEMALS kJ-Werte als kcal übernehmen.
+kJ vs. kcal – KRITISCH:
+- Europäische Etiketten zeigen oft kJ UND kcal. Verwende IMMER kcal. 1 kcal ≈ 4,18 kJ.
 
-4. **Einheit (detected_unit)**:
-   - Flüssigkeiten/Getränke → "ml".
-   - Feste Speisen mit Gramm-Präferenz → "gram".
-   - Sonst → "$unitString".
+EINHEIT (detected_unit):
+- Flüssigkeiten → "ml" | Feste Speisen (Gramm-Modus) → "gram" | Sonst → "$unitString"
 
-5. **Mahlzeitname**: `meal_name` IMMER auf Deutsch.
+NAME: `meal_name` IMMER auf Deutsch.
 
-6. **Mengen-Referenzen**: ${useGrams ? 'Volle Pfanne ~800-1200g. Teller ~300-500g. Glas ~200-300ml.' : 'Teller ~1.0 Portion. Pfanne ~2-4 Portionen. Getränk: Menge in ml.'}
+MENGEN-REFERENZ: ${useGrams ? 'Volle Pfanne ~800–1200g. Normaler Teller ~350–500g. Glas ~200–300ml. Schüssel ~400–600g.' : 'Normaler Teller ~1.0 Portion. Volle Pfanne ~2–4 Portionen. Getränk: Menge in ml.'}
 
-ANTWORETE NUR ALS JSON. "analysis_note" MUSS ZUERST KOMMEN.
+ANTWORTE NUR ALS JSON. "analysis_note" MUSS ZUERST KOMMEN.
 ''';
 
     } else {
       final unitString = useGrams ? 'gram' : 'serving';
-      return '''You are an AI Nutritionist. Analyze the image(s) and any user note precisely.
+      return '''You are a precise AI Nutritionist. Analyze the image(s) and any user notes step by step.
 
-LOGIC:
-1. **Analysis ("analysis_note")**:
-   - Identify all ingredients and food items.
-   - Auto-detect liquids (drinks, soups, smoothies → use "ml" as unit).
-   ${useGrams ? '- Estimate weight in grams for solid foods.' : '- Estimate servings (plate=1.0) for solid foods.'}
-   - Use references (Rice ~28g C/100g, Chicken ~31g P/100g).
-   - Verify: (P×4 + C×4 + F×9) ≈ Calories.
+THINKING PROCESS (document in analysis_note):
+1. List ALL visible food items and ingredients individually.
+2. Estimate quantity/weight of each component using visual cues (plate size, packaging, reference objects).
+3. Apply reference values:
+   - Cooked rice ~28g carbs/100g, ~130 kcal/100g
+   - Chicken breast ~31g protein/100g, ~165 kcal/100g
+   - Cooked pasta ~25g carbs/100g, ~130 kcal/100g
+   - Lean beef ~26g protein/100g, ~215 kcal/100g
+   - Salmon ~20g protein/100g, ~208 kcal/100g
+   - Egg (L) ~6g protein, ~70 kcal
+   - Avocado ~15g fat/100g, ~160 kcal/100g
+   - Broccoli ~2.8g protein/100g, ~34 kcal/100g
+   - Olive oil ~14g fat/tbsp, ~120 kcal/tbsp
+4. Sum all components.
+5. Verify: (Protein×4 + Carbs×4 + Fat×9) ≈ Calories (max 10% deviation allowed).
 
-2. **SCALING – VERY IMPORTANT**:
-   - If you see multiple images where one shows a product (e.g. a protein shake bottle with 750g label) and another shows the nutrition facts (e.g. "per 100g: 350 kcal"), MULTIPLY ALL label values by (total_quantity / 100). Example: 750g × (350/100) = 2625 kcal total.
-   - `detected_quantity` = the TOTAL quantity of the product (e.g. 750), NOT the serving size.
-   - All values in the response (calories, protein, carbs, fats) must already be scaled for the TOTAL quantity shown.
-   - Always use total quantity, not the serving size shown on the label.
+SCALING – CRITICAL:
+- If images show a product AND its nutrition label: MULTIPLY label values by (total_qty / reference_qty).
+  Example: 750g product × (350 kcal/100g) = 2625 kcal total.
+- `detected_quantity` = TOTAL product quantity (e.g. 750), NOT serving size.
+- All output values must already be scaled for the TOTAL quantity.
 
-3. **kJ vs kcal – VERY IMPORTANT**:
-   - European food labels often show BOTH kJ and kcal on the same line.
-   - ALWAYS use the kcal value. Ignore the kJ value entirely.
-   - 1 kcal ≈ 4.18 kJ. NEVER use kJ values as if they were kcal.
+kJ vs kcal – CRITICAL:
+- European labels show BOTH kJ and kcal. ALWAYS use kcal. 1 kcal ≈ 4.18 kJ.
 
-4. **Unit (detected_unit)**:
-   - Liquids/drinks → "ml".
-   - Solid foods with gram preference → "gram".
-   - Otherwise → "$unitString".
+UNIT (detected_unit):
+- Liquids → "ml" | Solid foods (gram mode) → "gram" | Otherwise → "$unitString"
 
-5. **Meal name**: `meal_name` ALWAYS in English.
+NAME: `meal_name` ALWAYS in English.
 
-6. **Quantity references**: ${useGrams ? 'Full pan ~800-1200g. Plate ~300-500g. Glass ~200-300ml.' : 'Standard plate ~1.0. Full pan ~2-4. Drink: quantity in ml.'}
+QUANTITY REFERENCE: ${useGrams ? 'Full pan ~800–1200g. Standard plate ~350–500g. Glass ~200–300ml. Bowl ~400–600g.' : 'Standard plate ~1.0 serving. Full pan ~2–4 servings. Drink: quantity in ml.'}
 
 RESPONSE FORMAT: JSON ONLY. "analysis_note" MUST BE FIRST.
 ''';
