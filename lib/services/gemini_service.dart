@@ -293,9 +293,8 @@ class GeminiService {
 
       // Build config
       final Map<String, dynamic> generationConfig = {
-        'temperature': 0.1, // Slightly above 0 for better flexible food recognition
-        'maxOutputTokens':
-            1024, // Reduced from 1536 since we removed verbose examples
+        'temperature': 0.1,
+        'maxOutputTokens': 1024,
         'responseMimeType': 'application/json',
         'responseSchema': {
           'type': 'OBJECT',
@@ -537,7 +536,6 @@ MENGEN-REFERENZ: ${useGrams ? 'Volle Pfanne ~800–1200g. Normaler Teller ~350�
 
 ANTWORTE NUR ALS JSON. "analysis_note" MUSS ZUERST KOMMEN.
 ''';
-
     } else {
       final unitString = useGrams ? 'gram' : 'serving';
       return '''You are a precise AI Nutritionist. Analyze the image(s) and any user notes step by step.
@@ -576,7 +574,6 @@ QUANTITY REFERENCE: ${useGrams ? 'Full pan ~800–1200g. Standard plate ~350–5
 
 RESPONSE FORMAT: JSON ONLY. "analysis_note" MUST BE FIRST.
 ''';
-
     }
   }
 }

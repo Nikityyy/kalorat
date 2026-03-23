@@ -204,11 +204,10 @@ void main() {
           goal: 2, // Gain
         );
 
-        // TDEE ~2100 + 250 = ~2350 (lean bulk, not dirty bulk +500)
-        expect(user.dailyCalorieTarget, closeTo(2350, 10));
+        expect(user.dailyCalorieTarget, closeTo(2200, 10));
       });
 
-      test('lean bulk surplus is less than dirty bulk surplus', () {
+      test('lean bulk surplus is much less than dirty bulk surplus', () {
         final gainUser = UserModel(
           name: 'Gain',
           birthdate: DateTime(1990, 1, 1),
@@ -225,9 +224,9 @@ void main() {
           gender: 0,
           goal: 1,
         );
-        // Surplus should be +250, not +500
-        final surplus = gainUser.dailyCalorieTarget - maintainUser.dailyCalorieTarget;
-        expect(surplus, closeTo(250, 5));
+        final surplus =
+            gainUser.dailyCalorieTarget - maintainUser.dailyCalorieTarget;
+        expect(surplus, closeTo(100, 5));
       });
 
       test('defaults to male when gender is null', () {
@@ -298,7 +297,10 @@ void main() {
           weight: 80,
           goal: 1,
         );
-        expect(gainUser.dailyProteinTarget, greaterThan(maintainUser.dailyProteinTarget));
+        expect(
+          gainUser.dailyProteinTarget,
+          greaterThan(maintainUser.dailyProteinTarget),
+        );
       });
     });
 

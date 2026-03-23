@@ -222,33 +222,35 @@ class UserModel extends HiveObject {
 
     // Goal adjustment
     if (goal == Goal.lose) return tdee - 500;
-    if (goal == Goal.gain) return tdee + 250; // Lean bulk: moderate surplus
+    if (goal == Goal.gain) return tdee + 100;
     return tdee;
   }
 
   double get dailyProteinTarget {
     double mult = 1.5;
     if (goal == Goal.lose) mult = 1.8;
-    if (goal == Goal.gain) mult = 2.2; // Lean bulk: high protein for muscle retention
+    if (goal == Goal.gain) mult = 2.2;
+    return weight * mult;
+  }
+
+  double get dailyFatTarget {
+    double mult = 1.0;
+    if (goal == Goal.lose) mult = 0.8;
+    if (goal == Goal.gain) mult = 1.1;
+
     return weight * mult;
   }
 
   double get dailyCarbTarget {
     final proteinCals = dailyProteinTarget * 4;
-    final remaining = (dailyCalorieTarget - proteinCals).clamp(
-      0,
-      double.infinity,
-    );
-    return (remaining * 0.55) / 4;
-  }
+    final fatCals = dailyFatTarget * 9;
 
-  double get dailyFatTarget {
-    final proteinCals = dailyProteinTarget * 4;
-    final remaining = (dailyCalorieTarget - proteinCals).clamp(
-      0,
+    final remaining = (dailyCalorieTarget - proteinCals - fatCals).clamp(
+      0.0,
       double.infinity,
     );
-    return (remaining * 0.45) / 9;
+
+    return remaining / 4;
   }
 
   // --------------- copyWith ---------------
