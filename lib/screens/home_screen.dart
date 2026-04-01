@@ -320,6 +320,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           if (detectedMultiplier <= 0) detectedMultiplier = 1.0;
 
           final mealWithPortion = finalMeal.copyWith(
+            calories: finalMeal.calories * detectedMultiplier,
+            protein: finalMeal.protein * detectedMultiplier,
+            carbs: finalMeal.carbs * detectedMultiplier,
+            fats: finalMeal.fats * detectedMultiplier,
             portionMultiplier: detectedMultiplier,
             portionUnit: detectedUnit,
             quantityPerUnit: baseQuantityPerUnit,
