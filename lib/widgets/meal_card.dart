@@ -208,17 +208,17 @@ class MealCard extends StatelessWidget {
                 children: [
                   _MacroChip(
                     label: l10n.protein,
-                    value: '${meal.protein.toInt()}${l10n.grams}',
+                    value: '${meal.protein.toStringAsFixed(1)}${l10n.grams}',
                     color: AppColors.styrianForest,
                   ),
                   _MacroChip(
                     label: l10n.carbs,
-                    value: '${meal.carbs.toInt()}${l10n.grams}',
+                    value: '${meal.carbs.toStringAsFixed(1)}${l10n.grams}',
                     color: AppColors.styrianForest,
                   ),
                   _MacroChip(
                     label: l10n.fats,
-                    value: '${meal.fats.toInt()}${l10n.grams}',
+                    value: '${meal.fats.toStringAsFixed(1)}${l10n.grams}',
                     color: AppColors.styrianForest,
                   ),
                 ],

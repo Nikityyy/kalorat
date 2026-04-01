@@ -288,10 +288,10 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
         setState(() {
           _meal = _meal.copyWith(
             mealName: result['meal_name'] ?? '',
-            calories: (result['calories'] ?? 0).toDouble() / detectedMultiplier,
-            protein: (result['protein'] ?? 0).toDouble() / detectedMultiplier,
-            carbs: (result['carbs'] ?? 0).toDouble() / detectedMultiplier,
-            fats: (result['fats'] ?? 0).toDouble() / detectedMultiplier,
+            calories: (result['calories'] ?? 0).toDouble(),
+            protein: (result['protein'] ?? 0).toDouble(),
+            carbs: (result['carbs'] ?? 0).toDouble(),
+            fats: (result['fats'] ?? 0).toDouble(),
             portionUnit: detectedUnit,
             quantityPerUnit: baseQuantityPerUnit,
           );
@@ -505,7 +505,7 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
     Function(double) onSave,
   ) {
     final controller = TextEditingController(
-      text: currentValue.toInt().toString(),
+      text: currentValue.toStringAsFixed(1),
     );
     showDialog(
       context: context,
@@ -834,15 +834,14 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
                               _MacroCard(
                                 label: l10n.protein,
                                 value:
-                                    '${(_meal.protein * _portionMultiplier).toInt()}g',
+                                    '${(_meal.protein * _portionMultiplier).toStringAsFixed(1)}g',
                                 color: AppColors.styrianForest,
                                 onEdit: () => _showEditMacroDialog(
                                   l10n.protein,
                                   _meal.protein * _portionMultiplier,
                                   (val) {
                                     setState(() {
-                                      final newProtein =
-                                          val / _portionMultiplier;
+                                      final newProtein = val / _portionMultiplier;
                                       final newCalories =
                                           _meal.isCalorieOverride
                                           ? _meal.calories
@@ -861,7 +860,7 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
                               _MacroCard(
                                 label: l10n.carbs,
                                 value:
-                                    '${(_meal.carbs * _portionMultiplier).toInt()}g',
+                                    '${(_meal.carbs * _portionMultiplier).toStringAsFixed(1)}g',
                                 color: AppColors.styrianForest,
                                 onEdit: () => _showEditMacroDialog(
                                   l10n.carbs,
@@ -887,7 +886,7 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
                               _MacroCard(
                                 label: l10n.fats,
                                 value:
-                                    '${(_meal.fats * _portionMultiplier).toInt()}g',
+                                    '${(_meal.fats * _portionMultiplier).toStringAsFixed(1)}g',
                                 color: AppColors.styrianForest,
                                 onEdit: () => _showEditMacroDialog(
                                   l10n.fats,

@@ -132,8 +132,16 @@ class SyncService {
         .eq('user_id', userId);
 
     for (final mealData in mealsData) {
-      final meal = _mealFromSupabase(mealData);
-      await _db.saveMeal(meal);
+      final cloudMeal = _mealFromSupabase(mealData);
+      MealModel finalMeal = cloudMeal;
+
+      // Preserve local photo paths if they exist
+      final localMeal = _db.getMealById(cloudMeal.id);
+      if (localMeal != null && localMeal.photoPaths.isNotEmpty) {
+        finalMeal = cloudMeal.copyWith(photoPaths: localMeal.photoPaths);
+      }
+
+      await _db.saveMeal(finalMeal);
     }
 
     // Fetch and merge weights
@@ -243,6 +251,8 @@ class SyncService {
       'is_manual_entry': meal.isManualEntry,
       'is_calorie_override': meal.isCalorieOverride,
       'portion_multiplier': meal.portionMultiplier,
+      'portion_unit': meal.portionUnit,
+      'quantity_per_unit': meal.quantityPerUnit,
       // Note: photoPaths are local file paths, not synced to cloud
     });
   }
@@ -278,6 +288,8 @@ class SyncService {
       isCalorieOverride: data['is_calorie_override'] ?? false,
       portionMultiplier:
           (data['portion_multiplier'] as num?)?.toDouble() ?? 1.0,
+      portionUnit: data['portion_unit'] ?? 'serving',
+      quantityPerUnit: (data['quantity_per_unit'] as num?)?.toDouble() ?? 1.0,
     );
   }
 

@@ -308,6 +308,11 @@ class DatabaseService {
     return _mealsBox.containsKey(mealId) || _findMealKey(mealId) != null;
   }
 
+  MealModel? getMealById(String mealId) {
+    final key = _findMealKey(mealId) ?? mealId;
+    return _mealsBox.get(key);
+  }
+
   /// Helper to find meal by ID when key might differ from ID
   /// (for backwards compatibility with auto-generated keys)
   dynamic _findMealKey(String mealId) {

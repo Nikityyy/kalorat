@@ -518,17 +518,22 @@ DENKPROZESS (in analysis_note dokumentieren):
 4. Summiere alle Komponenten.
 5. Verifiziere: (Protein×4 + KH×4 + Fett×9) ≈ kcal (max. 10% Abweichung erlaubt).
 
-SKALIERUNG – KRITISCH:
-- Wenn Bilder ein Produkt UND sein Nährwertetikett zeigen: MULTIPLIZIERE Etikettwerte mit (Gesamtmenge/Referenzmenge).
-  Beispiel: 750g Produkt × (350 kcal/100g) = 2625 kcal.
-- `detected_quantity` = GESAMTE Produktmenge (z.B. 750), NICHT Portionsgröße.
-- Alle Ausgabewerte bereits für GESAMTE Menge skalieren.
+NÄHRWERT-AUSGABE – KRITISCH:
+- calories, protein, carbs, fats IMMER PRO 100g (Gramm-Modus) oder PRO 1 PORTION (Portions-Modus) angeben.
+- NIEMALS die Werte für die Gesamtmenge skalieren. Die App übernimmt die Skalierung.
+- `detected_quantity` = geschätzte GESAMTE Menge des Essens (z.B. 250g, 2 Portionen).
+- Beispiel Gramm-Modus: 250g Reis → calories/protein/carbs/fats pro 100g angeben, detected_quantity=250.
+- Beispiel Portions-Modus: 2 Portionen → Werte pro 1 Portion angeben, detected_quantity=2.
+- Wenn ein Nährwertetikett sichtbar ist: Werte PRO 100g (oder pro Portion wie auf dem Etikett) direkt übernehmen. detected_quantity = geschätzte Gesamtmenge.
 
 kJ vs. kcal – KRITISCH:
 - Europäische Etiketten zeigen oft kJ UND kcal. Verwende IMMER kcal. 1 kcal ≈ 4,18 kJ.
 
 EINHEIT (detected_unit):
-- Flüssigkeiten → "ml" | Feste Speisen (Gramm-Modus) → "gram" | Sonst → "$unitString"
+- Orientiere dich an der REFERENZEINHEIT des Nährwertetiketts, NICHT an der physischen Form des Produkts.
+- Etikett pro 100g → "gram" (auch bei Flüssigkeiten wie Smoothies oder Säften!)
+- Etikett pro 100ml → "ml"
+- Kein Etikett sichtbar (Gramm-Modus) → "gram" | Kein Etikett (Portions-Modus) → "$unitString"
 
 NAME: `meal_name` IMMER auf Deutsch.
 
@@ -556,17 +561,22 @@ THINKING PROCESS (document in analysis_note):
 4. Sum all components.
 5. Verify: (Protein×4 + Carbs×4 + Fat×9) ≈ Calories (max 10% deviation allowed).
 
-SCALING – CRITICAL:
-- If images show a product AND its nutrition label: MULTIPLY label values by (total_qty / reference_qty).
-  Example: 750g product × (350 kcal/100g) = 2625 kcal total.
-- `detected_quantity` = TOTAL product quantity (e.g. 750), NOT serving size.
-- All output values must already be scaled for the TOTAL quantity.
+NUTRITION OUTPUT – CRITICAL:
+- calories, protein, carbs, fats MUST ALWAYS be PER 100g (gram mode) or PER 1 SERVING (serving mode).
+- NEVER scale values to the total quantity. The app handles scaling.
+- `detected_quantity` = estimated TOTAL quantity of the food (e.g. 250g, 2 servings).
+- Example gram mode: 250g rice → report calories/protein/carbs/fats per 100g, detected_quantity=250.
+- Example serving mode: 2 servings → report values per 1 serving, detected_quantity=2.
+- If a nutrition label is visible: use the values PER 100g (or per serving as shown on label) directly. detected_quantity = estimated total quantity.
 
 kJ vs kcal – CRITICAL:
 - European labels show BOTH kJ and kcal. ALWAYS use kcal. 1 kcal ≈ 4.18 kJ.
 
 UNIT (detected_unit):
-- Liquids → "ml" | Solid foods (gram mode) → "gram" | Otherwise → "$unitString"
+- Base this on the nutrition LABEL'S reference unit, NOT the physical form of the food.
+- Label per 100g → "gram" (even for liquids like smoothies or juices!)
+- Label per 100ml → "ml"
+- No label visible (gram mode) → "gram" | No label (serving mode) → "$unitString"
 
 NAME: `meal_name` ALWAYS in English.
 

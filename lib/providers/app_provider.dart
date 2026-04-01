@@ -113,13 +113,16 @@ class AppProvider extends ChangeNotifier {
     final session = Supabase.instance.client.auth.currentSession;
     if (session != null && _isOnline) {
       // Do NOT await — let the UI appear immediately
-      _syncService.syncFromCloud().then((_) {
-        _user = _databaseService.getUser(); // Refresh after background sync
-        _invalidateStatsCache();
-        notifyListeners();
-      }).catchError((e) {
-        AppLogger.error('AppProvider', 'Background cloud sync failed', e);
-      });
+      _syncService
+          .syncFromCloud()
+          .then((_) {
+            _user = _databaseService.getUser(); // Refresh after background sync
+            _invalidateStatsCache();
+            notifyListeners();
+          })
+          .catchError((e) {
+            AppLogger.error('AppProvider', 'Background cloud sync failed', e);
+          });
     }
 
     // Migration: If key exists in insecure storage but not secure storage, migrate it
@@ -408,12 +411,12 @@ class AppProvider extends ChangeNotifier {
       );
     }
 
-    // RATE LIMIT: Max 10 meals per day
+    // RATE LIMIT: Max 15 meals per day
     // Only check if it's a NEW meal (not an update to an existing one)
     final existingMeal = _databaseService.hasMeal(meal.id);
     if (!existingMeal) {
       final todayMeals = _databaseService.getMealsByDate(DateTime.now());
-      if (todayMeals.length >= 10) {
+      if (todayMeals.length >= 15) {
         final isGerman = language == 'de';
         throw Exception(
           isGerman
