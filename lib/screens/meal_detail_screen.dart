@@ -166,7 +166,8 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
             children: [
               Center(
                 child: Container(
-                  width: 40, height: 4,
+                  width: 40,
+                  height: 4,
                   decoration: BoxDecoration(
                     color: AppColors.borderGrey,
                     borderRadius: BorderRadius.circular(2),
@@ -210,10 +211,15 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
                         side: const BorderSide(color: AppColors.pebble),
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(AppTheme.borderRadius),
+                          borderRadius: BorderRadius.circular(
+                            AppTheme.borderRadius,
+                          ),
                         ),
                       ),
-                      child: const Text('Abbrechen', style: TextStyle(color: AppColors.slate)),
+                      child: const Text(
+                        'Abbrechen',
+                        style: TextStyle(color: AppColors.slate),
+                      ),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -231,11 +237,16 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
                         foregroundColor: AppColors.glacialWhite,
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(AppTheme.borderRadius),
+                          borderRadius: BorderRadius.circular(
+                            AppTheme.borderRadius,
+                          ),
                         ),
                         elevation: 0,
                       ),
-                      child: const Text('Neu analysieren', style: TextStyle(fontWeight: FontWeight.bold)),
+                      child: const Text(
+                        'Neu analysieren',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
                     ),
                   ),
                 ],
@@ -265,10 +276,12 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
         _meal.photoPaths,
         useGrams: provider.user?.useGramsByDefault ?? false,
         mealContext: submittedContext,
+        useAccurateMode: provider.user?.useAccurateMode ?? false,
       );
 
       if (result != null) {
-        if (result.containsKey('error') && result['error'] == 'no_food_detected') {
+        if (result.containsKey('error') &&
+            result['error'] == 'no_food_detected') {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text(context.l10n.noFoodDetected)),
@@ -299,16 +312,16 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
         });
 
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Analysis updated!')),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('Analysis updated!')));
         }
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Retry failed: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Retry failed: $e')));
       }
     } finally {
       if (mounted) setState(() => _isAnalyzing = false);
@@ -841,7 +854,8 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
                                   _meal.protein * _portionMultiplier,
                                   (val) {
                                     setState(() {
-                                      final newProtein = val / _portionMultiplier;
+                                      final newProtein =
+                                          val / _portionMultiplier;
                                       final newCalories =
                                           _meal.isCalorieOverride
                                           ? _meal.calories

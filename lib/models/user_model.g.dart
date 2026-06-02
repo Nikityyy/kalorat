@@ -39,13 +39,14 @@ class UserModelAdapter extends TypeAdapter<UserModel> {
       useGramsByDefault: fields[19] as bool? ?? false,
       activityLevel: fields[20] as int? ?? 0,
       dayStartHour: fields[21] as int? ?? 0,
+      useAccurateMode: fields[22] as bool? ?? false,
     );
   }
 
   @override
   void write(BinaryWriter writer, UserModel obj) {
     writer
-      ..writeByte(22)
+      ..writeByte(23)
       ..writeByte(0)
       ..write(obj.name)
       ..writeByte(1)
@@ -89,7 +90,9 @@ class UserModelAdapter extends TypeAdapter<UserModel> {
       ..writeByte(20)
       ..write(obj.activityLevelIndex)
       ..writeByte(21)
-      ..write(obj.dayStartHour);
+      ..write(obj.dayStartHour)
+      ..writeByte(22)
+      ..write(obj.useAccurateMode);
   }
 
   @override

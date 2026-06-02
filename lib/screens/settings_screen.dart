@@ -166,6 +166,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
     UserModel user,
     dynamic l10n,
   ) {
+    final isGerman = provider.language == 'de';
+
     return _buildSection(l10n.preferences, [
       SwitchListTile(
         title: const Text(
@@ -179,6 +181,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
         value: user.useGramsByDefault,
         activeThumbColor: AppColors.primary,
         onChanged: (v) => provider.updateUser(useGramsByDefault: v),
+      ),
+      const Divider(height: 1, indent: 16, endIndent: 16),
+      SwitchListTile(
+        title: Text(
+          isGerman
+              ? 'KI-Genauigkeitsmodus (Deep Think)'
+              : 'AI Accurate Mode (Deep Think)',
+          style: const TextStyle(color: AppColors.slate),
+        ),
+        subtitle: Text(
+          isGerman
+              ? 'Mehr Genauigkeit durch tiefere KI-Analyse. Deaktiviert (Fast Mode) ist extrem schnell.'
+              : 'Higher accuracy via deep AI reasoning. Off (Fast Mode) is extremely fast.',
+          style: const TextStyle(fontSize: 12),
+        ),
+        value: user.useAccurateMode,
+        activeThumbColor: AppColors.primary,
+        onChanged: (v) => provider.updateUser(useAccurateMode: v),
       ),
       const Divider(height: 1, indent: 16, endIndent: 16),
       _buildDayStartSelector(provider, user, l10n),
@@ -784,8 +804,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       // Session gone – sign in again
                       final authService = AuthService();
                       await authService.signOut();
-                      final (response, photoUrl) =
-                          await authService.signInWithGoogle();
+                      final (response, photoUrl) = await authService
+                          .signInWithGoogle();
                       if (response.user != null && mounted) {
                         await provider.updateUser(
                           supabaseUserId: response.user!.id,
@@ -935,9 +955,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
           if (path != null && mounted) {
             if (path == 'web_download') {
               // Web: file was downloaded via browser, just confirm
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Download started')),
-              );
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(const SnackBar(content: Text('Download started')));
             } else {
               await SharePlus.instance.share(
                 ShareParams(files: [XFile(path)], text: 'Kalorat Backup'),

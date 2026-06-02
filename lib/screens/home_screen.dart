@@ -266,6 +266,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         _capturedPhotos,
         useGrams: provider.user?.useGramsByDefault ?? false,
         mealContext: mealContext,
+        useAccurateMode: provider.user?.useAccurateMode ?? false,
       );
 
       if (result != null) {

@@ -78,6 +78,11 @@ class UserModel extends HiveObject {
   @HiveField(21)
   final int dayStartHour;
 
+  /// When true, the Gemini API uses deep chain-of-thought reasoning (HIGH).
+  /// When false (default), uses MINIMAL thinking for near-instantaneous responses.
+  @HiveField(22)
+  final bool useAccurateMode;
+
   // --------------- Enum accessors ---------------
 
   Goal get goal => Goal.fromIndex(goalIndex);
@@ -112,6 +117,7 @@ class UserModel extends HiveObject {
     this.useGramsByDefault = false,
     int activityLevel = 0,
     this.dayStartHour = 0,
+    this.useAccurateMode = false,
   }) : height = height.clamp(50.0, 300.0),
        weight = weight.clamp(1.0, 500.0),
        goalIndex = goal.clamp(0, Goal.values.length - 1),
@@ -144,6 +150,7 @@ class UserModel extends HiveObject {
     String? photoUrl,
     bool useGramsByDefault = false,
     ActivityLevel activityLevel = ActivityLevel.sedentary,
+    bool useAccurateMode = false,
   }) : this(
          name: name,
          birthdate: birthdate,
@@ -167,6 +174,7 @@ class UserModel extends HiveObject {
          useGramsByDefault: useGramsByDefault,
          activityLevel: activityLevel.index,
          dayStartHour: 0,
+         useAccurateMode: useAccurateMode,
        );
 
   // --------------- Computed properties ---------------
@@ -278,6 +286,7 @@ class UserModel extends HiveObject {
     bool? useGramsByDefault,
     int? activityLevel,
     int? dayStartHour,
+    bool? useAccurateMode,
   }) {
     return UserModel(
       name: name ?? this.name,
@@ -303,6 +312,7 @@ class UserModel extends HiveObject {
       useGramsByDefault: useGramsByDefault ?? this.useGramsByDefault,
       activityLevel: activityLevel ?? activityLevelIndex,
       dayStartHour: dayStartHour ?? this.dayStartHour,
+      useAccurateMode: useAccurateMode ?? this.useAccurateMode,
     );
   }
 
@@ -331,6 +341,7 @@ class UserModel extends HiveObject {
     'useGramsByDefault': useGramsByDefault,
     'activityLevel': activityLevelIndex,
     'dayStartHour': dayStartHour,
+    'useAccurateMode': useAccurateMode,
   };
 
   factory UserModel.fromJson(Map<String, dynamic> json) => UserModel(
@@ -358,5 +369,6 @@ class UserModel extends HiveObject {
     useGramsByDefault: json['useGramsByDefault'] ?? false,
     activityLevel: json['activityLevel'] ?? 0,
     dayStartHour: (json['dayStartHour'] as int?) ?? 0,
+    useAccurateMode: json['useAccurateMode'] ?? false,
   );
 }

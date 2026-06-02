@@ -40,9 +40,7 @@ class GeminiService {
   static const String _baseUrlBase =
       'https://generativelanguage.googleapis.com/v1beta/models';
 
-  // Preferred model order: gemini-flash-latest first (auto-redirects to latest
-  // Flash), gemini-flash-lite-latest as fallback on rate limit.
-  static const String _preferredModel = 'gemini-flash-latest';
+  static const String _preferredModel = 'gemini-flash-lite-latest';
 
   // Cache for available models to avoid fetching on every request
   List<String>? _cachedModels;
@@ -115,13 +113,13 @@ class GeminiService {
           return b.compareTo(a);
         });
 
-        // Ensure our preferred model (gemini-flash-latest) is first,
-        // lite models (gemini-flash-lite-latest) are last as fallback.
+        // Ensure our preferred model (gemini-flash-lite-latest) is first,
+        // lite models (gemini-flash-latest) are last as fallback.
         final preferred = supportedModels
-            .where((m) => !m.toLowerCase().contains('lite'))
+            .where((m) => m.toLowerCase().contains('lite'))
             .toList();
         final fallbackLite = supportedModels
-            .where((m) => m.toLowerCase().contains('lite'))
+            .where((m) => !m.toLowerCase().contains('lite'))
             .toList();
         supportedModels
           ..clear()
@@ -155,6 +153,7 @@ class GeminiService {
     List<String> imagePaths, {
     bool useGrams = false,
     String? mealContext,
+    bool useAccurateMode = false,
   }) async {
     if (apiKey.isEmpty) {
       throw GeminiError(GeminiErrorType.invalidApiKey, 'API key is not set');
@@ -202,6 +201,7 @@ class GeminiService {
           imagePaths,
           useGrams: useGrams,
           mealContext: mealContext,
+          useAccurateMode: useAccurateMode,
         );
 
         // Success! Save this model as preferred
@@ -240,6 +240,7 @@ class GeminiService {
     List<String> imagePaths, {
     bool useGrams = false,
     String? mealContext,
+    bool useAccurateMode = false,
   }) async {
     try {
       // Prepare image parts in background to avoid UI jank
@@ -323,7 +324,11 @@ class GeminiService {
         },
       };
 
-      // Apply thinking config only for specific reasoning models
+      // Configurable thinking mode based on selected toggles
+      generationConfig['thinkingConfig'] = {
+        'thinkingLevel': useAccurateMode ? 'HIGH' : 'MINIMAL',
+      };
+
       // Build request body
       final Map<String, dynamic> requestBody;
 

@@ -59,6 +59,7 @@ class OfflineQueueService {
     String apiKey,
     String language, {
     bool useGrams = false,
+    bool useAccurateMode = false,
   }) async {
     if (!await isOnline()) return;
 
@@ -72,6 +73,7 @@ class OfflineQueueService {
         final result = await geminiService.analyzeMeal(
           meal.photoPaths,
           useGrams: useGrams,
+          useAccurateMode: useAccurateMode,
         );
         if (result != null) {
           final updatedMeal = meal.copyWith(

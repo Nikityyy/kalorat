@@ -329,6 +329,51 @@ class DatabaseService {
       ..sort((a, b) => b.date.compareTo(a.date));
   }
 
+  /// Save multiple meals in a single batch write transaction.
+  Future<void> saveMealsBatch(List<MealModel> meals) async {
+    final Map<dynamic, MealModel> mealsMap = {};
+    for (final meal in meals) {
+      final existingKey = _findMealKey(meal.id);
+      final key = existingKey ?? meal.id;
+      mealsMap[key] = meal;
+    }
+
+    // Bulk write to Hive box
+    await _mealsBox.putAll(mealsMap);
+
+    // Rebuild in-memory indices once after the batch write is complete
+    await _buildIndices();
+  }
+
+  /// Save multiple weights in a single batch write transaction.
+  Future<void> saveWeightsBatch(List<WeightModel> weights) async {
+    final List<WeightModel> currentWeights = _weightsBox.values.toList();
+    final Map<dynamic, WeightModel> weightsToPut = {};
+    final List<WeightModel> weightsToAdd = [];
+
+    for (final weight in weights) {
+      final existingIndex = currentWeights.indexWhere(
+        (w) =>
+            w.date.year == weight.date.year &&
+            w.date.month == weight.date.month &&
+            w.date.day == weight.date.day,
+      );
+      if (existingIndex >= 0) {
+        final key = _weightsBox.keyAt(existingIndex);
+        weightsToPut[key] = weight;
+      } else {
+        weightsToAdd.add(weight);
+      }
+    }
+
+    if (weightsToPut.isNotEmpty) {
+      await _weightsBox.putAll(weightsToPut);
+    }
+    if (weightsToAdd.isNotEmpty) {
+      await _weightsBox.addAll(weightsToAdd);
+    }
+  }
+
   WeightModel? getWeightByDate(DateTime date) {
     try {
       return _weightsBox.values.firstWhere(

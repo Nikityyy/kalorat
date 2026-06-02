@@ -267,6 +267,7 @@ class AppProvider extends ChangeNotifier {
     bool? useGramsByDefault,
     int? activityLevel,
     int? dayStartHour,
+    bool? useAccurateMode,
   }) async {
     // If user is null (e.g. during onboarding before first save), create a new one
     // Use device language for new users instead of hardcoded 'en'
@@ -295,6 +296,7 @@ class AppProvider extends ChangeNotifier {
           useGramsByDefault: false,
           activityLevel: 0,
           dayStartHour: 0,
+          useAccurateMode: false,
         );
 
     _user = currentUser.copyWith(
@@ -322,6 +324,7 @@ class AppProvider extends ChangeNotifier {
       useGramsByDefault: useGramsByDefault ?? currentUser.useGramsByDefault,
       activityLevel: activityLevel ?? currentUser.activityLevelIndex,
       dayStartHour: dayStartHour ?? currentUser.dayStartHour,
+      useAccurateMode: useAccurateMode ?? currentUser.useAccurateMode,
       // If new API key provided, save to secure storage and clear here.
       // If not, keep existing empty string (or whatever is there).
       // We don't want to overwrite with empty string if apiKey wasn't passed.
@@ -383,6 +386,7 @@ class AppProvider extends ChangeNotifier {
         apiKey,
         language,
         useGrams: _user?.useGramsByDefault ?? false,
+        useAccurateMode: _user?.useAccurateMode ?? false,
       );
     } finally {
       _isProcessingQueue = false;

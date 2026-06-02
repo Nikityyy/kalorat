@@ -17,8 +17,7 @@ class SyncService {
   /// Get the current user ID or null if guest.
   String? get _userId => _client.auth.currentUser?.id;
 
-  /// Sync local data to Supabase cloud.
-  /// Called after login or periodically when online.
+  /// Sync local data to Supabase cloud using bulk operations.
   Future<void> syncToCloud() async {
     final userId = _userId;
     if (userId == null) return;
@@ -29,23 +28,64 @@ class SyncService {
       await _upsertProfile(userId, user);
     }
 
-    // Sync meals
+    // 1. Bulk Sync Meals to Supabase
     final meals = _db.getAllMeals();
-    for (final meal in meals) {
-      await _upsertMeal(userId, meal);
+    if (meals.isNotEmpty) {
+      final mealsData = meals
+          .map(
+            (meal) => {
+              'id': meal.id,
+              'user_id': userId,
+              'timestamp': meal.timestamp.toIso8601String(),
+              'meal_name': meal.mealName,
+              'calories': meal.calories,
+              'protein': meal.protein,
+              'carbs': meal.carbs,
+              'fats': meal.fats,
+              'vitamins': meal.vitamins,
+              'minerals': meal.minerals,
+              'is_pending': meal.isPending,
+              'is_manual_entry': meal.isManualEntry,
+              'is_calorie_override': meal.isCalorieOverride,
+              'portion_multiplier': meal.portionMultiplier,
+              'portion_unit': meal.portionUnit,
+              'quantity_per_unit': meal.quantityPerUnit,
+            },
+          )
+          .toList();
+
+      try {
+        await _client.from('meals').upsert(mealsData);
+      } catch (e) {
+        AppLogger.error('SyncService', 'Failed to bulk sync meals to cloud', e);
+      }
     }
 
-    // Sync weights (Delta sync)
+    // 2. Bulk Sync Weights (Delta sync) to Supabase
     final weights = _db.getAllWeights();
-    for (final weight in weights.where((w) => w.isPending)) {
+    final pendingWeights = weights.where((w) => w.isPending).toList();
+    if (pendingWeights.isNotEmpty) {
+      final weightsData = pendingWeights.map((weight) {
+        final dateKey = weight.date.toIso8601String().split('T')[0];
+        return {
+          'id': '${userId}_$dateKey',
+          'user_id': userId,
+          'date': weight.date.toIso8601String(),
+          'weight': weight.weight,
+        };
+      }).toList();
+
       try {
-        await _upsertWeight(userId, weight);
-        // Mark as synced locally
-        await _db.saveWeight(weight.copyWith(isPending: false));
+        await _client.from('weights').upsert(weightsData);
+        // Mark as synced locally in a single batch
+        final updatedWeights = pendingWeights
+            .map((w) => w.copyWith(isPending: false))
+            .toList();
+        await _db.saveWeightsBatch(updatedWeights);
       } catch (e) {
         AppLogger.error(
           'SyncService',
-          'Failed to sync weight ${weight.date}',
+          'Failed to bulk sync weights to cloud',
           e,
         );
       }
@@ -58,8 +98,7 @@ class SyncService {
     }
   }
 
-  /// Sync data from Supabase cloud to local Hive.
-  /// Called after login to restore data on new device.
+  /// Sync data from Supabase cloud to local Hive using batch database writes.
   Future<void> syncFromCloud() async {
     final userId = _userId;
     if (userId == null) return;
@@ -94,6 +133,7 @@ class SyncService {
           supabaseUserId: userId,
           photoUrl: profileData['photo_url'],
           dayStartHour: profileData['day_start_hour'] ?? 0,
+          useAccurateMode: profileData['use_accurate_mode'] ?? false,
         );
       } else {
         // Merge cloud profile into local (cloud is source of truth for profile fields).
@@ -108,6 +148,7 @@ class SyncService {
             : null;
         final cloudPhoto = profileData['photo_url'] as String?;
         final cloudDayStart = profileData['day_start_hour'] as int?;
+        final cloudAccurateMode = profileData['use_accurate_mode'] as bool?;
 
         currentUser = currentUser.copyWith(
           name: (cloudName != null && cloudName.isNotEmpty)
@@ -120,17 +161,19 @@ class SyncService {
           gender: cloudGender ?? currentUser.genderIndex,
           photoUrl: cloudPhoto ?? currentUser.photoUrl,
           dayStartHour: cloudDayStart ?? currentUser.dayStartHour,
+          useAccurateMode: cloudAccurateMode ?? currentUser.useAccurateMode,
         );
       }
       await _db.saveUser(currentUser);
     }
 
-    // Fetch and merge meals
+    // 1. Fetch and batch merge meals
     final mealsData = await _client
         .from('meals')
         .select()
         .eq('user_id', userId);
 
+    final List<MealModel> mealsToSave = [];
     for (final mealData in mealsData) {
       final cloudMeal = _mealFromSupabase(mealData);
       MealModel finalMeal = cloudMeal;
@@ -141,18 +184,27 @@ class SyncService {
         finalMeal = cloudMeal.copyWith(photoPaths: localMeal.photoPaths);
       }
 
-      await _db.saveMeal(finalMeal);
+      mealsToSave.add(finalMeal);
     }
 
-    // Fetch and merge weights
+    if (mealsToSave.isNotEmpty) {
+      await _db.saveMealsBatch(mealsToSave);
+    }
+
+    // 2. Fetch and batch merge weights
     final weightsData = await _client
         .from('weights')
         .select()
         .eq('user_id', userId);
 
+    final List<WeightModel> weightsToSave = [];
     for (final weightData in weightsData) {
       final weight = _weightFromSupabase(weightData);
-      await _db.saveWeight(weight);
+      weightsToSave.add(weight);
+    }
+
+    if (weightsToSave.isNotEmpty) {
+      await _db.saveWeightsBatch(weightsToSave);
     }
 
     // Update last sync timestamp
@@ -232,38 +284,7 @@ class SyncService {
       'day_start_hour': user.dayStartHour,
       'updated_at': DateTime.now().toIso8601String(),
       'photo_url': user.photoUrl,
-    });
-  }
-
-  Future<void> _upsertMeal(String userId, MealModel meal) async {
-    await _client.from('meals').upsert({
-      'id': meal.id,
-      'user_id': userId,
-      'timestamp': meal.timestamp.toIso8601String(),
-      'meal_name': meal.mealName,
-      'calories': meal.calories,
-      'protein': meal.protein,
-      'carbs': meal.carbs,
-      'fats': meal.fats,
-      'vitamins': meal.vitamins,
-      'minerals': meal.minerals,
-      'is_pending': meal.isPending,
-      'is_manual_entry': meal.isManualEntry,
-      'is_calorie_override': meal.isCalorieOverride,
-      'portion_multiplier': meal.portionMultiplier,
-      'portion_unit': meal.portionUnit,
-      'quantity_per_unit': meal.quantityPerUnit,
-      // Note: photoPaths are local file paths, not synced to cloud
-    });
-  }
-
-  Future<void> _upsertWeight(String userId, WeightModel weight) async {
-    final dateKey = weight.date.toIso8601String().split('T')[0];
-    await _client.from('weights').upsert({
-      'id': '${userId}_$dateKey',
-      'user_id': userId,
-      'date': weight.date.toIso8601String(),
-      'weight': weight.weight,
+      'use_accurate_mode': user.useAccurateMode,
     });
   }
 
@@ -310,7 +331,24 @@ class SyncService {
     if (userId == null) return false;
 
     try {
-      await _upsertMeal(userId, meal);
+      await _client.from('meals').upsert({
+        'id': meal.id,
+        'user_id': userId,
+        'timestamp': meal.timestamp.toIso8601String(),
+        'meal_name': meal.mealName,
+        'calories': meal.calories,
+        'protein': meal.protein,
+        'carbs': meal.carbs,
+        'fats': meal.fats,
+        'vitamins': meal.vitamins,
+        'minerals': meal.minerals,
+        'is_pending': meal.isPending,
+        'is_manual_entry': meal.isManualEntry,
+        'is_calorie_override': meal.isCalorieOverride,
+        'portion_multiplier': meal.portionMultiplier,
+        'portion_unit': meal.portionUnit,
+        'quantity_per_unit': meal.quantityPerUnit,
+      });
       return true;
     } catch (e) {
       // Log error but don't throw - local operation should succeed
@@ -325,7 +363,13 @@ class SyncService {
     if (userId == null) return false;
 
     try {
-      await _upsertWeight(userId, weight);
+      final dateKey = weight.date.toIso8601String().split('T')[0];
+      await _client.from('weights').upsert({
+        'id': '${userId}_$dateKey',
+        'user_id': userId,
+        'date': weight.date.toIso8601String(),
+        'weight': weight.weight,
+      });
       await _db.saveWeight(weight.copyWith(isPending: false));
       return true;
     } catch (e) {

@@ -56,17 +56,17 @@ void main() {
         await tempDir.delete(recursive: true);
       });
 
-      test('non-lite Flash model comes before lite Flash model', () async {
+      test('lite Flash model comes before full Flash model', () async {
         // Create a real temp file for the image so XFile.readAsBytes works on non-web
         final testFile = File('${tempDir.path}/test_image.jpg');
         await testFile.writeAsBytes(base64Decode(_dummyBase64Jpeg));
 
-        // Simulate the API returning a mixed list: lite first, then non-lite.
-        // The service should sort them so non-lite (full Flash) is first.
+        // Simulate the API returning a mixed list: non-lite first, then lite.
+        // The service should sort them so lite model is first.
         final modelsResponse = jsonEncode({
           'models': [
-            {'name': 'models/gemini-flash-lite-latest'},
             {'name': 'models/gemini-flash-latest'},
+            {'name': 'models/gemini-flash-lite-latest'},
           ],
         });
 
@@ -117,15 +117,12 @@ void main() {
           apiKey: 'test_key',
           client: trackingClient,
         );
-        // We can't inspect private model list directly, but we CAN verify
-        // that 'lite' does NOT appear in the first model path called.
         await trackingService.analyzeMeal([testFile.path]);
-        // The first generateContent URL should NOT contain 'lite'
         if (firstModelCalled != null) {
           expect(
             firstModelCalled!.toLowerCase().contains('lite'),
-            isFalse,
-            reason: 'First model tried should not be a Lite model',
+            isTrue,
+            reason: 'First model tried should not be a non-Lite model',
           );
         }
       });
