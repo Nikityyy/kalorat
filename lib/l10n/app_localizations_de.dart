@@ -15,7 +15,8 @@ class AppLocalizationsDe extends AppLocalizations {
   String get welcome => 'Willkommen bei Kalorat';
 
   @override
-  String get welcomeSubtitle => 'Dein Begleiter am Berg.';
+  String get welcomeSubtitle =>
+      'Präzises Ernährungstracking. Absolute Klarheit.';
 
   @override
   String get next => 'Weiter';
@@ -203,7 +204,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get weightHistory => 'Gewichtsverlauf';
 
   @override
-  String get noWeightData => 'Der Weg beginnt hier.';
+  String get noWeightData => 'Noch keine Gewichtsdaten erfasst.';
 
   @override
   String get statistics => 'Statistiken';
@@ -468,7 +469,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get saveMeal => 'Eintrag loggen';
 
   @override
-  String get welcomeSlogan => 'Kalorien, schön getrackt.';
+  String get welcomeSlogan => 'Kalorien, präzise getrackt.';
 
   @override
   String get getStarted => 'Los geht\'s';
@@ -718,10 +719,11 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get rateLimitMeals =>
-      'Der Guide sagt: Ruh dich etwas aus, du hast heute genug getrackt.';
+      'Maximum erreicht. Limit von 15 Mahlzeiten pro Tag.';
 
   @override
-  String get rateLimitPhotos => 'Der Guide sagt: Pack leicht. 5 Fotos genügen.';
+  String get rateLimitPhotos =>
+      'Maximum erreicht. Limit von 5 Fotos pro Mahlzeit.';
 
   @override
   String get legal => 'Rechtliches';

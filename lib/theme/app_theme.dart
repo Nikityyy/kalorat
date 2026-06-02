@@ -11,29 +11,29 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.light,
-      scaffoldBackgroundColor: AppColors.glacialWhite,
+      scaffoldBackgroundColor: AppColors.pureWhite,
       primaryColor: AppColors.styrianForest,
       colorScheme: ColorScheme.light(
         primary: AppColors.styrianForest,
-        secondary: AppColors.glacierMint,
-        surface: AppColors.steel,
-        error: AppColors.kaiserRed,
-        onPrimary: AppColors.glacialWhite,
-        onSurface: AppColors.frost,
+        secondary: AppColors.styrianForest,
+        surface: AppColors.offWhite,
+        error: AppColors.signalRed,
+        onPrimary: AppColors.pureWhite,
+        onSurface: AppColors.deepSpaceBlack,
       ),
       cardTheme: CardThemeData(
-        color: AppColors.steel,
+        color: AppColors.offWhite,
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(borderRadius),
           side: const BorderSide(
-            color: AppColors.borderGrey,
+            color: AppColors.subtleAsh,
             width: _borderWidth,
           ),
         ),
       ),
       appBarTheme: AppBarTheme(
-        backgroundColor: AppColors.glacialWhite,
+        backgroundColor: AppColors.pureWhite,
         elevation: 0,
         centerTitle: true,
         titleTextStyle: AppTypography.titleLarge,
@@ -50,12 +50,12 @@ class AppTheme {
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.styrianForest,
-          foregroundColor: AppColors.glacialWhite,
+          foregroundColor: AppColors.pureWhite,
           elevation: 0,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(borderRadius),
             side: const BorderSide(
-              color: AppColors.borderGrey,
+              color: AppColors.subtleAsh,
               width: _borderWidth,
             ),
           ),
@@ -75,51 +75,46 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
-      scaffoldBackgroundColor: AppColors.frost,
+      scaffoldBackgroundColor: AppColors.deepSpaceBlack,
       primaryColor: AppColors.styrianForest,
       colorScheme: ColorScheme.dark(
         primary: AppColors.styrianForest,
-        secondary: AppColors.glacierMint,
-        surface: const Color(0xFF252A2A),
-        error: AppColors.kaiserRed,
-        onPrimary: AppColors.glacialWhite,
-        onSurface: AppColors.glacialWhite,
+        secondary: AppColors.styrianForest,
+        surface: AppColors.richCharcoal,
+        error: AppColors.signalRed,
+        onPrimary: AppColors.pureWhite,
+        onSurface: AppColors.pureWhite,
       ),
       cardTheme: CardThemeData(
-        color: const Color(0xFF252A2A),
+        color: AppColors.richCharcoal,
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(borderRadius),
-          side: BorderSide(
-            color: AppColors.borderGrey.withValues(alpha: 0.3),
-            width: _borderWidth,
-          ),
+          side: BorderSide(color: AppColors.darkChrome, width: _borderWidth),
         ),
       ),
       appBarTheme: const AppBarTheme(
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
-        foregroundColor: AppColors.glacialWhite,
+        foregroundColor: AppColors.pureWhite,
       ),
       textTheme: TextTheme(
         displayLarge: AppTypography.displayLarge.copyWith(
-          color: AppColors.glacialWhite,
+          color: AppColors.pureWhite,
         ),
         displayMedium: AppTypography.displayMedium.copyWith(
-          color: AppColors.glacialWhite,
+          color: AppColors.pureWhite,
         ),
         titleLarge: AppTypography.titleLarge.copyWith(
-          color: AppColors.glacialWhite,
+          color: AppColors.pureWhite,
         ),
-        bodyLarge: AppTypography.bodyLarge.copyWith(
-          color: AppColors.glacialWhite,
-        ),
+        bodyLarge: AppTypography.bodyLarge.copyWith(color: AppColors.pureWhite),
         bodyMedium: AppTypography.bodyMedium.copyWith(
-          color: AppColors.glacialWhite,
+          color: AppColors.pureWhite,
         ),
         labelLarge: AppTypography.labelLarge.copyWith(
-          color: AppColors.glacialWhite,
+          color: AppColors.pureWhite,
         ),
       ),
       pageTransitionsTheme: const PageTransitionsTheme(
@@ -134,8 +129,8 @@ class AppTheme {
   static CupertinoThemeData get iosTheme {
     return CupertinoThemeData(
       primaryColor: AppColors.styrianForest,
-      scaffoldBackgroundColor: AppColors.glacialWhite,
-      barBackgroundColor: AppColors.glacialWhite.withValues(alpha: 0.8),
+      scaffoldBackgroundColor: AppColors.pureWhite,
+      barBackgroundColor: AppColors.pureWhite.withValues(alpha: 0.8),
       textTheme: CupertinoTextThemeData(
         primaryColor: AppColors.styrianForest,
         textStyle: AppTypography.bodyMedium,

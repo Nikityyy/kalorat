@@ -1,32 +1,50 @@
 import 'package:flutter/material.dart';
 
-class AppColors {
-  // The Glacial Kit (Brand Identity 2.0)
-  static const Color styrianForest = Color(0xFF0F5838); // Primary - Deep Green
-  static const Color glacialWhite = Color(
-    0xFFFAFAFC,
-  ); // Canvas - Cool Off-White
-  static const Color steel = Color(0xFFF0F2F5); // Surface Light
-  static const Color frost = Color(0xFF1A1F1F); // Surface Dark
-  static const Color kaiserRed = Color(0xFFED2939); // Action/Alert - Signal Red
-  static const Color glacierMint = Color(0xFF3ED685); // Success
-  static const Color amber = Color(0xFFFFBF00); // Warning/Alert
-  static const Color borderGrey = Color(0xFFD1D5DB); // Topographic Border
+// HOPE LLC — Fluid Precision
 
-  // Functional Assignments
-  static const Color primary = styrianForest;
-  static const Color background = glacialWhite;
-  static const Color surface = steel;
-  static const Color surfaceDark = frost;
-  static const Color error = kaiserRed;
-  static const Color success = glacierMint;
-  static const Color warning = amber;
-  static const Color border = borderGrey;
+class AppColors {
+  // Primary/Accent
+  static const Color primary = Color(0xFF0F5838); // Styrian Forest
+  static const Color background = Color(0xFFFFFFFF); // Pure White canvas
+  static const Color error = Color(0xFFED2939); // Signal Red
+  static const Color surface = Color(0xFFF9FAFB); // Off-White surface
+
+  // HOPE LLC — Fluid Precision
+  // Kalorat Accent: Styrian Forest
+  static const Color styrianForestColor = Color(0xFF0F5838); // Primary Accent
+  static const Color styrianForestDark = Color(0xFF0A3C26); // Hover state
+  static const Color styrianForestLight = Color(0xFF1EB070); // Light variant
+
+  // Monochrome Canvas — Light Mode
+  static const Color pureWhite = Color(0xFFFFFFFF); // Light Canvas
+  static const Color offWhite = Color(0xFFF9FAFB); // Off-White Surface
+  static const Color subtleAsh = Color(0xFFE5E7EB); // 1px Hard Border Light
+  static const Color lightSurface = Color(0xFFF3F4F6); // Light surface card bg
+
+  // Monochrome Canvas — Dark Mode
+  static const Color deepSpaceBlack = Color(0xFF0A0A0A); // Dark Canvas
+  static const Color richCharcoal = Color(0xFF141414); // Surface Dark
+  static const Color darkChrome = Color(0xFF27272A); // 1px Hard Border Dark
+
+  // Functional Colors
+  static const Color signalRed = Color(0xFFED2939); // Error/Alert
+  static const Color success = Color(0xFF0F5838); // Success
+  static const Color warning = Color(0xFFF59E0B); // Warning Amber
+  static const Color infoBlue = Color(0xFF3B82F6); // Info
 
   static const Color transparent = Colors.transparent;
 
-  // Legacy aliases (for gradual migration)
-  static const Color limestone = glacialWhite;
-  static const Color pebble = steel;
-  static const Color slate = frost;
+  // Backward-compatible aliases for migration
+  // These exist so old code continues to compile — migrate gradually
+  static const Color styrianForest = styrianForestColor;
+  static const Color glacialWhite = pureWhite;
+  static const Color steel = offWhite;
+  static const Color frost = deepSpaceBlack;
+  static const Color borderGrey = subtleAsh;
+  static const Color kaiserRed = signalRed;
+  static const Color glacierMint = styrianForest;
+  static const Color amber = warning;
+  static const Color limestone = pureWhite;
+  static const Color pebble = offWhite;
+  static const Color slate = deepSpaceBlack;
 }

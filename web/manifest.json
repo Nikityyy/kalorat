@@ -5,9 +5,9 @@
     "start_url": ".",
     "scope": ".",
     "display": "standalone",
-    "background_color": "#0F5838",
-    "theme_color": "#0F5838",
-    "description": "Your companion for the climb. Honest, precise, and human nutrition tracking.",
+    "background_color": "#FFFFFF",
+    "theme_color": "#FFFFFF",
+    "description": "Kalorat — The System. Because tracking Kalorien requires absolute clarity. Precise nutrition tracking by HOPE LLC.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

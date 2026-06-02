@@ -406,8 +406,8 @@ class AppProvider extends ChangeNotifier {
       // Manual fallback if context unavailable, though usually handled by UI
       throw Exception(
         isGerman
-            ? "Der Guide sagt: Pack leicht. 5 Fotos genügen."
-            : "The Guide says: Pack light. 5 photos are enough.",
+            ? "Maximum erreicht. Limit von 5 Fotos pro Mahlzeit."
+            : "Maximum reached. 5 photos per meal limit.",
       );
     }
 
@@ -420,8 +420,8 @@ class AppProvider extends ChangeNotifier {
         final isGerman = language == 'de';
         throw Exception(
           isGerman
-              ? "Der Guide sagt: Ruh dich etwas aus, du hast heute genug getrackt."
-              : "The Guide says: Rest a bit, you've tracked enough for today.",
+              ? "Maximum erreicht. Limit von 15 Mahlzeiten pro Tag."
+              : "Maximum reached. 15 meals per day limit.",
         );
       }
     }

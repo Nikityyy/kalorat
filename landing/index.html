@@ -6,28 +6,27 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <!-- SEO -->
-    <title>Kalorat — Companion for the Climb</title>
+    <title>Kalorat — The System. Because tracking Kalorien requires absolute clarity.</title>
     <meta name="description"
-        content="Kalorat is your companion for the climb. Honest, precise, and human nutrition tracking designed with the clarity of the Alps. No noise, just the path ahead.">
+        content="Kalorat. Engineered by HOPE LLC. Precise, honest nutrition tracking. No noise. Just absolute clarity.">
     <meta name="keywords"
-        content="kalorat, calorie tracker, nutrition tracking, meal logger, health companion, austrian design, alpine wellness">
-    <meta name="author" content="Kalorat Team">
+        content="kalorat, HOPE LLC, calorie tracker, nutrition tracking, meal logger, health companion, fluid precision">
+    <meta name="author" content="HOPE LLC">
 
     <!-- Open Graph -->
     <meta property="og:type" content="website">
-    <meta property="og:title" content="Kalorat — Companion for the Climb">
+    <meta property="og:title" content="Kalorat — The System. Absolute Clarity.">
     <meta property="og:description"
-        content="Honest, precise, and human nutrition tracking designed with the clarity of the Alps.">
+        content="Precise, honest nutrition tracking. Engineered by HOPE LLC with fluid precision.">
     <meta property="og:image" content="assets/kalorat-favicon-ios.webp">
     <meta property="og:url" content="https://nikity.is-a.dev/kalorat/">
 
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Kalorat — Companion for the Climb">
+    <meta name="twitter:title" content="Kalorat — The System. Absolute Clarity.">
     <meta name="twitter:description"
-        content="Honest, precise, and human nutrition tracking designed with the clarity of the Alps.">
+        content="Precise, honest nutrition tracking. Engineered by HOPE LLC with fluid precision.">
 
-    <!-- Theme -->
     <meta name="theme-color" content="#0F5838">
 
     <!-- Favicon -->
@@ -46,8 +45,7 @@
 
     <style>
         /* ============================================
-       KALORAT DESIGN SYSTEM
-       Digital Alpinism — The Glacial Kit
+       KALORAT — HOPE LLC BRAND IDENTITY
        ============================================ */
 
         *,
@@ -59,23 +57,23 @@
         }
 
         :root {
-            /* The Glacial Kit */
+            /* HOPE LLC — Kalorat Palette */
             --styrian-forest: #0F5838;
             --styrian-forest-rgb: 15, 88, 56;
-            --glacial-white: #FAFAFC;
-            --steel-frost: #F0F2F5;
-            --dark-surface: #1A1F1F;
-            --kaiser-red: #ED2939;
-            --glacier-mint: #3ED685;
-            --border: #D1D5DB;
-            --text-primary: #1A1F1F;
-            --text-secondary: #4A5568;
-            --white: #FFFFFF;
+            --pure-white: #FFFFFF;
+            --off-white: #F9FAFB;
+            --subtle-ash: #E5E7EB;
+            --deep-space: #0A0A0A;
+            --rich-charcoal: #141414;
+            --text-primary: #0A0A0A;
+            --text-secondary: #4B5563;
+            --signal-red: #ED2939;
 
             /* System */
             --radius: 12px;
             --radius-lg: 20px;
             --radius-xl: 28px;
+            --border-width: 1px;
         }
 
         html {
@@ -84,7 +82,7 @@
 
         body {
             font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
-            background-color: var(--glacial-white);
+            background-color: var(--pure-white);
             color: var(--text-primary);
             line-height: 1.6;
             -webkit-font-smoothing: antialiased;
@@ -92,7 +90,7 @@
             overflow-x: hidden;
         }
 
-        /* Headings: Bold, -1px tracking (Bodenständig) */
+        /* Headings: Bold, -1px tracking */
         h1,
         h2,
         h3,
@@ -132,10 +130,10 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            background: rgba(250, 250, 252, 0.95);
+            background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
-            border-bottom: 1px solid var(--border);
+            border-bottom: 1px solid var(--subtle-ash);
         }
 
         .nav-left {
@@ -201,11 +199,9 @@
         }
 
         .lang-option.active {
-            background: var(--white);
+            background: var(--pure-white);
             color: var(--styrian-forest);
             opacity: 1;
-            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-            /* Very subtle purely for visibility against grey bg */
         }
 
         .nav-cta {
@@ -214,22 +210,19 @@
             gap: 0.5rem;
             padding: 0.5rem 1.25rem;
             background: var(--styrian-forest);
-            color: var(--white);
+            color: var(--pure-white);
             border-radius: 100px;
             font-size: 0.875rem;
             font-weight: 600;
             border: 1px solid var(--styrian-forest);
-            /* Explicit border */
             cursor: pointer;
             transition: all 0.2s;
             white-space: nowrap;
-            /* Prevent ugly wrapping */
             line-height: 1;
-            /* Fix height */
         }
 
         .nav-cta:hover {
-            background: var(--white);
+            background: var(--pure-white);
             color: var(--styrian-forest);
             transform: translateY(-1px);
         }
@@ -319,7 +312,6 @@
             opacity: 0;
             animation: fadeInUp 0.6s ease-out 0.4s forwards;
             scroll-margin-top: 100px;
-            /* Fix for fixed header overlap */
         }
 
         .btn-download {
@@ -334,34 +326,32 @@
             font-family: 'Outfit', sans-serif;
             cursor: pointer;
             transition: all 0.2s;
-            border: 1px solid var(--border);
+            border: 1px solid var(--subtle-ash);
             line-height: 1.2;
         }
 
         .btn-android {
             background: var(--styrian-forest);
-            color: var(--white);
+            color: var(--pure-white);
             border-color: var(--styrian-forest);
         }
 
         .btn-android:hover {
-            background: var(--white);
+            background: var(--pure-white);
             color: var(--styrian-forest);
             transform: translateY(-2px);
-            /* Removed soft shadow */
         }
 
         .btn-ios {
-            background: var(--white);
+            background: var(--pure-white);
             color: var(--text-primary);
-            border-color: var(--border);
+            border-color: var(--subtle-ash);
         }
 
         .btn-ios:hover {
             border-color: var(--text-primary);
-            background: var(--steel-frost);
+            background: var(--off-white);
             transform: translateY(-2px);
-            /* Removed soft shadow */
         }
 
         .btn-icon {
@@ -438,7 +428,7 @@
         }
 
         /* ============================================
-       FEATURE SHOWCASE (Cal AI style — alternating)
+       FEATURE SHOWCASE
        ============================================ */
         .feature-row {
             display: flex;
@@ -523,7 +513,7 @@
         .feature-list .check {
             width: 20px;
             height: 20px;
-            background: var(--glacier-mint);
+            background: var(--styrian-forest);
             border-radius: 50%;
             display: flex;
             align-items: center;
@@ -537,44 +527,44 @@
         }
 
         /* ============================================
-       VALUES GRID
+       PRINCIPLES GRID — HOPE LLC Core Values
        ============================================ */
-        .values-section {
-            background: var(--white);
-            border-top: 1px solid var(--border);
-            border-bottom: 1px solid var(--border);
+        .principles-section {
+            background: var(--pure-white);
+            border-top: 1px solid var(--subtle-ash);
+            border-bottom: 1px solid var(--subtle-ash);
         }
 
-        .values-header {
+        .principles-header {
             text-align: center;
             margin-bottom: 4rem;
         }
 
-        .values-header .section-desc {
+        .principles-header .section-desc {
             margin: 0.5rem auto 0;
         }
 
-        .values-grid {
+        .principles-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
             gap: 1px;
-            background: var(--border);
-            border: 1px solid var(--border);
+            background: var(--subtle-ash);
+            border: 1px solid var(--subtle-ash);
             border-radius: var(--radius-lg);
             overflow: hidden;
         }
 
-        .value-card {
-            background: var(--white);
+        .principle-card {
+            background: var(--pure-white);
             padding: 2.25rem;
             transition: background 0.2s;
         }
 
-        .value-card:hover {
-            background: var(--steel-frost);
+        .principle-card:hover {
+            background: var(--off-white);
         }
 
-        .value-card h3 {
+        .principle-card h3 {
             font-size: 1rem;
             font-weight: 700;
             color: var(--styrian-forest);
@@ -582,7 +572,7 @@
             letter-spacing: -0.5px;
         }
 
-        .value-german {
+        .principle-sub {
             font-family: 'JetBrains Mono', monospace;
             font-size: 0.7rem;
             color: var(--text-secondary);
@@ -591,7 +581,7 @@
             margin-bottom: 0.75rem;
         }
 
-        .value-card p {
+        .principle-card p {
             font-size: 0.88rem;
             color: var(--text-secondary);
             line-height: 1.6;
@@ -621,13 +611,13 @@
         }
 
         .modal {
-            background: var(--white);
+            background: var(--pure-white);
             border-radius: var(--radius-xl);
             max-width: 480px;
             width: 100%;
             max-height: 90vh;
             overflow-y: auto;
-            border: 1px solid var(--border);
+            border: 1px solid var(--subtle-ash);
             position: relative;
         }
 
@@ -638,8 +628,8 @@
             width: 36px;
             height: 36px;
             border-radius: 50%;
-            border: 1px solid var(--border);
-            background: var(--white);
+            border: 1px solid var(--subtle-ash);
+            background: var(--pure-white);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -651,7 +641,7 @@
         }
 
         .modal-close:hover {
-            background: var(--steel-frost);
+            background: var(--off-white);
             color: var(--text-primary);
         }
 
@@ -677,7 +667,7 @@
             display: flex;
             gap: 1rem;
             padding: 1.25rem 0;
-            border-top: 1px solid var(--border);
+            border-top: 1px solid var(--subtle-ash);
             opacity: 0;
             transform: translateY(10px);
             animation: stepIn 0.4s ease-out forwards;
@@ -703,7 +693,7 @@
             width: 32px;
             height: 32px;
             background: var(--styrian-forest);
-            color: var(--white);
+            color: var(--pure-white);
             border-radius: 50%;
             display: flex;
             align-items: center;
@@ -731,19 +721,19 @@
         .step-visual {
             margin-top: 0.75rem;
             border-radius: var(--radius);
-            border: 1px solid var(--border);
+            border: 1px solid var(--subtle-ash);
             overflow: hidden;
-            background: var(--steel-frost);
+            background: var(--off-white);
         }
 
         .step-visual img {
             width: 100%;
-            background: var(--steel-frost);
+            background: var(--off-white);
         }
 
         .modal-footer {
             padding: 1.5rem 2.5rem;
-            border-top: 1px solid var(--border);
+            border-top: 1px solid var(--subtle-ash);
             text-align: center;
         }
 
@@ -753,7 +743,7 @@
             gap: 0.5rem;
             padding: 0.75rem 2rem;
             background: var(--styrian-forest);
-            color: var(--white);
+            color: var(--pure-white);
             border-radius: var(--radius);
             font-family: 'Outfit', sans-serif;
             font-size: 0.95rem;
@@ -779,7 +769,7 @@
         .cta-box {
             max-width: 900px;
             margin: 0 auto;
-            background: var(--dark-surface);
+            background: var(--deep-space);
             border-radius: var(--radius-xl);
             padding: 5rem 3rem;
             text-align: center;
@@ -806,17 +796,17 @@
             left: -20%;
             width: 400px;
             height: 400px;
-            background: radial-gradient(circle, rgba(62, 214, 133, 0.08) 0%, transparent 65%);
+            background: radial-gradient(circle, rgba(var(--styrian-forest-rgb), 0.08) 0%, transparent 65%);
             pointer-events: none;
         }
 
         .cta-box .section-eyebrow {
-            color: var(--glacier-mint);
+            color: var(--styrian-forest);
         }
 
         .cta-box h2 {
             font-size: clamp(2rem, 4vw, 3rem);
-            color: var(--white);
+            color: var(--pure-white);
             max-width: 600px;
             margin: 0 auto 1rem;
         }
@@ -843,7 +833,7 @@
             justify-content: center;
             gap: 0.75rem;
             padding: 0.85rem 1.75rem;
-            background: var(--white);
+            background: var(--pure-white);
             color: var(--text-primary);
             border-radius: var(--radius);
             font-family: 'Outfit', sans-serif;
@@ -857,8 +847,7 @@
 
         .btn-cta-android:hover {
             transform: translateY(-2px);
-            background: var(--steel-frost);
-            /* Removed soft shadow */
+            background: var(--off-white);
         }
 
         .btn-cta-ios {
@@ -868,7 +857,7 @@
             gap: 0.75rem;
             padding: 0.85rem 1.75rem;
             background: transparent;
-            color: var(--white);
+            color: var(--pure-white);
             border-radius: var(--radius);
             font-family: 'Outfit', sans-serif;
             font-size: 0.95rem;
@@ -893,7 +882,7 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            border-top: 1px solid var(--border);
+            border-top: 1px solid var(--subtle-ash);
             max-width: 1100px;
             margin: 0 auto;
         }
@@ -982,7 +971,7 @@
                 align-items: center;
             }
 
-            .values-grid {
+            .principles-grid {
                 grid-template-columns: repeat(2, 1fr);
             }
         }
@@ -1025,7 +1014,7 @@
                 padding: 4rem 1.5rem;
             }
 
-            .values-grid {
+            .principles-grid {
                 grid-template-columns: 1fr;
             }
 
@@ -1047,13 +1036,13 @@
     <!-- ==================== NAV ==================== -->
     <nav>
         <div class="nav-left">
-            <img src="assets/kalorat-textlogo.webp" alt="Kalorat text logo in Styrian Forest green"
+            <img src="assets/kalorat-textlogo.webp" alt="Kalorat text logo in Styrian Forest Green"
                 class="nav-logo-img">
         </div>
         <div class="nav-right">
             <ul class="nav-links">
                 <li><a href="#features" data-i18n="nav_features">Features</a></li>
-                <li><a href="#values" data-i18n="nav_code">Our Code</a></li>
+                <li><a href="#principles" data-i18n="nav_principles">Principles</a></li>
             </ul>
             <div class="lang-toggle" onclick="toggleLanguage()">
                 <span class="lang-option" id="lang-de">DE</span>
@@ -1064,12 +1053,10 @@
     </nav>
 
     <!-- ==================== HERO ==================== -->
-    <!-- ==================== HERO ==================== -->
     <section class="hero">
-        <h1 data-i18n="hero_title">Track your nutrition <br><span class="accent">with just a photo.</span></h1>
-        <p class="hero-sub" data-i18n="hero_subtitle">Honest, precise, and human nutrition tracking. Your companion for
-            the climb, built with the
-            clarity of the Alps.</p>
+        <h1 data-i18n="hero_title">Track your nutrition <br><span class="accent">with absolute clarity.</span></h1>
+        <p class="hero-sub" data-i18n="hero_subtitle">Precise, honest nutrition tracking. Engineered by HOPE LLC. No
+            noise. Just the data that matters.</p>
         <div class="hero-badges">
             <span class="badge-opensource"><i class="ri-open-source-line"></i> <span data-i18n="badge_opensource">100%
                     Open Source</span></span>
@@ -1107,7 +1094,7 @@
             <!-- Feature 1: Snap & Track -->
             <div class="feature-row">
                 <div class="feature-content">
-                    <span class="feature-tag" data-i18n="feat1_tag">Snap &amp; Track</span>
+                    <span class="feature-tag" data-i18n="feat1_tag">Snap & Track</span>
                     <h2 data-i18n="feat1_title">Take a photo. <br>We handle the rest.</h2>
                     <p data-i18n="feat1_desc">Point your camera at any meal and get instant calorie and nutrient
                         information. No manual entry,
@@ -1145,10 +1132,10 @@
             <div class="feature-row reverse">
                 <div class="feature-content">
                     <span class="feature-tag" data-i18n="feat2_tag">Honest Insights</span>
-                    <h2 data-i18n="feat2_title">See the truth. <br>Clearly.</h2>
+                    <h2 data-i18n="feat2_title">See the data. <br>Clearly.</h2>
                     <p data-i18n="feat2_desc">No gamification tricks, no streaks to maintain. Just clear, honest data
                         about your nutrition
-                        presented the way a trusted guide would explain it.</p>
+                        presented with absolute clarity.</p>
                     <ul class="feature-list">
                         <li>
                             <span class="check"><svg viewBox="0 0 12 12" fill="none" stroke="#fff" stroke-width="2">
@@ -1181,43 +1168,39 @@
         </div>
     </section>
 
-    <!-- ==================== VALUES ==================== -->
-    <section class="values-section" id="values">
+    <!-- ==================== PRINCIPLES ==================== -->
+    <section class="principles-section" id="principles">
         <div class="section-container">
-            <div class="values-header">
-                <p class="section-eyebrow" data-i18n="values_eyebrow">Our Code</p>
-                <h2 class="section-title" data-i18n="values_title">Built on Alpine Values</h2>
-                <p class="section-desc" data-i18n="values_desc">Four principles forged from the philosophy of Digital
-                    Alpinism.</p>
+            <div class="principles-header">
+                <p class="section-eyebrow" data-i18n="principles_eyebrow">Our Manifesto</p>
+                <h2 class="section-title" data-i18n="principles_title">Engineered on Fluid Precision</h2>
+                <p class="section-desc" data-i18n="principles_desc">Four core values that define every tool we build.
+                </p>
             </div>
-            <div class="values-grid">
-                <div class="value-card">
-                    <h3 data-i18n="val1_title">Comradery</h3>
-                    <span class="value-german">Kameradschaft</span>
-                    <p data-i18n="val1_desc">We are in this together. The app is a partner, not a judge. We celebrate
-                        the wins and stay calm
-                        during the losses.</p>
+            <div class="principles-grid">
+                <div class="principle-card">
+                    <h3 data-i18n="principle1_title">Absolute Clarity</h3>
+                    <span class="principle-sub">Klarheit</span>
+                    <p data-i18n="principle1_desc">If a user has to guess how an interface works, we have failed. We
+                        design for instant comprehension.</p>
                 </div>
-                <div class="value-card">
-                    <h3 data-i18n="val2_title">Precision</h3>
-                    <span class="value-german">Pr&auml;zision</span>
-                    <p data-i18n="val2_desc">A guide must be accurate. We show the math clearly so you always know where
-                        you stand on the
-                        mountain.</p>
+                <div class="principle-card">
+                    <h3 data-i18n="principle2_title">Uncompromising Precision</h3>
+                    <span class="principle-sub">Präzision</span>
+                    <p data-i18n="principle2_desc">From the mathematics of an algorithm to a 1px container border,
+                        everything is exactly where it is supposed to be.</p>
                 </div>
-                <div class="value-card">
-                    <h3 data-i18n="val3_title">Reduction</h3>
-                    <span class="value-german">Reduktion</span>
-                    <p data-i18n="val3_desc">Less, but better. We remove the noise so you can focus on the walk. Every
-                        pixel must serve the
-                        user.</p>
+                <div class="principle-card">
+                    <h3 data-i18n="principle3_title">Fluid Motion</h3>
+                    <span class="principle-sub">Bewegung</span>
+                    <p data-i18n="principle3_desc">A premium experience is felt. Our software glides and transitions
+                        with frictionless grace inside its structured grid.</p>
                 </div>
-                <div class="value-card">
-                    <h3 data-i18n="val4_title">Craftsmanship</h3>
-                    <span class="value-german">Handwerk</span>
-                    <p data-i18n="val4_desc">Built with the care of an Alpine carpenter. Our software should feel like a
-                        physical tool —
-                        solid, fast, and timeless.</p>
+                <div class="principle-card">
+                    <h3 data-i18n="principle4_title">Silent Confidence</h3>
+                    <span class="principle-sub">Stille</span>
+                    <p data-i18n="principle4_desc">Great software doesn't need to shout. We let our architecture, our
+                        speed, and our results speak for themselves.</p>
                 </div>
             </div>
         </div>
@@ -1226,10 +1209,9 @@
     <!-- ==================== CTA ==================== -->
     <section class="cta-section">
         <div class="cta-box">
-            <p class="section-eyebrow" data-i18n="cta_eyebrow">Start Your Climb</p>
-            <h2 data-i18n="cta_title">Your companion is ready.</h2>
-            <p data-i18n="cta_desc">Download for Android or install from your browser. No account required to get
-                started.</p>
+            <p class="section-eyebrow" data-i18n="cta_eyebrow">Start Now</p>
+            <h2 data-i18n="cta_title">The system is ready.</h2>
+            <p data-i18n="cta_desc">Download for Android or install from your browser. No account required.</p>
             <div class="cta-buttons">
                 <a href="https://github.com/Nikityyy/kalorat/releases/latest/download/app-release.apk"
                     class="btn-cta-android">
@@ -1246,8 +1228,8 @@
 
     <!-- ==================== FOOTER ==================== -->
     <footer>
-        <p class="footer-left"><span data-i18n="footer_text">2026 Kalorat. Built with precision in Austria. By</span> <a
-                href="https://nikity.is-a.dev/" target="_blank">Nikita Berger</a>.</p>
+        <p class="footer-left"><span data-i18n="footer_text">2026 Kalorat by HOPE LLC. Engineered with fluid precision.
+                By</span> <a href="https://nikity.is-a.dev/" target="_blank">Nikita Berger</a>.</p>
         <ul class="footer-links">
             <li><a href="https://github.com/Nikityyy/kalorat" target="_blank">GitHub</a></li>
         </ul>
@@ -1325,12 +1307,12 @@
             en: {
                 // Navigation
                 nav_features: "Features",
-                nav_code: "Our Code",
+                nav_principles: "Principles",
                 nav_download: "Download App",
 
                 // Hero
-                hero_title: "Track your nutrition <br><span class=\"accent\">with just a photo.</span>",
-                hero_subtitle: "Honest, precise, and human nutrition tracking. Your companion for the climb, built with the clarity of the Alps.",
+                hero_title: "Track your nutrition <br><span class=\"accent\">with absolute clarity.</span>",
+                hero_subtitle: "Precise, honest nutrition tracking. Engineered by HOPE LLC. No noise. Just the data that matters.",
                 badge_opensource: "100% Open Source",
                 btn_android: "Download for Android",
                 btn_ios: "Install on iPhone",
@@ -1344,32 +1326,32 @@
                 feat1_list3: "Works with any cuisine",
 
                 feat2_tag: "Honest Insights",
-                feat2_title: "See the truth. <br>Clearly.",
-                feat2_desc: "No gamification tricks, no streaks to maintain. Just clear, honest data about your nutrition presented the way a trusted guide would explain it.",
+                feat2_title: "See the data. <br>Clearly.",
+                feat2_desc: "No gamification tricks, no streaks to maintain. Just clear, honest data about your nutrition presented with absolute clarity.",
                 feat2_list1: "Weekly and monthly trend charts",
                 feat2_list2: "Personalized daily summaries",
                 feat2_list3: "Calorie and macro goals",
 
-                // Values
-                values_eyebrow: "Our Code",
-                values_title: "Built on Alpine Values",
-                values_desc: "Four principles forged from the philosophy of Digital Alpinism.",
-                val1_title: "Comradery",
-                val1_desc: "We are in this together. The app is a partner, not a judge. We celebrate the wins and stay calm during the losses.",
-                val2_title: "Precision",
-                val2_desc: "A guide must be accurate. We show the math clearly so you always know where you stand on the mountain.",
-                val3_title: "Reduction",
-                val3_desc: "Less, but better. We remove the noise so you can focus on the walk. Every pixel must serve the user.",
-                val4_title: "Craftsmanship",
-                val4_desc: "Built with the care of an Alpine carpenter. Our software should feel like a physical tool — solid, fast, and timeless.",
+                // Principles
+                principles_eyebrow: "Our Manifesto",
+                principles_title: "Engineered on Fluid Precision",
+                principles_desc: "Four core values that define every tool we build.",
+                principle1_title: "Absolute Clarity",
+                principle1_desc: "If a user has to guess how an interface works, we have failed. We design for instant comprehension.",
+                principle2_title: "Uncompromising Precision",
+                principle2_desc: "From the mathematics of an algorithm to a 1px container border, everything is exactly where it is supposed to be.",
+                principle3_title: "Fluid Motion",
+                principle3_desc: "A premium experience is felt. Our software glides and transitions with frictionless grace inside its structured grid.",
+                principle4_title: "Silent Confidence",
+                principle4_desc: "Great software doesn't need to shout. We let our architecture, our speed, and our results speak for themselves.",
 
                 // CTA
-                cta_eyebrow: "Start Your Climb",
-                cta_title: "Your companion is ready.",
-                cta_desc: "Download for Android or install from your browser. No account required to get started.",
+                cta_eyebrow: "Start Now",
+                cta_title: "The system is ready.",
+                cta_desc: "Download for Android or install from your browser. No account required.",
 
                 // Footer
-                footer_text: "2026 Kalorat. Built with precision in Austria. By",
+                footer_text: "2026 Kalorat by HOPE LLC. Engineered with fluid precision. By",
 
                 // Modal
                 modal_title: "Install Kalorat on iPhone",
@@ -1387,12 +1369,12 @@
             de: {
                 // Navigation
                 nav_features: "Funktionen",
-                nav_code: "Unser Kodex",
+                nav_principles: "Prinzipien",
                 nav_download: "App Laden",
 
                 // Hero
-                hero_title: "Tracke deine Ernährung <br><span class=\"accent\">mit nur einem Foto.</span>",
-                hero_subtitle: "Ehrlich, präzise und menschlich. Dein Bergführer für die Ernährung, gebaut mit der Klarheit der Alpen.",
+                hero_title: "Tracke deine Ernährung <br><span class=\"accent\">mit absoluter Klarheit.</span>",
+                hero_subtitle: "Präzises, ehrliches Ernährungstracking. Entwickelt von HOPE LLC. Kein Lärm. Nur die Daten, die zählen.",
                 badge_opensource: "100% Open Source",
                 btn_android: "Für Android Laden",
                 btn_ios: "Auf iPhone installieren",
@@ -1406,32 +1388,32 @@
                 feat1_list3: "Funktioniert mit jeder Küche",
 
                 feat2_tag: "Ehrliche Einblicke",
-                feat2_title: "Sieh die Wahrheit. <br>Ganz klar.",
-                feat2_desc: "Keine Gamification-Tricks, keine Streaks. Nur klare, ehrliche Daten über deine Ernährung, so wie ein vertrauenswürdiger Bergführer sie erklären würde.",
+                feat2_title: "Sieh die Daten. <br>Ganz klar.",
+                feat2_desc: "Keine Gamification-Tricks, keine Streaks. Nur klare, ehrliche Daten über deine Ernährung, präsentiert mit absoluter Klarheit.",
                 feat2_list1: "Wochen- und Monatstrends",
                 feat2_list2: "Personalisierte Tagesübersichten",
                 feat2_list3: "Kalorien- und Makro-Ziele",
 
-                // Values
-                values_eyebrow: "Unser Kodex",
-                values_title: "Gebaut auf Alpinen Werten",
-                values_desc: "Vier Prinzipien, geschmiedet aus der Philosophie des Digitalen Alpinismus.",
-                val1_title: "Kameradschaft",
-                val1_desc: "Wir sitzen im selben Boot. Die App ist ein Partner, kein Richter. Wir feiern Erfolge und bleiben ruhig bei Rückschlägen.",
-                val2_title: "Präzision",
-                val2_desc: "Ein Bergführer muss genau sein. Wir zeigen die Mathematik klar, damit du immer weißt, wo du am Berg stehst.",
-                val3_title: "Reduktion",
-                val3_desc: "Weniger, aber besser. Wir entfernen den Lärm, damit du dich auf den Weg konzentrieren kannst. Jedes Pixel muss dem Nutzer dienen.",
-                val4_title: "Handwerk",
-                val4_desc: "Gebaut mit der Sorgfalt eines alpinen Zimmermanns. Unsere Software soll sich wie ein physisches Werkzeug anfühlen — solide, schnell und zeitlos.",
+                // Principles
+                principles_eyebrow: "Unser Manifest",
+                principles_title: "Entwickelt mit Fluid Precision",
+                principles_desc: "Vier Kernwerte, die jedes unserer Werkzeuge definieren.",
+                principle1_title: "Absolute Klarheit",
+                principle1_desc: "Wenn ein Nutzer raten muss, wie eine Oberfläche funktioniert, haben wir versagt. Wir gestalten für sofortiges Verständnis.",
+                principle2_title: "Unnachgiebige Präzision",
+                principle2_desc: "Von der Mathematik eines Algorithmus bis zur 1px-Container-Grenze: Alles ist genau dort, wo es sein soll.",
+                principle3_title: "Fließende Bewegung",
+                principle3_desc: "Ein Premium-Erlebnis wird gespürt. Unsere Software gleitet und wechselt mit reibungsloser Anmut innerhalb ihres strukturierten Rasters.",
+                principle4_title: "Stille Zuversicht",
+                principle4_desc: "Großartige Software muss nicht schreien. Wir lassen unsere Architektur, unsere Geschwindigkeit und unsere Ergebnisse für sich sprechen.",
 
                 // CTA
-                cta_eyebrow: "Beginne den Aufstieg",
-                cta_title: "Dein Begleiter steht bereit.",
+                cta_eyebrow: "Jetzt starten",
+                cta_title: "Das System ist bereit.",
                 cta_desc: "Lade die App für Android oder installiere sie im Browser. Kein Account erforderlich.",
 
                 // Footer
-                footer_text: "2026 Kalorat. Mit Präzision gebaut in Österreich. Von",
+                footer_text: "2026 Kalorat by HOPE LLC. Entwickelt mit Fluid Precision. Von",
 
                 // Modal
                 modal_title: "Kalorat auf iPhone installieren",
@@ -1515,7 +1497,7 @@
             if (e.key === 'Escape') closeIOSTutorial();
         });
 
-        // Reveal on scroll (features + values)
+        // Reveal on scroll (features + principles)
         const observerOptions = { threshold: 0.15, rootMargin: '0px 0px -50px 0px' };
         const observer = new IntersectionObserver((entries) => {
             entries.forEach(entry => {

@@ -30,19 +30,19 @@ class AppTypography {
   static TextStyle get bodyLarge => GoogleFonts.outfit(
     fontSize: 18,
     fontWeight: FontWeight.w400,
-    color: AppColors.frost,
+    color: AppColors.deepSpaceBlack,
   );
 
   static TextStyle get bodyMedium => GoogleFonts.outfit(
     fontSize: 16,
     fontWeight: FontWeight.w400,
-    color: AppColors.frost.withValues(alpha: 0.8),
+    color: AppColors.deepSpaceBlack.withValues(alpha: 0.8),
   );
 
   static TextStyle get labelLarge => GoogleFonts.outfit(
     fontSize: 16,
     fontWeight: FontWeight.w600,
-    color: AppColors.glacialWhite,
+    color: AppColors.pureWhite,
     letterSpacing: 0.5,
   );
 
@@ -69,12 +69,12 @@ class AppTypography {
   static TextStyle get bodySmall => GoogleFonts.outfit(
     fontSize: 14,
     fontWeight: FontWeight.w400,
-    color: AppColors.frost.withValues(alpha: 0.7),
+    color: AppColors.deepSpaceBlack.withValues(alpha: 0.7),
   );
 
   static TextStyle get buttonLarge => GoogleFonts.outfit(
     fontSize: 16,
     fontWeight: FontWeight.w600,
-    color: AppColors.glacialWhite,
+    color: AppColors.pureWhite,
   );
 }

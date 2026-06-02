@@ -113,7 +113,7 @@ abstract class AppLocalizations {
   /// No description provided for @welcomeSubtitle.
   ///
   /// In de, this message translates to:
-  /// **'Dein Begleiter am Berg.'**
+  /// **'Präzises Ernährungstracking. Absolute Klarheit.'**
   String get welcomeSubtitle;
 
   /// No description provided for @next.
@@ -485,7 +485,7 @@ abstract class AppLocalizations {
   /// No description provided for @noWeightData.
   ///
   /// In de, this message translates to:
-  /// **'Der Weg beginnt hier.'**
+  /// **'Noch keine Gewichtsdaten erfasst.'**
   String get noWeightData;
 
   /// No description provided for @statistics.
@@ -989,7 +989,7 @@ abstract class AppLocalizations {
   /// No description provided for @welcomeSlogan.
   ///
   /// In de, this message translates to:
-  /// **'Kalorien, schön getrackt.'**
+  /// **'Kalorien, präzise getrackt.'**
   String get welcomeSlogan;
 
   /// No description provided for @getStarted.
@@ -1463,13 +1463,13 @@ abstract class AppLocalizations {
   /// No description provided for @rateLimitMeals.
   ///
   /// In de, this message translates to:
-  /// **'Der Guide sagt: Ruh dich etwas aus, du hast heute genug getrackt.'**
+  /// **'Maximum erreicht. Limit von 15 Mahlzeiten pro Tag.'**
   String get rateLimitMeals;
 
   /// No description provided for @rateLimitPhotos.
   ///
   /// In de, this message translates to:
-  /// **'Der Guide sagt: Pack leicht. 5 Fotos genügen.'**
+  /// **'Maximum erreicht. Limit von 5 Fotos pro Mahlzeit.'**
   String get rateLimitPhotos;
 
   /// No description provided for @legal.

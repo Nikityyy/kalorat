@@ -15,7 +15,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get welcome => 'Welcome to Kalorat';
 
   @override
-  String get welcomeSubtitle => 'Your companion for the climb.';
+  String get welcomeSubtitle => 'Precise nutrition tracking. Absolute clarity.';
 
   @override
   String get next => 'Next';
@@ -127,10 +127,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get addMorePhotos => 'Add more photos';
 
   @override
-  String get analyzeMeal => 'Check Provisions';
+  String get analyzeMeal => 'Analyze';
 
   @override
-  String get analyzing => 'Checking...';
+  String get analyzing => 'Analyzing...';
 
   @override
   String get mealName => 'Meal';
@@ -203,7 +203,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get weightHistory => 'Weight history';
 
   @override
-  String get noWeightData => 'The path starts here.';
+  String get noWeightData => 'No weight data recorded yet.';
 
   @override
   String get statistics => 'Statistics';
@@ -434,7 +434,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Do you really want to delete this meal?';
 
   @override
-  String get analyzingMeal => 'Checking provisions...';
+  String get analyzingMeal => 'Analyzing meal...';
 
   @override
   String get cameraNeeded => 'Camera Access Needed';
@@ -465,7 +465,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get saveMeal => 'Log Entry';
 
   @override
-  String get welcomeSlogan => 'Calories, tracked beautifully.';
+  String get welcomeSlogan => 'Calories, tracked with precision.';
 
   @override
   String get getStarted => 'Get Started';
@@ -711,12 +711,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get error => 'Error';
 
   @override
-  String get rateLimitMeals =>
-      'The Guide says: Rest a bit, you\'ve tracked enough for today.';
+  String get rateLimitMeals => 'Maximum reached. 15 meals per day limit.';
 
   @override
-  String get rateLimitPhotos =>
-      'The Guide says: Pack light. 5 photos are enough.';
+  String get rateLimitPhotos => 'Maximum reached. 5 photos per meal limit.';
 
   @override
   String get legal => 'Legal';

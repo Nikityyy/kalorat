@@ -55,7 +55,7 @@ class KaloratApp extends StatelessWidget {
             Widget homeWidget;
             if (!provider.isInitialized) {
               homeWidget = Scaffold(
-                backgroundColor: AppColors.limestone,
+                backgroundColor: AppColors.pureWhite,
                 body: Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
