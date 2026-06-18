@@ -85,6 +85,7 @@ class KaloratApp extends StatelessWidget {
               title: 'Kalorat',
               scrollBehavior: const MaterialScrollBehavior().copyWith(
                 dragDevices: {
+                  PointerDeviceKind.touch,
                   PointerDeviceKind.mouse,
                   PointerDeviceKind.stylus,
                   PointerDeviceKind.unknown,

@@ -45,6 +45,15 @@
   <link rel="dns-prefetch" href="https://generativelanguage.googleapis.com">
 
   <style>
+    /* Prevent double-highlight from browser native selection (Flutter renders its own) */
+    ::selection {
+      background: transparent;
+    }
+
+    ::-moz-selection {
+      background: transparent;
+    }
+
     body {
       background-color: #FFFFFF;
       margin: 0;
