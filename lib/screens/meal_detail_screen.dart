@@ -15,6 +15,7 @@ import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 import '../theme/app_typography.dart';
 import '../widgets/inputs/action_button.dart';
+import '../widgets/live_thought_panel.dart';
 import 'package:gal/gal.dart';
 import 'package:share_plus/share_plus.dart';
 
@@ -38,6 +39,8 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
   late MealModel _meal;
   late double _portionMultiplier;
   bool _isAnalyzing = false;
+  String _liveThoughtText = '';
+  AnalysisPhase _analysisPhase = AnalysisPhase.drafting;
   String? _mealContext;
 
   // FocusNode for retry context sheet — avoids autofocus keyboard-jump bug
@@ -79,12 +82,12 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
 
   void _updatePortionByValue(double newValue) {
     setState(() {
-      if (widget.meal.portionUnit == 'serving') {
+      if (_meal.portionUnit == 'serving') {
         _portionMultiplier = newValue;
       } else {
         // For grams/ml, the user enters e.g., 250.
         // Multiplier = 250 / 100
-        _portionMultiplier = newValue / widget.meal.quantityPerUnit;
+        _portionMultiplier = newValue / _meal.quantityPerUnit;
       }
       if (_portionMultiplier < 0.1) _portionMultiplier = 0.1;
     });
@@ -267,21 +270,43 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
     setState(() {
       _mealContext = submittedContext;
       _isAnalyzing = true;
+      _liveThoughtText = '';
+      _analysisPhase = AnalysisPhase.drafting;
     });
+
+    Map<String, dynamic>? result;
 
     try {
       final language = provider.language;
       final gemini = GeminiService(apiKey: apiKey, language: language);
-      final result = await gemini.analyzeMeal(
+      final stream = gemini.analyzeMealStream(
         _meal.photoPaths,
         useGrams: provider.user?.useGramsByDefault ?? false,
         mealContext: submittedContext,
         useAccurateMode: provider.user?.useAccurateMode ?? false,
+        allowEstimateVariation: true,
+        previousAnalysis: _currentAnalysisSnapshot(),
       );
 
-      if (result != null) {
-        if (result.containsKey('error') &&
-            result['error'] == 'no_food_detected') {
+      await for (final event in stream) {
+        if (!mounted) break;
+        if (event is AnalysisPhaseChanged) {
+          setState(() {
+            _analysisPhase = event.phase;
+          });
+        } else if (event is ThoughtChunk) {
+          setState(() {
+            _liveThoughtText += event.text;
+          });
+        } else if (event is AnalysisResult) {
+          result = event.data;
+        }
+      }
+
+      final analysis = result;
+      if (analysis != null) {
+        if (analysis.containsKey('error') &&
+            analysis['error'] == 'no_food_detected') {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text(context.l10n.noFoodDetected)),
@@ -290,8 +315,8 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
           return;
         }
 
-        double detectedQty = (result['detected_quantity'] ?? 1.0).toDouble();
-        String detectedUnit = result['detected_unit'] ?? 'serving';
+        double detectedQty = (analysis['detected_quantity'] ?? 1.0).toDouble();
+        String detectedUnit = analysis['detected_unit'] ?? 'serving';
         double baseQuantityPerUnit = (detectedUnit == 'serving') ? 1.0 : 100.0;
         double detectedMultiplier = (detectedUnit == 'serving')
             ? detectedQty
@@ -300,11 +325,30 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
 
         setState(() {
           _meal = _meal.copyWith(
-            mealName: result['meal_name'] ?? '',
-            calories: (result['calories'] ?? 0).toDouble(),
-            protein: (result['protein'] ?? 0).toDouble(),
-            carbs: (result['carbs'] ?? 0).toDouble(),
-            fats: (result['fats'] ?? 0).toDouble(),
+            mealName: analysis['meal_name'] ?? '',
+            calories: (analysis['calories'] ?? 0).toDouble(),
+            protein: (analysis['protein'] ?? 0).toDouble(),
+            carbs: (analysis['carbs'] ?? 0).toDouble(),
+            fats: (analysis['fats'] ?? 0).toDouble(),
+            caloriesPer100g: (analysis['calories_per_100g'] as num?)
+                ?.toDouble(),
+            proteinPer100g: (analysis['protein_per_100g'] as num?)?.toDouble(),
+            carbsPer100g: (analysis['carbs_per_100g'] as num?)?.toDouble(),
+            fatsPer100g: (analysis['fats_per_100g'] as num?)?.toDouble(),
+            vitamins: analysis['vitamins'] != null
+                ? Map<String, double>.from(
+                    (analysis['vitamins'] as Map).map(
+                      (k, v) => MapEntry(k.toString(), (v ?? 0).toDouble()),
+                    ),
+                  )
+                : null,
+            minerals: analysis['minerals'] != null
+                ? Map<String, double>.from(
+                    (analysis['minerals'] as Map).map(
+                      (k, v) => MapEntry(k.toString(), (v ?? 0).toDouble()),
+                    ),
+                  )
+                : null,
             portionUnit: detectedUnit,
             quantityPerUnit: baseQuantityPerUnit,
           );
@@ -316,6 +360,12 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
             context,
           ).showSnackBar(const SnackBar(content: Text('Analysis updated!')));
         }
+      } else if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(context.l10n.analysisError('No result received.')),
+          ),
+        );
       }
     } catch (e) {
       if (mounted) {
@@ -324,14 +374,37 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
         ).showSnackBar(SnackBar(content: Text('Retry failed: $e')));
       }
     } finally {
-      if (mounted) setState(() => _isAnalyzing = false);
+      if (mounted) {
+        setState(() {
+          _isAnalyzing = false;
+          _liveThoughtText = '';
+        });
+      }
     }
   }
 
+  Map<String, dynamic> _currentAnalysisSnapshot() {
+    return {
+      'meal_name': _meal.mealName,
+      'calories': _meal.calories,
+      'protein': _meal.protein,
+      'carbs': _meal.carbs,
+      'fats': _meal.fats,
+      'detected_quantity': _meal.portionUnit == 'serving'
+          ? _portionMultiplier
+          : _portionMultiplier * _meal.quantityPerUnit,
+      'detected_unit': _meal.portionUnit,
+      'calories_per_100g': _meal.caloriesPer100g,
+      'protein_per_100g': _meal.proteinPer100g,
+      'carbs_per_100g': _meal.carbsPer100g,
+      'fats_per_100g': _meal.fatsPer100g,
+    };
+  }
+
   void _showEditPortionDialog() {
-    double currentValue = (widget.meal.portionUnit == 'serving')
+    double currentValue = (_meal.portionUnit == 'serving')
         ? _portionMultiplier
-        : (_portionMultiplier * widget.meal.quantityPerUnit);
+        : (_portionMultiplier * _meal.quantityPerUnit);
 
     final controller = TextEditingController(
       text: currentValue.toStringAsFixed(1),
@@ -344,7 +417,7 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
           borderRadius: BorderRadius.circular(AppTheme.borderRadius),
         ),
         title: Text(
-          widget.meal.portionUnit == 'serving' ? 'Portion' : 'Menge',
+          _meal.portionUnit == 'serving' ? 'Portion' : 'Menge',
           style: AppTypography.displayMedium.copyWith(fontSize: 24),
         ),
         content: TextField(
@@ -352,9 +425,9 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
           style: AppTypography.bodyMedium,
           decoration: InputDecoration(
-            suffixText: widget.meal.portionUnit == 'serving'
+            suffixText: _meal.portionUnit == 'serving'
                 ? 'x'
-                : widget.meal.portionUnit,
+                : _meal.portionUnit,
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
           ),
         ),
@@ -378,7 +451,7 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
     );
   }
 
-  void _saveMeal() {
+  Future<void> _saveMeal() async {
     final provider = context.read<AppProvider>();
 
     // Adjust values by portion multiplier before saving
@@ -391,9 +464,11 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
     );
 
     // saveMeal handles both create and update
-    provider.saveMeal(finalMeal);
+    await provider.saveMeal(finalMeal);
 
-    Navigator.of(context).pop(); // Return to previous screen
+    if (mounted) {
+      Navigator.of(context).pop(); // Return to previous screen
+    }
   }
 
   void _showEditMealNameDialog() {
@@ -574,6 +649,79 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
     );
   }
 
+  Widget _buildAnalyzingView() {
+    final l10n = context.l10n;
+    final screenHeight = MediaQuery.of(context).size.height;
+
+    return Stack(
+      children: [
+        if (_meal.photoPaths.isNotEmpty)
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            height: screenHeight * 0.35,
+            child: PlatformUtils.isWeb
+                ? Image.memory(
+                    base64Decode(_meal.photoPaths.first),
+                    fit: BoxFit.cover,
+                  )
+                : Image.file(File(_meal.photoPaths.first), fit: BoxFit.cover),
+          ),
+        Positioned(
+          top: MediaQuery.of(context).padding.top + 8,
+          left: 16,
+          child: CircleAvatar(
+            backgroundColor: Colors.black26,
+            child: IconButton(
+              icon: const Icon(Icons.arrow_back, color: Colors.white),
+              onPressed: () {
+                setState(() => _isAnalyzing = false);
+              },
+            ),
+          ),
+        ),
+        Positioned(
+          top: screenHeight * 0.3,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          child: Container(
+            decoration: const BoxDecoration(
+              color: AppColors.glacialWhite,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+            ),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(24, 32, 24, 48),
+              child: Column(
+                children: [
+                  Text(
+                    l10n.analyzing,
+                    style: AppTypography.displayMedium.copyWith(fontSize: 32),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 32),
+                  LiveThoughtPanel(
+                    thoughtText: _liveThoughtText,
+                    titleLabel: l10n.aiThinkingTitle,
+                    thinkingLabel: l10n.aiThinkingLabel,
+                  ),
+                  const SizedBox(height: 24),
+                  AnalysisPhaseIndicator(
+                    phase: _analysisPhase,
+                    draftingLabel: l10n.analyzingMeal,
+                    verifyingLabel: l10n.verifyingEstimate,
+                  ),
+                  const SizedBox(height: 16),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
@@ -581,6 +729,13 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
     final isKeyboardVisible = KeyboardVisibilityProvider.isKeyboardVisible(
       context,
     );
+
+    if (_isAnalyzing) {
+      return Scaffold(
+        backgroundColor: AppColors.glacialWhite,
+        body: _buildAnalyzingView(),
+      );
+    }
 
     return Scaffold(
       backgroundColor: AppColors.glacialWhite,
@@ -710,15 +865,12 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
                                     IconButton(
                                       onPressed: _portionMultiplier > 0.1
                                           ? () {
-                                              if (widget.meal.portionUnit ==
+                                              if (_meal.portionUnit ==
                                                   'serving') {
                                                 _updatePortion(-0.5);
                                               } else {
                                                 _updatePortion(
-                                                  -50.0 /
-                                                      widget
-                                                          .meal
-                                                          .quantityPerUnit,
+                                                  -50.0 / _meal.quantityPerUnit,
                                                 );
                                               }
                                             }
@@ -741,9 +893,9 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
                                           vertical: 4,
                                         ),
                                         child: Text(
-                                          widget.meal.portionUnit == 'serving'
+                                          _meal.portionUnit == 'serving'
                                               ? '${_portionMultiplier.toStringAsFixed(1)}x'
-                                              : '${(_portionMultiplier * widget.meal.quantityPerUnit).toInt()} ${widget.meal.portionUnit}',
+                                              : '${(_portionMultiplier * _meal.quantityPerUnit).toInt()} ${_meal.portionUnit}',
                                           style: AppTypography.bodyMedium
                                               .copyWith(
                                                 fontWeight: FontWeight.bold,
@@ -755,12 +907,11 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
                                     const SizedBox(width: 8),
                                     IconButton(
                                       onPressed: () {
-                                        if (widget.meal.portionUnit ==
-                                            'serving') {
+                                        if (_meal.portionUnit == 'serving') {
                                           _updatePortion(0.5);
                                         } else {
                                           _updatePortion(
-                                            50.0 / widget.meal.quantityPerUnit,
+                                            50.0 / _meal.quantityPerUnit,
                                           );
                                         }
                                       },
@@ -924,6 +1075,11 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
                               ),
                             ],
                           ),
+
+                          if (_hasPer100Reference()) ...[
+                            const SizedBox(height: 16),
+                            _buildPer100Reference(),
+                          ],
                         ],
                       ),
                     ),
@@ -982,49 +1138,70 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
                 ),
               ),
             ),
-
-          // 5. Skeleton Loader Overlay
-          if (_isAnalyzing)
-            Positioned.fill(
-              child: Container(
-                color: Colors.black.withValues(alpha: 0.1),
-                child: Center(
-                  child: Container(
-                    padding: const EdgeInsets.all(32),
-                    decoration: BoxDecoration(
-                      color: AppColors.glacialWhite,
-                      borderRadius: BorderRadius.circular(24),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.1),
-                          blurRadius: 20,
-                          offset: const Offset(0, 10),
-                        ),
-                      ],
-                    ),
-                    child: const Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        CircularProgressIndicator(
-                          color: AppColors.styrianForest,
-                        ),
-                        SizedBox(height: 24),
-                        Text(
-                          'AI analysiert...',
-                          style: TextStyle(
-                            color: AppColors.styrianForest,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
         ],
       ),
     );
+  }
+
+  bool _hasPer100Reference() {
+    return _meal.caloriesPer100g != null ||
+        _meal.proteinPer100g != null ||
+        _meal.carbsPer100g != null ||
+        _meal.fatsPer100g != null;
+  }
+
+  Widget _buildPer100Reference() {
+    final l10n = context.l10n;
+    final unit = _meal.portionUnit == 'ml' ? '100ml' : '100g';
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.offWhite,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.subtleAsh, width: 1),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '${l10n.reference} / $unit',
+            style: AppTypography.dataLabel.copyWith(
+              fontSize: 11,
+              color: AppColors.styrianForest,
+              letterSpacing: 0,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              _Per100Value(
+                label: l10n.kcal.toUpperCase(),
+                value: _meal.caloriesPer100g?.toStringAsFixed(0) ?? '-',
+              ),
+              _Per100Value(
+                label: l10n.proteinShort.toUpperCase(),
+                value: _formatPer100Macro(_meal.proteinPer100g),
+              ),
+              _Per100Value(
+                label: l10n.carbsShort.toUpperCase(),
+                value: _formatPer100Macro(_meal.carbsPer100g),
+              ),
+              _Per100Value(
+                label: l10n.fatsShort.toUpperCase(),
+                value: _formatPer100Macro(_meal.fatsPer100g),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _formatPer100Macro(double? value) {
+    if (value == null) return '-';
+    return '${value.toStringAsFixed(1)}g';
   }
 }
 
@@ -1092,6 +1269,41 @@ class _MacroCard extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _Per100Value extends StatelessWidget {
+  final String label;
+  final String value;
+
+  const _Per100Value({required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            value,
+            style: AppTypography.dataMedium.copyWith(
+              fontSize: 16,
+              color: AppColors.deepSpaceBlack,
+              letterSpacing: 0,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            label,
+            style: AppTypography.dataLabel.copyWith(
+              fontSize: 10,
+              color: AppColors.deepSpaceBlack.withValues(alpha: 0.45),
+              letterSpacing: 0,
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -52,6 +52,18 @@ class MealModel extends HiveObject {
   @HiveField(15)
   final double quantityPerUnit; // e.g., 1.0 for serving, 100.0 for grams
 
+  @HiveField(16)
+  final double? caloriesPer100g;
+
+  @HiveField(17)
+  final double? proteinPer100g;
+
+  @HiveField(18)
+  final double? carbsPer100g;
+
+  @HiveField(19)
+  final double? fatsPer100g;
+
   MealModel({
     required this.id,
     required this.timestamp,
@@ -69,6 +81,10 @@ class MealModel extends HiveObject {
     this.portionMultiplier = 1.0,
     this.portionUnit = 'serving',
     this.quantityPerUnit = 1.0,
+    this.caloriesPer100g,
+    this.proteinPer100g,
+    this.carbsPer100g,
+    this.fatsPer100g,
   });
 
   MealModel copyWith({
@@ -88,6 +104,10 @@ class MealModel extends HiveObject {
     double? portionMultiplier,
     String? portionUnit,
     double? quantityPerUnit,
+    double? caloriesPer100g,
+    double? proteinPer100g,
+    double? carbsPer100g,
+    double? fatsPer100g,
   }) {
     return MealModel(
       id: id ?? this.id,
@@ -106,6 +126,10 @@ class MealModel extends HiveObject {
       portionMultiplier: portionMultiplier ?? this.portionMultiplier,
       portionUnit: portionUnit ?? this.portionUnit,
       quantityPerUnit: quantityPerUnit ?? this.quantityPerUnit,
+      caloriesPer100g: caloriesPer100g ?? this.caloriesPer100g,
+      proteinPer100g: proteinPer100g ?? this.proteinPer100g,
+      carbsPer100g: carbsPer100g ?? this.carbsPer100g,
+      fatsPer100g: fatsPer100g ?? this.fatsPer100g,
     );
   }
 
@@ -126,6 +150,10 @@ class MealModel extends HiveObject {
     'portionMultiplier': portionMultiplier,
     'portionUnit': portionUnit,
     'quantityPerUnit': quantityPerUnit,
+    'caloriesPer100g': caloriesPer100g,
+    'proteinPer100g': proteinPer100g,
+    'carbsPer100g': carbsPer100g,
+    'fatsPer100g': fatsPer100g,
   };
 
   factory MealModel.fromJson(Map<String, dynamic> json) => MealModel(
@@ -149,5 +177,9 @@ class MealModel extends HiveObject {
     portionMultiplier: (json['portionMultiplier'] ?? 1.0).toDouble(),
     portionUnit: json['portionUnit'] ?? 'serving',
     quantityPerUnit: (json['quantityPerUnit'] ?? 1.0).toDouble(),
+    caloriesPer100g: (json['caloriesPer100g'] as num?)?.toDouble(),
+    proteinPer100g: (json['proteinPer100g'] as num?)?.toDouble(),
+    carbsPer100g: (json['carbsPer100g'] as num?)?.toDouble(),
+    fatsPer100g: (json['fatsPer100g'] as num?)?.toDouble(),
   );
 }

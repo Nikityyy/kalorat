@@ -33,10 +33,15 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   bool _isCameraInitialized = false;
   bool _hasPermission = false;
   bool _isCapturing = false;
+  bool _isInitializingCamera = false;
   bool _isAnalyzing = false;
   List<String> _capturedPhotos = [];
   bool _isTakingMore = false;
   String? _mealContext;
+
+  // Live thought summary text accumulated during streaming analysis
+  String _liveThoughtText = '';
+  AnalysisPhase _analysisPhase = AnalysisPhase.drafting;
 
   // FocusNode for context textarea — avoids the autofocus keyboard-jump bug
   final FocusNode _contextFocusNode = FocusNode();
@@ -62,6 +67,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (PlatformUtils.isWeb) return;
+
     if (state == AppLifecycleState.inactive) {
       if (_cameraController != null && _cameraController!.value.isInitialized) {
         _cameraController?.dispose();
@@ -77,31 +84,43 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   }
 
   Future<void> _initCamera() async {
-    // On web, camera APIs are not available - use image picker only
+    if (_isInitializingCamera) return;
+    _isInitializingCamera = true;
+
     if (PlatformUtils.isWeb) {
       if (mounted) setState(() => _hasPermission = true);
-      return;
+    } else {
+      final status = await Permission.camera.request();
+      if (!status.isGranted) {
+        if (mounted) setState(() => _hasPermission = false);
+        _isInitializingCamera = false;
+        return;
+      }
+      if (mounted) setState(() => _hasPermission = true);
     }
-
-    final status = await Permission.camera.request();
-    if (!status.isGranted) {
-      if (mounted) setState(() => _hasPermission = false);
-      return;
-    }
-
-    if (mounted) setState(() => _hasPermission = true);
 
     try {
       _cameras = await availableCameras();
     } catch (e) {
       debugPrint('Error accessing cameras: $e');
-      _cameras = [];
+      if (PlatformUtils.isWeb) {
+        await Future<void>.delayed(const Duration(milliseconds: 350));
+        try {
+          _cameras = await availableCameras();
+        } catch (retryError) {
+          debugPrint('Camera retry failed: $retryError');
+          _cameras = [];
+        }
+      } else {
+        _cameras = [];
+      }
     }
 
     if (_cameras == null || _cameras!.isEmpty) {
       if (mounted) {
         setState(() => _isCameraInitialized = false);
       }
+      _isInitializingCamera = false;
       return;
     }
 
@@ -110,8 +129,13 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       await _cameraController!.dispose();
     }
 
+    final selectedCamera = _cameras!.firstWhere(
+      (camera) => camera.lensDirection == CameraLensDirection.back,
+      orElse: () => _cameras!.first,
+    );
+
     _cameraController = CameraController(
-      _cameras!.first,
+      selectedCamera,
       ResolutionPreset.medium,
       enableAudio: false,
     );
@@ -126,6 +150,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       if (mounted) {
         setState(() => _isCameraInitialized = false);
       }
+    } finally {
+      _isInitializingCamera = false;
     }
   }
 
@@ -161,9 +187,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   }
 
   Future<void> _capturePhoto() async {
-    // Camera capture not available on web
-    if (PlatformUtils.isWeb) return;
-
     if (_cameraController == null ||
         !_cameraController!.value.isInitialized ||
         _isCapturing) {
@@ -175,15 +198,21 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     try {
       final XFile photo = await _cameraController!.takePicture();
 
-      // Save to app documents directory
-      final appDir = await getApplicationDocumentsDirectory();
-      final fileName =
-          'meal_${DateTime.now().millisecondsSinceEpoch}_${_capturedPhotos.length}.jpg';
-      final savedPath = '${appDir.path}/$fileName';
-      await File(photo.path).copy(savedPath);
+      String storedPhoto;
+      if (PlatformUtils.isWeb) {
+        final bytes = await photo.readAsBytes();
+        storedPhoto = base64Encode(bytes);
+      } else {
+        final appDir = await getApplicationDocumentsDirectory();
+        final fileName =
+            'meal_${DateTime.now().millisecondsSinceEpoch}_${_capturedPhotos.length}.jpg';
+        final savedPath = '${appDir.path}/$fileName';
+        await File(photo.path).copy(savedPath);
+        storedPhoto = savedPath;
+      }
 
       setState(() {
-        _capturedPhotos.add(savedPath);
+        _capturedPhotos.add(storedPhoto);
       });
       await _persistPhotos();
     } catch (e) {
@@ -226,6 +255,43 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     }
   }
 
+  double _resolveDetectedQuantity({
+    required Map<String, dynamic> result,
+    required String unit,
+  }) {
+    double detectedQty = (result['detected_quantity'] ?? 1.0).toDouble();
+
+    if (unit != 'g' && unit != 'ml') {
+      return detectedQty > 0 ? detectedQty : 1.0;
+    }
+
+    final calories = (result['calories'] as num?)?.toDouble();
+    final caloriesPer100 = (result['calories_per_100g'] as num?)?.toDouble();
+
+    if (calories == null ||
+        caloriesPer100 == null ||
+        calories <= 0 ||
+        caloriesPer100 <= 0) {
+      return detectedQty > 0 ? detectedQty : 100.0;
+    }
+
+    final inferredQuantity = calories / caloriesPer100 * 100.0;
+
+    // Prüfen, ob die gemeldete Menge zu den Nährwerten passt.
+    final expectedCalories = caloriesPer100 * detectedQty / 100.0;
+    final difference =
+        (expectedCalories - calories).abs() /
+        calories.clamp(1.0, double.infinity);
+
+    // Bei deutlicher Abweichung ist die aus den Nährwerten berechnete Menge
+    // verlässlicher.
+    if (difference > 0.15) {
+      return inferredQuantity;
+    }
+
+    return detectedQty;
+  }
+
   Future<void> _analyzeMeal({String? mealContext}) async {
     if (_capturedPhotos.isEmpty) return;
 
@@ -258,108 +324,152 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       return;
     }
 
-    setState(() => _isAnalyzing = true);
+    setState(() {
+      _isAnalyzing = true;
+      _liveThoughtText = '';
+      _analysisPhase = AnalysisPhase.drafting;
+    });
+
+    Map<String, dynamic>? result;
 
     try {
       final gemini = GeminiService(apiKey: apiKey, language: language);
-      final result = await gemini.analyzeMeal(
+      final stream = gemini.analyzeMealStream(
         _capturedPhotos,
         useGrams: provider.user?.useGramsByDefault ?? false,
         mealContext: mealContext,
         useAccurateMode: provider.user?.useAccurateMode ?? false,
       );
 
-      if (result != null) {
-        debugPrint('Analysis result received. Checking content...');
-        if (result.containsKey('error') &&
-            result['error'] == 'no_food_detected') {
-          _showMessage(l10n.noFoodDetected);
-          _resetCaptureState();
-          return;
-        }
-
-        try {
-          debugPrint('Parsing meal data...');
-          final finalMeal = MealModel(
-            id: mealId,
-            timestamp: DateTime.now(),
-            photoPaths: List.from(_capturedPhotos),
-            mealName: result['meal_name'] ?? '',
-            calories: (result['calories'] ?? 0).toDouble(),
-            protein: (result['protein'] ?? 0).toDouble(),
-            carbs: (result['carbs'] ?? 0).toDouble(),
-            fats: (result['fats'] ?? 0).toDouble(),
-            vitamins: result['vitamins'] != null
-                ? Map<String, double>.from(
-                    (result['vitamins'] as Map).map(
-                      (k, v) => MapEntry(k.toString(), (v ?? 0).toDouble()),
-                    ),
-                  )
-                : null,
-            minerals: result['minerals'] != null
-                ? Map<String, double>.from(
-                    (result['minerals'] as Map).map(
-                      (k, v) => MapEntry(k.toString(), (v ?? 0).toDouble()),
-                    ),
-                  )
-                : null,
-            isPending: false,
-          );
-
-          // Calculate portion data
-          double detectedQty = (result['detected_quantity'] ?? 1.0).toDouble();
-          String detectedUnit = result['detected_unit'] ?? 'serving';
-
-          double baseQuantityPerUnit = (detectedUnit == 'serving')
-              ? 1.0
-              : 100.0;
-          double detectedMultiplier = (detectedUnit == 'serving')
-              ? detectedQty
-              : (detectedQty / baseQuantityPerUnit);
-
-          // Ensure we don't divide by zero
-          if (detectedMultiplier <= 0) detectedMultiplier = 1.0;
-
-          final mealWithPortion = finalMeal.copyWith(
-            calories: finalMeal.calories * detectedMultiplier,
-            protein: finalMeal.protein * detectedMultiplier,
-            carbs: finalMeal.carbs * detectedMultiplier,
-            fats: finalMeal.fats * detectedMultiplier,
-            portionMultiplier: detectedMultiplier,
-            portionUnit: detectedUnit,
-            quantityPerUnit: baseQuantityPerUnit,
-          );
-
-          debugPrint('Meal parsed successfully: ${mealWithPortion.mealName}');
-
-          if (mounted) {
-            debugPrint('Pushing MealDetailScreen...');
-            await Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => MealDetailScreen(
-                  meal: mealWithPortion,
-                  isNewEntry: true,
-                  initialMealContext: mealContext,
-                ),
-              ),
-            );
-            debugPrint('Returned from MealDetailScreen');
-            _resetCaptureState();
-          }
-        } catch (e, stack) {
-          debugPrint('Error parsing/pushing: $e\n$stack');
-          _showMessage(l10n.analysisError('Parse error: $e'));
+      await for (final event in stream) {
+        if (!mounted) break;
+        if (event is AnalysisPhaseChanged) {
+          setState(() {
+            _analysisPhase = event.phase;
+          });
+        } else if (event is ThoughtChunk) {
+          setState(() {
+            _liveThoughtText += event.text;
+          });
+        } else if (event is AnalysisResult) {
+          result = event.data;
         }
       }
     } catch (e) {
-      debugPrint('Outer analysis error: $e');
+      debugPrint('Analysis stream error: $e');
       if (mounted) {
-        _showMessage(l10n.analysisError(e.toString()));
+        String errorMsg;
+        if (e is GeminiError && e.type == GeminiErrorType.timedOut) {
+          errorMsg = l10n.analysisTimedOut;
+        } else {
+          errorMsg = l10n.analysisError(e.toString());
+        }
+        setState(() => _isAnalyzing = false);
+        _showMessage(errorMsg);
+        setState(() => _liveThoughtText = '');
+        return;
       }
-    } finally {
+    }
+
+    if (result != null) {
+      debugPrint('Analysis result received. Checking content...');
+      if (result.containsKey('error') &&
+          result['error'] == 'no_food_detected') {
+        if (mounted) {
+          setState(() => _isAnalyzing = false);
+          _showMessage(l10n.noFoodDetected);
+          _resetCaptureState();
+        }
+        return;
+      }
+
+      try {
+        debugPrint('Parsing meal data...');
+        final finalMeal = MealModel(
+          id: mealId,
+          timestamp: DateTime.now(),
+          photoPaths: List.from(_capturedPhotos),
+          mealName: result['meal_name'] ?? '',
+          calories: (result['calories'] ?? 0).toDouble(),
+          protein: (result['protein'] ?? 0).toDouble(),
+          carbs: (result['carbs'] ?? 0).toDouble(),
+          fats: (result['fats'] ?? 0).toDouble(),
+          caloriesPer100g: (result['calories_per_100g'] as num?)?.toDouble(),
+          proteinPer100g: (result['protein_per_100g'] as num?)?.toDouble(),
+          carbsPer100g: (result['carbs_per_100g'] as num?)?.toDouble(),
+          fatsPer100g: (result['fats_per_100g'] as num?)?.toDouble(),
+          vitamins: result['vitamins'] != null
+              ? Map<String, double>.from(
+                  (result['vitamins'] as Map).map(
+                    (k, v) => MapEntry(k.toString(), (v ?? 0).toDouble()),
+                  ),
+                )
+              : null,
+          minerals: result['minerals'] != null
+              ? Map<String, double>.from(
+                  (result['minerals'] as Map).map(
+                    (k, v) => MapEntry(k.toString(), (v ?? 0).toDouble()),
+                  ),
+                )
+              : null,
+          isPending: false,
+        );
+
+        // Calculate portion data
+        final String detectedUnit = result['detected_unit'] ?? 'serving';
+
+        final double detectedQty = _resolveDetectedQuantity(
+          result: result,
+          unit: detectedUnit,
+        );
+
+        double baseQuantityPerUnit = (detectedUnit == 'serving') ? 1.0 : 100.0;
+        double detectedMultiplier = (detectedUnit == 'serving')
+            ? detectedQty
+            : (detectedQty / baseQuantityPerUnit);
+
+        // Ensure we don't divide by zero
+        if (detectedMultiplier <= 0) detectedMultiplier = 1.0;
+
+        final mealWithPortion = finalMeal.copyWith(
+          calories: finalMeal.calories,
+          protein: finalMeal.protein,
+          carbs: finalMeal.carbs,
+          fats: finalMeal.fats,
+          portionMultiplier: detectedMultiplier,
+          portionUnit: detectedUnit,
+          quantityPerUnit: baseQuantityPerUnit,
+        );
+
+        debugPrint('Meal parsed successfully: ${mealWithPortion.mealName}');
+
+        if (mounted) {
+          debugPrint('Pushing MealDetailScreen...');
+          setState(() => _isAnalyzing = false);
+          await Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => MealDetailScreen(
+                meal: mealWithPortion,
+                isNewEntry: true,
+                initialMealContext: mealContext,
+              ),
+            ),
+          );
+          debugPrint('Returned from MealDetailScreen');
+          await _resetCaptureState();
+        }
+      } catch (e, stack) {
+        debugPrint('Error parsing/pushing: $e\n$stack');
+        if (mounted) {
+          setState(() => _isAnalyzing = false);
+          _showMessage(l10n.analysisError('Parse error: $e'));
+        }
+      }
+    } else {
       if (mounted) {
         setState(() => _isAnalyzing = false);
+        _showMessage(l10n.analysisError('No result received.'));
       }
     }
   }
@@ -385,13 +495,17 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     }
   }
 
-  void _resetCaptureState() {
+  Future<void> _resetCaptureState() async {
     setState(() {
       _capturedPhotos = [];
       _isTakingMore = false;
       _mealContext = null;
+      // Prevent the old CameraPreview from being shown while reinitializing
+      _isCameraInitialized = false;
     });
     _clearPersistedPhotos();
+    // Ensure a fresh camera preview after clearing photos
+    await _initCamera();
   }
 
   Future<void> _clearPhotos() async {
@@ -424,7 +538,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     );
 
     if (confirmed == true) {
-      _resetCaptureState();
+      await _resetCaptureState();
     }
   }
 
@@ -498,7 +612,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             child: IconButton(
               icon: const Icon(Icons.arrow_back, color: Colors.white),
               onPressed: () {
-                // Cancel analysis (user can go back)
+                // Allows user to abort UI wise (analysis may continue in bg if not properly cancelled)
+                setState(() => _isAnalyzing = false);
               },
             ),
           ),
@@ -516,7 +631,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
             ),
             child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(24, 32, 24, 140),
+              padding: const EdgeInsets.fromLTRB(24, 32, 24, 48),
               child: Column(
                 children: [
                   // Header Text (Analyzing...)
@@ -525,124 +640,29 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                     style: AppTypography.displayMedium.copyWith(fontSize: 32),
                     textAlign: TextAlign.center,
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 32),
 
-                  // Skeleton Portion Control
-                  Container(
-                    width: 160,
-                    padding: const EdgeInsets.all(4),
-                    decoration: BoxDecoration(
-                      color: AppColors.glacialWhite,
-                      borderRadius: BorderRadius.circular(24),
-                      border: Border.all(color: AppColors.borderGrey),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        // Minus skeleton
-                        Container(
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            color: AppColors.pebble.withValues(alpha: 0.1),
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                        // Text skeleton
-                        const SkeletonBox(
-                          width: 40,
-                          height: 16,
-                          borderRadius: 4,
-                        ),
-                        // Plus skeleton
-                        Container(
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            color: AppColors.pebble.withValues(alpha: 0.1),
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                      ],
-                    ),
+                  // Live Thought Summary Panel - Focused solely on reasoning stream
+                  LiveThoughtPanel(
+                    thoughtText: _liveThoughtText,
+                    titleLabel: l10n.aiThinkingTitle,
+                    thinkingLabel: l10n.aiThinkingLabel,
                   ),
 
                   const SizedBox(height: 24),
 
-                  // Skeleton Calories Card (Green)
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(vertical: 32),
-                    decoration: BoxDecoration(
-                      color: AppColors.styrianForest,
-                      borderRadius: BorderRadius.circular(
-                        AppTheme.borderRadius,
-                      ),
-                      border: Border.all(color: AppColors.borderGrey, width: 1),
-                    ),
-                    child: Column(
-                      children: [
-                        const SkeletonBox(
-                          height: 64,
-                          width: 120,
-                          borderRadius: 8,
-                          color: Colors.white24,
-                        ),
-                        const SizedBox(height: 8),
-                        const SkeletonBox(
-                          height: 16,
-                          width: 80,
-                          borderRadius: 4,
-                          color: Colors.white24,
-                        ),
-                      ],
-                    ),
+                  AnalysisPhaseIndicator(
+                    phase: _analysisPhase,
+                    draftingLabel: l10n.analyzingMeal,
+                    verifyingLabel: l10n.verifyingEstimate,
                   ),
-
-                  const SizedBox(height: 24),
-
-                  // Skeleton Macros Row
-                  Row(
-                    children: [
-                      Expanded(child: _buildSkeletonMacroCard()),
-                      const SizedBox(width: 12),
-                      Expanded(child: _buildSkeletonMacroCard()),
-                      const SizedBox(width: 12),
-                      Expanded(child: _buildSkeletonMacroCard()),
-                    ],
-                  ),
-
-                  const SizedBox(height: 48),
-
-                  // Loading indicator
-                  const CircularProgressIndicator(
-                    color: AppColors.styrianForest,
-                    strokeWidth: 3,
-                  ),
+                  const SizedBox(height: 16),
                 ],
               ),
             ),
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildSkeletonMacroCard() {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 8),
-      decoration: BoxDecoration(
-        color: AppColors.steel,
-        borderRadius: BorderRadius.circular(AppTheme.borderRadius),
-        border: Border.all(color: AppColors.borderGrey, width: 1),
-      ),
-      child: const Column(
-        children: [
-          SkeletonBox(height: 24, width: 50, borderRadius: 4),
-          SizedBox(height: 4),
-          SkeletonBox(height: 12, width: 40, borderRadius: 4),
-        ],
-      ),
     );
   }
 
@@ -686,72 +706,50 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     );
   }
 
+  Widget _buildCameraPreview(CameraController controller) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final previewAspectRatio = controller.value.aspectRatio;
+        final screenAspectRatio = constraints.maxWidth / constraints.maxHeight;
+        final scale = (previewAspectRatio / screenAspectRatio).clamp(1.0, 10.0);
+
+        return ClipRect(
+          child: Transform.scale(
+            scale: scale,
+            alignment: Alignment.center,
+            child: Center(child: CameraPreview(controller)),
+          ),
+        );
+      },
+    );
+  }
+
+  /// Re-initializes the camera and switches to camera mode.
+  /// This ensures a fresh controller is ready before the preview is mounted.
+  Future<void> _switchToCameraMode() async {
+    setState(() => _isTakingMore = true);
+    // Always dispose and reinitialize the camera to get a fresh preview
+    // connection. Otherwise the CameraPreview widget may show a frozen
+    // or stale frame after being unmounted and remounted.
+    if (_cameraController != null) {
+      await _cameraController!.dispose();
+      setState(() => _isCameraInitialized = false);
+    }
+    await _initCamera();
+  }
+
   Widget _buildCamera() {
     final l10n = context.l10n;
 
     final bool canShowCamera =
         _isCameraInitialized &&
         _cameraController != null &&
-        _cameraController!.value.isInitialized &&
-        _cameraController!.value.previewSize != null;
+        _cameraController!.value.isInitialized;
 
     return Stack(
       children: [
-        if (PlatformUtils.isWeb)
-          Container(
-            color: Colors.black,
-            child: Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(24),
-                    decoration: BoxDecoration(
-                      color: AppColors.styrianForest.withValues(alpha: 0.2),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.photo_library_outlined,
-                      size: 64,
-                      color: AppColors.pebble,
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  Text(
-                    l10n.cameraNeeded,
-                    style: AppTypography.displayMedium.copyWith(
-                      color: AppColors.pebble,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 12),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 48),
-                    child: Text(
-                      '${l10n.cameraNotAvailableWeb}\n${l10n.useGalleryInstead}',
-                      textAlign: TextAlign.center,
-                      style: AppTypography.bodyMedium.copyWith(
-                        color: AppColors.pebble.withValues(alpha: 0.7),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          )
-        else if (canShowCamera)
-          Positioned.fill(
-            child: ClipRect(
-              child: FittedBox(
-                fit: BoxFit.cover,
-                child: SizedBox(
-                  width: _cameraController!.value.previewSize!.height,
-                  height: _cameraController!.value.previewSize!.width,
-                  child: CameraPreview(_cameraController!),
-                ),
-              ),
-            ),
-          )
+        if (canShowCamera)
+          Positioned.fill(child: _buildCameraPreview(_cameraController!))
         else
           Container(
             color: Colors.black,
@@ -763,7 +761,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                     Padding(
                       padding: const EdgeInsets.all(32.0),
                       child: Text(
-                        'No camera found. Please use Gallery.',
+                        '${l10n.cameraNotAvailableWeb}\n${l10n.useGalleryInstead}',
                         textAlign: TextAlign.center,
                         style: AppTypography.bodyMedium.copyWith(
                           color: AppColors.pebble,
@@ -785,7 +783,14 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             top: MediaQuery.of(context).padding.top + 16,
             left: 20,
             child: GestureDetector(
-              onTap: () => setState(() => _isTakingMore = false),
+              onTap: () async {
+                setState(() {
+                  _isTakingMore = false;
+                  _isCameraInitialized = false;
+                });
+                // Ensure the camera preview is refreshed
+                await _initCamera();
+              },
               child: Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 16,
@@ -830,30 +835,29 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             child: Stack(
               alignment: Alignment.center,
               children: [
-                // Left: Gallery (only shown on native, on web the center button is gallery)
-                if (!PlatformUtils.isWeb)
-                  Positioned(
-                    left: 40,
-                    child: GestureDetector(
-                      onTap: _pickFromGallery,
-                      child: Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: AppColors.pebble.withValues(alpha: 0.2),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.photo_library_outlined,
-                          color: AppColors.pebble,
-                          size: 28,
-                        ),
+                // Left: Gallery
+                Positioned(
+                  left: 40,
+                  child: GestureDetector(
+                    onTap: _pickFromGallery,
+                    child: Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: AppColors.pebble.withValues(alpha: 0.2),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.photo_library_outlined,
+                        color: AppColors.pebble,
+                        size: 28,
                       ),
                     ),
                   ),
+                ),
 
-                // Center: Capture (native) or Gallery (web)
+                // Center: Capture
                 GestureDetector(
-                  onTap: PlatformUtils.isWeb ? _pickFromGallery : _capturePhoto,
+                  onTap: _capturePhoto,
                   child: Container(
                     width: 84,
                     height: 84,
@@ -869,13 +873,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                           color: AppColors.pebble,
                           shape: BoxShape.circle,
                         ),
-                        child: PlatformUtils.isWeb
-                            ? const Icon(
-                                Icons.photo_library_rounded,
-                                color: AppColors.styrianForest,
-                                size: 32,
-                              )
-                            : _isCapturing
+                        child: _isCapturing
                             ? const Center(
                                 child: CircularProgressIndicator(
                                   color: AppColors.styrianForest,
@@ -1066,7 +1064,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                       const SizedBox(width: 12),
                       Expanded(
                         child: OutlinedButton(
-                          onPressed: () => setState(() => _isTakingMore = true),
+                          onPressed: _switchToCameraMode,
                           style: OutlinedButton.styleFrom(
                             side: const BorderSide(
                               color: AppColors.styrianForest,

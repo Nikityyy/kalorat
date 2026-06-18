@@ -22,6 +22,7 @@ class NameStep extends StatefulWidget {
 
 class _NameStepState extends State<NameStep> {
   late TextEditingController _controller;
+  String? _errorMessage;
 
   @override
   void initState() {
@@ -53,11 +54,17 @@ class _NameStepState extends State<NameStep> {
           TextField(
             controller: _controller,
             style: AppTypography.displayMedium,
+            onChanged: (_) {
+              if (_errorMessage != null) {
+                setState(() => _errorMessage = null);
+              }
+            },
             decoration: InputDecoration(
               hintText: l10n.onboardingNameHint,
               hintStyle: AppTypography.displayMedium.copyWith(
                 color: AppColors.slate.withValues(alpha: 0.3),
               ),
+              errorText: _errorMessage,
               border: UnderlineInputBorder(
                 borderSide: BorderSide(color: AppColors.pebble, width: 2),
               ),
@@ -71,9 +78,12 @@ class _NameStepState extends State<NameStep> {
           ActionButton(
             text: l10n.continueButton,
             onPressed: () {
-              if (_controller.text.isNotEmpty) {
-                widget.onNext(_controller.text);
+              final name = _controller.text.trim();
+              if (name.isEmpty) {
+                setState(() => _errorMessage = l10n.nameValidationError);
+                return;
               }
+              widget.onNext(name);
             },
           ),
           const SizedBox(height: 32),

@@ -33,13 +33,17 @@ class MealModelAdapter extends TypeAdapter<MealModel> {
       portionMultiplier: fields[13] as double,
       portionUnit: fields[14] as String,
       quantityPerUnit: fields[15] as double,
+      caloriesPer100g: fields[16] as double?,
+      proteinPer100g: fields[17] as double?,
+      carbsPer100g: fields[18] as double?,
+      fatsPer100g: fields[19] as double?,
     );
   }
 
   @override
   void write(BinaryWriter writer, MealModel obj) {
     writer
-      ..writeByte(16)
+      ..writeByte(20)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -71,7 +75,15 @@ class MealModelAdapter extends TypeAdapter<MealModel> {
       ..writeByte(14)
       ..write(obj.portionUnit)
       ..writeByte(15)
-      ..write(obj.quantityPerUnit);
+      ..write(obj.quantityPerUnit)
+      ..writeByte(16)
+      ..write(obj.caloriesPer100g)
+      ..writeByte(17)
+      ..write(obj.proteinPer100g)
+      ..writeByte(18)
+      ..write(obj.carbsPer100g)
+      ..writeByte(19)
+      ..write(obj.fatsPer100g);
   }
 
   @override

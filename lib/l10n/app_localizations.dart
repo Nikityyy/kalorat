@@ -716,6 +716,12 @@ abstract class AppLocalizations {
   /// **'Bitte einen gültigen API-Key eingeben'**
   String get apiKeyValidationError;
 
+  /// No description provided for @nameValidationError.
+  ///
+  /// In de, this message translates to:
+  /// **'Bitte gib deinen Namen ein'**
+  String get nameValidationError;
+
   /// No description provided for @analysisError.
   ///
   /// In de, this message translates to:
@@ -1613,13 +1619,13 @@ abstract class AppLocalizations {
   /// No description provided for @cameraNotAvailableWeb.
   ///
   /// In de, this message translates to:
-  /// **'Kamera im Browser nicht verfügbar.'**
+  /// **'Kamera nicht verfügbar.'**
   String get cameraNotAvailableWeb;
 
   /// No description provided for @useGalleryInstead.
   ///
   /// In de, this message translates to:
-  /// **'Nutze die Galerie unten, um Fotos auszuwählen.'**
+  /// **'Kamerazugriff erlauben oder Galerie verwenden.'**
   String get useGalleryInstead;
 
   /// No description provided for @updateAvailable.
@@ -1705,6 +1711,36 @@ abstract class AppLocalizations {
   /// In de, this message translates to:
   /// **'Mahlzeiten, die vor dieser Uhrzeit gespeichert werden, zählen zum Vortag'**
   String get dayStartsAtHint;
+
+  /// No description provided for @aiThinkingTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'KI-Analyse'**
+  String get aiThinkingTitle;
+
+  /// No description provided for @aiThinkingLabel.
+  ///
+  /// In de, this message translates to:
+  /// **'KI denkt nach...'**
+  String get aiThinkingLabel;
+
+  /// No description provided for @analysisTimedOut.
+  ///
+  /// In de, this message translates to:
+  /// **'Analyse abgebrochen. Bitte erneut versuchen.'**
+  String get analysisTimedOut;
+
+  /// No description provided for @verifyingEstimate.
+  ///
+  /// In de, this message translates to:
+  /// **'Schätzung prüfen'**
+  String get verifyingEstimate;
+
+  /// No description provided for @reference.
+  ///
+  /// In de, this message translates to:
+  /// **'Referenz'**
+  String get reference;
 }
 
 class _AppLocalizationsDelegate

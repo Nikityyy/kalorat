@@ -324,6 +324,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get apiKeyValidationError => 'Please enter a valid API key';
 
   @override
+  String get nameValidationError => 'Please enter your name';
+
+  @override
   String analysisError(String error) {
     return 'Analysis error: $error';
   }
@@ -789,11 +792,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get selectDate => 'Select date';
 
   @override
-  String get cameraNotAvailableWeb => 'Camera is not available in the browser.';
+  String get cameraNotAvailableWeb => 'Camera unavailable.';
 
   @override
   String get useGalleryInstead =>
-      'Use the gallery button below to pick photos.';
+      'Allow camera access or use the gallery button.';
 
   @override
   String get updateAvailable => 'Update Available';
@@ -839,4 +842,19 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get dayStartsAtHint =>
       'Meals logged before this time count towards the previous day';
+
+  @override
+  String get aiThinkingTitle => 'AI Reasoning';
+
+  @override
+  String get aiThinkingLabel => 'AI is thinking...';
+
+  @override
+  String get analysisTimedOut => 'Analysis timed out. Please try again.';
+
+  @override
+  String get verifyingEstimate => 'Verifying estimate';
+
+  @override
+  String get reference => 'Reference';
 }

@@ -3,3 +3,4 @@ export 'bmi_indicator.dart';
 export 'meal_card.dart';
 export 'offline_banner.dart';
 export 'common/skeleton_loader.dart';
+export 'live_thought_panel.dart';

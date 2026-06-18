@@ -78,7 +78,7 @@ class UserModel extends HiveObject {
   @HiveField(21)
   final int dayStartHour;
 
-  /// When true, the Gemini API uses deep chain-of-thought reasoning (HIGH).
+  /// When true, the Gemini API uses deep chain-of-thought reasoning (MEDIUM).
   /// When false (default), uses MINIMAL thinking for near-instantaneous responses.
   @HiveField(22)
   final bool useAccurateMode;

@@ -12,7 +12,6 @@
   "edit": "Bearbeiten",
   "yes": "Ja",
   "no": "Nein",
-  
   "onboardingName": "Wie heißt du?",
   "onboardingNameHint": "Dein Name",
   "onboardingBirthdate": "Wann bist du geboren?",
@@ -24,12 +23,10 @@
   "onboardingApiKey": "Gemini API-Key eingeben",
   "onboardingApiKeyHint": "API-Key",
   "onboardingApiKeyInfo": "API-Key von ai.dev eintragen. Gehe zu https://ai.dev → Konto → API Key erstellen → hier einfügen.",
-  
   "home": "Start",
   "me": "Ich",
   "history": "Historie",
   "settings": "Einstellungen",
-  
   "profile": "Profil",
   "age": "Alter",
   "years": "Jahre",
@@ -40,7 +37,6 @@
   "bmiNormal": "Normalgewicht",
   "bmiOverweight": "Übergewicht",
   "bmiObese": "Adipositas",
-  
   "takePhoto": "Foto aufnehmen",
   "addMorePhotos": "Weitere Fotos hinzufügen",
   "analyzeMeal": "Mahlzeit checken",
@@ -53,11 +49,9 @@
   "vitamins": "Vitamine",
   "minerals": "Mineralstoffe",
   "manualEntry": "Manuell eingeben",
-  
   "offlineMessage": "Du bist offline. Die AI wird die Mahlzeit analysieren, sobald du wieder online bist und die App öffnest.",
   "pendingAnalysis": "Ausstehende Analysen",
   "processingQueue": "Verarbeite ausstehende Mahlzeiten...",
-  
   "today": "Heute",
   "thisWeek": "Diese Woche",
   "thisMonth": "Dieser Monat",
@@ -67,16 +61,13 @@
   "month": "Monat",
   "year": "Jahr",
   "total": "Gesamt",
-  
   "weightTracking": "Gewichtsverlauf",
   "addWeight": "Gewicht eintragen",
   "weightHistory": "Gewichtsverlauf",
   "noWeightData": "Noch keine Gewichtsdaten erfasst.",
-  
   "statistics": "Statistiken",
   "noMealData": "Noch keine Mahlzeiten erfasst",
   "mealsLogged": "Mahlzeiten erfasst",
-  
   "language": "Sprache",
   "german": "Deutsch",
   "english": "English",
@@ -90,7 +81,6 @@
   "notifications": "Benachrichtigungen",
   "mealReminders": "Mahlzeit-Erinnerungen",
   "weightReminders": "Gewichts-Erinnerungen",
-  
   "confirmDelete": "Wirklich löschen?",
   "confirmDeleteMeal": "Möchtest du diese Mahlzeit wirklich löschen?",
   "cameraPermission": "Kamera-Berechtigung wird benötigt",
@@ -99,7 +89,6 @@
   "meTitle": "Profil",
   "deleteWeight": "Gewicht löschen?",
   "deleteWeightConfirm": "Möchtest du diesen Eintrag wirklich löschen?",
-
   "name": "Name",
   "heightCm": "Größe (cm)",
   "weightKg": "Gewicht (kg)",
@@ -107,7 +96,9 @@
   "ageYears": "{age} Jahre",
   "@ageYears": {
     "placeholders": {
-      "age": {"type": "int"}
+      "age": {
+        "type": "int"
+      }
     }
   },
   "saveChanges": "Änderungen speichern",
@@ -116,7 +107,9 @@
   "exported": "Exportiert: {path}",
   "@exported": {
     "placeholders": {
-      "path": {"type": "String"}
+      "path": {
+        "type": "String"
+      }
     }
   },
   "importSuccessful": "Import erfolgreich",
@@ -124,10 +117,13 @@
   "buildingPlan": "Wir erstellen deinen Plan...",
   "analyzingMetabolism": "Dein Stoffwechsel wird analysiert",
   "apiKeyValidationError": "Bitte einen gültigen API-Key eingeben",
+  "nameValidationError": "Bitte gib deinen Namen ein",
   "analysisError": "Fehler bei der Analyse: {error}",
   "@analysisError": {
     "placeholders": {
-      "error": {"type": "String"}
+      "error": {
+        "type": "String"
+      }
     }
   },
   "mealSaved": "Mahlzeit gespeichert",
@@ -144,13 +140,16 @@
   "male": "Männlich",
   "female": "Weiblich",
   "other": "Divers",
-
   "yourBmi": "DEIN BMI",
   "healthyRange": "Gesunder Bereich: {min} - {max} kg",
   "@healthyRange": {
     "placeholders": {
-      "min": {"type": "String"},
-      "max": {"type": "String"}
+      "min": {
+        "type": "String"
+      },
+      "max": {
+        "type": "String"
+      }
     }
   },
   "status": "STATUS",
@@ -216,7 +215,6 @@
   "editMealName": "Mahlzeitnamen bearbeiten",
   "editCalories": "Kalorien bearbeiten",
   "date": "Datum",
-
   "healthIntegration": "Gesundheitsintegration",
   "healthSyncEnabled": "Mit Gesundheit synchronisieren",
   "healthSyncDescription": "Teile Ernährungs- und Gewichtsdaten mit Apple Health oder Google Health Connect.",
@@ -229,7 +227,6 @@
   "healthConnectNotInstalled": "Health Connect App nicht installiert",
   "healthPermissionDenied": "Gesundheitsberechtigungen verweigert",
   "healthSyncSuccess": "Mit Gesundheits-App synchronisiert",
-
   "healthOnboardingTitle": "Gesundheit verbinden",
   "healthOnboardingDescription": "Synchronisiere deine Ernährungs- und Gewichtsdaten mit der Gesundheits-App deines Geräts für einen vollständigen Überblick.",
   "healthOnboardingBenefit1": "Automatisches Mahlzeiten-Logging",
@@ -248,18 +245,18 @@
   "connected": "Verbunden",
   "disconnected": "Getrennt",
   "healthConnectionFailed": "Verbindung fehlgeschlagen",
-
   "loginTitle": "Anmelden",
   "loginSubtitle": "Synchronisiere deine Daten auf all deinen Geräten",
   "signInWithGoogle": "Mit Google anmelden",
   "continueAsGuest": "Als Gast fortfahren",
   "guestWarning": "Gastdaten werden nur lokal gespeichert und können nicht wiederhergestellt werden, wenn du das Gerät wechselst.",
-
   "account": "Konto",
   "loggedInAs": "Angemeldet als {email}",
   "@loggedInAs": {
     "placeholders": {
-      "email": {"type": "String"}
+      "email": {
+        "type": "String"
+      }
     }
   },
   "logOut": "Abmelden",
@@ -281,10 +278,8 @@
   "legal": "Rechtliches",
   "privacyPolicy": "Datenschutzerklärung",
   "termsOfService": "Nutzungsbedingungen",
-
   "featureOnlyInApp": "Nur in der App",
   "healthNotAvailableWeb": "Die Gesundheitsintegration erfordert die native App",
-
   "activityLevel": "Aktivitätslevel",
   "sedentary": "Sitzend",
   "lightlyActive": "Leicht aktiv",
@@ -302,19 +297,20 @@
   "streakDays": "{count} Tage",
   "@streakDays": {
     "placeholders": {
-      "count": {"type": "int"}
+      "count": {
+        "type": "int"
+      }
     }
   },
   "discardPhotos": "Fotos verwerfen?",
   "discardPhotosConfirm": "Deine aufgenommenen Fotos gehen verloren.",
   "selectDate": "Datum wählen",
-  "cameraNotAvailableWeb": "Kamera im Browser nicht verfügbar.",
-  "useGalleryInstead": "Nutze die Galerie unten, um Fotos auszuwählen.",
+  "cameraNotAvailableWeb": "Kamera nicht verfügbar.",
+  "useGalleryInstead": "Kamerazugriff erlauben oder Galerie verwenden.",
   "updateAvailable": "Update verfügbar",
   "updateReady": "Eine neue Version von Kalorat ist bereit. Jetzt aktualisieren für die neuesten Features.",
   "reloadButton": "Neu laden",
   "laterButton": "Später",
-
   "mealContextTitle": "Noch etwas hinzufügen?",
   "mealContextHint": "z.B. Vanillepudding, 200g, Angaben von der Packung...",
   "mealContextSkip": "Überspringen",
@@ -324,5 +320,10 @@
   "saveToGallerySuccess": "Foto in Galerie gespeichert!",
   "saveToGalleryError": "Foto konnte nicht gespeichert werden.",
   "dayStartsAt": "Tag beginnt um",
-  "dayStartsAtHint": "Mahlzeiten, die vor dieser Uhrzeit gespeichert werden, zählen zum Vortag"
+  "dayStartsAtHint": "Mahlzeiten, die vor dieser Uhrzeit gespeichert werden, zählen zum Vortag",
+  "aiThinkingTitle": "KI-Analyse",
+  "aiThinkingLabel": "KI denkt nach...",
+  "analysisTimedOut": "Analyse abgebrochen. Bitte erneut versuchen.",
+  "verifyingEstimate": "Schätzung prüfen",
+  "reference": "Referenz"
 }

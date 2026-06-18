@@ -12,7 +12,6 @@
   "edit": "Edit",
   "yes": "Yes",
   "no": "No",
-  
   "onboardingName": "What's your name?",
   "onboardingNameHint": "Your name",
   "onboardingBirthdate": "When were you born?",
@@ -24,12 +23,10 @@
   "onboardingApiKey": "Enter Gemini API key",
   "onboardingApiKeyHint": "API key",
   "onboardingApiKeyInfo": "Enter your API key from ai.dev. Go to https://ai.dev → Account → Create API Key → paste here.",
-  
   "home": "Home",
   "me": "Me",
   "history": "History",
   "settings": "Settings",
-  
   "profile": "Profile",
   "age": "Age",
   "years": "years",
@@ -40,7 +37,6 @@
   "bmiNormal": "Normal weight",
   "bmiOverweight": "Overweight",
   "bmiObese": "Obese",
-  
   "takePhoto": "Capture",
   "addMorePhotos": "Add more photos",
   "analyzeMeal": "Analyze",
@@ -53,11 +49,9 @@
   "vitamins": "Vitamins",
   "minerals": "Minerals",
   "manualEntry": "Manual entry",
-  
   "offlineMessage": "You are offline. The AI will analyze your meal once you are back online and open the app.",
   "pendingAnalysis": "Pending analyses",
   "processingQueue": "Processing pending meals...",
-  
   "today": "Today",
   "thisWeek": "This week",
   "thisMonth": "This month",
@@ -67,16 +61,13 @@
   "month": "Month",
   "year": "Year",
   "total": "Total",
-  
   "weightTracking": "Weight tracking",
   "addWeight": "Add weight",
   "weightHistory": "Weight history",
   "noWeightData": "No weight data recorded yet.",
-  
   "statistics": "Statistics",
   "noMealData": "No meals recorded yet",
   "mealsLogged": "meals logged",
-  
   "language": "Language",
   "german": "Deutsch",
   "english": "English",
@@ -90,7 +81,6 @@
   "notifications": "Notifications",
   "mealReminders": "Meal reminders",
   "weightReminders": "Weight reminders",
-  
   "confirmDelete": "Confirm delete?",
   "confirmDeleteMeal": "Do you really want to delete this meal?",
   "cameraPermission": "Camera permission required",
@@ -99,7 +89,6 @@
   "meTitle": "Profile",
   "deleteWeight": "Delete weight?",
   "deleteWeightConfirm": "Do you really want to delete this entry?",
-
   "name": "Name",
   "heightCm": "Height (cm)",
   "weightKg": "Weight (kg)",
@@ -107,7 +96,9 @@
   "ageYears": "{age} years",
   "@ageYears": {
     "placeholders": {
-      "age": {"type": "int"}
+      "age": {
+        "type": "int"
+      }
     }
   },
   "saveChanges": "Save changes",
@@ -116,7 +107,9 @@
   "exported": "Exported: {path}",
   "@exported": {
     "placeholders": {
-      "path": {"type": "String"}
+      "path": {
+        "type": "String"
+      }
     }
   },
   "importSuccessful": "Import successful",
@@ -124,10 +117,13 @@
   "buildingPlan": "Building your plan...",
   "analyzingMetabolism": "Analyzing your metabolism",
   "apiKeyValidationError": "Please enter a valid API key",
+  "nameValidationError": "Please enter your name",
   "analysisError": "Analysis error: {error}",
   "@analysisError": {
     "placeholders": {
-      "error": {"type": "String"}
+      "error": {
+        "type": "String"
+      }
     }
   },
   "mealSaved": "Meal saved",
@@ -144,13 +140,16 @@
   "male": "Male",
   "female": "Female",
   "other": "Other",
-
   "yourBmi": "YOUR BMI",
   "healthyRange": "Healthy range: {min} - {max} kg",
   "@healthyRange": {
     "placeholders": {
-      "min": {"type": "String"},
-      "max": {"type": "String"}
+      "min": {
+        "type": "String"
+      },
+      "max": {
+        "type": "String"
+      }
     }
   },
   "status": "STATUS",
@@ -216,7 +215,6 @@
   "editMealName": "Edit meal name",
   "editCalories": "Edit calories",
   "date": "Date",
-
   "healthIntegration": "Health Integration",
   "healthSyncEnabled": "Sync with Health",
   "healthSyncDescription": "Share nutrition and weight data with Apple Health or Google Health Connect.",
@@ -229,7 +227,6 @@
   "healthConnectNotInstalled": "Health Connect app not installed",
   "healthPermissionDenied": "Health permissions denied",
   "healthSyncSuccess": "Synced with health app",
-
   "healthOnboardingTitle": "Connect Your Health",
   "healthOnboardingDescription": "Sync your nutrition and weight data with your device's health app for a complete picture of your wellness.",
   "healthOnboardingBenefit1": "Automatic meal logging",
@@ -248,18 +245,18 @@
   "connected": "Connected",
   "disconnected": "Disconnected",
   "healthConnectionFailed": "Connection failed",
-
   "loginTitle": "Sign In",
   "loginSubtitle": "Sync your data across all your devices",
   "signInWithGoogle": "Sign in with Google",
   "continueAsGuest": "Continue as guest",
   "guestWarning": "Guest data is only stored locally and cannot be recovered if you switch devices.",
-
   "account": "Account",
   "loggedInAs": "Signed in as {email}",
   "@loggedInAs": {
     "placeholders": {
-      "email": {"type": "String"}
+      "email": {
+        "type": "String"
+      }
     }
   },
   "logOut": "Sign Out",
@@ -281,10 +278,8 @@
   "legal": "Legal",
   "privacyPolicy": "Privacy Policy",
   "termsOfService": "Terms of Service",
-
   "featureOnlyInApp": "Only in app",
   "healthNotAvailableWeb": "Health integration requires the native app",
-
   "activityLevel": "Activity Level",
   "sedentary": "Sedentary",
   "lightlyActive": "Lightly Active",
@@ -302,19 +297,20 @@
   "streakDays": "{count} days",
   "@streakDays": {
     "placeholders": {
-      "count": {"type": "int"}
+      "count": {
+        "type": "int"
+      }
     }
   },
   "discardPhotos": "Discard photos?",
   "discardPhotosConfirm": "Your captured photos will be lost.",
   "selectDate": "Select date",
-  "cameraNotAvailableWeb": "Camera is not available in the browser.",
-  "useGalleryInstead": "Use the gallery button below to pick photos.",
+  "cameraNotAvailableWeb": "Camera unavailable.",
+  "useGalleryInstead": "Allow camera access or use the gallery button.",
   "updateAvailable": "Update Available",
   "updateReady": "A new version of Kalorat is ready. Update now to get the latest features.",
   "reloadButton": "Reload",
   "laterButton": "Later",
-
   "mealContextTitle": "Anything to add?",
   "mealContextHint": "e.g. Vanilla pudding, 200g, info from label...",
   "mealContextSkip": "Skip",
@@ -324,5 +320,10 @@
   "saveToGallerySuccess": "Photo saved to gallery!",
   "saveToGalleryError": "Could not save photo.",
   "dayStartsAt": "Day starts at",
-  "dayStartsAtHint": "Meals logged before this time count towards the previous day"
+  "dayStartsAtHint": "Meals logged before this time count towards the previous day",
+  "aiThinkingTitle": "AI Reasoning",
+  "aiThinkingLabel": "AI is thinking...",
+  "analysisTimedOut": "Analysis timed out. Please try again.",
+  "verifyingEstimate": "Verifying estimate",
+  "reference": "Reference"
 }
