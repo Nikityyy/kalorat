@@ -112,51 +112,55 @@ class _SettingsScreenState extends State<SettingsScreen> {
         centerTitle: true,
         backgroundColor: Colors.transparent,
       ),
-      body: ListView(
+      body: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.all(20),
-        children: [
-          // 1. Profile
-          _buildSection(l10n.profile, [
-            _buildTextField(l10n.name, _nameController),
-            _buildTextField(
-              l10n.heightCm,
-              _heightController,
-              keyboardType: TextInputType.number,
-            ),
-            _buildTextField(
-              l10n.weightKg,
-              _weightController,
-              keyboardType: TextInputType.number,
-            ),
-            _buildBirthdatePicker(provider.language, user),
-            _buildGenderSelector(provider, user),
-            _buildGoalSelector(provider, user),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // 1. Profile
+            _buildSection(l10n.profile, [
+              _buildTextField(l10n.name, _nameController),
+              _buildTextField(
+                l10n.heightCm,
+                _heightController,
+                keyboardType: TextInputType.number,
+              ),
+              _buildTextField(
+                l10n.weightKg,
+                _weightController,
+                keyboardType: TextInputType.number,
+              ),
+              _buildBirthdatePicker(provider.language, user),
+              _buildGenderSelector(provider, user),
+              _buildGoalSelector(provider, user),
+              const SizedBox(height: 24),
+              _buildActivityLevelSelector(provider, user),
+            ]),
             const SizedBox(height: 24),
-            _buildActivityLevelSelector(provider, user),
-          ]),
-          const SizedBox(height: 24),
 
-          // 2. Preferences (Precision Mode)
-          _buildPreferencesSection(provider, user, l10n),
-          const SizedBox(height: 24),
+            // 2. Preferences (Precision Mode)
+            _buildPreferencesSection(provider, user, l10n),
+            const SizedBox(height: 24),
 
-          // 3. Notifications
-          _buildNotificationsSection(provider, user, l10n),
-          const SizedBox(height: 24),
+            // 3. Notifications
+            _buildNotificationsSection(provider, user, l10n),
+            const SizedBox(height: 24),
 
-          // 4. Integrations (API Key + Health)
-          _buildIntegrationsSection(provider, user, l10n),
-          const SizedBox(height: 24),
+            // 4. Integrations (API Key + Health)
+            _buildIntegrationsSection(provider, user, l10n),
+            const SizedBox(height: 24),
 
-          // 5. Account & Data
-          _buildAccountDataSection(provider, user, l10n),
+            // 5. Account & Data
+            _buildAccountDataSection(provider, user, l10n),
 
-          const SizedBox(height: 24),
-          _buildLegalSection(provider, l10n),
-          const SizedBox(height: 32),
-          PrimaryButton(text: l10n.saveChanges, onPressed: _saveChanges),
-          const SizedBox(height: 32),
-        ],
+            const SizedBox(height: 24),
+            _buildLegalSection(provider, l10n),
+            const SizedBox(height: 32),
+            PrimaryButton(text: l10n.saveChanges, onPressed: _saveChanges),
+            const SizedBox(height: 32),
+          ],
+        ),
       ),
     );
   }
