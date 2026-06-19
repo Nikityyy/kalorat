@@ -1667,7 +1667,7 @@ abstract class AppLocalizations {
   /// No description provided for @mealContextSkip.
   ///
   /// In de, this message translates to:
-  /// **'Überspringen'**
+  /// **'Ohne Hinweis'**
   String get mealContextSkip;
 
   /// No description provided for @mealContextAnalyze.

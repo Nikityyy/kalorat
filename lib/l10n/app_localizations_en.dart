@@ -819,7 +819,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'e.g. Vanilla pudding, 200g, info from label...';
 
   @override
-  String get mealContextSkip => 'Skip';
+  String get mealContextSkip => 'No note';
 
   @override
   String get mealContextAnalyze => 'Analyze';

@@ -830,7 +830,7 @@ class AppLocalizationsDe extends AppLocalizations {
       'z.B. Vanillepudding, 200g, Angaben von der Packung...';
 
   @override
-  String get mealContextSkip => 'Überspringen';
+  String get mealContextSkip => 'Ohne Hinweis';
 
   @override
   String get mealContextAnalyze => 'Analysieren';

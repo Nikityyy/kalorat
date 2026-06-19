@@ -15,6 +15,7 @@ import '../services/gemini_service.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 import '../theme/app_typography.dart';
+import '../utils/nutrition_units.dart';
 import '../utils/platform_utils.dart';
 import '../widgets/inputs/action_button.dart';
 import '../widgets/widgets.dart';
@@ -37,6 +38,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   bool _isAnalyzing = false;
   List<String> _capturedPhotos = [];
   bool _isTakingMore = false;
+  int _cameraPreviewKey = 0;
   String? _mealContext;
 
   // Live thought summary text accumulated during streaming analysis
@@ -83,67 +85,101 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     }
   }
 
-  Future<void> _initCamera() async {
+  Future<void> _disposeCamera({bool clearCameraList = false}) async {
+    final controller = _cameraController;
+    _cameraController = null;
+    if (clearCameraList) {
+      _cameras = null;
+    }
+    if (mounted) {
+      setState(() {
+        _isCameraInitialized = false;
+        _cameraPreviewKey++;
+      });
+    }
+    await controller?.dispose();
+  }
+
+  Future<void> _initCamera({bool forceRestart = false}) async {
     if (_isInitializingCamera) return;
-    _isInitializingCamera = true;
-
-    if (PlatformUtils.isWeb) {
-      if (mounted) setState(() => _hasPermission = true);
-    } else {
-      final status = await Permission.camera.request();
-      if (!status.isGranted) {
-        if (mounted) setState(() => _hasPermission = false);
-        _isInitializingCamera = false;
-        return;
-      }
-      if (mounted) setState(() => _hasPermission = true);
-    }
-
-    try {
-      _cameras = await availableCameras();
-    } catch (e) {
-      debugPrint('Error accessing cameras: $e');
-      if (PlatformUtils.isWeb) {
-        await Future<void>.delayed(const Duration(milliseconds: 350));
-        try {
-          _cameras = await availableCameras();
-        } catch (retryError) {
-          debugPrint('Camera retry failed: $retryError');
-          _cameras = [];
-        }
-      } else {
-        _cameras = [];
-      }
-    }
-
-    if (_cameras == null || _cameras!.isEmpty) {
+    if (!forceRestart &&
+        _cameraController != null &&
+        _cameraController!.value.isInitialized) {
       if (mounted) {
-        setState(() => _isCameraInitialized = false);
+        setState(() {
+          _hasPermission = true;
+          _isCameraInitialized = true;
+        });
       }
-      _isInitializingCamera = false;
       return;
     }
 
-    // Dispose old controller if it exists
-    if (_cameraController != null) {
-      await _cameraController!.dispose();
-    }
-
-    final selectedCamera = _cameras!.firstWhere(
-      (camera) => camera.lensDirection == CameraLensDirection.back,
-      orElse: () => _cameras!.first,
-    );
-
-    _cameraController = CameraController(
-      selectedCamera,
-      ResolutionPreset.medium,
-      enableAudio: false,
-    );
+    _isInitializingCamera = true;
 
     try {
+      if (PlatformUtils.isWeb) {
+        if (mounted) setState(() => _hasPermission = true);
+      } else {
+        final status = await Permission.camera.request();
+        if (!status.isGranted) {
+          if (mounted) setState(() => _hasPermission = false);
+          return;
+        }
+        if (mounted) setState(() => _hasPermission = true);
+      }
+
+      if (_cameras == null || forceRestart) {
+        try {
+          _cameras = await availableCameras();
+        } catch (e) {
+          debugPrint('Error accessing cameras: $e');
+          if (PlatformUtils.isWeb) {
+            await Future<void>.delayed(const Duration(milliseconds: 350));
+            try {
+              _cameras = await availableCameras();
+            } catch (retryError) {
+              debugPrint('Camera retry failed: $retryError');
+              _cameras = [];
+            }
+          } else {
+            _cameras = [];
+          }
+        }
+      }
+
+      if (_cameras == null || _cameras!.isEmpty) {
+        if (mounted) {
+          setState(() => _isCameraInitialized = false);
+        }
+        return;
+      }
+
+      if (_cameraController != null) {
+        if (forceRestart || !_cameraController!.value.isInitialized) {
+          await _cameraController!.dispose();
+          _cameraController = null;
+        }
+      }
+
+      if (_cameraController == null) {
+        final selectedCamera = _cameras!.firstWhere(
+          (camera) => camera.lensDirection == CameraLensDirection.back,
+          orElse: () => _cameras!.first,
+        );
+
+        _cameraController = CameraController(
+          selectedCamera,
+          ResolutionPreset.medium,
+          enableAudio: false,
+        );
+      }
+
       await _cameraController!.initialize();
       if (mounted) {
-        setState(() => _isCameraInitialized = true);
+        setState(() {
+          _isCameraInitialized = true;
+          _cameraPreviewKey++;
+        });
       }
     } catch (e) {
       debugPrint('Camera init error: $e');
@@ -215,14 +251,24 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         _capturedPhotos.add(storedPhoto);
       });
       await _persistPhotos();
+      if (PlatformUtils.isWeb) {
+        await _disposeCamera();
+        if (mounted) {
+          setState(() => _isTakingMore = false);
+        }
+      }
     } catch (e) {
       debugPrint('Capture error: $e');
     } finally {
-      setState(() => _isCapturing = false);
+      if (mounted) setState(() => _isCapturing = false);
     }
   }
 
   Future<void> _pickFromGallery() async {
+    if (PlatformUtils.isWeb) {
+      await _disposeCamera();
+    }
+
     final picker = ImagePicker();
     final List<XFile> images = await picker.pickMultiImage(
       imageQuality: 40,
@@ -252,44 +298,16 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       }
       setState(() {});
       await _persistPhotos();
+      if (PlatformUtils.isWeb && mounted) {
+        setState(() => _isTakingMore = false);
+      }
+    } else if (PlatformUtils.isWeb && mounted) {
+      if (_capturedPhotos.isEmpty) {
+        await _initCamera();
+      } else {
+        setState(() => _isTakingMore = false);
+      }
     }
-  }
-
-  double _resolveDetectedQuantity({
-    required Map<String, dynamic> result,
-    required String unit,
-  }) {
-    double detectedQty = (result['detected_quantity'] ?? 1.0).toDouble();
-
-    if (unit != 'g' && unit != 'ml') {
-      return detectedQty > 0 ? detectedQty : 1.0;
-    }
-
-    final calories = (result['calories'] as num?)?.toDouble();
-    final caloriesPer100 = (result['calories_per_100g'] as num?)?.toDouble();
-
-    if (calories == null ||
-        caloriesPer100 == null ||
-        calories <= 0 ||
-        caloriesPer100 <= 0) {
-      return detectedQty > 0 ? detectedQty : 100.0;
-    }
-
-    final inferredQuantity = calories / caloriesPer100 * 100.0;
-
-    // Prüfen, ob die gemeldete Menge zu den Nährwerten passt.
-    final expectedCalories = caloriesPer100 * detectedQty / 100.0;
-    final difference =
-        (expectedCalories - calories).abs() /
-        calories.clamp(1.0, double.infinity);
-
-    // Bei deutlicher Abweichung ist die aus den Nährwerten berechnete Menge
-    // verlässlicher.
-    if (difference > 0.15) {
-      return inferredQuantity;
-    }
-
-    return detectedQty;
   }
 
   Future<void> _analyzeMeal({String? mealContext}) async {
@@ -385,15 +403,39 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
       try {
         debugPrint('Parsing meal data...');
+        final detectedPortion = normalizeDetectedPortion(result);
+        final detectedUnit = detectedPortion.unit;
+        final detectedQty = detectedPortion.quantity;
+        final baseQuantityPerUnit = quantityPerUnitFor(detectedUnit);
         final finalMeal = MealModel(
           id: mealId,
           timestamp: DateTime.now(),
           photoPaths: List.from(_capturedPhotos),
           mealName: result['meal_name'] ?? '',
-          calories: (result['calories'] ?? 0).toDouble(),
-          protein: (result['protein'] ?? 0).toDouble(),
-          carbs: (result['carbs'] ?? 0).toDouble(),
-          fats: (result['fats'] ?? 0).toDouble(),
+          calories: nutritionBaseValue(
+            result,
+            unit: detectedUnit,
+            valueKey: 'calories',
+            referenceKey: 'calories_per_100g',
+          ),
+          protein: nutritionBaseValue(
+            result,
+            unit: detectedUnit,
+            valueKey: 'protein',
+            referenceKey: 'protein_per_100g',
+          ),
+          carbs: nutritionBaseValue(
+            result,
+            unit: detectedUnit,
+            valueKey: 'carbs',
+            referenceKey: 'carbs_per_100g',
+          ),
+          fats: nutritionBaseValue(
+            result,
+            unit: detectedUnit,
+            valueKey: 'fats',
+            referenceKey: 'fats_per_100g',
+          ),
           caloriesPer100g: (result['calories_per_100g'] as num?)?.toDouble(),
           proteinPer100g: (result['protein_per_100g'] as num?)?.toDouble(),
           carbsPer100g: (result['carbs_per_100g'] as num?)?.toDouble(),
@@ -416,14 +458,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         );
 
         // Calculate portion data
-        final String detectedUnit = result['detected_unit'] ?? 'serving';
-
-        final double detectedQty = _resolveDetectedQuantity(
-          result: result,
-          unit: detectedUnit,
-        );
-
-        double baseQuantityPerUnit = (detectedUnit == 'serving') ? 1.0 : 100.0;
         double detectedMultiplier = (detectedUnit == 'serving')
             ? detectedQty
             : (detectedQty / baseQuantityPerUnit);
@@ -501,11 +535,14 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       _isTakingMore = false;
       _mealContext = null;
       // Prevent the old CameraPreview from being shown while reinitializing
-      _isCameraInitialized = false;
+      if (!PlatformUtils.isWeb) {
+        _isCameraInitialized = false;
+      }
     });
     _clearPersistedPhotos();
-    // Ensure a fresh camera preview after clearing photos
-    await _initCamera();
+    if (!_isCameraInitialized) {
+      await _initCamera();
+    }
   }
 
   Future<void> _clearPhotos() async {
@@ -707,35 +744,42 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   }
 
   Widget _buildCameraPreview(CameraController controller) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final previewAspectRatio = controller.value.aspectRatio;
-        final screenAspectRatio = constraints.maxWidth / constraints.maxHeight;
-        final scale = (previewAspectRatio / screenAspectRatio).clamp(1.0, 10.0);
-
-        return ClipRect(
-          child: Transform.scale(
-            scale: scale,
-            alignment: Alignment.center,
-            child: Center(child: CameraPreview(controller)),
-          ),
-        );
-      },
+    return KeyedSubtree(
+      key: ValueKey(_cameraPreviewKey),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          return ClipRect(
+            child: SizedBox.expand(
+              child: FittedBox(
+                fit: BoxFit.cover,
+                child: SizedBox(
+                  width: constraints.maxWidth,
+                  height: constraints.maxWidth / controller.value.aspectRatio,
+                  child: CameraPreview(controller),
+                ),
+              ),
+            ),
+          );
+        },
+      ),
     );
   }
 
-  /// Re-initializes the camera and switches to camera mode.
-  /// This ensures a fresh controller is ready before the preview is mounted.
+  /// Switches back to camera mode with a fresh web media stream.
   Future<void> _switchToCameraMode() async {
-    setState(() => _isTakingMore = true);
-    // Always dispose and reinitialize the camera to get a fresh preview
-    // connection. Otherwise the CameraPreview widget may show a frozen
-    // or stale frame after being unmounted and remounted.
-    if (_cameraController != null) {
-      await _cameraController!.dispose();
-      setState(() => _isCameraInitialized = false);
+    setState(() {
+      _isTakingMore = true;
+      _isCameraInitialized = false;
+    });
+    if (PlatformUtils.isWeb) {
+      await _disposeCamera();
+      await Future<void>.delayed(const Duration(milliseconds: 120));
+      await _initCamera();
+    } else if (!_isCameraInitialized ||
+        _cameraController == null ||
+        !_cameraController!.value.isInitialized) {
+      await _initCamera();
     }
-    await _initCamera();
   }
 
   Widget _buildCamera() {
@@ -786,10 +830,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               onTap: () async {
                 setState(() {
                   _isTakingMore = false;
-                  _isCameraInitialized = false;
                 });
-                // Ensure the camera preview is refreshed
-                await _initCamera();
               },
               child: Container(
                 padding: const EdgeInsets.symmetric(
@@ -1171,7 +1212,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                     child: OutlinedButton(
                       onPressed: () {
                         submittedContext = null;
-                        analyzeShouldRun = false;
+                        analyzeShouldRun = true;
                         Navigator.pop(sheetContext);
                       },
                       style: OutlinedButton.styleFrom(

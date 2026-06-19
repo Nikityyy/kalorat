@@ -14,6 +14,7 @@ import '../providers/app_provider.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 import '../theme/app_typography.dart';
+import '../utils/nutrition_units.dart';
 import '../widgets/inputs/action_button.dart';
 import '../widgets/live_thought_panel.dart';
 import 'package:gal/gal.dart';
@@ -55,7 +56,9 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
     // If the meal was saved with a multiplier (e.g. 2x), the stored calories
     // are already 2x. We need to divide by the multiplier to get the "base"
     // values for the editing session, so that the UI can re-multiply them consistently.
-    if (_portionMultiplier != 1.0 && _portionMultiplier > 0) {
+    if (!widget.isNewEntry &&
+        _portionMultiplier != 1.0 &&
+        _portionMultiplier > 0) {
       _meal = widget.meal.copyWith(
         calories: widget.meal.calories / _portionMultiplier,
         protein: widget.meal.protein / _portionMultiplier,
@@ -315,9 +318,10 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
           return;
         }
 
-        double detectedQty = (analysis['detected_quantity'] ?? 1.0).toDouble();
-        String detectedUnit = analysis['detected_unit'] ?? 'serving';
-        double baseQuantityPerUnit = (detectedUnit == 'serving') ? 1.0 : 100.0;
+        final detectedPortion = normalizeDetectedPortion(analysis);
+        final detectedQty = detectedPortion.quantity;
+        final detectedUnit = detectedPortion.unit;
+        final baseQuantityPerUnit = quantityPerUnitFor(detectedUnit);
         double detectedMultiplier = (detectedUnit == 'serving')
             ? detectedQty
             : (detectedQty / baseQuantityPerUnit);
@@ -326,10 +330,30 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
         setState(() {
           _meal = _meal.copyWith(
             mealName: analysis['meal_name'] ?? '',
-            calories: (analysis['calories'] ?? 0).toDouble(),
-            protein: (analysis['protein'] ?? 0).toDouble(),
-            carbs: (analysis['carbs'] ?? 0).toDouble(),
-            fats: (analysis['fats'] ?? 0).toDouble(),
+            calories: nutritionBaseValue(
+              analysis,
+              unit: detectedUnit,
+              valueKey: 'calories',
+              referenceKey: 'calories_per_100g',
+            ),
+            protein: nutritionBaseValue(
+              analysis,
+              unit: detectedUnit,
+              valueKey: 'protein',
+              referenceKey: 'protein_per_100g',
+            ),
+            carbs: nutritionBaseValue(
+              analysis,
+              unit: detectedUnit,
+              valueKey: 'carbs',
+              referenceKey: 'carbs_per_100g',
+            ),
+            fats: nutritionBaseValue(
+              analysis,
+              unit: detectedUnit,
+              valueKey: 'fats',
+              referenceKey: 'fats_per_100g',
+            ),
             caloriesPer100g: (analysis['calories_per_100g'] as num?)
                 ?.toDouble(),
             proteinPer100g: (analysis['protein_per_100g'] as num?)?.toDouble(),
@@ -427,7 +451,7 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
           decoration: InputDecoration(
             suffixText: _meal.portionUnit == 'serving'
                 ? 'x'
-                : _meal.portionUnit,
+                : displayUnitFor(_meal.portionUnit),
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
           ),
         ),
@@ -895,7 +919,7 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
                                         child: Text(
                                           _meal.portionUnit == 'serving'
                                               ? '${_portionMultiplier.toStringAsFixed(1)}x'
-                                              : '${(_portionMultiplier * _meal.quantityPerUnit).toInt()} ${_meal.portionUnit}',
+                                              : '${(_portionMultiplier * _meal.quantityPerUnit).toInt()} ${displayUnitFor(_meal.portionUnit)}',
                                           style: AppTypography.bodyMedium
                                               .copyWith(
                                                 fontWeight: FontWeight.bold,
@@ -1150,9 +1174,137 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
         _meal.fatsPer100g != null;
   }
 
+  bool _canEditPer100Reference() {
+    return isPer100Unit(_meal.portionUnit);
+  }
+
+  void _showEditPer100ReferenceDialog() {
+    if (!_canEditPer100Reference()) return;
+
+    final caloriesController = TextEditingController(
+      text: _meal.caloriesPer100g?.toStringAsFixed(0) ?? '',
+    );
+    final proteinController = TextEditingController(
+      text: _meal.proteinPer100g?.toStringAsFixed(1) ?? '',
+    );
+    final carbsController = TextEditingController(
+      text: _meal.carbsPer100g?.toStringAsFixed(1) ?? '',
+    );
+    final fatsController = TextEditingController(
+      text: _meal.fatsPer100g?.toStringAsFixed(1) ?? '',
+    );
+
+    double? readNumber(TextEditingController controller) {
+      return double.tryParse(controller.text.trim().replaceAll(',', '.'));
+    }
+
+    Widget field({
+      required TextEditingController controller,
+      required String label,
+      required String suffix,
+    }) {
+      return TextField(
+        controller: controller,
+        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+        style: AppTypography.bodyMedium,
+        decoration: InputDecoration(
+          labelText: label,
+          suffixText: suffix,
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+          focusedBorder: const OutlineInputBorder(
+            borderSide: BorderSide(color: AppColors.styrianForest),
+          ),
+        ),
+      );
+    }
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppColors.glacialWhite,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppTheme.borderRadius),
+        ),
+        title: Text(
+          '${context.l10n.edit} ${context.l10n.reference}',
+          style: AppTypography.displayMedium.copyWith(fontSize: 24),
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              field(
+                controller: caloriesController,
+                label: context.l10n.kcal.toUpperCase(),
+                suffix: 'kcal',
+              ),
+              const SizedBox(height: 12),
+              field(
+                controller: proteinController,
+                label: context.l10n.proteinShort.toUpperCase(),
+                suffix: 'g',
+              ),
+              const SizedBox(height: 12),
+              field(
+                controller: carbsController,
+                label: context.l10n.carbsShort.toUpperCase(),
+                suffix: 'g',
+              ),
+              const SizedBox(height: 12),
+              field(
+                controller: fatsController,
+                label: context.l10n.fatsShort.toUpperCase(),
+                suffix: 'g',
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              context.l10n.cancel,
+              style: const TextStyle(color: AppColors.slate),
+            ),
+          ),
+          TextButton(
+            onPressed: () {
+              final calories = readNumber(caloriesController);
+              final protein = readNumber(proteinController);
+              final carbs = readNumber(carbsController);
+              final fats = readNumber(fatsController);
+
+              setState(() {
+                _meal = _meal.copyWith(
+                  caloriesPer100g: calories,
+                  proteinPer100g: protein,
+                  carbsPer100g: carbs,
+                  fatsPer100g: fats,
+                  calories: calories ?? _meal.calories,
+                  protein: protein ?? _meal.protein,
+                  carbs: carbs ?? _meal.carbs,
+                  fats: fats ?? _meal.fats,
+                );
+              });
+              Navigator.pop(context);
+            },
+            child: Text(
+              context.l10n.save,
+              style: const TextStyle(
+                color: AppColors.styrianForest,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildPer100Reference() {
     final l10n = context.l10n;
     final unit = _meal.portionUnit == 'ml' ? '100ml' : '100g';
+    final canEdit = _canEditPer100Reference();
 
     return Container(
       width: double.infinity,
@@ -1165,13 +1317,32 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            '${l10n.reference} / $unit',
-            style: AppTypography.dataLabel.copyWith(
-              fontSize: 11,
-              color: AppColors.styrianForest,
-              letterSpacing: 0,
-            ),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  '${l10n.reference} / $unit',
+                  style: AppTypography.dataLabel.copyWith(
+                    fontSize: 11,
+                    color: AppColors.styrianForest,
+                    letterSpacing: 0,
+                  ),
+                ),
+              ),
+              if (canEdit)
+                InkWell(
+                  onTap: _showEditPer100ReferenceDialog,
+                  borderRadius: BorderRadius.circular(16),
+                  child: Padding(
+                    padding: const EdgeInsets.all(4),
+                    child: Icon(
+                      Icons.edit,
+                      size: 16,
+                      color: AppColors.styrianForest.withValues(alpha: 0.7),
+                    ),
+                  ),
+                ),
+            ],
           ),
           const SizedBox(height: 12),
           Row(

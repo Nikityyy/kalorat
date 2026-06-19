@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:hive_flutter/hive_flutter.dart';
 import '../utils/app_logger.dart';
+import '../utils/nutrition_units.dart';
 import '../utils/platform_utils.dart';
 import 'gemini_stream_client.dart';
 
@@ -67,12 +68,10 @@ class GeminiService {
       'https://generativelanguage.googleapis.com/v1beta/models';
 
   static const List<String> _preferredFlashModels = [
-    'gemini-2.5-flash',
     'gemini-flash-latest',
   ];
 
   static const List<String> _preferredFlashLiteModels = [
-    'gemini-2.5-flash-lite',
     'gemini-flash-lite-latest',
   ];
 
@@ -737,7 +736,10 @@ class GeminiService {
             'carbs_per_100g': {'type': 'NUMBER'},
             'fats_per_100g': {'type': 'NUMBER'},
             'detected_quantity': {'type': 'NUMBER'},
-            'detected_unit': {'type': 'STRING'},
+            'detected_unit': {
+              'type': 'STRING',
+              'enum': ['gram', 'ml', 'serving'],
+            },
             'photo_interpretation': {'type': 'STRING'},
             'confidence_score': {'type': 'NUMBER'},
           },
@@ -987,7 +989,10 @@ Return ONLY JSON in the required schema.''';
         'carbs_per_100g': {'type': 'NUMBER'},
         'fats_per_100g': {'type': 'NUMBER'},
         'detected_quantity': {'type': 'NUMBER'},
-        'detected_unit': {'type': 'STRING'},
+        'detected_unit': {
+          'type': 'STRING',
+          'enum': ['gram', 'ml', 'serving'],
+        },
         'photo_interpretation': {'type': 'STRING'},
         'confidence_score': {'type': 'NUMBER'},
       },
@@ -1015,13 +1020,20 @@ Return ONLY JSON in the required schema.''';
   }
 
   Map<String, dynamic> _normalizeAnalysisResult(Map<String, dynamic> result) {
-    final detectedUnit = result['detected_unit']?.toString() ?? 'serving';
-    final isPer100Mode = detectedUnit == 'gram' || detectedUnit == 'ml';
+    final detectedPortion = normalizeDetectedPortion(result);
+    result['detected_unit'] = detectedPortion.unit;
+    result['detected_quantity'] = detectedPortion.quantity;
+
+    final isPer100Mode = isPer100Unit(detectedPortion.unit);
     if (isPer100Mode) {
       result['calories_per_100g'] ??= result['calories'];
       result['protein_per_100g'] ??= result['protein'];
       result['carbs_per_100g'] ??= result['carbs'];
       result['fats_per_100g'] ??= result['fats'];
+      result['calories'] = result['calories_per_100g'];
+      result['protein'] = result['protein_per_100g'];
+      result['carbs'] = result['carbs_per_100g'];
+      result['fats'] = result['fats_per_100g'];
     }
     result['photo_interpretation'] ??= 'single_meal_or_same_angle';
     return result;
@@ -1198,6 +1210,7 @@ NÄHRWERT-AUSGABE – KRITISCH:
 - Beispiel Portions-Modus: 2 Portionen → Werte pro 1 Portion angeben, detected_quantity=2.
 - Wenn ein Nährwertetikett sichtbar ist: Werte PRO 100g (oder pro Portion wie auf dem Etikett) direkt übernehmen. detected_quantity = geschätzte Gesamtmenge.
 - calories_per_100g, protein_per_100g, carbs_per_100g, fats_per_100g IMMER für die sichtbare Gesamtmahlzeit angeben. Bei Flüssigkeiten bedeutet _per_100g pro 100ml.
+- detected_unit darf NUR "gram", "ml" oder "serving" sein. Verwende NIEMALS "liter", "liters", "l", "grams" oder "servings".
 
 kJ vs. kcal – KRITISCH:
 - Europäische Etiketten zeigen oft kJ UND kcal. Verwende IMMER kcal. 1 kcal ≈ 4,18 kJ.
@@ -1265,6 +1278,7 @@ NUTRITION OUTPUT – CRITICAL:
 - Example serving mode: 2 servings → report values per 1 serving, detected_quantity=2.
 - If a nutrition label is visible: use the values PER 100g (or per serving as shown on label) directly. detected_quantity = estimated total quantity.
 - calories_per_100g, protein_per_100g, carbs_per_100g, fats_per_100g MUST always describe the whole visible meal. For liquids, _per_100g means per 100ml.
+- detected_unit may ONLY be "gram", "ml", or "serving". NEVER output "liter", "liters", "l", "grams", or "servings".
 
 kJ vs kcal – CRITICAL:
 - European labels show BOTH kJ and kcal. ALWAYS use kcal. 1 kcal ≈ 4.18 kJ.
