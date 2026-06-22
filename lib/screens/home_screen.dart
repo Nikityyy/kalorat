@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io' show File;
 import 'package:camera/camera.dart';
@@ -40,6 +41,18 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   bool _isTakingMore = false;
   int _cameraPreviewKey = 0;
   String? _mealContext;
+  bool _isTorchOn = false;
+  bool _canUseTorch = true;
+  bool _canZoom = false;
+  bool _canTapFocus = true;
+  bool _showZoomIndicator = false;
+  double _minZoomLevel = 1.0;
+  double _maxZoomLevel = 1.0;
+  double _currentZoomLevel = 1.0;
+  double _baseZoomLevel = 1.0;
+  int _activePointers = 0;
+  Offset? _focusIndicatorOffset;
+  Timer? _focusIndicatorTimer;
 
   // Live thought summary text accumulated during streaming analysis
   String _liveThoughtText = '';
@@ -62,6 +75,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _focusIndicatorTimer?.cancel();
     _cameraController?.dispose();
     _contextFocusNode.dispose();
     super.dispose();
@@ -73,9 +87,15 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
     if (state == AppLifecycleState.inactive) {
       if (_cameraController != null && _cameraController!.value.isInitialized) {
-        _cameraController?.dispose();
+        final controller = _cameraController;
+        _cameraController = null;
+        unawaited(controller?.dispose());
         setState(() {
           _isCameraInitialized = false;
+          _isTorchOn = false;
+          _canZoom = false;
+          _showZoomIndicator = false;
+          _focusIndicatorOffset = null;
         });
       }
     } else if (state == AppLifecycleState.resumed) {
@@ -94,10 +114,94 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     if (mounted) {
       setState(() {
         _isCameraInitialized = false;
+        _isTorchOn = false;
+        _canUseTorch = true;
+        _canZoom = false;
+        _canTapFocus = !PlatformUtils.isWeb;
+        _showZoomIndicator = false;
+        _currentZoomLevel = 1.0;
+        _minZoomLevel = 1.0;
+        _maxZoomLevel = 1.0;
+        _activePointers = 0;
+        _focusIndicatorOffset = null;
         _cameraPreviewKey++;
       });
     }
     await controller?.dispose();
+  }
+
+  Future<CameraController> _createBestCameraController(
+    CameraDescription camera,
+  ) async {
+    const presets = [ResolutionPreset.veryHigh, ResolutionPreset.high];
+
+    Object? lastError;
+    for (final preset in presets) {
+      final controller = CameraController(
+        camera,
+        preset,
+        enableAudio: false,
+        imageFormatGroup: ImageFormatGroup.jpeg,
+      );
+
+      try {
+        await controller.initialize();
+        return controller;
+      } catch (e) {
+        lastError = e;
+        await controller.dispose();
+      }
+    }
+
+    throw CameraException(
+      'cameraInitFailed',
+      'Could not initialize camera at a supported resolution: $lastError',
+    );
+  }
+
+  Future<void> _prepareCameraControls() async {
+    final controller = _cameraController;
+    if (controller == null || !controller.value.isInitialized) return;
+
+    double minZoom = 1.0;
+    double maxZoom = 1.0;
+    var canZoom = false;
+    var canUseTorch = true;
+
+    try {
+      minZoom = await controller.getMinZoomLevel();
+      maxZoom = await controller.getMaxZoomLevel();
+      canZoom = maxZoom > minZoom;
+      if (canZoom) {
+        final initialZoom = _currentZoomLevel
+            .clamp(minZoom, maxZoom)
+            .toDouble();
+        await controller.setZoomLevel(initialZoom);
+        _currentZoomLevel = initialZoom;
+      }
+    } catch (e) {
+      minZoom = 1.0;
+      maxZoom = 1.0;
+      canZoom = false;
+      _currentZoomLevel = 1.0;
+    }
+
+    try {
+      await controller.setFlashMode(FlashMode.off);
+    } catch (e) {
+      canUseTorch = false;
+    }
+
+    if (mounted) {
+      setState(() {
+        _minZoomLevel = minZoom;
+        _maxZoomLevel = maxZoom;
+        _canZoom = canZoom;
+        _canUseTorch = canUseTorch;
+        _canTapFocus = !PlatformUtils.isWeb;
+        _isTorchOn = false;
+      });
+    }
   }
 
   Future<void> _initCamera({bool forceRestart = false}) async {
@@ -167,14 +271,13 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           orElse: () => _cameras!.first,
         );
 
-        _cameraController = CameraController(
-          selectedCamera,
-          ResolutionPreset.medium,
-          enableAudio: false,
-        );
+        _cameraController = await _createBestCameraController(selectedCamera);
       }
 
-      await _cameraController!.initialize();
+      if (!_cameraController!.value.isInitialized) {
+        await _cameraController!.initialize();
+      }
+      await _prepareCameraControls();
       if (mounted) {
         setState(() {
           _isCameraInitialized = true;
@@ -251,17 +354,165 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         _capturedPhotos.add(storedPhoto);
       });
       await _persistPhotos();
-      if (PlatformUtils.isWeb) {
-        await _disposeCamera();
-        if (mounted) {
-          setState(() => _isTakingMore = false);
-        }
+      if (!_isTakingMore && _isTorchOn) {
+        await _setTorchMode(false);
+      }
+      if (PlatformUtils.isWeb && _isTakingMore && mounted) {
+        await _restartWebCameraStream();
       }
     } catch (e) {
       debugPrint('Capture error: $e');
     } finally {
       if (mounted) setState(() => _isCapturing = false);
     }
+  }
+
+  Future<void> _restartWebCameraStream() async {
+    if (!PlatformUtils.isWeb) return;
+
+    await _disposeCamera();
+    await Future<void>.delayed(const Duration(milliseconds: 120));
+    await _initCamera(forceRestart: true);
+  }
+
+  Future<void> _setTorchMode(bool enabled) async {
+    final controller = _cameraController;
+    if (controller == null ||
+        !controller.value.isInitialized ||
+        !_canUseTorch) {
+      return;
+    }
+
+    try {
+      await controller.setFlashMode(enabled ? FlashMode.torch : FlashMode.off);
+      if (mounted) {
+        setState(() => _isTorchOn = enabled);
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isTorchOn = false;
+          _canUseTorch = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _toggleTorch() async {
+    await _setTorchMode(!_isTorchOn);
+  }
+
+  void _handlePreviewPointerDown(PointerDownEvent event) {
+    _activePointers++;
+  }
+
+  void _handlePreviewPointerUp(PointerEvent event) {
+    _activePointers = (_activePointers - 1).clamp(0, 10).toInt();
+  }
+
+  void _handleScaleStart(ScaleStartDetails details) {
+    _baseZoomLevel = _currentZoomLevel;
+  }
+
+  Future<void> _handleScaleUpdate(ScaleUpdateDetails details) async {
+    final controller = _cameraController;
+    if (controller == null ||
+        !controller.value.isInitialized ||
+        !_canZoom ||
+        _activePointers < 2) {
+      return;
+    }
+
+    final nextZoom = (_baseZoomLevel * details.scale)
+        .clamp(_minZoomLevel, _maxZoomLevel)
+        .toDouble();
+    if ((nextZoom - _currentZoomLevel).abs() < 0.01) return;
+
+    try {
+      await controller.setZoomLevel(nextZoom);
+      if (mounted) {
+        setState(() {
+          _currentZoomLevel = nextZoom;
+          _showZoomIndicator = true;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _canZoom = false);
+      }
+    }
+  }
+
+  void _handleScaleEnd(ScaleEndDetails details) {
+    if (mounted) {
+      setState(() => _showZoomIndicator = false);
+    }
+  }
+
+  Offset _normalizePreviewPoint(
+    Offset localPosition,
+    BoxConstraints constraints,
+    double cameraAspectRatio,
+  ) {
+    final previewWidth = constraints.maxWidth;
+    final previewHeight = previewWidth / cameraAspectRatio;
+    final widthScale = constraints.maxWidth / previewWidth;
+    final heightScale = constraints.maxHeight / previewHeight;
+    final scale = widthScale > heightScale ? widthScale : heightScale;
+    final displayedWidth = previewWidth * scale;
+    final displayedHeight = previewHeight * scale;
+    final cropLeft = (constraints.maxWidth - displayedWidth) / 2;
+    final cropTop = (constraints.maxHeight - displayedHeight) / 2;
+
+    return Offset(
+      ((localPosition.dx - cropLeft) / displayedWidth).clamp(0.0, 1.0),
+      ((localPosition.dy - cropTop) / displayedHeight).clamp(0.0, 1.0),
+    );
+  }
+
+  Future<void> _focusAtPoint(
+    TapDownDetails details,
+    BoxConstraints constraints,
+    CameraController controller,
+  ) async {
+    if (_activePointers > 1 ||
+        !controller.value.isInitialized ||
+        !_canTapFocus) {
+      return;
+    }
+
+    final normalizedPoint = _normalizePreviewPoint(
+      details.localPosition,
+      constraints,
+      controller.value.aspectRatio,
+    );
+
+    _focusIndicatorTimer?.cancel();
+    if (mounted) {
+      setState(() => _focusIndicatorOffset = details.localPosition);
+    }
+
+    try {
+      await controller.setFocusMode(FocusMode.auto);
+    } catch (_) {}
+
+    try {
+      await controller.setFocusPoint(normalizedPoint);
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _canTapFocus = false;
+          _focusIndicatorOffset = null;
+        });
+      }
+      return;
+    }
+
+    _focusIndicatorTimer = Timer(const Duration(milliseconds: 850), () {
+      if (mounted) {
+        setState(() => _focusIndicatorOffset = null);
+      }
+    });
   }
 
   Future<void> _pickFromGallery() async {
@@ -271,9 +522,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
     final picker = ImagePicker();
     final List<XFile> images = await picker.pickMultiImage(
-      imageQuality: 40,
-      maxWidth: 1024,
-      maxHeight: 1024,
+      imageQuality: 55,
+      maxWidth: 1280,
+      maxHeight: 1280,
       requestFullMetadata: false,
     );
 
@@ -310,6 +561,47 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     }
   }
 
+  Future<void> _deleteStoredPhotoIfDisposable(String photoPath) async {
+    if (PlatformUtils.isWeb || photoPath.isEmpty) return;
+
+    try {
+      final file = File(photoPath);
+      if (await file.exists()) {
+        await file.delete();
+      }
+    } catch (e) {
+      debugPrint('Could not delete discarded photo: $e');
+    }
+  }
+
+  Future<void> _removeCapturedPhoto(int index) async {
+    if (index < 0 || index >= _capturedPhotos.length) return;
+
+    final removedPhoto = _capturedPhotos[index];
+    setState(() {
+      _capturedPhotos.removeAt(index);
+      if (_capturedPhotos.isEmpty) {
+        _isTakingMore = false;
+        _mealContext = null;
+      }
+    });
+
+    await _deleteStoredPhotoIfDisposable(removedPhoto);
+
+    if (_capturedPhotos.isEmpty) {
+      await _clearPersistedPhotos();
+      if (PlatformUtils.isWeb) {
+        await _restartWebCameraStream();
+      } else if (!_isCameraInitialized ||
+          _cameraController == null ||
+          !_cameraController!.value.isInitialized) {
+        await _initCamera();
+      }
+    } else {
+      await _persistPhotos();
+    }
+  }
+
   Future<void> _analyzeMeal({String? mealContext}) async {
     if (_capturedPhotos.isEmpty) return;
 
@@ -334,6 +626,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       setState(() {
         _capturedPhotos = [];
       });
+      await _clearPersistedPhotos();
 
       if (mounted) {
         final message = !isOnline ? l10n.offlineMessage : l10n.enterApiKeyError;
@@ -539,7 +832,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         _isCameraInitialized = false;
       }
     });
-    _clearPersistedPhotos();
+    await _clearPersistedPhotos();
     if (!_isCameraInitialized) {
       await _initCamera();
     }
@@ -575,6 +868,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     );
 
     if (confirmed == true) {
+      for (final photo in List<String>.from(_capturedPhotos)) {
+        await _deleteStoredPhotoIfDisposable(photo);
+      }
       await _resetCaptureState();
     }
   }
@@ -748,14 +1044,84 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       key: ValueKey(_cameraPreviewKey),
       child: LayoutBuilder(
         builder: (context, constraints) {
-          return ClipRect(
-            child: SizedBox.expand(
-              child: FittedBox(
-                fit: BoxFit.cover,
-                child: SizedBox(
-                  width: constraints.maxWidth,
-                  height: constraints.maxWidth / controller.value.aspectRatio,
-                  child: CameraPreview(controller),
+          return Listener(
+            onPointerDown: _handlePreviewPointerDown,
+            onPointerUp: _handlePreviewPointerUp,
+            onPointerCancel: _handlePreviewPointerUp,
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onScaleStart: _handleScaleStart,
+              onScaleUpdate: _handleScaleUpdate,
+              onScaleEnd: _handleScaleEnd,
+              onTapDown: (details) =>
+                  _focusAtPoint(details, constraints, controller),
+              child: ClipRect(
+                child: Stack(
+                  children: [
+                    SizedBox.expand(
+                      child: FittedBox(
+                        fit: BoxFit.cover,
+                        child: SizedBox(
+                          width: constraints.maxWidth,
+                          height:
+                              constraints.maxWidth /
+                              controller.value.aspectRatio,
+                          child: CameraPreview(controller),
+                        ),
+                      ),
+                    ),
+                    if (_focusIndicatorOffset != null)
+                      Positioned(
+                        left: _focusIndicatorOffset!.dx - 34,
+                        top: _focusIndicatorOffset!.dy - 34,
+                        child: IgnorePointer(
+                          child: Container(
+                            width: 68,
+                            height: 68,
+                            decoration: BoxDecoration(
+                              border: Border.all(
+                                color: AppColors.pebble,
+                                width: 2,
+                              ),
+                              borderRadius: BorderRadius.circular(34),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.25),
+                                  blurRadius: 8,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    if (_showZoomIndicator && _canZoom)
+                      Positioned(
+                        top: MediaQuery.of(context).padding.top + 24,
+                        left: 0,
+                        right: 0,
+                        child: IgnorePointer(
+                          child: Center(
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 6,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.black.withValues(alpha: 0.45),
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              child: Text(
+                                '${_currentZoomLevel.toStringAsFixed(1)}x',
+                                style: const TextStyle(
+                                  color: AppColors.pebble,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
               ),
             ),
@@ -769,12 +1135,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   Future<void> _switchToCameraMode() async {
     setState(() {
       _isTakingMore = true;
-      _isCameraInitialized = false;
+      _isCameraInitialized =
+          _cameraController != null && _cameraController!.value.isInitialized;
     });
     if (PlatformUtils.isWeb) {
-      await _disposeCamera();
-      await Future<void>.delayed(const Duration(milliseconds: 120));
-      await _initCamera();
+      await _restartWebCameraStream();
     } else if (!_isCameraInitialized ||
         _cameraController == null ||
         !_cameraController!.value.isInitialized) {
@@ -821,6 +1186,42 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             ),
           ),
 
+        // Camera tools
+        if (canShowCamera)
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 16,
+            right: 20,
+            child: Tooltip(
+              message: _canUseTorch ? 'Flash' : 'Flash unavailable',
+              child: GestureDetector(
+                onTap: _canUseTorch ? () => _toggleTorch() : null,
+                child: AnimatedOpacity(
+                  duration: const Duration(milliseconds: 160),
+                  opacity: _canUseTorch ? 1 : 0.45,
+                  child: Container(
+                    width: 52,
+                    height: 52,
+                    decoration: BoxDecoration(
+                      color: _isTorchOn
+                          ? AppColors.styrianForest
+                          : Colors.black.withValues(alpha: 0.45),
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: AppColors.pebble.withValues(alpha: 0.75),
+                        width: 1,
+                      ),
+                    ),
+                    child: Icon(
+                      _isTorchOn ? Icons.flash_on : Icons.flash_off,
+                      color: AppColors.pebble,
+                      size: 24,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+
         // Simple Top Bar
         if (_capturedPhotos.isNotEmpty)
           Positioned(
@@ -828,6 +1229,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             left: 20,
             child: GestureDetector(
               onTap: () async {
+                if (_isTorchOn) {
+                  await _setTorchMode(false);
+                }
                 setState(() {
                   _isTakingMore = false;
                 });
@@ -931,7 +1335,12 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   Positioned(
                     right: 40,
                     child: GestureDetector(
-                      onTap: () => setState(() => _isTakingMore = false),
+                      onTap: () async {
+                        if (_isTorchOn) {
+                          await _setTorchMode(false);
+                        }
+                        setState(() => _isTakingMore = false);
+                      },
                       child: Stack(
                         alignment: Alignment.topRight,
                         children: [
@@ -1041,10 +1450,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                       top: 8,
                       right: 8,
                       child: GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            _capturedPhotos.removeAt(index);
-                          });
+                        onTap: () async {
+                          await _removeCapturedPhoto(index);
                         },
                         child: Container(
                           padding: const EdgeInsets.all(6),
