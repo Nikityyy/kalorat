@@ -63,13 +63,59 @@ class AnalysisResult extends AnalysisProgress {
   const AnalysisResult(this.data);
 }
 
+class _StreamedJsonThoughtSplitter {
+  static final RegExp _jsonStartRegExp = RegExp(
+    r'```(?:json)?\s*\{|\{\s*"(?:analysis_note|meal_name|calories)"',
+  );
+
+  static final RegExp _pendingFenceRegExp = RegExp(
+    r'(?:`{1,2}|```(?:j(?:s(?:o(?:n)?)?)?)?\s*)$',
+  );
+
+  final StringBuffer answerBuffer = StringBuffer();
+  final StringBuffer _pendingThought = StringBuffer();
+  bool _jsonStarted = false;
+
+  Iterable<ThoughtChunk> addText(String text) sync* {
+    answerBuffer.write(text);
+
+    if (_jsonStarted) return;
+
+    final candidate = _pendingThought.toString() + text;
+    _pendingThought.clear();
+
+    final match = _jsonStartRegExp.firstMatch(candidate);
+    if (match != null) {
+      _jsonStarted = true;
+      final thoughtText = candidate.substring(0, match.start);
+      if (thoughtText.isNotEmpty) {
+        yield ThoughtChunk(thoughtText);
+      }
+      return;
+    }
+
+    final pendingMatch = _pendingFenceRegExp.firstMatch(candidate);
+    final safeText = pendingMatch == null
+        ? candidate
+        : candidate.substring(0, pendingMatch.start);
+    final pendingText = pendingMatch == null
+        ? ''
+        : candidate.substring(pendingMatch.start);
+
+    if (safeText.isNotEmpty) {
+      yield ThoughtChunk(safeText);
+    }
+    if (pendingText.isNotEmpty) {
+      _pendingThought.write(pendingText);
+    }
+  }
+}
+
 class GeminiService {
   static const String _baseUrlBase =
       'https://generativelanguage.googleapis.com/v1beta/models';
 
-  static const List<String> _preferredFlashModels = [
-    'gemini-flash-latest',
-  ];
+  static const List<String> _preferredFlashModels = ['gemini-flash-latest'];
 
   static const List<String> _preferredFlashLiteModels = [
     'gemini-flash-lite-latest',
@@ -382,7 +428,8 @@ class GeminiService {
         )) {
           if (event is AnalysisResult) {
             yield const AnalysisPhaseChanged(AnalysisPhase.verifying);
-            final verified = await _verifyAnalysis(
+            bool gotVerifiedResult = false;
+            await for (final verifyEvent in _verifyAnalysisStream(
               model,
               event.data,
               imageCount: imagePaths.length,
@@ -391,8 +438,15 @@ class GeminiService {
               useAccurateMode: useAccurateMode,
               allowEstimateVariation: allowEstimateVariation,
               previousAnalysis: previousAnalysis,
-            );
-            yield AnalysisResult(verified);
+            )) {
+              yield verifyEvent;
+              if (verifyEvent is AnalysisResult) {
+                gotVerifiedResult = true;
+              }
+            }
+            if (!gotVerifiedResult) {
+              yield AnalysisResult(_normalizeAnalysisResult(event.data));
+            }
             gotResult = true;
           } else {
             yield event;
@@ -541,9 +595,8 @@ class GeminiService {
     }
 
     // SSE parsing state
-    final StringBuffer answerBuffer = StringBuffer();
+    final thoughtSplitter = _StreamedJsonThoughtSplitter();
     final StringBuffer lineBuffer = StringBuffer();
-    bool jsonStarted = false;
 
     // Helper to process SSE events and separate live thoughts from final JSON.
     Stream<AnalysisProgress> processSseEvent(String event) async* {
@@ -569,47 +622,8 @@ class GeminiService {
               if (isThought) {
                 yield ThoughtChunk(text);
               } else {
-                // If the model mixes thoughts and JSON inside the standard text part
-                if (!jsonStarted) {
-                  String currentBuffer = answerBuffer.toString() + text;
-                  // Look for start of JSON block
-                  final match = RegExp(
-                    r'```(?:json)?\s*\{|\{\s*"(?:analysis_note|meal_name|calories)"',
-                  ).firstMatch(currentBuffer);
-
-                  if (match != null) {
-                    jsonStarted = true;
-                    int jsonStartIndex = match.start;
-                    int previousBufferLen = answerBuffer.length;
-
-                    // If JSON started somewhere inside this text chunk, yield the preceding part as a thought
-                    if (jsonStartIndex > previousBufferLen) {
-                      int thoughtLenInText = jsonStartIndex - previousBufferLen;
-                      if (thoughtLenInText > 0) {
-                        yield ThoughtChunk(text.substring(0, thoughtLenInText));
-                      }
-                    }
-                    answerBuffer.write(text);
-                  } else {
-                    final possibleJsonStart = currentBuffer.indexOf('{');
-                    if (possibleJsonStart != -1) {
-                      final previousBufferLen = answerBuffer.length;
-                      if (possibleJsonStart > previousBufferLen) {
-                        final thoughtLenInText =
-                            possibleJsonStart - previousBufferLen;
-                        if (thoughtLenInText > 0) {
-                          yield ThoughtChunk(
-                            text.substring(0, thoughtLenInText),
-                          );
-                        }
-                      }
-                    } else {
-                      yield ThoughtChunk(text);
-                    }
-                    answerBuffer.write(text);
-                  }
-                } else {
-                  answerBuffer.write(text);
+                for (final chunk in thoughtSplitter.addText(text)) {
+                  yield chunk;
                 }
               }
             }
@@ -640,7 +654,7 @@ class GeminiService {
     }
 
     // Parse accumulated answer as JSON
-    final rawAnswer = answerBuffer.toString().trim();
+    final rawAnswer = thoughtSplitter.answerBuffer.toString().trim();
     if (rawAnswer.isEmpty) {
       throw GeminiError(GeminiErrorType.unknown, 'Empty response from Gemini');
     }
@@ -971,6 +985,159 @@ Return ONLY JSON in the required schema.''';
         'Verification failed: $e. Using draft.',
       );
       return _normalizeAnalysisResult(draft);
+    }
+  }
+
+  Stream<AnalysisProgress> _verifyAnalysisStream(
+    String modelName,
+    Map<String, dynamic>? draft, {
+    required int imageCount,
+    required bool useGrams,
+    required bool useAccurateMode,
+    required bool allowEstimateVariation,
+    String? mealContext,
+    Map<String, dynamic>? previousAnalysis,
+  }) async* {
+    if (draft == null || draft['error'] == 'no_food_detected') {
+      yield AnalysisResult(draft ?? {'error': 'no_food_detected'});
+      return;
+    }
+
+    final verificationPrompt = language == 'de'
+        ? '''Pruefe den Analyse-Entwurf als zweiter, strenger Verifikationsschritt.
+
+Aufgaben:
+- Entscheide, ob $imageCount Foto(s) dieselbe Mahlzeit aus mehreren Winkeln zeigen oder mehrere unterschiedliche Mahlzeiten, die summiert werden muessen.
+- Wenn es mehrere Mahlzeiten sind: summiere calories, protein, carbs, fats und setze einen passenden gemeinsamen meal_name.
+- Wenn es dieselbe Mahlzeit ist: nutze die Fotos als zusaetzliche Winkel, nicht als doppelte Portion.
+- Pruefe portion/detected_quantity/detected_unit und korrigiere unplausible Werte.
+- Pruefe kcal grob gegen protein*4 + carbs*4 + fats*9.
+- Gib per-100g Referenzwerte fuer die gesamte sichtbare Mahlzeit aus. Bei fluessigen Mahlzeiten entspricht per_100g per_100ml.
+- Retry-Modus: ${allowEstimateVariation ? 'Challenge den vorherigen Wert und korrigiere die wahrscheinlichste falsche Annahme, aber bleibe plausibel.' : 'Bewahre stabile, konservative Schaetzungen.'}
+
+Streame kurze Pruefnotizen als Gedanken und beende mit JSON im geforderten Schema.'''
+        : '''Verify the draft as a strict second analysis pass.
+
+Tasks:
+- Decide whether the $imageCount photo(s) show the same meal from different angles or multiple different meals that must be summed.
+- If they are multiple meals: sum calories, protein, carbs, fats and set a suitable combined meal_name.
+- If they are the same meal: use the photos as extra angles, not duplicate portions.
+- Check portion/detected_quantity/detected_unit and correct implausible values.
+- Check kcal roughly against protein*4 + carbs*4 + fats*9.
+- Return per-100g reference values for the whole visible meal. For liquid meals, per_100g means per_100ml.
+- Retry mode: ${allowEstimateVariation ? 'Challenge the previous value and correct the most likely wrong assumption, while staying plausible.' : 'Keep estimates stable and conservative.'}
+
+Stream short verification notes as thoughts and finish with JSON in the required schema.''';
+
+    final content = <Map<String, dynamic>>[
+      {'text': _analysisContextNote(imageCount)},
+      if (mealContext != null && mealContext.trim().isNotEmpty)
+        {'text': 'User note: ${mealContext.trim()}'},
+      if (previousAnalysis != null)
+        {'text': 'Previous estimate: ${jsonEncode(previousAnalysis)}'},
+      {'text': 'Draft estimate to verify: ${jsonEncode(draft)}'},
+    ];
+
+    final requestBody = {
+      'system_instruction': {
+        'parts': [
+          {'text': verificationPrompt},
+        ],
+      },
+      'contents': [
+        {'parts': content},
+      ],
+      'generationConfig': {
+        ..._generationControls(allowEstimateVariation: allowEstimateVariation),
+        'maxOutputTokens': 1536,
+        'thinkingConfig': {
+          'includeThoughts': true,
+          'thinkingLevel': useAccurateMode ? 'HIGH' : 'MINIMAL',
+        },
+      },
+    };
+
+    try {
+      final url =
+          '$_baseUrlBase/$modelName:streamGenerateContent?alt=sse&key=$apiKey';
+      final timeout = useAccurateMode
+          ? const Duration(seconds: 90)
+          : const Duration(seconds: 45);
+      final platformStream = makeStreamRequestPlatform(
+        client: _client,
+        url: url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(requestBody),
+        timeout: timeout,
+      );
+
+      final thoughtSplitter = _StreamedJsonThoughtSplitter();
+      final lineBuffer = StringBuffer();
+
+      Stream<AnalysisProgress> processSseEvent(String event) async* {
+        final dataLines = event
+            .split('\n')
+            .where((l) => l.startsWith('data: '))
+            .map((l) => l.substring(6).trim())
+            .toList();
+
+        for (final dataStr in dataLines) {
+          if (dataStr.isEmpty || dataStr == '[DONE]') continue;
+          try {
+            final json = jsonDecode(dataStr) as Map<String, dynamic>;
+            final candidates = json['candidates'] as List<dynamic>? ?? [];
+            for (final candidate in candidates) {
+              final parts =
+                  (candidate['content']?['parts'] as List<dynamic>?) ?? [];
+              for (final part in parts) {
+                final text = part['text'] as String?;
+                final isThought = part['thought'] as bool? ?? false;
+                if (text == null || text.isEmpty) continue;
+
+                if (isThought) {
+                  yield ThoughtChunk(text);
+                  continue;
+                }
+
+                for (final chunk in thoughtSplitter.addText(text)) {
+                  yield chunk;
+                }
+              }
+            }
+          } catch (e) {
+            AppLogger.debug(
+              'GeminiService',
+              'Failed to parse verification SSE chunk: $e',
+            );
+          }
+        }
+      }
+
+      await for (final chunk in platformStream) {
+        lineBuffer.write(chunk.replaceAll('\r\n', '\n').replaceAll('\r', '\n'));
+        final events = lineBuffer.toString().split('\n\n');
+        lineBuffer
+          ..clear()
+          ..write(events.removeLast());
+
+        for (final event in events) {
+          yield* processSseEvent(event);
+        }
+      }
+
+      if (lineBuffer.isNotEmpty) {
+        yield* processSseEvent(lineBuffer.toString());
+      }
+
+      final rawAnswer = thoughtSplitter.answerBuffer.toString().trim();
+      final parsed = rawAnswer.isEmpty ? null : _parseJsonFromText(rawAnswer);
+      yield AnalysisResult(_normalizeAnalysisResult(parsed ?? draft));
+    } catch (e) {
+      AppLogger.warning(
+        'GeminiService',
+        'Streaming verification failed: $e. Using draft.',
+      );
+      yield AnalysisResult(_normalizeAnalysisResult(draft));
     }
   }
 

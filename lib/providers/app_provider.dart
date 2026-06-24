@@ -25,6 +25,7 @@ class AppProvider extends ChangeNotifier {
   bool _isOnline = true;
   bool _isInitialized = false;
   bool _isProcessingQueue = false;
+  bool _isMealAnalysisActive = false;
 
   // Stats cache for performance (invalidated via version counter)
   int _statsCacheVersion = 0;
@@ -51,6 +52,7 @@ class AppProvider extends ChangeNotifier {
   bool get isOnline => _isOnline;
   bool get isInitialized => _isInitialized;
   bool get isOnboardingCompleted => _user?.onboardingCompleted ?? false;
+  bool get isMealAnalysisActive => _isMealAnalysisActive;
   String get language {
     if (_user != null) return _user!.language;
     if (_languageOverride != null) return _languageOverride!;
@@ -184,6 +186,12 @@ class AppProvider extends ChangeNotifier {
   }
 
   void performUpdate() => _pwaService.performUpdate();
+
+  void setMealAnalysisActive(bool active) {
+    if (_isMealAnalysisActive == active) return;
+    _isMealAnalysisActive = active;
+    notifyListeners();
+  }
 
   Future<void> saveUser(UserModel user) async {
     await _databaseService.saveUser(user);

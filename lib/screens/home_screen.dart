@@ -4,11 +4,13 @@ import 'dart:io' show File;
 import 'package:camera/camera.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:gal/gal.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
+import 'package:share_plus/share_plus.dart';
 import '../extensions/l10n_extension.dart';
 import '../models/models.dart';
 import '../providers/app_provider.dart';
@@ -74,6 +76,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
   @override
   void dispose() {
+    try {
+      context.read<AppProvider>().setMealAnalysisActive(false);
+    } catch (_) {}
     WidgetsBinding.instance.removeObserver(this);
     _focusIndicatorTimer?.cancel();
     _cameraController?.dispose();
@@ -602,6 +607,120 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     }
   }
 
+  ImageProvider _photoImageProvider(String photo) {
+    return PlatformUtils.isWeb
+        ? MemoryImage(base64Decode(photo))
+        : FileImage(File(photo)) as ImageProvider;
+  }
+
+  Future<void> _saveCapturedPhoto(String photo) async {
+    final l10n = context.l10n;
+
+    try {
+      if (PlatformUtils.isWeb) {
+        final bytes = base64Decode(photo);
+        await SharePlus.instance.share(
+          ShareParams(
+            files: [
+              XFile.fromData(
+                bytes,
+                mimeType: 'image/jpeg',
+                name: 'kalorat_meal.jpg',
+              ),
+            ],
+          ),
+        );
+      } else {
+        await Gal.putImage(photo, album: 'Kalorat');
+      }
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(l10n.saveToGallerySuccess),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(l10n.saveToGalleryError),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _openCapturedPhoto(int index) async {
+    if (index < 0 || index >= _capturedPhotos.length) return;
+
+    await showDialog<void>(
+      context: context,
+      barrierColor: Colors.black.withValues(alpha: 0.92),
+      builder: (dialogContext) {
+        final photo = _capturedPhotos[index];
+
+        return Dialog.fullscreen(
+          backgroundColor: Colors.black,
+          child: SafeArea(
+            child: Stack(
+              children: [
+                Positioned.fill(
+                  child: InteractiveViewer(
+                    minScale: 0.8,
+                    maxScale: 4,
+                    child: Center(
+                      child: Image(
+                        image: _photoImageProvider(photo),
+                        fit: BoxFit.contain,
+                      ),
+                    ),
+                  ),
+                ),
+                Positioned(
+                  top: 12,
+                  left: 12,
+                  right: 12,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      _PhotoPreviewButton(
+                        icon: Icons.close,
+                        tooltip: 'Schliessen',
+                        onPressed: () => Navigator.pop(dialogContext),
+                      ),
+                      Row(
+                        children: [
+                          _PhotoPreviewButton(
+                            icon: Icons.download,
+                            tooltip: context.l10n.saveToGallery,
+                            onPressed: () => _saveCapturedPhoto(photo),
+                          ),
+                          const SizedBox(width: 10),
+                          _PhotoPreviewButton(
+                            icon: Icons.delete_outline,
+                            tooltip: context.l10n.discard,
+                            onPressed: () async {
+                              Navigator.pop(dialogContext);
+                              await _removeCapturedPhoto(index);
+                            },
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   Future<void> _analyzeMeal({String? mealContext}) async {
     if (_capturedPhotos.isEmpty) return;
 
@@ -640,6 +759,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       _liveThoughtText = '';
       _analysisPhase = AnalysisPhase.drafting;
     });
+    provider.setMealAnalysisActive(true);
 
     Map<String, dynamic>? result;
 
@@ -657,6 +777,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         if (event is AnalysisPhaseChanged) {
           setState(() {
             _analysisPhase = event.phase;
+            if (event.phase == AnalysisPhase.verifying &&
+                !_liveThoughtText.contains(l10n.verifyingEstimate)) {
+              _liveThoughtText =
+                  '${_liveThoughtText.trimRight()}\n\n## ${l10n.verifyingEstimate}\n\n';
+            }
           });
         } else if (event is ThoughtChunk) {
           setState(() {
@@ -676,6 +801,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           errorMsg = l10n.analysisError(e.toString());
         }
         setState(() => _isAnalyzing = false);
+        provider.setMealAnalysisActive(false);
         _showMessage(errorMsg);
         setState(() => _liveThoughtText = '');
         return;
@@ -688,6 +814,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           result['error'] == 'no_food_detected') {
         if (mounted) {
           setState(() => _isAnalyzing = false);
+          provider.setMealAnalysisActive(false);
           _showMessage(l10n.noFoodDetected);
           _resetCaptureState();
         }
@@ -773,6 +900,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         if (mounted) {
           debugPrint('Pushing MealDetailScreen...');
           setState(() => _isAnalyzing = false);
+          provider.setMealAnalysisActive(false);
           await Navigator.push(
             context,
             MaterialPageRoute(
@@ -790,12 +918,14 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         debugPrint('Error parsing/pushing: $e\n$stack');
         if (mounted) {
           setState(() => _isAnalyzing = false);
+          provider.setMealAnalysisActive(false);
           _showMessage(l10n.analysisError('Parse error: $e'));
         }
       }
     } else {
       if (mounted) {
         setState(() => _isAnalyzing = false);
+        provider.setMealAnalysisActive(false);
         _showMessage(l10n.analysisError('No result received.'));
       }
     }
@@ -828,12 +958,12 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       _isTakingMore = false;
       _mealContext = null;
       // Prevent the old CameraPreview from being shown while reinitializing
-      if (!PlatformUtils.isWeb) {
-        _isCameraInitialized = false;
-      }
+      _isCameraInitialized = false;
     });
     await _clearPersistedPhotos();
-    if (!_isCameraInitialized) {
+    if (PlatformUtils.isWeb) {
+      await _restartWebCameraStream();
+    } else if (!_isCameraInitialized) {
       await _initCamera();
     }
   }
@@ -936,23 +1066,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               : Image.file(File(_capturedPhotos.first), fit: BoxFit.cover),
         ),
 
-        // 2. Back Button (Overlay)
-        Positioned(
-          top: MediaQuery.of(context).padding.top + 8,
-          left: 16,
-          child: CircleAvatar(
-            backgroundColor: Colors.black26,
-            child: IconButton(
-              icon: const Icon(Icons.arrow_back, color: Colors.white),
-              onPressed: () {
-                // Allows user to abort UI wise (analysis may continue in bg if not properly cancelled)
-                setState(() => _isAnalyzing = false);
-              },
-            ),
-          ),
-        ),
-
-        // 3. Content Sheet
+        // 2. Content Sheet
         Positioned(
           top: screenHeight * 0.3,
           left: 0,
@@ -1420,29 +1534,32 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 return Stack(
                   children: [
                     Positioned.fill(
-                      child: Container(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(
-                            AppTheme.borderRadius,
+                      child: GestureDetector(
+                        onTap: () => _openCapturedPhoto(index),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(
+                              AppTheme.borderRadius,
+                            ),
+                            border: Border.all(
+                              color: AppColors.borderGrey,
+                              width: 1,
+                            ),
                           ),
-                          border: Border.all(
-                            color: AppColors.borderGrey,
-                            width: 1,
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(
+                              AppTheme.borderRadius,
+                            ),
+                            child: PlatformUtils.isWeb
+                                ? Image.memory(
+                                    base64Decode(_capturedPhotos[index]),
+                                    fit: BoxFit.cover,
+                                  )
+                                : Image.file(
+                                    File(_capturedPhotos[index]),
+                                    fit: BoxFit.cover,
+                                  ),
                           ),
-                        ),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(
-                            AppTheme.borderRadius,
-                          ),
-                          child: PlatformUtils.isWeb
-                              ? Image.memory(
-                                  base64Decode(_capturedPhotos[index]),
-                                  fit: BoxFit.cover,
-                                )
-                              : Image.file(
-                                  File(_capturedPhotos[index]),
-                                  fit: BoxFit.cover,
-                                ),
                         ),
                       ),
                     ),
@@ -1677,5 +1794,32 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       setState(() => _mealContext = submittedContext);
       await _analyzeMeal(mealContext: submittedContext);
     }
+  }
+}
+
+class _PhotoPreviewButton extends StatelessWidget {
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback onPressed;
+
+  const _PhotoPreviewButton({
+    required this.icon,
+    required this.tooltip,
+    required this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: tooltip,
+      child: Material(
+        color: Colors.black.withValues(alpha: 0.46),
+        shape: const CircleBorder(),
+        child: IconButton(
+          onPressed: onPressed,
+          icon: Icon(icon, color: AppColors.glacialWhite),
+        ),
+      ),
+    );
   }
 }

@@ -525,42 +525,45 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final age = _calculateAge(birthdate);
     final formattedDate = _formatDate(birthdate, language);
 
-    return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-      title: Text(
-        l10n.birthdate,
-        style: TextStyle(
-          fontSize: 16,
-          color: AppColors.slate.withValues(alpha: 0.6),
+    return Material(
+      color: Colors.transparent,
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+        title: Text(
+          l10n.birthdate,
+          style: TextStyle(
+            fontSize: 16,
+            color: AppColors.slate.withValues(alpha: 0.6),
+          ),
         ),
-      ),
-      subtitle: Text(
-        formattedDate,
-        style: const TextStyle(fontSize: 16, color: AppColors.slate),
-      ),
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(AppTheme.borderRadius),
-            ),
-            child: Text(
-              l10n.ageYears(age),
-              style: TextStyle(
-                fontSize: 14,
-                color: AppColors.primary,
-                fontWeight: FontWeight.w600,
+        subtitle: Text(
+          formattedDate,
+          style: const TextStyle(fontSize: 16, color: AppColors.slate),
+        ),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(AppTheme.borderRadius),
+              ),
+              child: Text(
+                l10n.ageYears(age),
+                style: TextStyle(
+                  fontSize: 14,
+                  color: AppColors.primary,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
-          ),
-          const SizedBox(width: 8),
-          Icon(Icons.calendar_today, color: AppColors.primary),
-        ],
+            const SizedBox(width: 8),
+            Icon(Icons.calendar_today, color: AppColors.primary),
+          ],
+        ),
+        onTap: () => _showDatePicker(language),
       ),
-      onTap: () => _showDatePicker(language),
     );
   }
 

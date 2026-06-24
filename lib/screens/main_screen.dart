@@ -65,12 +65,15 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   Widget _buildBody(dynamic l10n) {
+    final hideNavigation = context.watch<AppProvider>().isMealAnalysisActive;
+
     if (PlatformUtils.isIOS) {
       return GestureDetector(
         onHorizontalDragEnd: _onSwipe,
         behavior: HitTestBehavior.translucent,
         child: CupertinoTabScaffold(
           tabBar: CupertinoTabBar(
+            height: hideNavigation ? 0 : 50,
             currentIndex: _currentIndex,
             onTap: (index) => setState(() => _currentIndex = index),
             activeColor: AppColors.styrianForest,
@@ -152,60 +155,64 @@ class _MainScreenState extends State<MainScreen> {
           ),
         ],
       ),
-      bottomNavigationBar: NavigationBarTheme(
-        data: NavigationBarThemeData(
-          labelTextStyle: WidgetStateProperty.all(
-            const TextStyle(
-              fontWeight: FontWeight.w500,
-              color: AppColors.slate,
-            ),
-          ),
-          iconTheme: WidgetStateProperty.resolveWith((states) {
-            if (states.contains(WidgetState.selected)) {
-              return const IconThemeData(color: AppColors.pebble);
-            }
-            return const IconThemeData(color: AppColors.slate);
-          }),
-        ),
-        child: NavigationBar(
-          selectedIndex: _currentIndex,
-          onDestinationSelected: (index) {
-            setState(() => _currentIndex = index);
-            _pageController.animateToPage(
-              index,
-              duration: const Duration(milliseconds: 300),
-              curve: Curves.easeInOut,
-            );
-          },
-          backgroundColor: AppColors.limestone,
-          indicatorColor:
-              AppColors.styrianForest, // Styrian Forest for active indicator
-          surfaceTintColor: Colors.transparent,
-          destinations: [
-            NavigationDestination(
-              icon: const Icon(Icons.person_outline),
-              selectedIcon: const Icon(
-                Icons.person,
-                color: AppColors.pebble,
-              ), // White icon on Shamrock
-              label: l10n.me,
-            ),
-            NavigationDestination(
-              icon: const Icon(Icons.camera_alt_outlined),
-              selectedIcon: const Icon(
-                Icons.camera_alt,
-                color: AppColors.pebble,
+      bottomNavigationBar: hideNavigation
+          ? null
+          : NavigationBarTheme(
+              data: NavigationBarThemeData(
+                labelTextStyle: WidgetStateProperty.all(
+                  const TextStyle(
+                    fontWeight: FontWeight.w500,
+                    color: AppColors.slate,
+                  ),
+                ),
+                iconTheme: WidgetStateProperty.resolveWith((states) {
+                  if (states.contains(WidgetState.selected)) {
+                    return const IconThemeData(color: AppColors.pebble);
+                  }
+                  return const IconThemeData(color: AppColors.slate);
+                }),
               ),
-              label: l10n.home,
+              child: NavigationBar(
+                selectedIndex: _currentIndex,
+                onDestinationSelected: (index) {
+                  setState(() => _currentIndex = index);
+                  _pageController.animateToPage(
+                    index,
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.easeInOut,
+                  );
+                },
+                backgroundColor: AppColors.limestone,
+                indicatorColor: AppColors.styrianForest,
+                surfaceTintColor: Colors.transparent,
+                destinations: [
+                  NavigationDestination(
+                    icon: const Icon(Icons.person_outline),
+                    selectedIcon: const Icon(
+                      Icons.person,
+                      color: AppColors.pebble,
+                    ),
+                    label: l10n.me,
+                  ),
+                  NavigationDestination(
+                    icon: const Icon(Icons.camera_alt_outlined),
+                    selectedIcon: const Icon(
+                      Icons.camera_alt,
+                      color: AppColors.pebble,
+                    ),
+                    label: l10n.home,
+                  ),
+                  NavigationDestination(
+                    icon: const Icon(Icons.history_outlined),
+                    selectedIcon: const Icon(
+                      Icons.history,
+                      color: AppColors.pebble,
+                    ),
+                    label: l10n.history,
+                  ),
+                ],
+              ),
             ),
-            NavigationDestination(
-              icon: const Icon(Icons.history_outlined),
-              selectedIcon: const Icon(Icons.history, color: AppColors.pebble),
-              label: l10n.history,
-            ),
-          ],
-        ),
-      ),
     );
   }
 }

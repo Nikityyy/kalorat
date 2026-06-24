@@ -294,16 +294,65 @@ class _PhaseCell extends StatelessWidget {
           if (isComplete)
             Icon(Icons.check, size: 15, color: foreground)
           else if (isActive)
-            Container(
-              width: 7,
-              height: 7,
-              decoration: const BoxDecoration(
-                color: AppColors.pureWhite,
-                shape: BoxShape.circle,
-              ),
-            ),
+            const _ActivePhasePulse(),
         ],
       ),
+    );
+  }
+}
+
+class _ActivePhasePulse extends StatefulWidget {
+  const _ActivePhasePulse();
+
+  @override
+  State<_ActivePhasePulse> createState() => _ActivePhasePulseState();
+}
+
+class _ActivePhasePulseState extends State<_ActivePhasePulse>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, _) {
+        final activeDot = (_controller.value * 3).floor().clamp(0, 2);
+
+        return Row(
+          mainAxisSize: MainAxisSize.min,
+          children: List.generate(3, (index) {
+            final isActive = index == activeDot;
+            return AnimatedContainer(
+              duration: const Duration(milliseconds: 180),
+              margin: EdgeInsets.only(left: index == 0 ? 0 : 3),
+              width: isActive ? 8 : 5,
+              height: 5,
+              decoration: BoxDecoration(
+                color: AppColors.pureWhite.withValues(
+                  alpha: isActive ? 1 : 0.5,
+                ),
+                borderRadius: BorderRadius.circular(4),
+              ),
+            );
+          }),
+        );
+      },
     );
   }
 }

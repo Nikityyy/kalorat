@@ -28,16 +28,27 @@ class RulerPicker extends StatefulWidget {
 class _RulerPickerState extends State<RulerPicker> {
   late FixedExtentScrollController _controller;
   late double _currentValue;
+  late String _displayValue;
 
   @override
   void initState() {
     super.initState();
-    _currentValue = widget.initialValue;
+    _currentValue = _snapValue(widget.initialValue);
+    _displayValue = _formatValue(_currentValue);
     // initialValue (e.g. 70.5) - minValue (30.0) = 40.5
     // 40.5 * 10 = 405 steps
     _controller = FixedExtentScrollController(
-      initialItem: ((widget.initialValue - widget.minValue) * 10).round(),
+      initialItem: ((_currentValue - widget.minValue) * 10).round(),
     );
+  }
+
+  @override
+  void didUpdateWidget(covariant RulerPicker oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.initialValue != widget.initialValue) {
+      _currentValue = _snapValue(widget.initialValue);
+      _displayValue = _formatValue(_currentValue);
+    }
   }
 
   @override
@@ -45,6 +56,10 @@ class _RulerPickerState extends State<RulerPicker> {
     _controller.dispose();
     super.dispose();
   }
+
+  double _snapValue(double value) => double.parse(value.toStringAsFixed(1));
+
+  String _formatValue(double value) => value.toStringAsFixed(1);
 
   @override
   Widget build(BuildContext context) {
@@ -61,7 +76,7 @@ class _RulerPickerState extends State<RulerPicker> {
           textBaseline: TextBaseline.alphabetic,
           children: [
             Text(
-              _currentValue.toStringAsFixed(1).replaceAll('.', ','),
+              _displayValue,
               style: AppTypography.heroNumber.copyWith(
                 fontSize: 64,
                 color: AppColors.styrianForest,
@@ -112,10 +127,13 @@ class _RulerPickerState extends State<RulerPicker> {
                     onSelectedItemChanged: (index) {
                       final val = widget.minValue + (index / 10.0);
                       // Snap to 1 decimal place to avoid floating point errors
-                      final newValue = double.parse(val.toStringAsFixed(1));
+                      final newValue = _snapValue(val);
 
                       if (newValue != _currentValue) {
-                        setState(() => _currentValue = newValue);
+                        setState(() {
+                          _currentValue = newValue;
+                          _displayValue = _formatValue(newValue);
+                        });
                         widget.onValueChanged(newValue);
                       }
                     },

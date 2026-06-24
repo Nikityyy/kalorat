@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math' as math;
 import '../utils/platform_utils.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 
@@ -296,6 +297,11 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
         if (event is AnalysisPhaseChanged) {
           setState(() {
             _analysisPhase = event.phase;
+            if (event.phase == AnalysisPhase.verifying &&
+                !_liveThoughtText.contains(context.l10n.verifyingEstimate)) {
+              _liveThoughtText =
+                  '${_liveThoughtText.trimRight()}\n\n## ${context.l10n.verifyingEstimate}\n\n';
+            }
           });
         } else if (event is ThoughtChunk) {
           setState(() {
@@ -693,19 +699,6 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
                 : Image.file(File(_meal.photoPaths.first), fit: BoxFit.cover),
           ),
         Positioned(
-          top: MediaQuery.of(context).padding.top + 8,
-          left: 16,
-          child: CircleAvatar(
-            backgroundColor: Colors.black26,
-            child: IconButton(
-              icon: const Icon(Icons.arrow_back, color: Colors.white),
-              onPressed: () {
-                setState(() => _isAnalyzing = false);
-              },
-            ),
-          ),
-        ),
-        Positioned(
           top: screenHeight * 0.3,
           left: 0,
           right: 0,
@@ -954,153 +947,10 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
 
                           const SizedBox(height: 24),
 
-                          // Calories Card
-                          GestureDetector(
-                            onTap: _showEditCaloriesDialog,
-                            child: Container(
-                              width: double.infinity,
-                              padding: const EdgeInsets.symmetric(vertical: 32),
-                              decoration: BoxDecoration(
-                                color: AppColors.styrianForest,
-                                borderRadius: BorderRadius.circular(
-                                  AppTheme.borderRadius,
-                                ),
-                                border: Border.all(
-                                  color: AppColors.borderGrey,
-                                  width: 1,
-                                ),
-                              ),
-                              child: Stack(
-                                children: [
-                                  Align(
-                                    alignment: Alignment.center,
-                                    child: Column(
-                                      children: [
-                                        Text(
-                                          '${(_meal.calories * _portionMultiplier).toInt()}',
-                                          style: AppTypography.heroNumber
-                                              .copyWith(
-                                                color: AppColors.glacialWhite,
-                                                fontSize: 64,
-                                              ),
-                                        ),
-                                        Text(
-                                          l10n.calories.toUpperCase(),
-                                          style: AppTypography.labelLarge
-                                              .copyWith(
-                                                color: AppColors.glacialWhite
-                                                    .withValues(alpha: 0.7),
-                                                letterSpacing: 2,
-                                              ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  Positioned(
-                                    right: 16,
-                                    top: 0,
-                                    child: Icon(
-                                      _meal.isCalorieOverride
-                                          ? Icons.lock_open
-                                          : Icons.lock,
-                                      color: AppColors.glacialWhite.withValues(
-                                        alpha: 0.3,
-                                      ),
-                                      size: 20,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
+                          _buildNutritionOverview(),
 
-                          const SizedBox(height: 24),
-
-                          // Macros Row
-                          Row(
-                            children: [
-                              _MacroCard(
-                                label: l10n.protein,
-                                value:
-                                    '${(_meal.protein * _portionMultiplier).toStringAsFixed(1)}g',
-                                color: AppColors.styrianForest,
-                                onEdit: () => _showEditMacroDialog(
-                                  l10n.protein,
-                                  _meal.protein * _portionMultiplier,
-                                  (val) {
-                                    setState(() {
-                                      final newProtein =
-                                          val / _portionMultiplier;
-                                      final newCalories =
-                                          _meal.isCalorieOverride
-                                          ? _meal.calories
-                                          : (newProtein * 4) +
-                                                (_meal.carbs * 4) +
-                                                (_meal.fats * 9);
-                                      _meal = _meal.copyWith(
-                                        protein: newProtein,
-                                        calories: newCalories,
-                                      );
-                                    });
-                                  },
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              _MacroCard(
-                                label: l10n.carbs,
-                                value:
-                                    '${(_meal.carbs * _portionMultiplier).toStringAsFixed(1)}g',
-                                color: AppColors.styrianForest,
-                                onEdit: () => _showEditMacroDialog(
-                                  l10n.carbs,
-                                  _meal.carbs * _portionMultiplier,
-                                  (val) {
-                                    setState(() {
-                                      final newCarbs = val / _portionMultiplier;
-                                      final newCalories =
-                                          _meal.isCalorieOverride
-                                          ? _meal.calories
-                                          : (_meal.protein * 4) +
-                                                (newCarbs * 4) +
-                                                (_meal.fats * 9);
-                                      _meal = _meal.copyWith(
-                                        carbs: newCarbs,
-                                        calories: newCalories,
-                                      );
-                                    });
-                                  },
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              _MacroCard(
-                                label: l10n.fats,
-                                value:
-                                    '${(_meal.fats * _portionMultiplier).toStringAsFixed(1)}g',
-                                color: AppColors.styrianForest,
-                                onEdit: () => _showEditMacroDialog(
-                                  l10n.fats,
-                                  _meal.fats * _portionMultiplier,
-                                  (val) {
-                                    setState(() {
-                                      final newFats = val / _portionMultiplier;
-                                      final newCalories =
-                                          _meal.isCalorieOverride
-                                          ? _meal.calories
-                                          : (_meal.protein * 4) +
-                                                (_meal.carbs * 4) +
-                                                (newFats * 9);
-                                      _meal = _meal.copyWith(
-                                        fats: newFats,
-                                        calories: newCalories,
-                                      );
-                                    });
-                                  },
-                                ),
-                              ),
-                            ],
-                          ),
-
-                          if (_hasPer100Reference()) ...[
+                          if (_hasPer100Reference() ||
+                              _canEditPer100Reference()) ...[
                             const SizedBox(height: 16),
                             _buildPer100Reference(),
                           ],
@@ -1172,6 +1022,133 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
         _meal.proteinPer100g != null ||
         _meal.carbsPer100g != null ||
         _meal.fatsPer100g != null;
+  }
+
+  Widget _buildNutritionOverview() {
+    final l10n = context.l10n;
+    final caloriesValue = _meal.calories * _portionMultiplier;
+
+    final protein = _meal.protein * _portionMultiplier;
+    final carbs = _meal.carbs * _portionMultiplier;
+    final fats = _meal.fats * _portionMultiplier;
+    final proteinCalories = protein * 4;
+    final carbsCalories = carbs * 4;
+    final fatCalories = fats * 9;
+    final macroCalories = proteinCalories + carbsCalories + fatCalories;
+
+    int percent(double value) {
+      if (macroCalories <= 0) return 0;
+      return ((value / macroCalories) * 100).round();
+    }
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.pureWhite,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.subtleAsh, width: 1),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 14,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          GestureDetector(
+            onTap: _showEditCaloriesDialog,
+            child: _CalorieRing(
+              calories: caloriesValue.round(),
+              isOverride: _meal.isCalorieOverride,
+              proteinCalories: proteinCalories,
+              carbsCalories: carbsCalories,
+              fatCalories: fatCalories,
+            ),
+          ),
+          const SizedBox(width: 18),
+          Expanded(
+            child: Column(
+              children: [
+                _MacroSummaryRow(
+                  label: l10n.protein,
+                  value: '${protein.toStringAsFixed(1)}g',
+                  percent: percent(proteinCalories),
+                  color: const Color(0xFF2F73D9),
+                  onTap: _editProtein,
+                ),
+                const SizedBox(height: 12),
+                _MacroSummaryRow(
+                  label: l10n.carbs,
+                  value: '${carbs.toStringAsFixed(1)}g',
+                  percent: percent(carbsCalories),
+                  color: const Color(0xFFFF8A00),
+                  onTap: _editCarbs,
+                ),
+                const SizedBox(height: 12),
+                _MacroSummaryRow(
+                  label: l10n.fats,
+                  value: '${fats.toStringAsFixed(1)}g',
+                  percent: percent(fatCalories),
+                  color: const Color(0xFFFF5A5F),
+                  onTap: _editFats,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _editProtein() {
+    _showEditMacroDialog(
+      context.l10n.protein,
+      _meal.protein * _portionMultiplier,
+      (val) {
+        setState(() {
+          final newProtein = val / _portionMultiplier;
+          final newCalories = _meal.isCalorieOverride
+              ? _meal.calories
+              : (newProtein * 4) + (_meal.carbs * 4) + (_meal.fats * 9);
+          _meal = _meal.copyWith(protein: newProtein, calories: newCalories);
+        });
+      },
+    );
+  }
+
+  void _editCarbs() {
+    _showEditMacroDialog(
+      context.l10n.carbs,
+      _meal.carbs * _portionMultiplier,
+      (val) {
+        setState(() {
+          final newCarbs = val / _portionMultiplier;
+          final newCalories = _meal.isCalorieOverride
+              ? _meal.calories
+              : (_meal.protein * 4) + (newCarbs * 4) + (_meal.fats * 9);
+          _meal = _meal.copyWith(carbs: newCarbs, calories: newCalories);
+        });
+      },
+    );
+  }
+
+  void _editFats() {
+    _showEditMacroDialog(
+      context.l10n.fats,
+      _meal.fats * _portionMultiplier,
+      (val) {
+        setState(() {
+          final newFats = val / _portionMultiplier;
+          final newCalories = _meal.isCalorieOverride
+              ? _meal.calories
+              : (_meal.protein * 4) + (_meal.carbs * 4) + (newFats * 9);
+          _meal = _meal.copyWith(fats: newFats, calories: newCalories);
+        });
+      },
+    );
   }
 
   bool _canEditPer100Reference() {
@@ -1376,69 +1353,212 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
   }
 }
 
-class _MacroCard extends StatelessWidget {
-  final String label;
-  final String value;
-  final Color color;
-  final VoidCallback? onEdit;
+class _CalorieRing extends StatelessWidget {
+  final int calories;
+  final bool isOverride;
+  final double proteinCalories;
+  final double carbsCalories;
+  final double fatCalories;
 
-  const _MacroCard({
-    required this.label,
-    required this.value,
-    required this.color,
-    this.onEdit,
+  const _CalorieRing({
+    required this.calories,
+    required this.isOverride,
+    required this.proteinCalories,
+    required this.carbsCalories,
+    required this.fatCalories,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Expanded(
-      child: GestureDetector(
-        onTap: onEdit,
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 8),
-          decoration: BoxDecoration(
-            color: AppColors.steel,
-            borderRadius: BorderRadius.circular(AppTheme.borderRadius),
-            border: Border.all(color: color.withValues(alpha: 0.2), width: 2),
+    return SizedBox(
+      width: 104,
+      height: 104,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          SizedBox(
+            width: 96,
+            height: 96,
+            child: CustomPaint(
+              painter: _MacroCalorieRingPainter(
+                proteinCalories: proteinCalories,
+                carbsCalories: carbsCalories,
+                fatCalories: fatCalories,
+                strokeWidth: 8,
+              ),
+            ),
           ),
-          child: Column(
+          Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
               Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    value,
+                    '$calories',
                     style: AppTypography.titleLarge.copyWith(
-                      color: color,
-                      fontSize: 24,
+                      fontSize: 26,
+                      color: AppColors.deepSpaceBlack,
                     ),
                   ),
-                  if (onEdit != null) ...[
-                    const SizedBox(width: 4),
-                    Icon(
-                      Icons.edit,
-                      size: 14,
-                      color: color.withValues(alpha: 0.5),
-                    ),
+                  if (isOverride) ...[
+                    const SizedBox(width: 3),
+                    const Icon(Icons.lock_open, size: 12),
                   ],
                 ],
               ),
-              const SizedBox(height: 4),
-              FittedBox(
-                fit: BoxFit.scaleDown,
-                child: Text(
-                  label.toUpperCase(),
-                  style: AppTypography.labelLarge.copyWith(
-                    fontSize: 10,
-                    color: AppColors.frost.withValues(alpha: 0.5),
-                    letterSpacing: 1,
-                  ),
-                  textAlign: TextAlign.center,
-                  maxLines: 1,
+              Text(
+                'kcal',
+                style: AppTypography.labelLarge.copyWith(
+                  fontSize: 11,
+                  color: AppColors.deepSpaceBlack,
+                  letterSpacing: 0,
                 ),
               ),
             ],
           ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MacroCalorieRingPainter extends CustomPainter {
+  final double proteinCalories;
+  final double carbsCalories;
+  final double fatCalories;
+  final double strokeWidth;
+
+  const _MacroCalorieRingPainter({
+    required this.proteinCalories,
+    required this.carbsCalories,
+    required this.fatCalories,
+    required this.strokeWidth,
+  });
+
+  static const _proteinColor = Color(0xFF2F73D9);
+  static const _carbsColor = Color(0xFFFF8A00);
+  static const _fatColor = Color(0xFFFF5A5F);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = (size.shortestSide - strokeWidth) / 2;
+    final rect = Rect.fromCircle(center: center, radius: radius);
+    final total = proteinCalories + carbsCalories + fatCalories;
+
+    final trackPaint = Paint()
+      ..color = AppColors.subtleAsh.withValues(alpha: 0.45)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth
+      ..strokeCap = StrokeCap.round;
+    canvas.drawCircle(center, radius, trackPaint);
+
+    if (total <= 0) return;
+
+    final paint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth
+      ..strokeCap = StrokeCap.round;
+
+    var startAngle = -math.pi / 2;
+    const gap = 0.035;
+    final segments = [
+      MapEntry(proteinCalories, _proteinColor),
+      MapEntry(carbsCalories, _carbsColor),
+      MapEntry(fatCalories, _fatColor),
+    ];
+
+    for (final segment in segments) {
+      final calories = segment.key;
+      if (calories <= 0) continue;
+      final sweep = (calories / total) * math.pi * 2;
+      paint.color = segment.value;
+      canvas.drawArc(
+        rect,
+        startAngle,
+        (sweep - gap).clamp(0.0, math.pi * 2).toDouble(),
+        false,
+        paint,
+      );
+      startAngle += sweep;
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _MacroCalorieRingPainter oldDelegate) {
+    return proteinCalories != oldDelegate.proteinCalories ||
+        carbsCalories != oldDelegate.carbsCalories ||
+        fatCalories != oldDelegate.fatCalories ||
+        strokeWidth != oldDelegate.strokeWidth;
+  }
+}
+
+class _MacroSummaryRow extends StatelessWidget {
+  final String label;
+  final String value;
+  final int percent;
+  final Color color;
+  final VoidCallback onTap;
+
+  const _MacroSummaryRow({
+    required this.label,
+    required this.value,
+    required this.percent,
+    required this.color,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 2),
+        child: Row(
+          children: [
+            Container(
+              width: 9,
+              height: 9,
+              decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                label,
+                style: AppTypography.labelLarge.copyWith(
+                  fontSize: 12,
+                  color: AppColors.deepSpaceBlack,
+                  letterSpacing: 0,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            Text(
+              value,
+              style: AppTypography.labelLarge.copyWith(
+                fontSize: 12,
+                color: AppColors.deepSpaceBlack,
+                letterSpacing: 0,
+              ),
+            ),
+            const SizedBox(width: 12),
+            SizedBox(
+              width: 34,
+              child: Text(
+                '$percent%',
+                textAlign: TextAlign.right,
+                style: AppTypography.labelLarge.copyWith(
+                  fontSize: 12,
+                  color: AppColors.slate,
+                  letterSpacing: 0,
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
