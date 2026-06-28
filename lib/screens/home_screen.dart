@@ -59,6 +59,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   // Live thought summary text accumulated during streaming analysis
   String _liveThoughtText = '';
   AnalysisPhase _analysisPhase = AnalysisPhase.drafting;
+  ImageProvider? _analysisHeroImageProvider;
 
   // FocusNode for context textarea — avoids the autofocus keyboard-jump bug
   final FocusNode _contextFocusNode = FocusNode();
@@ -756,6 +757,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
     setState(() {
       _isAnalyzing = true;
+      _analysisHeroImageProvider = _capturedPhotos.isNotEmpty
+          ? _photoImageProvider(_capturedPhotos.first)
+          : null;
       _liveThoughtText = '';
       _analysisPhase = AnalysisPhase.drafting;
     });
@@ -800,7 +804,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         } else {
           errorMsg = l10n.analysisError(e.toString());
         }
-        setState(() => _isAnalyzing = false);
+        setState(() {
+          _isAnalyzing = false;
+          _analysisHeroImageProvider = null;
+        });
         provider.setMealAnalysisActive(false);
         _showMessage(errorMsg);
         setState(() => _liveThoughtText = '');
@@ -813,7 +820,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       if (result.containsKey('error') &&
           result['error'] == 'no_food_detected') {
         if (mounted) {
-          setState(() => _isAnalyzing = false);
+          setState(() {
+            _isAnalyzing = false;
+            _analysisHeroImageProvider = null;
+          });
           provider.setMealAnalysisActive(false);
           _showMessage(l10n.noFoodDetected);
           _resetCaptureState();
@@ -899,7 +909,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
         if (mounted) {
           debugPrint('Pushing MealDetailScreen...');
-          setState(() => _isAnalyzing = false);
+          setState(() {
+            _isAnalyzing = false;
+            _analysisHeroImageProvider = null;
+          });
           provider.setMealAnalysisActive(false);
           await Navigator.push(
             context,
@@ -917,14 +930,20 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       } catch (e, stack) {
         debugPrint('Error parsing/pushing: $e\n$stack');
         if (mounted) {
-          setState(() => _isAnalyzing = false);
+          setState(() {
+            _isAnalyzing = false;
+            _analysisHeroImageProvider = null;
+          });
           provider.setMealAnalysisActive(false);
           _showMessage(l10n.analysisError('Parse error: $e'));
         }
       }
     } else {
       if (mounted) {
-        setState(() => _isAnalyzing = false);
+        setState(() {
+          _isAnalyzing = false;
+          _analysisHeroImageProvider = null;
+        });
         provider.setMealAnalysisActive(false);
         _showMessage(l10n.analysisError('No result received.'));
       }
@@ -1053,18 +1072,18 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     return Stack(
       children: [
         // 1. Background Image (Actual captured photo)
-        Positioned(
-          top: 0,
-          left: 0,
-          right: 0,
-          height: screenHeight * 0.35,
-          child: PlatformUtils.isWeb
-              ? Image.memory(
-                  base64Decode(_capturedPhotos.first),
-                  fit: BoxFit.cover,
-                )
-              : Image.file(File(_capturedPhotos.first), fit: BoxFit.cover),
-        ),
+        if (_analysisHeroImageProvider != null)
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            height: screenHeight * 0.35,
+            child: Image(
+              image: _analysisHeroImageProvider!,
+              fit: BoxFit.cover,
+              gaplessPlayback: true,
+            ),
+          ),
 
         // 2. Content Sheet
         Positioned(

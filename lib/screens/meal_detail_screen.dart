@@ -44,6 +44,7 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
   String _liveThoughtText = '';
   AnalysisPhase _analysisPhase = AnalysisPhase.drafting;
   String? _mealContext;
+  ImageProvider? _analysisHeroImageProvider;
 
   // FocusNode for retry context sheet — avoids autofocus keyboard-jump bug
   final FocusNode _contextFocusNode = FocusNode();
@@ -87,6 +88,12 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
   void dispose() {
     _contextFocusNode.dispose();
     super.dispose();
+  }
+
+  ImageProvider _mealPhotoImageProvider(String photo) {
+    return PlatformUtils.isWeb
+        ? MemoryImage(base64Decode(photo))
+        : FileImage(File(photo)) as ImageProvider;
   }
 
   void _updatePortion(double change) {
@@ -286,6 +293,9 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
     setState(() {
       _mealContext = submittedContext;
       _isAnalyzing = true;
+      _analysisHeroImageProvider = _meal.photoPaths.isNotEmpty
+          ? _mealPhotoImageProvider(_meal.photoPaths.first)
+          : null;
       _liveThoughtText = '';
       _analysisPhase = AnalysisPhase.drafting;
     });
@@ -419,6 +429,7 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
       if (mounted) {
         setState(() {
           _isAnalyzing = false;
+          _analysisHeroImageProvider = null;
           _liveThoughtText = '';
         });
       }
@@ -715,18 +726,17 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
 
     return Stack(
       children: [
-        if (_meal.photoPaths.isNotEmpty)
+        if (_analysisHeroImageProvider != null)
           Positioned(
             top: 0,
             left: 0,
             right: 0,
             height: screenHeight * 0.35,
-            child: PlatformUtils.isWeb
-                ? Image.memory(
-                    base64Decode(_meal.photoPaths.first),
-                    fit: BoxFit.cover,
-                  )
-                : Image.file(File(_meal.photoPaths.first), fit: BoxFit.cover),
+            child: Image(
+              image: _analysisHeroImageProvider!,
+              fit: BoxFit.cover,
+              gaplessPlayback: true,
+            ),
           ),
         Positioned(
           top: screenHeight * 0.3,
