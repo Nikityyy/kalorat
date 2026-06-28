@@ -61,10 +61,22 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
         _portionMultiplier != 1.0 &&
         _portionMultiplier > 0) {
       _meal = widget.meal.copyWith(
-        calories: widget.meal.calories / _portionMultiplier,
-        protein: widget.meal.protein / _portionMultiplier,
-        carbs: widget.meal.carbs / _portionMultiplier,
-        fats: widget.meal.fats / _portionMultiplier,
+        calories: baseValueFromScaled(
+          scaledValue: widget.meal.calories,
+          portionMultiplier: _portionMultiplier,
+        ),
+        protein: baseValueFromScaled(
+          scaledValue: widget.meal.protein,
+          portionMultiplier: _portionMultiplier,
+        ),
+        carbs: baseValueFromScaled(
+          scaledValue: widget.meal.carbs,
+          portionMultiplier: _portionMultiplier,
+        ),
+        fats: baseValueFromScaled(
+          scaledValue: widget.meal.fats,
+          portionMultiplier: _portionMultiplier,
+        ),
       );
     } else {
       _meal = widget.meal;
@@ -486,10 +498,22 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
 
     // Adjust values by portion multiplier before saving
     final finalMeal = _meal.copyWith(
-      calories: _meal.calories * _portionMultiplier,
-      protein: _meal.protein * _portionMultiplier,
-      carbs: _meal.carbs * _portionMultiplier,
-      fats: _meal.fats * _portionMultiplier,
+      calories: scaledValueFromBase(
+        baseValue: _meal.calories,
+        portionMultiplier: _portionMultiplier,
+      ),
+      protein: scaledValueFromBase(
+        baseValue: _meal.protein,
+        portionMultiplier: _portionMultiplier,
+      ),
+      carbs: scaledValueFromBase(
+        baseValue: _meal.carbs,
+        portionMultiplier: _portionMultiplier,
+      ),
+      fats: scaledValueFromBase(
+        baseValue: _meal.fats,
+        portionMultiplier: _portionMultiplier,
+      ),
       portionMultiplier: _portionMultiplier,
     );
 
@@ -497,7 +521,7 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
     await provider.saveMeal(finalMeal);
 
     if (mounted) {
-      Navigator.of(context).pop(); // Return to previous screen
+      Navigator.of(context).pop(finalMeal); // Return to previous screen
     }
   }
 
@@ -595,9 +619,15 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
               if (newValue != null) {
                 setState(() {
                   // Calculate new base calories
-                  final newBase = newValue / _portionMultiplier;
+                  final newBase = baseValueFromScaled(
+                    scaledValue: newValue,
+                    portionMultiplier: _portionMultiplier,
+                  );
                   _meal = _meal.copyWith(
                     calories: newBase,
+                    caloriesPer100g: isPer100Unit(_meal.portionUnit)
+                        ? newBase
+                        : _meal.caloriesPer100g,
                     isCalorieOverride: true, // Force manual mode
                   );
                 });
@@ -1109,46 +1139,81 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
       _meal.protein * _portionMultiplier,
       (val) {
         setState(() {
-          final newProtein = val / _portionMultiplier;
+          final newProtein = baseValueFromScaled(
+            scaledValue: val,
+            portionMultiplier: _portionMultiplier,
+          );
           final newCalories = _meal.isCalorieOverride
               ? _meal.calories
               : (newProtein * 4) + (_meal.carbs * 4) + (_meal.fats * 9);
-          _meal = _meal.copyWith(protein: newProtein, calories: newCalories);
+          _meal = _meal.copyWith(
+            protein: newProtein,
+            calories: newCalories,
+            proteinPer100g: isPer100Unit(_meal.portionUnit)
+                ? newProtein
+                : _meal.proteinPer100g,
+            caloriesPer100g:
+                isPer100Unit(_meal.portionUnit) && !_meal.isCalorieOverride
+                ? newCalories
+                : _meal.caloriesPer100g,
+          );
         });
       },
     );
   }
 
   void _editCarbs() {
-    _showEditMacroDialog(
-      context.l10n.carbs,
-      _meal.carbs * _portionMultiplier,
-      (val) {
-        setState(() {
-          final newCarbs = val / _portionMultiplier;
-          final newCalories = _meal.isCalorieOverride
-              ? _meal.calories
-              : (_meal.protein * 4) + (newCarbs * 4) + (_meal.fats * 9);
-          _meal = _meal.copyWith(carbs: newCarbs, calories: newCalories);
-        });
-      },
-    );
+    _showEditMacroDialog(context.l10n.carbs, _meal.carbs * _portionMultiplier, (
+      val,
+    ) {
+      setState(() {
+        final newCarbs = baseValueFromScaled(
+          scaledValue: val,
+          portionMultiplier: _portionMultiplier,
+        );
+        final newCalories = _meal.isCalorieOverride
+            ? _meal.calories
+            : (_meal.protein * 4) + (newCarbs * 4) + (_meal.fats * 9);
+        _meal = _meal.copyWith(
+          carbs: newCarbs,
+          calories: newCalories,
+          carbsPer100g: isPer100Unit(_meal.portionUnit)
+              ? newCarbs
+              : _meal.carbsPer100g,
+          caloriesPer100g:
+              isPer100Unit(_meal.portionUnit) && !_meal.isCalorieOverride
+              ? newCalories
+              : _meal.caloriesPer100g,
+        );
+      });
+    });
   }
 
   void _editFats() {
-    _showEditMacroDialog(
-      context.l10n.fats,
-      _meal.fats * _portionMultiplier,
-      (val) {
-        setState(() {
-          final newFats = val / _portionMultiplier;
-          final newCalories = _meal.isCalorieOverride
-              ? _meal.calories
-              : (_meal.protein * 4) + (_meal.carbs * 4) + (newFats * 9);
-          _meal = _meal.copyWith(fats: newFats, calories: newCalories);
-        });
-      },
-    );
+    _showEditMacroDialog(context.l10n.fats, _meal.fats * _portionMultiplier, (
+      val,
+    ) {
+      setState(() {
+        final newFats = baseValueFromScaled(
+          scaledValue: val,
+          portionMultiplier: _portionMultiplier,
+        );
+        final newCalories = _meal.isCalorieOverride
+            ? _meal.calories
+            : (_meal.protein * 4) + (_meal.carbs * 4) + (newFats * 9);
+        _meal = _meal.copyWith(
+          fats: newFats,
+          calories: newCalories,
+          fatsPer100g: isPer100Unit(_meal.portionUnit)
+              ? newFats
+              : _meal.fatsPer100g,
+          caloriesPer100g:
+              isPer100Unit(_meal.portionUnit) && !_meal.isCalorieOverride
+              ? newCalories
+              : _meal.caloriesPer100g,
+        );
+      });
+    });
   }
 
   bool _canEditPer100Reference() {
@@ -1257,10 +1322,26 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
                   proteinPer100g: protein,
                   carbsPer100g: carbs,
                   fatsPer100g: fats,
-                  calories: calories ?? _meal.calories,
-                  protein: protein ?? _meal.protein,
-                  carbs: carbs ?? _meal.carbs,
-                  fats: fats ?? _meal.fats,
+                  calories: per100ReferenceFor(
+                    unit: _meal.portionUnit,
+                    baseValue: _meal.calories,
+                    explicitReference: calories,
+                  ),
+                  protein: per100ReferenceFor(
+                    unit: _meal.portionUnit,
+                    baseValue: _meal.protein,
+                    explicitReference: protein,
+                  ),
+                  carbs: per100ReferenceFor(
+                    unit: _meal.portionUnit,
+                    baseValue: _meal.carbs,
+                    explicitReference: carbs,
+                  ),
+                  fats: per100ReferenceFor(
+                    unit: _meal.portionUnit,
+                    baseValue: _meal.fats,
+                    explicitReference: fats,
+                  ),
                 );
               });
               Navigator.pop(context);

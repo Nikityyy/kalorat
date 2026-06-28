@@ -231,15 +231,18 @@ class _HistoryScreenState extends State<HistoryScreen> {
                             meal: filteredMeals[i],
                             onTap: filteredMeals[i].isPending
                                 ? null
-                                : () => Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (_) => MealDetailScreen(
-                                        meal: filteredMeals[i],
-                                        isNewEntry: false,
+                                : () async {
+                                    await Navigator.push<MealModel>(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => MealDetailScreen(
+                                          meal: filteredMeals[i],
+                                          isNewEntry: false,
+                                        ),
                                       ),
-                                    ),
-                                  ),
+                                    );
+                                    if (mounted) setState(() {});
+                                  },
                             onDelete: () => _confirmDelete(
                               context,
                               filteredMeals[i],

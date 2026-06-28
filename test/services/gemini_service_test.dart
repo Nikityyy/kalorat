@@ -32,6 +32,20 @@ String _sseTextEvent(String text) {
   })}\n\n';
 }
 
+String _sseThoughtEvent(String text) {
+  return 'data: ${jsonEncode({
+    'candidates': [
+      {
+        'content': {
+          'parts': [
+            {'text': text, 'thought': true},
+          ],
+        },
+      },
+    ],
+  })}\n\n';
+}
+
 void main() {
   group('GeminiService', () {
     test('validateApiKey returns true for 200 response', () async {
@@ -205,6 +219,72 @@ void main() {
           expect(visibleThoughtText, contains('Analyse der Mahlzeit'));
           expect(visibleThoughtText, isNot(contains('```json')));
           expect(visibleThoughtText, isNot(contains('```')));
+        },
+      );
+
+      test(
+        'streaming thoughts hide format chatter from visible summary',
+        () async {
+          final testFile = File('${tempDir.path}/stream_thought_image.jpg');
+          await testFile.writeAsBytes(base64Decode(_dummyBase64Jpeg));
+
+          final resultJson = jsonEncode({
+            'analysis_note': 'test',
+            'meal_name': 'Test',
+            'calories': 100,
+            'protein': 10,
+            'carbs': 10,
+            'fats': 5,
+            'detected_quantity': 1,
+            'detected_unit': 'serving',
+          });
+
+          var streamRequestCount = 0;
+          final client = MockClient((request) async {
+            if (request.method == 'GET') {
+              return http.StreamedResponse(
+                Stream.value(
+                  utf8.encode(
+                    jsonEncode({
+                      'models': [
+                        {'name': 'models/gemini-flash-lite-latest'},
+                      ],
+                    }),
+                  ),
+                ),
+                200,
+              );
+            }
+
+            streamRequestCount += 1;
+            final chunks = streamRequestCount == 1
+                ? [
+                    _sseThoughtEvent('- Ich erkenne Brot und Kaese.\n'),
+                    _sseThoughtEvent('- JSON wird vorbereitet.\n'),
+                    _sseTextEvent(resultJson),
+                  ]
+                : [_sseTextEvent(resultJson)];
+
+            return http.StreamedResponse(
+              Stream.fromIterable(chunks.map(utf8.encode)),
+              200,
+            );
+          });
+
+          final service = GeminiService(apiKey: 'test_key', client: client);
+          final thoughts = <String>[];
+
+          await for (final event in service.analyzeMealStream([
+            testFile.path,
+          ])) {
+            if (event is ThoughtChunk) {
+              thoughts.add(event.text);
+            }
+          }
+
+          final visibleThoughtText = thoughts.join();
+          expect(visibleThoughtText, contains('Brot und Kaese'));
+          expect(visibleThoughtText.toLowerCase(), isNot(contains('json')));
         },
       );
     });

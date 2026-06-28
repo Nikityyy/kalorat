@@ -94,3 +94,27 @@ double nutritionBaseValue(
 
   return value ?? referenceValue ?? 0.0;
 }
+
+double per100ReferenceFor({
+  required String unit,
+  required double baseValue,
+  double? explicitReference,
+}) {
+  if (isPer100Unit(unit)) return explicitReference ?? baseValue;
+  return explicitReference ?? baseValue;
+}
+
+double scaledValueFromBase({
+  required double baseValue,
+  required double portionMultiplier,
+}) {
+  return baseValue * portionMultiplier;
+}
+
+double baseValueFromScaled({
+  required double scaledValue,
+  required double portionMultiplier,
+}) {
+  if (portionMultiplier <= 0) return scaledValue;
+  return scaledValue / portionMultiplier;
+}

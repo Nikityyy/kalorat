@@ -63,6 +63,28 @@ class AnalysisResult extends AnalysisProgress {
   const AnalysisResult(this.data);
 }
 
+String _sanitizeVisibleThoughtText(String text) {
+  if (text.isEmpty) return text;
+
+  final withoutFences = text
+      .replaceAll(RegExp(r'```[a-zA-Z]*'), '')
+      .replaceAll('```', '');
+  final lines = withoutFences.replaceAll('\r\n', '\n').replaceAll('\r', '\n');
+  final filtered = lines
+      .split('\n')
+      .where((line) {
+        final lower = line.toLowerCase();
+        return !lower.contains('json') &&
+            !lower.contains('schema') &&
+            !lower.contains('response format') &&
+            !lower.contains('roh-json') &&
+            !lower.contains('raw json');
+      })
+      .join('\n');
+
+  return filtered;
+}
+
 class _StreamedJsonThoughtSplitter {
   static final RegExp _jsonStartRegExp = RegExp(
     r'```(?:json)?\s*\{|\{\s*"(?:analysis_note|meal_name|calories)"',
@@ -88,8 +110,9 @@ class _StreamedJsonThoughtSplitter {
     if (match != null) {
       _jsonStarted = true;
       final thoughtText = candidate.substring(0, match.start);
-      if (thoughtText.isNotEmpty) {
-        yield ThoughtChunk(thoughtText);
+      final visibleThoughtText = _sanitizeVisibleThoughtText(thoughtText);
+      if (visibleThoughtText.isNotEmpty) {
+        yield ThoughtChunk(visibleThoughtText);
       }
       return;
     }
@@ -102,8 +125,9 @@ class _StreamedJsonThoughtSplitter {
         ? ''
         : candidate.substring(pendingMatch.start);
 
-    if (safeText.isNotEmpty) {
-      yield ThoughtChunk(safeText);
+    final visibleSafeText = _sanitizeVisibleThoughtText(safeText);
+    if (visibleSafeText.isNotEmpty) {
+      yield ThoughtChunk(visibleSafeText);
     }
     if (pendingText.isNotEmpty) {
       _pendingThought.write(pendingText);
@@ -620,7 +644,10 @@ class GeminiService {
               if (text == null || text.isEmpty) continue;
 
               if (isThought) {
-                yield ThoughtChunk(text);
+                final visibleThoughtText = _sanitizeVisibleThoughtText(text);
+                if (visibleThoughtText.isNotEmpty) {
+                  yield ThoughtChunk(visibleThoughtText);
+                }
               } else {
                 for (final chunk in thoughtSplitter.addText(text)) {
                   yield chunk;
@@ -1095,7 +1122,10 @@ Stream short verification notes as thoughts and finish with JSON in the required
                 if (text == null || text.isEmpty) continue;
 
                 if (isThought) {
-                  yield ThoughtChunk(text);
+                  final visibleThoughtText = _sanitizeVisibleThoughtText(text);
+                  if (visibleThoughtText.isNotEmpty) {
+                    yield ThoughtChunk(visibleThoughtText);
+                  }
                   continue;
                 }
 

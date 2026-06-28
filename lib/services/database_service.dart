@@ -204,6 +204,7 @@ class DatabaseService {
       daysChecked++;
     }
 
+    meals.sort((a, b) => b.timestamp.compareTo(a.timestamp));
     return meals;
   }
 
