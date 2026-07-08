@@ -395,9 +395,26 @@ class AppProvider extends ChangeNotifier {
         language,
         useGrams: _user?.useGramsByDefault ?? false,
         useAccurateMode: _user?.useAccurateMode ?? false,
+        onMealProcessed: (meal) async {
+          // Update UI incrementally as each meal completes.
+          _invalidateStatsCache();
+          notifyListeners();
+
+          // Sync completed meal to cloud (fire-and-forget).
+          if (!(_user?.isGuest ?? true)) {
+            _syncService.syncMeal(meal);
+          }
+
+          // Sync to health platform if enabled.
+          if (_user?.healthSyncEnabled == true &&
+              _user?.syncMealsToHealth == true) {
+            await _healthService.writeMealData(meal);
+          }
+        },
       );
     } finally {
       _isProcessingQueue = false;
+      _invalidateStatsCache();
       notifyListeners();
     }
   }
