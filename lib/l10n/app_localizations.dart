@@ -1676,6 +1676,18 @@ abstract class AppLocalizations {
   /// **'Analysieren'**
   String get mealContextAnalyze;
 
+  /// No description provided for @mealContextBackground.
+  ///
+  /// In de, this message translates to:
+  /// **'Im Hintergrund analysieren'**
+  String get mealContextBackground;
+
+  /// No description provided for @mealSavedBackground.
+  ///
+  /// In de, this message translates to:
+  /// **'Gespeichert. Analyse läuft im Hintergrund.'**
+  String get mealSavedBackground;
+
   /// No description provided for @ml.
   ///
   /// In de, this message translates to:

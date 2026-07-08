@@ -836,6 +836,13 @@ class AppLocalizationsDe extends AppLocalizations {
   String get mealContextAnalyze => 'Analysieren';
 
   @override
+  String get mealContextBackground => 'Im Hintergrund analysieren';
+
+  @override
+  String get mealSavedBackground =>
+      'Gespeichert. Analyse läuft im Hintergrund.';
+
+  @override
   String get ml => 'ml';
 
   @override

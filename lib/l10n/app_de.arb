@@ -315,6 +315,8 @@
   "mealContextHint": "z.B. Vanillepudding, 200g, Angaben von der Packung...",
   "mealContextSkip": "Ohne Hinweis",
   "mealContextAnalyze": "Analysieren",
+  "mealContextBackground": "Im Hintergrund analysieren",
+  "mealSavedBackground": "Gespeichert. Analyse läuft im Hintergrund.",
   "ml": "ml",
   "saveToGallery": "Foto speichern",
   "saveToGallerySuccess": "Foto in Galerie gespeichert!",

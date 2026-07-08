@@ -315,6 +315,8 @@
   "mealContextHint": "e.g. Vanilla pudding, 200g, info from label...",
   "mealContextSkip": "No note",
   "mealContextAnalyze": "Analyze",
+  "mealContextBackground": "Analyze in background",
+  "mealSavedBackground": "Meal saved. Analysis running in background.",
   "ml": "ml",
   "saveToGallery": "Save photo",
   "saveToGallerySuccess": "Photo saved to gallery!",

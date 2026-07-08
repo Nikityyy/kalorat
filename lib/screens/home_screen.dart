@@ -722,7 +722,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     );
   }
 
-  Future<void> _analyzeMeal({String? mealContext}) async {
+  Future<void> _analyzeMeal({String? mealContext, bool background = false}) async {
     if (_capturedPhotos.isEmpty) return;
 
     final provider = context.read<AppProvider>();
@@ -733,7 +733,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
     final mealId = DateTime.now().millisecondsSinceEpoch.toString();
 
-    if (!isOnline || apiKey.isEmpty) {
+    if (background || !isOnline || apiKey.isEmpty) {
       // Save as pending
       final meal = MealModel(
         id: mealId,
@@ -749,8 +749,15 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       await _clearPersistedPhotos();
 
       if (mounted) {
-        final message = !isOnline ? l10n.offlineMessage : l10n.enterApiKeyError;
-        _showMessage(message);
+        if (background) {
+          _showMessage(l10n.mealSavedBackground);
+          if (isOnline && apiKey.isNotEmpty) {
+            provider.processOfflineQueue();
+          }
+        } else {
+          final message = !isOnline ? l10n.offlineMessage : l10n.enterApiKeyError;
+          _showMessage(message);
+        }
       }
       return;
     }
@@ -1689,6 +1696,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     final l10n = context.l10n;
     final contextController = TextEditingController(text: _mealContext);
     bool analyzeShouldRun = false;
+    bool background = false;
     String? submittedContext;
 
     await showModalBottomSheet<void>(
@@ -1802,6 +1810,34 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   ),
                 ],
               ),
+              const SizedBox(height: 8),
+              SizedBox(
+                width: double.infinity,
+                child: TextButton(
+                  onPressed: () {
+                    final text = contextController.text.trim();
+                    submittedContext = text.isNotEmpty ? text : null;
+                    analyzeShouldRun = true;
+                    background = true;
+                    Navigator.pop(sheetContext);
+                  },
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(
+                        AppTheme.borderRadius,
+                      ),
+                    ),
+                  ),
+                  child: Text(
+                    l10n.mealContextBackground,
+                    style: const TextStyle(
+                      color: AppColors.styrianForest,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
             ],
           ),
         ),
@@ -1811,7 +1847,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     // Only analyze if user explicitly tapped the Analyze button
     if (analyzeShouldRun && mounted) {
       setState(() => _mealContext = submittedContext);
-      await _analyzeMeal(mealContext: submittedContext);
+      await _analyzeMeal(mealContext: submittedContext, background: background);
     }
   }
 }

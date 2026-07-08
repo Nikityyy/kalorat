@@ -1,6 +1,7 @@
 import 'package:http/http.dart' as http;
 import 'package:connectivity_plus/connectivity_plus.dart';
 import '../utils/app_logger.dart';
+import '../utils/nutrition_units.dart';
 import 'database_service.dart';
 import 'gemini_service.dart';
 
@@ -76,12 +77,34 @@ class OfflineQueueService {
           useAccurateMode: useAccurateMode,
         );
         if (result != null) {
+          final detectedPortion = normalizeDetectedPortion(result);
+          final detectedUnit = detectedPortion.unit;
+          final detectedQty = detectedPortion.quantity;
+          final baseQuantityPerUnit = quantityPerUnitFor(detectedUnit);
+
+          double detectedMultiplier = (detectedUnit == 'serving')
+              ? detectedQty
+              : (detectedQty / baseQuantityPerUnit);
+          if (detectedMultiplier <= 0) detectedMultiplier = 1.0;
+
+          final baseCalories = nutritionBaseValue(result, unit: detectedUnit, valueKey: 'calories', referenceKey: 'calories_per_100g');
+          final baseProtein = nutritionBaseValue(result, unit: detectedUnit, valueKey: 'protein', referenceKey: 'protein_per_100g');
+          final baseCarbs = nutritionBaseValue(result, unit: detectedUnit, valueKey: 'carbs', referenceKey: 'carbs_per_100g');
+          final baseFats = nutritionBaseValue(result, unit: detectedUnit, valueKey: 'fats', referenceKey: 'fats_per_100g');
+
           final updatedMeal = meal.copyWith(
             mealName: result['meal_name'] ?? '',
-            calories: (result['calories'] ?? 0).toDouble(),
-            protein: (result['protein'] ?? 0).toDouble(),
-            carbs: (result['carbs'] ?? 0).toDouble(),
-            fats: (result['fats'] ?? 0).toDouble(),
+            calories: baseCalories * detectedMultiplier,
+            protein: baseProtein * detectedMultiplier,
+            carbs: baseCarbs * detectedMultiplier,
+            fats: baseFats * detectedMultiplier,
+            caloriesPer100g: (result['calories_per_100g'] as num?)?.toDouble(),
+            proteinPer100g: (result['protein_per_100g'] as num?)?.toDouble(),
+            carbsPer100g: (result['carbs_per_100g'] as num?)?.toDouble(),
+            fatsPer100g: (result['fats_per_100g'] as num?)?.toDouble(),
+            portionMultiplier: detectedMultiplier,
+            portionUnit: detectedUnit,
+            quantityPerUnit: baseQuantityPerUnit,
             vitamins: result['vitamins'] != null
                 ? Map<String, double>.from(
                     (result['vitamins'] as Map).map(

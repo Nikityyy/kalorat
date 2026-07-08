@@ -825,6 +825,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get mealContextAnalyze => 'Analyze';
 
   @override
+  String get mealContextBackground => 'Analyze in background';
+
+  @override
+  String get mealSavedBackground =>
+      'Meal saved. Analysis running in background.';
+
+  @override
   String get ml => 'ml';
 
   @override
