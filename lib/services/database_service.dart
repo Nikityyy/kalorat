@@ -87,9 +87,7 @@ class DatabaseService {
 
       // Sort lists by timestamp desc
       for (final key in _mealsDateIndex.keys) {
-        _mealsDateIndex[key]!.sort(
-          (a, b) => b.timestamp.compareTo(a.timestamp),
-        );
+        _mealsDateIndex[key]!.sort(compareMealsNewestFirst);
       }
     } catch (e) {
       AppLogger.error(
@@ -152,8 +150,7 @@ class DatabaseService {
 
   // Meal operations
   List<MealModel> getAllMeals() {
-    return _mealsBox.values.toList()
-      ..sort((a, b) => b.timestamp.compareTo(a.timestamp));
+    return _mealsBox.values.toList()..sort(compareMealsNewestFirst);
   }
 
   List<MealModel> getMealsByDate(DateTime date) {
@@ -204,7 +201,7 @@ class DatabaseService {
       daysChecked++;
     }
 
-    meals.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+    meals.sort(compareMealsNewestFirst);
     return meals;
   }
 
@@ -230,7 +227,7 @@ class DatabaseService {
     }
 
     // Sort by newest first
-    meals.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+    meals.sort(compareMealsNewestFirst);
 
     // Apply pagination
     if (offset >= meals.length) return [];
@@ -277,9 +274,7 @@ class DatabaseService {
     }
     _mealsDateIndex[newDateKey]!.add(meal);
     // Sort to keep order
-    _mealsDateIndex[newDateKey]!.sort(
-      (a, b) => b.timestamp.compareTo(a.timestamp),
-    );
+    _mealsDateIndex[newDateKey]!.sort(compareMealsNewestFirst);
     _daysWithMeals.add(newDateKey);
 
     // Save to Hive

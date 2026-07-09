@@ -2,6 +2,32 @@ import 'package:hive/hive.dart';
 
 part 'meal_model.g.dart';
 
+int compareMealsNewestFirst(MealModel a, MealModel b) {
+  final aMinute = DateTime(
+    a.timestamp.year,
+    a.timestamp.month,
+    a.timestamp.day,
+    a.timestamp.hour,
+    a.timestamp.minute,
+  );
+  final bMinute = DateTime(
+    b.timestamp.year,
+    b.timestamp.month,
+    b.timestamp.day,
+    b.timestamp.hour,
+    b.timestamp.minute,
+  );
+  final byMinute = bMinute.compareTo(aMinute);
+  if (byMinute != 0) return byMinute;
+
+  if (a.isPending != b.isPending) return a.isPending ? -1 : 1;
+
+  final byTimestamp = b.timestamp.compareTo(a.timestamp);
+  if (byTimestamp != 0) return byTimestamp;
+
+  return b.id.compareTo(a.id);
+}
+
 @HiveType(typeId: 1)
 class MealModel extends HiveObject {
   @HiveField(0)

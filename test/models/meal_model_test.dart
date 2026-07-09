@@ -98,6 +98,44 @@ void main() {
       });
     });
 
+    group('compareMealsNewestFirst', () {
+      test('sorts by full date before pending tie-break', () {
+        final newerDone = MealModel(
+          id: 'newer',
+          timestamp: DateTime(2026, 7, 10, 8, 0),
+          photoPaths: const [],
+        );
+        final olderPending = MealModel(
+          id: 'older',
+          timestamp: DateTime(2026, 7, 9, 23, 59),
+          photoPaths: const [],
+          isPending: true,
+        );
+
+        final meals = [olderPending, newerDone]..sort(compareMealsNewestFirst);
+
+        expect(meals, [newerDone, olderPending]);
+      });
+
+      test('keeps pending first within the same shown minute', () {
+        final done = MealModel(
+          id: 'done',
+          timestamp: DateTime(2026, 7, 9, 12, 55, 59),
+          photoPaths: const [],
+        );
+        final pending = MealModel(
+          id: 'pending',
+          timestamp: DateTime(2026, 7, 9, 12, 55, 1),
+          photoPaths: const [],
+          isPending: true,
+        );
+
+        final meals = [done, pending]..sort(compareMealsNewestFirst);
+
+        expect(meals, [pending, done]);
+      });
+    });
+
     group('toJson', () {
       test('serializes all fields to JSON', () {
         final meal = MealModel(

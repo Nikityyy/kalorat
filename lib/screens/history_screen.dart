@@ -90,8 +90,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
         break;
     }
 
-    // Sort by newest first
-    filteredMeals.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+    filteredMeals.sort(compareMealsNewestFirst);
 
     final periods = [l10n.day, l10n.week, l10n.month, l10n.year];
 

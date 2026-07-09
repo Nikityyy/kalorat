@@ -28,15 +28,11 @@ class RulerPicker extends StatefulWidget {
 class _RulerPickerState extends State<RulerPicker> {
   late FixedExtentScrollController _controller;
   late double _currentValue;
-  late String _displayValue;
 
   @override
   void initState() {
     super.initState();
     _currentValue = _snapValue(widget.initialValue);
-    _displayValue = _formatValue(_currentValue);
-    // initialValue (e.g. 70.5) - minValue (30.0) = 40.5
-    // 40.5 * 10 = 405 steps
     _controller = FixedExtentScrollController(
       initialItem: ((_currentValue - widget.minValue) * 10).round(),
     );
@@ -47,7 +43,6 @@ class _RulerPickerState extends State<RulerPicker> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.initialValue != widget.initialValue) {
       _currentValue = _snapValue(widget.initialValue);
-      _displayValue = _formatValue(_currentValue);
     }
   }
 
@@ -63,7 +58,6 @@ class _RulerPickerState extends State<RulerPicker> {
 
   @override
   Widget build(BuildContext context) {
-    // 1 tick = 0.1 unit
     final int totalSteps = ((widget.maxValue - widget.minValue) * 10).round();
 
     return Column(
@@ -76,7 +70,7 @@ class _RulerPickerState extends State<RulerPicker> {
           textBaseline: TextBaseline.alphabetic,
           children: [
             Text(
-              _displayValue,
+              _formatValue(_currentValue),
               style: AppTypography.heroNumber.copyWith(
                 fontSize: 64,
                 color: AppColors.styrianForest,
@@ -126,13 +120,11 @@ class _RulerPickerState extends State<RulerPicker> {
                     physics: const FixedExtentScrollPhysics(),
                     onSelectedItemChanged: (index) {
                       final val = widget.minValue + (index / 10.0);
-                      // Snap to 1 decimal place to avoid floating point errors
                       final newValue = _snapValue(val);
 
                       if (newValue != _currentValue) {
                         setState(() {
                           _currentValue = newValue;
-                          _displayValue = _formatValue(newValue);
                         });
                         widget.onValueChanged(newValue);
                       }
@@ -140,8 +132,6 @@ class _RulerPickerState extends State<RulerPicker> {
                     childDelegate: ListWheelChildBuilderDelegate(
                       childCount: totalSteps + 1,
                       builder: (context, index) {
-                        // index 0 = minValue
-                        // index 10 = minValue + 1.0
                         final isMajor = index % 10 == 0;
                         final isMedium = index % 5 == 0;
 
