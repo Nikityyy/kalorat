@@ -106,6 +106,7 @@ class OfflineQueueService {
         meal.photoPaths,
         useGrams: useGrams,
         useAccurateMode: useAccurateMode,
+        mealContext: meal.mealContext,
       )) {
         if (event is AnalysisResult) {
           result = event.data;

@@ -37,6 +37,7 @@ void main() {
           fats: 15,
           vitamins: {'A': 100.0, 'C': 50.0},
           minerals: {'Calcium': 200.0},
+          mealContext: '200g laut Packung',
           isPending: true,
           isManualEntry: true,
           isCalorieOverride: true,
@@ -50,6 +51,7 @@ void main() {
         expect(meal.fats, 15);
         expect(meal.vitamins, {'A': 100.0, 'C': 50.0});
         expect(meal.minerals, {'Calcium': 200.0});
+        expect(meal.mealContext, '200g laut Packung');
         expect(meal.isPending, true);
         expect(meal.isManualEntry, true);
         expect(meal.isCalorieOverride, true);
@@ -87,6 +89,7 @@ void main() {
           mealName: 'Updated',
           calories: 200,
           isPending: true,
+          mealContext: 'extra sauce',
           portionMultiplier: 1.5,
         );
 
@@ -94,6 +97,7 @@ void main() {
         expect(copy.mealName, 'Updated');
         expect(copy.calories, 200);
         expect(copy.isPending, true);
+        expect(copy.mealContext, 'extra sauce');
         expect(copy.portionMultiplier, 1.5);
       });
     });
@@ -149,6 +153,7 @@ void main() {
           fats: 15,
           vitamins: {'A': 100.0},
           minerals: {'Calcium': 200.0},
+          mealContext: 'half portion',
           isPending: false,
           isManualEntry: true,
           isCalorieOverride: false,
@@ -166,6 +171,7 @@ void main() {
         expect(json['fats'], 15);
         expect(json['vitamins'], {'A': 100.0});
         expect(json['minerals'], {'Calcium': 200.0});
+        expect(json['mealContext'], 'half portion');
         expect(json['isPending'], false);
         expect(json['isManualEntry'], true);
         expect(json['isCalorieOverride'], false);
@@ -185,6 +191,7 @@ void main() {
           'fats': 15,
           'vitamins': {'A': 100.0},
           'minerals': {'Calcium': 200.0},
+          'mealContext': 'label says 300 kcal',
           'isPending': false,
           'isManualEntry': true,
           'isCalorieOverride': false,
@@ -198,6 +205,7 @@ void main() {
         expect(meal.calories, 500);
         expect(meal.protein, 25);
         expect(meal.vitamins, {'A': 100.0});
+        expect(meal.mealContext, 'label says 300 kcal');
         expect(meal.portionMultiplier, 2.0);
       });
 
@@ -244,6 +252,7 @@ void main() {
           fats: 25.7,
           vitamins: {'A': 100.0, 'C': 50.0, 'D': 25.0},
           minerals: {'Calcium': 200.0, 'Iron': 10.0},
+          mealContext: 'two plates',
           isPending: true,
           isManualEntry: true,
           isCalorieOverride: true,
@@ -261,6 +270,7 @@ void main() {
         expect(restored.fats, original.fats);
         expect(restored.vitamins, original.vitamins);
         expect(restored.minerals, original.minerals);
+        expect(restored.mealContext, original.mealContext);
         expect(restored.isPending, original.isPending);
         expect(restored.isManualEntry, original.isManualEntry);
         expect(restored.isCalorieOverride, original.isCalorieOverride);

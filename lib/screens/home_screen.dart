@@ -722,7 +722,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     );
   }
 
-  Future<void> _analyzeMeal({String? mealContext, bool background = false}) async {
+  Future<void> _analyzeMeal({
+    String? mealContext,
+    bool background = false,
+  }) async {
     if (_capturedPhotos.isEmpty) return;
 
     final provider = context.read<AppProvider>();
@@ -740,11 +743,13 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         timestamp: DateTime.now(),
         photoPaths: List.from(_capturedPhotos),
         isPending: true,
+        mealContext: mealContext,
       );
       await provider.saveMeal(meal);
 
       setState(() {
         _capturedPhotos = [];
+        _mealContext = null;
       });
       await _clearPersistedPhotos();
 
@@ -755,7 +760,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             provider.processOfflineQueue();
           }
         } else {
-          final message = !isOnline ? l10n.offlineMessage : l10n.enterApiKeyError;
+          final message = !isOnline
+              ? l10n.offlineMessage
+              : l10n.enterApiKeyError;
           _showMessage(message);
         }
       }
@@ -1783,28 +1790,26 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    flex: 2,
-                    child: ElevatedButton(
+                    child: OutlinedButton(
                       onPressed: () {
                         final text = contextController.text.trim();
                         submittedContext = text.isNotEmpty ? text : null;
                         analyzeShouldRun = true;
+                        background = true;
                         Navigator.pop(sheetContext);
                       },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.styrianForest,
-                        foregroundColor: AppColors.glacialWhite,
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: AppColors.pebble),
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(
                             AppTheme.borderRadius,
                           ),
                         ),
-                        elevation: 0,
                       ),
                       child: Text(
-                        l10n.mealContextAnalyze,
-                        style: const TextStyle(fontWeight: FontWeight.bold),
+                        l10n.mealContextBackground,
+                        style: const TextStyle(color: AppColors.slate),
                       ),
                     ),
                   ),
@@ -1813,28 +1818,27 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               const SizedBox(height: 8),
               SizedBox(
                 width: double.infinity,
-                child: TextButton(
+                child: ElevatedButton(
                   onPressed: () {
                     final text = contextController.text.trim();
                     submittedContext = text.isNotEmpty ? text : null;
                     analyzeShouldRun = true;
-                    background = true;
                     Navigator.pop(sheetContext);
                   },
-                  style: TextButton.styleFrom(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.styrianForest,
+                    foregroundColor: AppColors.glacialWhite,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(
                         AppTheme.borderRadius,
                       ),
                     ),
+                    elevation: 0,
                   ),
                   child: Text(
-                    l10n.mealContextBackground,
-                    style: const TextStyle(
-                      color: AppColors.styrianForest,
-                      fontWeight: FontWeight.w600,
-                    ),
+                    l10n.mealContextAnalyze,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                 ),
               ),

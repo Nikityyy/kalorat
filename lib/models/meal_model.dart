@@ -90,6 +90,9 @@ class MealModel extends HiveObject {
   @HiveField(19)
   final double? fatsPer100g;
 
+  @HiveField(20)
+  final String? mealContext;
+
   MealModel({
     required this.id,
     required this.timestamp,
@@ -111,6 +114,7 @@ class MealModel extends HiveObject {
     this.proteinPer100g,
     this.carbsPer100g,
     this.fatsPer100g,
+    this.mealContext,
   });
 
   MealModel copyWith({
@@ -134,6 +138,7 @@ class MealModel extends HiveObject {
     double? proteinPer100g,
     double? carbsPer100g,
     double? fatsPer100g,
+    String? mealContext,
   }) {
     return MealModel(
       id: id ?? this.id,
@@ -156,6 +161,7 @@ class MealModel extends HiveObject {
       proteinPer100g: proteinPer100g ?? this.proteinPer100g,
       carbsPer100g: carbsPer100g ?? this.carbsPer100g,
       fatsPer100g: fatsPer100g ?? this.fatsPer100g,
+      mealContext: mealContext ?? this.mealContext,
     );
   }
 
@@ -180,6 +186,7 @@ class MealModel extends HiveObject {
     'proteinPer100g': proteinPer100g,
     'carbsPer100g': carbsPer100g,
     'fatsPer100g': fatsPer100g,
+    'mealContext': mealContext,
   };
 
   factory MealModel.fromJson(Map<String, dynamic> json) => MealModel(
@@ -207,5 +214,6 @@ class MealModel extends HiveObject {
     proteinPer100g: (json['proteinPer100g'] as num?)?.toDouble(),
     carbsPer100g: (json['carbsPer100g'] as num?)?.toDouble(),
     fatsPer100g: (json['fatsPer100g'] as num?)?.toDouble(),
+    mealContext: json['mealContext'],
   );
 }

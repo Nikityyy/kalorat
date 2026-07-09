@@ -1679,7 +1679,7 @@ abstract class AppLocalizations {
   /// No description provided for @mealContextBackground.
   ///
   /// In de, this message translates to:
-  /// **'Im Hintergrund analysieren'**
+  /// **'Im Hintergrund'**
   String get mealContextBackground;
 
   /// No description provided for @mealSavedBackground.
