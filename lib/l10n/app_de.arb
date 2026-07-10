@@ -327,5 +327,12 @@
   "aiThinkingLabel": "KI denkt nach...",
   "analysisTimedOut": "Analyse abgebrochen. Bitte erneut versuchen.",
   "verifyingEstimate": "Schätzung prüfen",
-  "reference": "Referenz"
+  "reference": "Referenz",
+  "showLess": "Weniger anzeigen",
+  "showAllWeights": "Alle {count} Gewichte anzeigen",
+  "@showAllWeights": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  }
 }

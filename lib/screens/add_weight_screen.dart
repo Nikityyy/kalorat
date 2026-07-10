@@ -22,9 +22,12 @@ class _AddWeightScreenState extends State<AddWeightScreen> {
   @override
   void initState() {
     super.initState();
-    final user = context.read<AppProvider>().user;
+    final provider = context.read<AppProvider>();
+    final weights = provider.weights;
     _weightController = TextEditingController(
-      text: user?.weight.toString() ?? '',
+      text: weights.isNotEmpty
+          ? weights.first.weight.toStringAsFixed(1)
+          : provider.user?.weight.toStringAsFixed(1) ?? '',
     );
   }
 

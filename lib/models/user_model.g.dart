@@ -39,7 +39,7 @@ class UserModelAdapter extends TypeAdapter<UserModel> {
       useGramsByDefault: fields[19] as bool? ?? false,
       activityLevel: fields[20] as int? ?? 0,
       dayStartHour: fields[21] as int? ?? 0,
-      useAccurateMode: fields[22] as bool? ?? false,
+      useAccurateMode: fields[22] as bool? ?? true,
     );
   }
 

@@ -9,6 +9,9 @@ class MobilePwaService implements PwaService {
   bool get updateAvailable => false;
 
   @override
+  Future<bool> hasCameraPermission() async => true;
+
+  @override
   void init() {
     // No-op on mobile
   }

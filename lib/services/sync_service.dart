@@ -133,7 +133,7 @@ class SyncService {
           supabaseUserId: userId,
           photoUrl: profileData['photo_url'],
           dayStartHour: profileData['day_start_hour'] ?? 0,
-          useAccurateMode: profileData['use_accurate_mode'] ?? false,
+          useAccurateMode: profileData['use_accurate_mode'] ?? true,
         );
       } else {
         // Merge cloud profile into local (cloud is source of truth for profile fields).

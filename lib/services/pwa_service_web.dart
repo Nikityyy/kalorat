@@ -10,6 +10,9 @@ external JSObject get _window;
 @JS('skipWaitingAndReload')
 external void _skipWaitingAndReload();
 
+@JS('kaloratCameraPermissionGranted')
+external JSPromise<JSBoolean> _cameraPermissionGranted();
+
 extension type WindowExtension(JSObject _) implements JSObject {
   @JS('addEventListener')
   external void addEventListener(String type, JSFunction callback);
@@ -27,6 +30,15 @@ class WebPwaService implements PwaService {
   bool _updateAvailable = false;
   @override
   bool get updateAvailable => _updateAvailable;
+
+  @override
+  Future<bool> hasCameraPermission() async {
+    try {
+      return (await _cameraPermissionGranted().toDart).toDart;
+    } catch (_) {
+      return false;
+    }
+  }
 
   @override
   void init() {

@@ -875,4 +875,12 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get reference => 'Referenz';
+
+  @override
+  String get showLess => 'Weniger anzeigen';
+
+  @override
+  String showAllWeights(int count) {
+    return 'Alle $count Gewichte anzeigen';
+  }
 }

@@ -1753,6 +1753,18 @@ abstract class AppLocalizations {
   /// In de, this message translates to:
   /// **'Referenz'**
   String get reference;
+
+  /// No description provided for @showLess.
+  ///
+  /// In de, this message translates to:
+  /// **'Weniger anzeigen'**
+  String get showLess;
+
+  /// No description provided for @showAllWeights.
+  ///
+  /// In de, this message translates to:
+  /// **'Alle {count} Gewichte anzeigen'**
+  String showAllWeights(int count);
 }
 
 class _AppLocalizationsDelegate

@@ -19,6 +19,10 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 1; // Start at Home (center)
   late final PageController _pageController;
+  final Set<int> _swipePointers = {};
+  Offset? _swipeStart;
+  int? _swipePointer;
+  bool _swipeCancelled = false;
 
   @override
   void initState() {
@@ -38,23 +42,53 @@ class _MainScreenState extends State<MainScreen> {
     HistoryScreen(),
   ];
 
-  void _onSwipe(DragEndDetails details) {
-    // Minimum velocity threshold to register a swipe
-    const double minVelocity = 200.0;
-    final velocity = details.primaryVelocity ?? 0;
-
-    if (velocity > minVelocity) {
-      // Swiped right → go to previous tab
-      if (_currentIndex > 0) {
-        setState(() => _currentIndex -= 1);
-      }
-    } else if (velocity < -minVelocity) {
-      // Swiped left → go to next tab
-      if (_currentIndex < _screens.length - 1) {
-        setState(() => _currentIndex += 1);
-      }
+  void _handlePointerDown(PointerDownEvent event) {
+    _swipePointers.add(event.pointer);
+    if (_swipePointers.length == 1) {
+      _swipeStart = event.position;
+      _swipePointer = event.pointer;
+      _swipeCancelled = false;
+    } else {
+      _swipeCancelled = true;
     }
   }
+
+  void _handlePointerUp(PointerEvent event) {
+    if (event.pointer == _swipePointer && !_swipeCancelled) {
+      final delta = event.position - _swipeStart!;
+      if (delta.dx.abs() >= 80 && delta.dx.abs() > delta.dy.abs() * 1.5) {
+        final next = (_currentIndex + (delta.dx < 0 ? 1 : -1)).clamp(
+          0,
+          _screens.length - 1,
+        );
+        if (next != _currentIndex) {
+          if (PlatformUtils.isIOS) {
+            setState(() => _currentIndex = next);
+          } else {
+            _pageController.animateToPage(
+              next,
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeInOut,
+            );
+          }
+        }
+      }
+    }
+    _swipePointers.remove(event.pointer);
+    if (_swipePointers.isEmpty) {
+      _swipeStart = null;
+      _swipePointer = null;
+      _swipeCancelled = false;
+    }
+  }
+
+  Widget _withTabSwipe(Widget child) => Listener(
+    behavior: HitTestBehavior.translucent,
+    onPointerDown: _handlePointerDown,
+    onPointerUp: _handlePointerUp,
+    onPointerCancel: _handlePointerUp,
+    child: child,
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -68,10 +102,8 @@ class _MainScreenState extends State<MainScreen> {
     final hideNavigation = context.watch<AppProvider>().isMealAnalysisActive;
 
     if (PlatformUtils.isIOS) {
-      return GestureDetector(
-        onHorizontalDragEnd: _onSwipe,
-        behavior: HitTestBehavior.translucent,
-        child: CupertinoTabScaffold(
+      return _withTabSwipe(
+        CupertinoTabScaffold(
           tabBar: CupertinoTabBar(
             height: hideNavigation ? 0 : 50,
             currentIndex: _currentIndex,
@@ -110,109 +142,111 @@ class _MainScreenState extends State<MainScreen> {
       );
     }
 
-    return Scaffold(
-      body: Column(
-        children: [
-          Consumer<AppProvider>(
-            builder: (context, provider, _) {
-              if (provider.updateAvailable) {
-                return MaterialBanner(
-                  backgroundColor: AppColors.styrianForest,
-                  content: Text(
-                    l10n.updateReady,
-                    style: const TextStyle(color: AppColors.pebble),
-                  ),
-                  leading: const Icon(
-                    Icons.system_update,
-                    color: AppColors.pebble,
-                  ),
-                  actions: [
-                    TextButton(
-                      onPressed: () => provider.performUpdate(),
-                      child: Text(
-                        l10n.reloadButton,
-                        style: const TextStyle(
-                          color: AppColors.pebble,
-                          fontWeight: FontWeight.bold,
+    return _withTabSwipe(
+      Scaffold(
+        body: Column(
+          children: [
+            Consumer<AppProvider>(
+              builder: (context, provider, _) {
+                if (provider.updateAvailable) {
+                  return MaterialBanner(
+                    backgroundColor: AppColors.styrianForest,
+                    content: Text(
+                      l10n.updateReady,
+                      style: const TextStyle(color: AppColors.pebble),
+                    ),
+                    leading: const Icon(
+                      Icons.system_update,
+                      color: AppColors.pebble,
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => provider.performUpdate(),
+                        child: Text(
+                          l10n.reloadButton,
+                          style: const TextStyle(
+                            color: AppColors.pebble,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
+                    ],
+                  );
+                }
+                return const SizedBox.shrink();
+              },
+            ),
+            Expanded(
+              child: PageView(
+                controller: _pageController,
+                physics: const NeverScrollableScrollPhysics(),
+                onPageChanged: (index) {
+                  setState(() => _currentIndex = index);
+                },
+                children: _screens,
+              ),
+            ),
+          ],
+        ),
+        bottomNavigationBar: hideNavigation
+            ? null
+            : NavigationBarTheme(
+                data: NavigationBarThemeData(
+                  labelTextStyle: WidgetStateProperty.all(
+                    const TextStyle(
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.slate,
+                    ),
+                  ),
+                  iconTheme: WidgetStateProperty.resolveWith((states) {
+                    if (states.contains(WidgetState.selected)) {
+                      return const IconThemeData(color: AppColors.pebble);
+                    }
+                    return const IconThemeData(color: AppColors.slate);
+                  }),
+                ),
+                child: NavigationBar(
+                  selectedIndex: _currentIndex,
+                  onDestinationSelected: (index) {
+                    setState(() => _currentIndex = index);
+                    _pageController.animateToPage(
+                      index,
+                      duration: const Duration(milliseconds: 300),
+                      curve: Curves.easeInOut,
+                    );
+                  },
+                  backgroundColor: AppColors.limestone,
+                  indicatorColor: AppColors.styrianForest,
+                  surfaceTintColor: Colors.transparent,
+                  destinations: [
+                    NavigationDestination(
+                      icon: const Icon(Icons.person_outline),
+                      selectedIcon: const Icon(
+                        Icons.person,
+                        color: AppColors.pebble,
+                      ),
+                      label: l10n.me,
+                    ),
+                    NavigationDestination(
+                      icon: const Icon(Icons.camera_alt_outlined),
+                      selectedIcon: const Icon(
+                        Icons.camera_alt,
+                        color: AppColors.pebble,
+                      ),
+                      label: l10n.home,
+                    ),
+                    NavigationDestination(
+                      icon: const Icon(Icons.history_outlined),
+                      selectedIcon: const Icon(
+                        Icons.history,
+                        color: AppColors.pebble,
+                      ),
+                      label: l10n.history,
                     ),
                   ],
-                );
-              }
-              return const SizedBox.shrink();
-            },
-          ),
-          Expanded(
-            child: PageView(
-              controller: _pageController,
-              physics: const ClampingScrollPhysics(), // Slide effect
-              onPageChanged: (index) {
-                setState(() => _currentIndex = index);
-              },
-              children: _screens,
-            ),
-          ),
-        ],
-      ),
-      bottomNavigationBar: hideNavigation
-          ? null
-          : NavigationBarTheme(
-              data: NavigationBarThemeData(
-                labelTextStyle: WidgetStateProperty.all(
-                  const TextStyle(
-                    fontWeight: FontWeight.w500,
-                    color: AppColors.slate,
-                  ),
                 ),
-                iconTheme: WidgetStateProperty.resolveWith((states) {
-                  if (states.contains(WidgetState.selected)) {
-                    return const IconThemeData(color: AppColors.pebble);
-                  }
-                  return const IconThemeData(color: AppColors.slate);
-                }),
               ),
-              child: NavigationBar(
-                selectedIndex: _currentIndex,
-                onDestinationSelected: (index) {
-                  setState(() => _currentIndex = index);
-                  _pageController.animateToPage(
-                    index,
-                    duration: const Duration(milliseconds: 300),
-                    curve: Curves.easeInOut,
-                  );
-                },
-                backgroundColor: AppColors.limestone,
-                indicatorColor: AppColors.styrianForest,
-                surfaceTintColor: Colors.transparent,
-                destinations: [
-                  NavigationDestination(
-                    icon: const Icon(Icons.person_outline),
-                    selectedIcon: const Icon(
-                      Icons.person,
-                      color: AppColors.pebble,
-                    ),
-                    label: l10n.me,
-                  ),
-                  NavigationDestination(
-                    icon: const Icon(Icons.camera_alt_outlined),
-                    selectedIcon: const Icon(
-                      Icons.camera_alt,
-                      color: AppColors.pebble,
-                    ),
-                    label: l10n.home,
-                  ),
-                  NavigationDestination(
-                    icon: const Icon(Icons.history_outlined),
-                    selectedIcon: const Icon(
-                      Icons.history,
-                      color: AppColors.pebble,
-                    ),
-                    label: l10n.history,
-                  ),
-                ],
-              ),
-            ),
+      ),
     );
   }
 }

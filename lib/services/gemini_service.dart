@@ -300,7 +300,7 @@ class GeminiService {
     List<String> imagePaths, {
     bool useGrams = false,
     String? mealContext,
-    bool useAccurateMode = false,
+    bool useAccurateMode = true,
     bool allowEstimateVariation = false,
     Map<String, dynamic>? previousAnalysis,
   }) async {
@@ -401,7 +401,7 @@ class GeminiService {
     List<String> imagePaths, {
     bool useGrams = false,
     String? mealContext,
-    bool useAccurateMode = false,
+    bool useAccurateMode = true,
     bool allowEstimateVariation = false,
     Map<String, dynamic>? previousAnalysis,
   }) async* {
@@ -509,7 +509,7 @@ class GeminiService {
     List<String> imagePaths, {
     bool useGrams = false,
     String? mealContext,
-    bool useAccurateMode = false,
+    bool useAccurateMode = true,
     bool allowEstimateVariation = false,
     Map<String, dynamic>? previousAnalysis,
   }) async* {
@@ -705,7 +705,7 @@ class GeminiService {
     List<String> imagePaths, {
     bool useGrams = false,
     String? mealContext,
-    bool useAccurateMode = false,
+    bool useAccurateMode = true,
     bool allowEstimateVariation = false,
     Map<String, dynamic>? previousAnalysis,
   }) async {

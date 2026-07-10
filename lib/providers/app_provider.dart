@@ -66,6 +66,7 @@ class AppProvider extends ChangeNotifier {
   List<WeightModel> get weights => getAllWeights();
   int get pendingMealsCount => _offlineQueueService.getPendingCount();
   bool get updateAvailable => _pwaService.updateAvailable;
+  Future<bool> hasCameraPermission() => _pwaService.hasCameraPermission();
 
   bool get mealRemindersEnabled => _user?.mealRemindersEnabled ?? true;
   bool get weightRemindersEnabled => _user?.weightRemindersEnabled ?? true;
@@ -102,6 +103,12 @@ class AppProvider extends ChangeNotifier {
 
     // Load user from DB
     _user = _databaseService.getUser();
+    final migrateAccurateMode =
+        _user != null && _databaseService.needsAccurateModeDefaultMigration;
+    if (migrateAccurateMode && !_user!.useAccurateMode) {
+      _user = _user!.copyWith(useAccurateMode: true);
+      await _databaseService.saveUser(_user!);
+    }
     if (_user != null) {
       await _databaseService.setDayStartHour(_user!.dayStartHour);
     }
@@ -117,14 +124,22 @@ class AppProvider extends ChangeNotifier {
       // Do NOT await — let the UI appear immediately
       _syncService
           .syncFromCloud()
-          .then((_) {
+          .then((_) async {
             _user = _databaseService.getUser(); // Refresh after background sync
+            if (migrateAccurateMode && _user != null) {
+              _user = _user!.copyWith(useAccurateMode: true);
+              await _databaseService.saveUser(_user!);
+              await _syncService.syncProfile();
+              await _databaseService.markAccurateModeDefaultMigrated();
+            }
             _invalidateStatsCache();
             notifyListeners();
           })
           .catchError((e) {
             AppLogger.error('AppProvider', 'Background cloud sync failed', e);
           });
+    } else if (session == null && migrateAccurateMode) {
+      await _databaseService.markAccurateModeDefaultMigrated();
     }
 
     // Migration: If key exists in insecure storage but not secure storage, migrate it
@@ -304,7 +319,7 @@ class AppProvider extends ChangeNotifier {
           useGramsByDefault: false,
           activityLevel: 0,
           dayStartHour: 0,
-          useAccurateMode: false,
+          useAccurateMode: true,
         );
 
     _user = currentUser.copyWith(
@@ -394,7 +409,7 @@ class AppProvider extends ChangeNotifier {
         apiKey,
         language,
         useGrams: _user?.useGramsByDefault ?? false,
-        useAccurateMode: _user?.useAccurateMode ?? false,
+        useAccurateMode: _user?.useAccurateMode ?? true,
         onMealProcessed: (meal) async {
           // Update UI incrementally as each meal completes.
           _invalidateStatsCache();

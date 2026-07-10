@@ -191,6 +191,14 @@
       }
     };
 
+    window.kaloratCameraPermissionGranted = async function () {
+      try {
+        return (await navigator.permissions.query({ name: 'camera' })).state === 'granted';
+      } catch (_) {
+        return false;
+      }
+    };
+
     registerServiceWorker();
 
     // Auto-hide splash when Flutter engine is ready

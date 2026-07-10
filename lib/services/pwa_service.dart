@@ -5,6 +5,7 @@ import 'pwa_service_mobile.dart' if (dart.library.html) 'pwa_service_web.dart';
 abstract class PwaService {
   Stream<bool> get updateAvailableStream;
   bool get updateAvailable;
+  Future<bool> hasCameraPermission();
   void init();
   void performUpdate();
   void dispose();

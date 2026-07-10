@@ -31,7 +31,8 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
+class _HomeScreenState extends State<HomeScreen>
+    with WidgetsBindingObserver, AutomaticKeepAliveClientMixin {
   CameraController? _cameraController;
   List<CameraDescription>? _cameras;
   bool _isCameraInitialized = false;
@@ -71,8 +72,19 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _initCamera();
+    if (PlatformUtils.isWeb) {
+      unawaited(_initWebCameraIfGranted());
+    } else {
+      _initCamera();
+    }
     _restorePersistedPhotos();
+  }
+
+  Future<void> _initWebCameraIfGranted() async {
+    final provider = context.read<AppProvider>();
+    if (await provider.hasCameraPermission() && mounted) {
+      await _initCamera();
+    }
   }
 
   @override
@@ -109,31 +121,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         _initCamera();
       }
     }
-  }
-
-  Future<void> _disposeCamera({bool clearCameraList = false}) async {
-    final controller = _cameraController;
-    _cameraController = null;
-    if (clearCameraList) {
-      _cameras = null;
-    }
-    if (mounted) {
-      setState(() {
-        _isCameraInitialized = false;
-        _isTorchOn = false;
-        _canUseTorch = true;
-        _canZoom = false;
-        _canTapFocus = !PlatformUtils.isWeb;
-        _showZoomIndicator = false;
-        _currentZoomLevel = 1.0;
-        _minZoomLevel = 1.0;
-        _maxZoomLevel = 1.0;
-        _activePointers = 0;
-        _focusIndicatorOffset = null;
-        _cameraPreviewKey++;
-      });
-    }
-    await controller?.dispose();
   }
 
   Future<CameraController> _createBestCameraController(
@@ -363,22 +350,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       if (!_isTakingMore && _isTorchOn) {
         await _setTorchMode(false);
       }
-      if (PlatformUtils.isWeb && _isTakingMore && mounted) {
-        await _restartWebCameraStream();
-      }
     } catch (e) {
       debugPrint('Capture error: $e');
     } finally {
       if (mounted) setState(() => _isCapturing = false);
     }
-  }
-
-  Future<void> _restartWebCameraStream() async {
-    if (!PlatformUtils.isWeb) return;
-
-    await _disposeCamera();
-    await Future<void>.delayed(const Duration(milliseconds: 120));
-    await _initCamera(forceRestart: true);
   }
 
   Future<void> _setTorchMode(bool enabled) async {
@@ -522,10 +498,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   }
 
   Future<void> _pickFromGallery() async {
-    if (PlatformUtils.isWeb) {
-      await _disposeCamera();
-    }
-
     final picker = ImagePicker();
     final List<XFile> images = await picker.pickMultiImage(
       imageQuality: 55,
@@ -596,9 +568,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
     if (_capturedPhotos.isEmpty) {
       await _clearPersistedPhotos();
-      if (PlatformUtils.isWeb) {
-        await _restartWebCameraStream();
-      } else if (!_isCameraInitialized ||
+      if (!_isCameraInitialized ||
           _cameraController == null ||
           !_cameraController!.value.isInitialized) {
         await _initCamera();
@@ -787,7 +757,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         _capturedPhotos,
         useGrams: provider.user?.useGramsByDefault ?? false,
         mealContext: mealContext,
-        useAccurateMode: provider.user?.useAccurateMode ?? false,
+        useAccurateMode: provider.user?.useAccurateMode ?? true,
       );
 
       await for (final event in stream) {
@@ -990,13 +960,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       _capturedPhotos = [];
       _isTakingMore = false;
       _mealContext = null;
-      // Prevent the old CameraPreview from being shown while reinitializing
-      _isCameraInitialized = false;
     });
     await _clearPersistedPhotos();
-    if (PlatformUtils.isWeb) {
-      await _restartWebCameraStream();
-    } else if (!_isCameraInitialized) {
+    if (!_isCameraInitialized ||
+        _cameraController == null ||
+        !_cameraController!.value.isInitialized) {
       await _initCamera();
     }
   }
@@ -1040,6 +1008,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     final provider = context.watch<AppProvider>();
     final isOnline = provider.isOnline;
 
@@ -1065,18 +1034,15 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       return _buildPermissionRequest();
     }
 
-    // Show skeleton loading screen while analyzing
-    if (_isAnalyzing) {
-      return _buildAnalyzingSkeleton();
-    }
-
-    // Change: if we are in 'review' but click 'more', we go back to camera but keep state.
-    // I'll add a boolean to toggle between 'review mode' and 'camera mode' if photos exist.
-    if (_capturedPhotos.isNotEmpty && !_isTakingMore) {
-      return _buildPhotoReview();
-    }
-
-    return _buildCamera();
+    return Stack(
+      children: [
+        Positioned.fill(child: _buildCamera()),
+        if (_isAnalyzing)
+          Positioned.fill(child: _buildAnalyzingSkeleton())
+        else if (_capturedPhotos.isNotEmpty && !_isTakingMore)
+          Positioned.fill(child: _buildPhotoReview()),
+      ],
+    );
   }
 
   Widget _buildAnalyzingSkeleton() {
@@ -1148,39 +1114,64 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
   Widget _buildPermissionRequest() {
     final l10n = context.l10n;
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: AppColors.styrianForest.withValues(alpha: 1.0),
-                shape: BoxShape.circle,
+    return ColoredBox(
+      color: AppColors.offWhite,
+      child: SafeArea(
+        child: Align(
+          alignment: const Alignment(0, -0.12),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 520),
+              child: Container(
+                padding: const EdgeInsets.all(32),
+                decoration: BoxDecoration(
+                  color: AppColors.pureWhite,
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(color: AppColors.borderGrey),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 88,
+                      height: 88,
+                      decoration: BoxDecoration(
+                        color: AppColors.styrianForest.withValues(alpha: 0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.camera_alt_outlined,
+                        size: 42,
+                        color: AppColors.styrianForest,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    Text(
+                      l10n.cameraNeeded,
+                      style: AppTypography.displayMedium.copyWith(
+                        color: AppColors.slate,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      l10n.cameraPermissionText,
+                      style: AppTypography.bodyMedium.copyWith(
+                        color: AppColors.slate.withValues(alpha: 0.65),
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 28),
+                    ActionButton(
+                      text: l10n.grantPermission,
+                      onPressed: _initCamera,
+                    ),
+                  ],
+                ),
               ),
-              child: const Icon(
-                Icons.camera_alt_outlined,
-                size: 48,
-                color: AppColors.glacialWhite,
-              ),
             ),
-            const SizedBox(height: 32),
-            Text(
-              l10n.cameraNeeded,
-              style: AppTypography.displayMedium,
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              l10n.cameraPermissionText,
-              style: AppTypography.bodyMedium,
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 48),
-            ActionButton(text: l10n.grantPermission, onPressed: _initCamera),
-          ],
+          ),
         ),
       ),
     );
@@ -1278,16 +1269,14 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     );
   }
 
-  /// Switches back to camera mode with a fresh web media stream.
+  /// Switches back to the still-running camera preview.
   Future<void> _switchToCameraMode() async {
     setState(() {
       _isTakingMore = true;
       _isCameraInitialized =
           _cameraController != null && _cameraController!.value.isInitialized;
     });
-    if (PlatformUtils.isWeb) {
-      await _restartWebCameraStream();
-    } else if (!_isCameraInitialized ||
+    if (!_isCameraInitialized ||
         _cameraController == null ||
         !_cameraController!.value.isInitialized) {
       await _initCamera();
@@ -1308,7 +1297,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           Positioned.fill(child: _buildCameraPreview(_cameraController!))
         else
           Container(
-            color: Colors.black,
+            color: AppColors.slate,
             child: Center(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -1324,10 +1313,15 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                         ),
                       ),
                     )
-                  else
-                    const CircularProgressIndicator(
-                      color: AppColors.styrianForest,
+                  else ...[
+                    Image.asset(
+                      'assets/kalorat-favicon-android.webp',
+                      width: 72,
+                      height: 72,
                     ),
+                    const SizedBox(height: 20),
+                    const CircularProgressIndicator(color: AppColors.pebble),
+                  ],
                 ],
               ),
             ),
@@ -1854,6 +1848,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       await _analyzeMeal(mealContext: submittedContext, background: background);
     }
   }
+
+  @override
+  bool get wantKeepAlive => true;
 }
 
 class _PhotoPreviewButton extends StatelessWidget {

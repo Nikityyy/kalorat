@@ -21,6 +21,7 @@ void main() {
         expect(user.geminiApiKey, ''); // default
         expect(user.onboardingCompleted, false); // default
         expect(user.goal, Goal.maintain); // default: Maintain
+        expect(user.useAccurateMode, true); // Deep Think defaults on
       });
 
       test('creates valid UserModel with all fields', () {
@@ -372,6 +373,7 @@ void main() {
         expect(user.language, 'de'); // default
         expect(user.goal, Goal.maintain); // default: Maintain
         expect(user.gender, Gender.male); // default: Male
+        expect(user.useAccurateMode, true);
       });
 
       test('handles integer height/weight by converting to double', () {

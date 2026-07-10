@@ -864,4 +864,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get reference => 'Reference';
+
+  @override
+  String get showLess => 'Show less';
+
+  @override
+  String showAllWeights(int count) {
+    return 'Show all $count weights';
+  }
 }

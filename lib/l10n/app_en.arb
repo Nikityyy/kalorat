@@ -327,5 +327,12 @@
   "aiThinkingLabel": "AI is thinking...",
   "analysisTimedOut": "Analysis timed out. Please try again.",
   "verifyingEstimate": "Verifying estimate",
-  "reference": "Reference"
+  "reference": "Reference",
+  "showLess": "Show less",
+  "showAllWeights": "Show all {count} weights",
+  "@showAllWeights": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  }
 }

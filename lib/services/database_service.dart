@@ -120,6 +120,15 @@ class DatabaseService {
     return box.get('onboarding_step', defaultValue: 0);
   }
 
+  bool get needsAccurateModeDefaultMigration =>
+      Hive.box(
+        'settings_box',
+      ).get('accurate_mode_default_migrated', defaultValue: false) !=
+      true;
+
+  Future<void> markAccurateModeDefaultMigrated() =>
+      Hive.box('settings_box').put('accurate_mode_default_migrated', true);
+
   // User operations
   UserModel? getUser() {
     if (!Hive.isBoxOpen(userBoxName)) {

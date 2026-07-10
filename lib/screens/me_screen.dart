@@ -107,7 +107,6 @@ class _MeScreenState extends State<MeScreen> {
                 const SizedBox(height: 24),
                 WeightList(
                   weights: sortedWeights,
-                  language: provider.language,
                   onDelete: (weight) => _confirmDeleteWeight(weight),
                 ),
               ],

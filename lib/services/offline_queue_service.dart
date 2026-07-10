@@ -55,7 +55,7 @@ class OfflineQueueService {
     String apiKey,
     String language, {
     bool useGrams = false,
-    bool useAccurateMode = false,
+    bool useAccurateMode = true,
     Future<void> Function(MealModel meal)? onMealProcessed,
   }) async {
     if (!await isOnline()) return;

@@ -117,7 +117,7 @@ class UserModel extends HiveObject {
     this.useGramsByDefault = false,
     int activityLevel = 0,
     this.dayStartHour = 0,
-    this.useAccurateMode = false,
+    this.useAccurateMode = true,
   }) : height = height.clamp(50.0, 300.0),
        weight = weight.clamp(1.0, 500.0),
        goalIndex = goal.clamp(0, Goal.values.length - 1),
@@ -150,7 +150,7 @@ class UserModel extends HiveObject {
     String? photoUrl,
     bool useGramsByDefault = false,
     ActivityLevel activityLevel = ActivityLevel.sedentary,
-    bool useAccurateMode = false,
+    bool useAccurateMode = true,
   }) : this(
          name: name,
          birthdate: birthdate,
@@ -369,6 +369,6 @@ class UserModel extends HiveObject {
     useGramsByDefault: json['useGramsByDefault'] ?? false,
     activityLevel: json['activityLevel'] ?? 0,
     dayStartHour: (json['dayStartHour'] as int?) ?? 0,
-    useAccurateMode: json['useAccurateMode'] ?? false,
+    useAccurateMode: json['useAccurateMode'] ?? true,
   );
 }

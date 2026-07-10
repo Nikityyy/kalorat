@@ -309,7 +309,7 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
         _meal.photoPaths,
         useGrams: provider.user?.useGramsByDefault ?? false,
         mealContext: submittedContext,
-        useAccurateMode: provider.user?.useAccurateMode ?? false,
+        useAccurateMode: provider.user?.useAccurateMode ?? true,
         allowEstimateVariation: true,
         previousAnalysis: _currentAnalysisSnapshot(),
       );
