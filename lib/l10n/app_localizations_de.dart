@@ -883,4 +883,59 @@ class AppLocalizationsDe extends AppLocalizations {
   String showAllWeights(int count) {
     return 'Alle $count Gewichte anzeigen';
   }
+
+  @override
+  String get editWeight => 'Gewicht bearbeiten';
+
+  @override
+  String get weightRangeError =>
+      'Bitte ein Gewicht zwischen 20 und 400 kg eingeben.';
+
+  @override
+  String get largeWeightJump => 'Großer Gewichtssprung';
+
+  @override
+  String confirmWeightJump(String previous, String next) {
+    return 'Änderung von $previous auf $next kg speichern?';
+  }
+
+  @override
+  String weeklyDifference(String difference) {
+    return '7-Tage-Differenz: $difference kg';
+  }
+
+  @override
+  String get switchCamera => 'Kamera wechseln';
+
+  @override
+  String get flash => 'Blitz';
+
+  @override
+  String get flashUnavailable => 'Blitz nicht verfügbar';
+
+  @override
+  String get analysisUpdated => 'Analyse aktualisiert!';
+
+  @override
+  String retryFailed(String error) {
+    return 'Erneuter Versuch fehlgeschlagen: $error';
+  }
+
+  @override
+  String get retryAnalysis => 'Analyse neu starten';
+
+  @override
+  String get syncData => 'Daten synchronisieren';
+
+  @override
+  String get downloadStarted => 'Download gestartet';
+
+  @override
+  String get restoreImportBackup => 'Letztes Import-Backup wiederherstellen';
+
+  @override
+  String get backupRestored => 'Backup wiederhergestellt.';
+
+  @override
+  String get close => 'Schließen';
 }

@@ -16,9 +16,10 @@ class MainScreen extends StatefulWidget {
   State<MainScreen> createState() => _MainScreenState();
 }
 
-class _MainScreenState extends State<MainScreen> {
+class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
   int _currentIndex = 1; // Start at Home (center)
   late final PageController _pageController;
+  late final ValueNotifier<bool> _cameraTabActive;
   final Set<int> _swipePointers = {};
   Offset? _swipeStart;
   int? _swipePointer;
@@ -27,20 +28,31 @@ class _MainScreenState extends State<MainScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _pageController = PageController(initialPage: _currentIndex);
+    _cameraTabActive = ValueNotifier(_currentIndex == 1);
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _pageController.dispose();
+    _cameraTabActive.dispose();
     super.dispose();
   }
 
-  final List<Widget> _screens = const [
-    MeScreen(),
-    HomeScreen(),
-    HistoryScreen(),
+  List<Widget> get _screens => [
+    const MeScreen(key: ValueKey('me')),
+    HomeScreen(key: const ValueKey('home'), activeListenable: _cameraTabActive),
+    const HistoryScreen(key: ValueKey('history')),
   ];
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      context.read<AppProvider>().refreshReminderTimezone();
+    }
+  }
 
   void _handlePointerDown(PointerDownEvent event) {
     _swipePointers.add(event.pointer);
@@ -62,6 +74,7 @@ class _MainScreenState extends State<MainScreen> {
           _screens.length - 1,
         );
         if (next != _currentIndex) {
+          _cameraTabActive.value = next == 1;
           if (PlatformUtils.isIOS) {
             setState(() => _currentIndex = next);
           } else {
@@ -107,7 +120,10 @@ class _MainScreenState extends State<MainScreen> {
           tabBar: CupertinoTabBar(
             height: hideNavigation ? 0 : 50,
             currentIndex: _currentIndex,
-            onTap: (index) => setState(() => _currentIndex = index),
+            onTap: (index) {
+              _cameraTabActive.value = index == 1;
+              setState(() => _currentIndex = index);
+            },
             activeColor: AppColors.styrianForest,
             inactiveColor: AppColors.slate.withValues(alpha: 0.5),
             backgroundColor: AppColors.limestone, // Strictly Matte
@@ -181,6 +197,7 @@ class _MainScreenState extends State<MainScreen> {
                 controller: _pageController,
                 physics: const NeverScrollableScrollPhysics(),
                 onPageChanged: (index) {
+                  _cameraTabActive.value = index == 1;
                   setState(() => _currentIndex = index);
                 },
                 children: _screens,
@@ -208,6 +225,7 @@ class _MainScreenState extends State<MainScreen> {
                 child: NavigationBar(
                   selectedIndex: _currentIndex,
                   onDestinationSelected: (index) {
+                    _cameraTabActive.value = index == 1;
                     setState(() => _currentIndex = index);
                     _pageController.animateToPage(
                       index,

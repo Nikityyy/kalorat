@@ -8,8 +8,14 @@ import '../../extensions/l10n_extension.dart';
 class WeightList extends StatefulWidget {
   final List<WeightModel> weights;
   final Function(WeightModel) onDelete;
+  final Function(WeightModel) onEdit;
 
-  const WeightList({super.key, required this.weights, required this.onDelete});
+  const WeightList({
+    super.key,
+    required this.weights,
+    required this.onDelete,
+    required this.onEdit,
+  });
 
   @override
   State<WeightList> createState() => _WeightListState();
@@ -60,6 +66,18 @@ class _WeightListState extends State<WeightList> {
                         fontWeight: FontWeight.bold,
                         color: AppColors.slate,
                       ),
+                    ),
+                    const SizedBox(width: 16),
+                    IconButton(
+                      icon: const Icon(
+                        Icons.edit_outlined,
+                        color: AppColors.slate,
+                        size: 20,
+                      ),
+                      tooltip: context.l10n.editWeight,
+                      onPressed: () => widget.onEdit(weight),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
                     ),
                     const SizedBox(width: 16),
                     IconButton(

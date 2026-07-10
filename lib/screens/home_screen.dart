@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io' show File;
 import 'package:camera/camera.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart' show ValueListenable;
 import 'package:flutter/material.dart';
 import 'package:gal/gal.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -25,7 +26,10 @@ import '../widgets/widgets.dart';
 import 'meal_detail_screen.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  final bool isActive;
+  final ValueListenable<bool>? activeListenable;
+
+  const HomeScreen({super.key, this.isActive = true, this.activeListenable});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -36,6 +40,7 @@ class _HomeScreenState extends State<HomeScreen>
   CameraController? _cameraController;
   List<CameraDescription>? _cameras;
   bool _isCameraInitialized = false;
+  bool _isPreviewPaused = false;
   bool _hasPermission = false;
   bool _isCapturing = false;
   bool _isInitializingCamera = false;
@@ -43,6 +48,7 @@ class _HomeScreenState extends State<HomeScreen>
   List<String> _capturedPhotos = [];
   bool _isTakingMore = false;
   int _cameraPreviewKey = 0;
+  int? _selectedCameraIndex;
   String? _mealContext;
   bool _isTorchOn = false;
   bool _canUseTorch = true;
@@ -68,16 +74,70 @@ class _HomeScreenState extends State<HomeScreen>
   static const String _pendingPhotosBox = 'pending_photos_box';
   static const String _pendingPhotosKey = 'pending_photos';
 
+  bool get _cameraTabIsActive =>
+      widget.activeListenable?.value ?? widget.isActive;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    if (PlatformUtils.isWeb) {
+    widget.activeListenable?.addListener(_handleCameraTabActivity);
+    if (!_cameraTabIsActive) {
+      // The tab will initialize the camera when first selected.
+    } else if (PlatformUtils.isWeb) {
       unawaited(_initWebCameraIfGranted());
     } else {
       _initCamera();
     }
     _restorePersistedPhotos();
+  }
+
+  void _handleCameraTabActivity() {
+    if (_cameraTabIsActive) {
+      unawaited(_resumeCameraPreview());
+    } else {
+      unawaited(_pauseCameraPreview());
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant HomeScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.isActive == widget.isActive) return;
+    if (widget.isActive) {
+      unawaited(_resumeCameraPreview());
+    } else {
+      unawaited(_pauseCameraPreview());
+    }
+  }
+
+  Future<void> _pauseCameraPreview() async {
+    final controller = _cameraController;
+    if (controller == null ||
+        !controller.value.isInitialized ||
+        _isPreviewPaused) {
+      return;
+    }
+    if (_isTorchOn) await _setTorchMode(false);
+    try {
+      await controller.pausePreview();
+      _isPreviewPaused = true;
+    } catch (_) {}
+  }
+
+  Future<void> _resumeCameraPreview() async {
+    final controller = _cameraController;
+    if (controller == null || !controller.value.isInitialized) {
+      await _initCamera();
+      return;
+    }
+    if (!_isPreviewPaused) return;
+    try {
+      await controller.resumePreview();
+      _isPreviewPaused = false;
+    } catch (_) {
+      await _initCamera(forceRestart: true);
+    }
   }
 
   Future<void> _initWebCameraIfGranted() async {
@@ -93,6 +153,7 @@ class _HomeScreenState extends State<HomeScreen>
       context.read<AppProvider>().setMealAnalysisActive(false);
     } catch (_) {}
     WidgetsBinding.instance.removeObserver(this);
+    widget.activeListenable?.removeListener(_handleCameraTabActivity);
     _focusIndicatorTimer?.cancel();
     _cameraController?.dispose();
     _contextFocusNode.dispose();
@@ -116,7 +177,7 @@ class _HomeScreenState extends State<HomeScreen>
           _focusIndicatorOffset = null;
         });
       }
-    } else if (state == AppLifecycleState.resumed) {
+    } else if (state == AppLifecycleState.resumed && _cameraTabIsActive) {
       if (!_isCameraInitialized) {
         _initCamera();
       }
@@ -259,10 +320,11 @@ class _HomeScreenState extends State<HomeScreen>
       }
 
       if (_cameraController == null) {
-        final selectedCamera = _cameras!.firstWhere(
+        _selectedCameraIndex ??= _cameras!.indexWhere(
           (camera) => camera.lensDirection == CameraLensDirection.back,
-          orElse: () => _cameras!.first,
         );
+        if (_selectedCameraIndex! < 0) _selectedCameraIndex = 0;
+        final selectedCamera = _cameras![_selectedCameraIndex!];
 
         _cameraController = await _createBestCameraController(selectedCamera);
       }
@@ -274,6 +336,7 @@ class _HomeScreenState extends State<HomeScreen>
       if (mounted) {
         setState(() {
           _isCameraInitialized = true;
+          _isPreviewPaused = false;
           _cameraPreviewKey++;
         });
       }
@@ -382,6 +445,38 @@ class _HomeScreenState extends State<HomeScreen>
 
   Future<void> _toggleTorch() async {
     await _setTorchMode(!_isTorchOn);
+  }
+
+  Future<void> _switchCamera() async {
+    if (_cameras == null || _cameras!.length < 2 || _isInitializingCamera) {
+      return;
+    }
+    _isInitializingCamera = true;
+    final oldController = _cameraController;
+    final nextIndex = ((_selectedCameraIndex ?? 0) + 1) % _cameras!.length;
+    if (mounted) setState(() => _isCameraInitialized = false);
+    try {
+      if (_isTorchOn) await _setTorchMode(false);
+      await oldController?.dispose();
+      _selectedCameraIndex = nextIndex;
+      _cameraController = await _createBestCameraController(
+        _cameras![nextIndex],
+      );
+      await _prepareCameraControls();
+      if (mounted) {
+        setState(() {
+          _isCameraInitialized = true;
+          _isPreviewPaused = false;
+          _cameraPreviewKey++;
+        });
+      }
+    } catch (e) {
+      debugPrint('Camera switch error: $e');
+      _cameraController = null;
+      if (mounted) setState(() => _isCameraInitialized = false);
+    } finally {
+      _isInitializingCamera = false;
+    }
   }
 
   void _handlePreviewPointerDown(PointerDownEvent event) {
@@ -627,6 +722,7 @@ class _HomeScreenState extends State<HomeScreen>
 
   Future<void> _openCapturedPhoto(int index) async {
     if (index < 0 || index >= _capturedPhotos.length) return;
+    final l10n = context.l10n;
 
     await showDialog<void>(
       context: context,
@@ -660,7 +756,7 @@ class _HomeScreenState extends State<HomeScreen>
                     children: [
                       _PhotoPreviewButton(
                         icon: Icons.close,
-                        tooltip: 'Schliessen',
+                        tooltip: l10n.close,
                         onPressed: () => Navigator.pop(dialogContext),
                       ),
                       Row(
@@ -1331,9 +1427,40 @@ class _HomeScreenState extends State<HomeScreen>
         if (canShowCamera)
           Positioned(
             top: MediaQuery.of(context).padding.top + 16,
+            left: 20,
+            child: Tooltip(
+              message: l10n.switchCamera,
+              child: GestureDetector(
+                onTap: (_cameras?.length ?? 0) > 1 ? _switchCamera : null,
+                child: AnimatedOpacity(
+                  duration: const Duration(milliseconds: 160),
+                  opacity: (_cameras?.length ?? 0) > 1 ? 1 : 0.45,
+                  child: Container(
+                    width: 52,
+                    height: 52,
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.45),
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: AppColors.pebble.withValues(alpha: 0.75),
+                      ),
+                    ),
+                    child: const Icon(
+                      Icons.cameraswitch_outlined,
+                      color: AppColors.pebble,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+        if (canShowCamera)
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 16,
             right: 20,
             child: Tooltip(
-              message: _canUseTorch ? 'Flash' : 'Flash unavailable',
+              message: _canUseTorch ? l10n.flash : l10n.flashUnavailable,
               child: GestureDetector(
                 onTap: _canUseTorch ? () => _toggleTorch() : null,
                 child: AnimatedOpacity(
@@ -1366,7 +1493,7 @@ class _HomeScreenState extends State<HomeScreen>
         // Simple Top Bar
         if (_capturedPhotos.isNotEmpty)
           Positioned(
-            top: MediaQuery.of(context).padding.top + 16,
+            top: MediaQuery.of(context).padding.top + 80,
             left: 20,
             child: GestureDetector(
               onTap: () async {

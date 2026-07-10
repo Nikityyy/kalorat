@@ -334,5 +334,33 @@
     "placeholders": {
       "count": {"type": "int"}
     }
-  }
+  },
+  "editWeight": "Edit weight",
+  "weightRangeError": "Enter a weight between 20 and 400 kg.",
+  "largeWeightJump": "Large weight change",
+  "confirmWeightJump": "Save the change from {previous} to {next} kg?",
+  "@confirmWeightJump": {
+    "placeholders": {
+      "previous": {"type": "String"},
+      "next": {"type": "String"}
+    }
+  },
+  "weeklyDifference": "7-day change: {difference} kg",
+  "@weeklyDifference": {
+    "placeholders": {"difference": {"type": "String"}}
+  },
+  "switchCamera": "Switch camera",
+  "flash": "Flash",
+  "flashUnavailable": "Flash unavailable",
+  "analysisUpdated": "Analysis updated!",
+  "retryFailed": "Retry failed: {error}",
+  "@retryFailed": {
+    "placeholders": {"error": {"type": "String"}}
+  },
+  "retryAnalysis": "Restart analysis",
+  "syncData": "Sync data",
+  "downloadStarted": "Download started",
+  "restoreImportBackup": "Restore last import backup",
+  "backupRestored": "Backup restored.",
+  "close": "Close"
 }

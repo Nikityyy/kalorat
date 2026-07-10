@@ -9,6 +9,38 @@ import '../../theme/app_typography.dart';
 
 enum _WeightRange { week, month, year }
 
+double? weeklyWeightDifference(List<WeightModel> weights) {
+  if (weights.length < 2) return null;
+  final sorted = List<WeightModel>.from(weights)
+    ..sort((a, b) => b.date.compareTo(a.date));
+  final latest = sorted.first;
+  final cutoff = latest.date.subtract(const Duration(days: 7));
+  final previous = sorted.where((weight) => !weight.date.isAfter(cutoff));
+  return previous.isEmpty ? null : latest.weight - previous.first.weight;
+}
+
+List<FlSpot> linearWeightTrend(List<FlSpot> spots) {
+  if (spots.length < 2) return const [];
+  final meanX =
+      spots.map((spot) => spot.x).reduce((a, b) => a + b) / spots.length;
+  final meanY =
+      spots.map((spot) => spot.y).reduce((a, b) => a + b) / spots.length;
+  final denominator = spots
+      .map((spot) => (spot.x - meanX) * (spot.x - meanX))
+      .reduce((a, b) => a + b);
+  if (denominator == 0) return const [];
+  final slope =
+      spots
+          .map((spot) => (spot.x - meanX) * (spot.y - meanY))
+          .reduce((a, b) => a + b) /
+      denominator;
+  double y(double x) => meanY + slope * (x - meanX);
+  return [
+    FlSpot(spots.first.x, y(spots.first.x)),
+    FlSpot(spots.last.x, y(spots.last.x)),
+  ];
+}
+
 class WeightChart extends StatefulWidget {
   final List<WeightModel> weights;
 
@@ -38,7 +70,7 @@ class _WeightChartState extends State<WeightChart> {
     }).toList()..sort((a, b) => a.date.compareTo(b.date));
 
     return Container(
-      height: 320,
+      height: 350,
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(8, 6, 8, 20),
       decoration: BoxDecoration(
@@ -49,6 +81,16 @@ class _WeightChartState extends State<WeightChart> {
       child: Column(
         children: [
           _buildRangeSelector(l10n),
+          if (weeklyWeightDifference(widget.weights)
+              case final difference?) ...[
+            const SizedBox(height: 8),
+            Text(
+              l10n.weeklyDifference(
+                '${difference >= 0 ? '+' : ''}${difference.toStringAsFixed(1)}',
+              ),
+              style: AppTypography.dataLabel.copyWith(color: AppColors.slate),
+            ),
+          ],
           const SizedBox(height: 16),
           Expanded(
             child: visible.isEmpty
@@ -124,6 +166,7 @@ class _WeightChartState extends State<WeightChart> {
           ),
         )
         .toList();
+    final trend = linearWeightTrend(spots);
     final lowest = spots.map((spot) => spot.y).reduce((a, b) => a < b ? a : b);
     final highest = spots.map((spot) => spot.y).reduce((a, b) => a > b ? a : b);
     var minY = (lowest - 1).floorToDouble();
@@ -211,6 +254,15 @@ class _WeightChartState extends State<WeightChart> {
               color: AppColors.styrianForest.withValues(alpha: 0.12),
             ),
           ),
+          if (trend.isNotEmpty)
+            LineChartBarData(
+              spots: trend,
+              isCurved: false,
+              color: AppColors.slate.withValues(alpha: 0.55),
+              barWidth: 2,
+              dashArray: [6, 4],
+              dotData: const FlDotData(show: false),
+            ),
         ],
         lineTouchData: LineTouchData(
           touchTooltipData: LineTouchTooltipData(

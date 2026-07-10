@@ -1,4 +1,5 @@
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
 import '../utils/app_logger.dart';
 import '../models/models.dart';
@@ -22,6 +23,18 @@ class DatabaseService {
   int _dayStartHour = 0;
 
   int get dayStartHour => _dayStartHour;
+
+  @visibleForTesting
+  Future<void> initForTest({
+    required Box<UserModel> userBox,
+    required Box<MealModel> mealsBox,
+    required Box<WeightModel> weightsBox,
+  }) async {
+    _userBox = userBox;
+    _mealsBox = mealsBox;
+    _weightsBox = weightsBox;
+    await _buildIndices();
+  }
 
   /// Update the day-start offset and rebuild indices so history reflects it.
   Future<void> setDayStartHour(int hour) async {

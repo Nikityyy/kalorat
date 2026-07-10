@@ -5,10 +5,11 @@ import '../utils/platform_utils.dart';
 /// Unified health service for Apple Health and Google Health Connect
 class HealthService {
   static final HealthService _instance = HealthService._internal();
-  factory HealthService() => _instance;
-  HealthService._internal();
+  factory HealthService({Health? health}) =>
+      health == null ? _instance : HealthService._internal(health);
+  HealthService._internal([Health? health]) : _health = health ?? Health();
 
-  final Health _health = Health();
+  final Health _health;
   bool _isConfigured = false;
 
   // Health data types we need for nutrition tracking

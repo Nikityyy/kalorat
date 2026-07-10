@@ -103,6 +103,32 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
     });
   }
 
+  Future<void> _editTimestamp() async {
+    final date = await showDatePicker(
+      context: context,
+      initialDate: _meal.timestamp,
+      firstDate: DateTime(2000),
+      lastDate: DateTime.now(),
+    );
+    if (date == null || !mounted) return;
+    final time = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.fromDateTime(_meal.timestamp),
+    );
+    if (time == null || !mounted) return;
+    setState(() {
+      _meal = _meal.copyWith(
+        timestamp: DateTime(
+          date.year,
+          date.month,
+          date.day,
+          time.hour,
+          time.minute,
+        ),
+      );
+    });
+  }
+
   void _updatePortionByValue(double newValue) {
     setState(() {
       if (_meal.portionUnit == 'serving') {
@@ -410,7 +436,7 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
         if (mounted) {
           ScaffoldMessenger.of(
             context,
-          ).showSnackBar(const SnackBar(content: Text('Analysis updated!')));
+          ).showSnackBar(SnackBar(content: Text(context.l10n.analysisUpdated)));
         }
       } else if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -421,9 +447,9 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Retry failed: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(context.l10n.retryFailed(e.toString()))),
+        );
       }
     } finally {
       if (mounted) {
@@ -853,7 +879,7 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
                       child: IconButton(
                         icon: const Icon(Icons.refresh, color: Colors.white),
                         onPressed: _showContextAndRetry,
-                        tooltip: 'Analyse neu starten',
+                        tooltip: context.l10n.retryAnalysis,
                       ),
                     ),
                   ],
@@ -902,6 +928,39 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
                                   color: AppColors.styrianForest.withValues(
                                     alpha: 0.5,
                                   ),
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          const SizedBox(height: 24),
+
+                          GestureDetector(
+                            onTap: _editTimestamp,
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(
+                                  Icons.schedule_outlined,
+                                  size: 18,
+                                  color: AppColors.styrianForest,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  '${_meal.timestamp.day.toString().padLeft(2, '0')}.'
+                                  '${_meal.timestamp.month.toString().padLeft(2, '0')}.'
+                                  '${_meal.timestamp.year}  '
+                                  '${_meal.timestamp.hour.toString().padLeft(2, '0')}:'
+                                  '${_meal.timestamp.minute.toString().padLeft(2, '0')}',
+                                  style: AppTypography.bodyMedium.copyWith(
+                                    color: AppColors.styrianForest,
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                                const Icon(
+                                  Icons.edit_outlined,
+                                  size: 16,
+                                  color: AppColors.styrianForest,
                                 ),
                               ],
                             ),

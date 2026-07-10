@@ -872,4 +872,58 @@ class AppLocalizationsEn extends AppLocalizations {
   String showAllWeights(int count) {
     return 'Show all $count weights';
   }
+
+  @override
+  String get editWeight => 'Edit weight';
+
+  @override
+  String get weightRangeError => 'Enter a weight between 20 and 400 kg.';
+
+  @override
+  String get largeWeightJump => 'Large weight change';
+
+  @override
+  String confirmWeightJump(String previous, String next) {
+    return 'Save the change from $previous to $next kg?';
+  }
+
+  @override
+  String weeklyDifference(String difference) {
+    return '7-day change: $difference kg';
+  }
+
+  @override
+  String get switchCamera => 'Switch camera';
+
+  @override
+  String get flash => 'Flash';
+
+  @override
+  String get flashUnavailable => 'Flash unavailable';
+
+  @override
+  String get analysisUpdated => 'Analysis updated!';
+
+  @override
+  String retryFailed(String error) {
+    return 'Retry failed: $error';
+  }
+
+  @override
+  String get retryAnalysis => 'Restart analysis';
+
+  @override
+  String get syncData => 'Sync data';
+
+  @override
+  String get downloadStarted => 'Download started';
+
+  @override
+  String get restoreImportBackup => 'Restore last import backup';
+
+  @override
+  String get backupRestored => 'Backup restored.';
+
+  @override
+  String get close => 'Close';
 }

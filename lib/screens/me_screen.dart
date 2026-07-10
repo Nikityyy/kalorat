@@ -107,6 +107,14 @@ class _MeScreenState extends State<MeScreen> {
                 const SizedBox(height: 24),
                 WeightList(
                   weights: sortedWeights,
+                  onEdit: (weight) async {
+                    await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => AddWeightScreen(initialWeight: weight),
+                      ),
+                    );
+                  },
                   onDelete: (weight) => _confirmDeleteWeight(weight),
                 ),
               ],

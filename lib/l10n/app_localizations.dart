@@ -1765,6 +1765,102 @@ abstract class AppLocalizations {
   /// In de, this message translates to:
   /// **'Alle {count} Gewichte anzeigen'**
   String showAllWeights(int count);
+
+  /// No description provided for @editWeight.
+  ///
+  /// In de, this message translates to:
+  /// **'Gewicht bearbeiten'**
+  String get editWeight;
+
+  /// No description provided for @weightRangeError.
+  ///
+  /// In de, this message translates to:
+  /// **'Bitte ein Gewicht zwischen 20 und 400 kg eingeben.'**
+  String get weightRangeError;
+
+  /// No description provided for @largeWeightJump.
+  ///
+  /// In de, this message translates to:
+  /// **'Großer Gewichtssprung'**
+  String get largeWeightJump;
+
+  /// No description provided for @confirmWeightJump.
+  ///
+  /// In de, this message translates to:
+  /// **'Änderung von {previous} auf {next} kg speichern?'**
+  String confirmWeightJump(String previous, String next);
+
+  /// No description provided for @weeklyDifference.
+  ///
+  /// In de, this message translates to:
+  /// **'7-Tage-Differenz: {difference} kg'**
+  String weeklyDifference(String difference);
+
+  /// No description provided for @switchCamera.
+  ///
+  /// In de, this message translates to:
+  /// **'Kamera wechseln'**
+  String get switchCamera;
+
+  /// No description provided for @flash.
+  ///
+  /// In de, this message translates to:
+  /// **'Blitz'**
+  String get flash;
+
+  /// No description provided for @flashUnavailable.
+  ///
+  /// In de, this message translates to:
+  /// **'Blitz nicht verfügbar'**
+  String get flashUnavailable;
+
+  /// No description provided for @analysisUpdated.
+  ///
+  /// In de, this message translates to:
+  /// **'Analyse aktualisiert!'**
+  String get analysisUpdated;
+
+  /// No description provided for @retryFailed.
+  ///
+  /// In de, this message translates to:
+  /// **'Erneuter Versuch fehlgeschlagen: {error}'**
+  String retryFailed(String error);
+
+  /// No description provided for @retryAnalysis.
+  ///
+  /// In de, this message translates to:
+  /// **'Analyse neu starten'**
+  String get retryAnalysis;
+
+  /// No description provided for @syncData.
+  ///
+  /// In de, this message translates to:
+  /// **'Daten synchronisieren'**
+  String get syncData;
+
+  /// No description provided for @downloadStarted.
+  ///
+  /// In de, this message translates to:
+  /// **'Download gestartet'**
+  String get downloadStarted;
+
+  /// No description provided for @restoreImportBackup.
+  ///
+  /// In de, this message translates to:
+  /// **'Letztes Import-Backup wiederherstellen'**
+  String get restoreImportBackup;
+
+  /// No description provided for @backupRestored.
+  ///
+  /// In de, this message translates to:
+  /// **'Backup wiederhergestellt.'**
+  String get backupRestored;
+
+  /// No description provided for @close.
+  ///
+  /// In de, this message translates to:
+  /// **'Schließen'**
+  String get close;
 }
 
 class _AppLocalizationsDelegate

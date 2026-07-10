@@ -11,10 +11,21 @@ import 'gemini_service.dart';
 class OfflineQueueService {
   final DatabaseService _databaseService;
   final Connectivity _connectivity = Connectivity();
+  final Future<bool> Function()? _onlineCheck;
+  final GeminiService Function(String apiKey, String language) _geminiFactory;
 
-  OfflineQueueService(this._databaseService);
+  OfflineQueueService(
+    this._databaseService, {
+    Future<bool> Function()? onlineCheck,
+    GeminiService Function(String apiKey, String language)? geminiFactory,
+  }) : _onlineCheck = onlineCheck,
+       _geminiFactory =
+           geminiFactory ??
+           ((apiKey, language) =>
+               GeminiService(apiKey: apiKey, language: language));
 
   Future<bool> isOnline() async {
+    if (_onlineCheck != null) return _onlineCheck();
     final result = await _connectivity.checkConnectivity();
     AppLogger.info('OfflineQueueService', 'Connectivity status: $result');
 
@@ -60,7 +71,7 @@ class OfflineQueueService {
   }) async {
     if (!await isOnline()) return;
 
-    final geminiService = GeminiService(apiKey: apiKey, language: language);
+    final geminiService = _geminiFactory(apiKey, language);
 
     // Keep draining meals added while an earlier background analysis runs.
     while (true) {

@@ -79,6 +79,20 @@ class AppProvider extends ChangeNotifier {
     await updateUser(weightRemindersEnabled: enabled);
   }
 
+  Future<void> refreshReminderTimezone() async {
+    final user = _user;
+    if (user == null) return;
+    await _notificationService.refreshTimezone();
+    await _notificationService.scheduleMealReminders(
+      enabled: user.mealRemindersEnabled,
+      language: user.language,
+    );
+    await _notificationService.scheduleWeightReminder(
+      enabled: user.weightRemindersEnabled,
+      language: user.language,
+    );
+  }
+
   DatabaseService get databaseService => _databaseService;
   OfflineQueueService get offlineQueueService => _offlineQueueService;
   ExportImportService get exportImportService => _exportImportService;
@@ -545,6 +559,15 @@ class AppProvider extends ChangeNotifier {
     }
 
     notifyListeners();
+  }
+
+  Future<void> updateWeight(WeightModel previous, WeightModel updated) async {
+    final dateChanged =
+        previous.date.year != updated.date.year ||
+        previous.date.month != updated.date.month ||
+        previous.date.day != updated.date.day;
+    if (dateChanged) await deleteWeight(previous.date);
+    await saveWeight(updated);
   }
 
   // Export/Import

@@ -6,6 +6,9 @@ import '../models/models.dart';
 import '../utils/app_logger.dart';
 import 'database_service.dart';
 
+bool shouldReplaceVersion(DateTime candidate, DateTime current) =>
+    candidate.isAfter(current);
+
 /// Cloud sync service using Supabase PostgreSQL.
 /// Handles bidirectional sync between local Hive storage and Supabase.
 class SyncService {
@@ -149,7 +152,7 @@ class SyncService {
       final cloudMeal = _mealFromSupabase(mealData);
       final localMeal = _db.getMealById(cloudMeal.id);
       if (localMeal != null &&
-          !cloudMeal.updatedAt.isAfter(localMeal.updatedAt)) {
+          !shouldReplaceVersion(cloudMeal.updatedAt, localMeal.updatedAt)) {
         continue;
       }
       MealModel finalMeal = cloudMeal;
@@ -176,7 +179,10 @@ class SyncService {
     for (final weightData in weightsData) {
       final weight = _weightFromSupabase(weightData);
       final local = _db.getWeightByDate(weight.date);
-      if (local != null && !weight.updatedAt.isAfter(local.updatedAt)) continue;
+      if (local != null &&
+          !shouldReplaceVersion(weight.updatedAt, local.updatedAt)) {
+        continue;
+      }
       weightsToSave.add(weight);
     }
 
@@ -511,13 +517,13 @@ class SyncService {
       final deletedAt = DateTime.parse(row['deleted_at']);
       if (type == 'meal') {
         final local = _db.getMealById(id);
-        if (local != null && deletedAt.isAfter(local.updatedAt)) {
+        if (local != null && shouldReplaceVersion(deletedAt, local.updatedAt)) {
           await _db.deleteMeal(id);
         }
       } else if (type == 'weight') {
         final date = DateTime.parse(id);
         final local = _db.getWeightByDate(date);
-        if (local != null && deletedAt.isAfter(local.updatedAt)) {
+        if (local != null && shouldReplaceVersion(deletedAt, local.updatedAt)) {
           await _db.deleteWeight(date);
         }
       }
@@ -538,7 +544,10 @@ class SyncService {
         .eq('entity_id', entityId)
         .maybeSingle();
     if (tombstone != null &&
-        !localUpdatedAt.isAfter(DateTime.parse(tombstone['deleted_at']))) {
+        !shouldReplaceVersion(
+          localUpdatedAt,
+          DateTime.parse(tombstone['deleted_at']),
+        )) {
       return false;
     }
 
@@ -550,6 +559,9 @@ class SyncService {
         .eq('id', cloudId)
         .maybeSingle();
     return remote == null ||
-        localUpdatedAt.isAfter(DateTime.parse(remote['updated_at']));
+        shouldReplaceVersion(
+          localUpdatedAt,
+          DateTime.parse(remote['updated_at']),
+        );
   }
 }

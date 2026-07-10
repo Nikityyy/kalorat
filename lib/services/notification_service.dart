@@ -1,6 +1,7 @@
 import '../utils/platform_utils.dart';
 import 'dart:ui' as ui;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 import '../l10n/app_localizations.dart';
@@ -17,7 +18,7 @@ class NotificationService {
   static const int weightReminderId = 2;
 
   Future<void> init() async {
-    tz.initializeTimeZones();
+    await refreshTimezone();
 
     if (PlatformUtils.isWeb) {
       // Web initialization
@@ -28,9 +29,9 @@ class NotificationService {
       '@mipmap/ic_launcher',
     );
     const iosSettings = DarwinInitializationSettings(
-      requestAlertPermission: true,
-      requestBadgePermission: true,
-      requestSoundPermission: true,
+      requestAlertPermission: false,
+      requestBadgePermission: false,
+      requestSoundPermission: false,
     );
 
     const initSettings = InitializationSettings(
@@ -39,6 +40,16 @@ class NotificationService {
     );
 
     await _notifications.initialize(settings: initSettings);
+  }
+
+  Future<void> refreshTimezone() async {
+    tz.initializeTimeZones();
+    try {
+      final deviceTimezone = await FlutterTimezone.getLocalTimezone();
+      tz.setLocalLocation(tz.getLocation(deviceTimezone.identifier));
+    } catch (_) {
+      tz.setLocalLocation(tz.UTC);
+    }
   }
 
   Future<bool> requestPermissions() async {

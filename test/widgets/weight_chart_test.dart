@@ -6,6 +6,19 @@ import 'package:kalorat/models/weight_model.dart';
 import 'package:kalorat/widgets/me/weight_chart.dart';
 
 void main() {
+  test('calculates seven-day difference and a linear trend', () {
+    final latest = DateTime(2026, 7, 10);
+    final weights = [
+      WeightModel(date: latest, weight: 70),
+      WeightModel(date: latest.subtract(const Duration(days: 7)), weight: 72),
+    ];
+
+    expect(weeklyWeightDifference(weights), -2);
+    final trend = linearWeightTrend(const [FlSpot(0, 72), FlSpot(7, 70)]);
+    expect(trend.first.y, 72);
+    expect(trend.last.y, 70);
+  });
+
   testWidgets('sparse ranges fit their data and keep selected text white', (
     tester,
   ) async {

@@ -5,7 +5,11 @@ import '../utils/platform_utils.dart';
 /// Authentication service wrapping Supabase Auth with Google providers.
 /// Supports guest mode where users can use the app without signing in.
 class AuthService {
-  SupabaseClient get _client => Supabase.instance.client;
+  final SupabaseClient? _clientOverride;
+
+  AuthService({SupabaseClient? client}) : _clientOverride = client;
+
+  SupabaseClient get _client => _clientOverride ?? Supabase.instance.client;
 
   /// Current authenticated user, or null if guest.
   User? get currentUser => _client.auth.currentUser;

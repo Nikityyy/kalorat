@@ -785,7 +785,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 )
               : const Icon(Icons.sync, color: AppColors.primary),
           title: Text(
-            'Sync Data',
+            l10n.syncData,
             style: const TextStyle(color: AppColors.slate),
           ),
           subtitle: user.lastSyncTimestamp != null
@@ -964,7 +964,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               // Web: file was downloaded via browser, just confirm
               ScaffoldMessenger.of(
                 context,
-              ).showSnackBar(const SnackBar(content: Text('Download started')));
+              ).showSnackBar(SnackBar(content: Text(l10n.downloadStarted)));
             } else {
               await SharePlus.instance.share(
                 ShareParams(files: [XFile(path)], text: 'Kalorat Backup'),
@@ -997,9 +997,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ListTile(
           leading: const Icon(Icons.restore, color: AppColors.primary),
           title: Text(
-            provider.language == 'de'
-                ? 'Letztes Import-Backup wiederherstellen'
-                : 'Restore last import backup',
+            l10n.restoreImportBackup,
             style: const TextStyle(color: AppColors.slate),
           ),
           onTap: () async {
@@ -1008,11 +1006,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               if (mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text(
-                      provider.language == 'de'
-                          ? 'Backup wiederhergestellt.'
-                          : 'Backup restored.',
-                    ),
+                    content: Text(l10n.backupRestored),
                     backgroundColor: AppColors.success,
                   ),
                 );
@@ -1020,7 +1014,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
             } catch (e) {
               if (mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(e.toString()), backgroundColor: AppColors.error),
+                  SnackBar(
+                    content: Text(e.toString()),
+                    backgroundColor: AppColors.error,
+                  ),
                 );
               }
             }

@@ -9,7 +9,9 @@ import '../providers/app_provider.dart';
 import '../theme/app_theme.dart';
 
 class AddWeightScreen extends StatefulWidget {
-  const AddWeightScreen({super.key});
+  final WeightModel? initialWeight;
+
+  const AddWeightScreen({super.key, this.initialWeight});
 
   @override
   State<AddWeightScreen> createState() => _AddWeightScreenState();
@@ -22,10 +24,13 @@ class _AddWeightScreenState extends State<AddWeightScreen> {
   @override
   void initState() {
     super.initState();
+    _selectedDate = widget.initialWeight?.date ?? DateTime.now();
     final provider = context.read<AppProvider>();
     final weights = provider.weights;
     _weightController = TextEditingController(
-      text: weights.isNotEmpty
+      text: widget.initialWeight != null
+          ? widget.initialWeight!.weight.toStringAsFixed(1)
+          : weights.isNotEmpty
           ? weights.first.weight.toStringAsFixed(1)
           : provider.user?.weight.toStringAsFixed(1) ?? '',
     );
@@ -40,7 +45,14 @@ class _AddWeightScreenState extends State<AddWeightScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(context.l10n.addWeight), centerTitle: true),
+      appBar: AppBar(
+        title: Text(
+          widget.initialWeight == null
+              ? context.l10n.addWeight
+              : context.l10n.editWeight,
+        ),
+        centerTitle: true,
+      ),
       body: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
@@ -133,25 +145,38 @@ class _AddWeightScreenState extends State<AddWeightScreen> {
   void _save() async {
     final weight = double.tryParse(_weightController.text.replaceAll(',', '.'));
     if (weight == null || weight < 20 || weight > 400) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Bitte ein Gewicht zwischen 20 und 400 kg eingeben.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(context.l10n.weightRangeError)));
       return;
     }
 
     final provider = context.read<AppProvider>();
-    final previous = provider.weights.isEmpty ? null : provider.weights.first.weight;
+    final previous = provider.weights.isEmpty
+        ? null
+        : provider.weights.first.weight;
     if (previous != null &&
         (weight - previous).abs() > 10 &&
         (weight - previous).abs() / previous > 0.1) {
       final confirmed = await showDialog<bool>(
         context: context,
         builder: (context) => AlertDialog(
-          title: const Text('Großer Gewichtssprung'),
-          content: Text('Von ${previous.toStringAsFixed(1)} auf ${weight.toStringAsFixed(1)} kg speichern?'),
+          title: Text(context.l10n.largeWeightJump),
+          content: Text(
+            context.l10n.confirmWeightJump(
+              previous.toStringAsFixed(1),
+              weight.toStringAsFixed(1),
+            ),
+          ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(context, false), child: Text(context.l10n.cancel)),
-            TextButton(onPressed: () => Navigator.pop(context, true), child: Text(context.l10n.save)),
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: Text(context.l10n.cancel),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: Text(context.l10n.save),
+            ),
           ],
         ),
       );
@@ -159,10 +184,21 @@ class _AddWeightScreenState extends State<AddWeightScreen> {
     }
 
     try {
-      await provider.saveWeight(WeightModel(date: _selectedDate, weight: weight));
+      final updated = WeightModel(
+        date: _selectedDate,
+        weight: weight,
+        note: widget.initialWeight?.note,
+      );
+      if (widget.initialWeight == null) {
+        await provider.saveWeight(updated);
+      } else {
+        await provider.updateWeight(widget.initialWeight!, updated);
+      }
     } on FormatException catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(e.message)));
       }
       return;
     }
