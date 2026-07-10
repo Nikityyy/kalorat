@@ -21,13 +21,14 @@ class WeightModelAdapter extends TypeAdapter<WeightModel> {
       weight: (fields[1] as num?)?.toDouble() ?? 0.0,
       note: fields[2] as String?,
       isPending: fields[3] as bool? ?? false,
+      updatedAt: fields[4] as DateTime?,
     );
   }
 
   @override
   void write(BinaryWriter writer, WeightModel obj) {
     writer
-      ..writeByte(4)
+      ..writeByte(5)
       ..writeByte(0)
       ..write(obj.date)
       ..writeByte(1)
@@ -35,7 +36,9 @@ class WeightModelAdapter extends TypeAdapter<WeightModel> {
       ..writeByte(2)
       ..write(obj.note)
       ..writeByte(3)
-      ..write(obj.isPending);
+      ..write(obj.isPending)
+      ..writeByte(4)
+      ..write(obj.updatedAt);
   }
 
   @override

@@ -138,6 +138,17 @@ void main() {
 
         expect(weight.note, '');
       });
+
+      test('rejects unrealistic values when validated', () {
+        expect(
+          () => WeightModel(date: DateTime(2026, 2, 6), weight: 11).validate(),
+          throwsFormatException,
+        );
+        expect(
+          () => WeightModel(date: DateTime(2026, 2, 6), weight: 700).validate(),
+          throwsFormatException,
+        );
+      });
     });
   });
 }

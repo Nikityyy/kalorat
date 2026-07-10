@@ -14,8 +14,15 @@ class MealCard extends StatelessWidget {
   final MealModel meal;
   final VoidCallback? onTap;
   final VoidCallback? onDelete;
+  final bool syncPending;
 
-  const MealCard({super.key, required this.meal, this.onTap, this.onDelete});
+  const MealCard({
+    super.key,
+    required this.meal,
+    this.onTap,
+    this.onDelete,
+    this.syncPending = false,
+  });
 
   String _formatDateTime(DateTime timestamp) {
     // Format: dd.MM.yyyy HH:mm
@@ -125,6 +132,10 @@ class MealCard extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(width: 8),
+                          if (syncPending) ...[
+                            const Icon(Icons.cloud_upload_outlined, size: 16),
+                            const SizedBox(width: 6),
+                          ],
                           Text(
                             _formatDateTime(meal.timestamp),
                             style: AppTypography.bodyMedium.copyWith(

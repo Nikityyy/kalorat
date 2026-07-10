@@ -50,6 +50,10 @@ class _WeightListState extends State<WeightList> {
                 ),
                 Row(
                   children: [
+                    if (weight.isPending) ...[
+                      const Icon(Icons.cloud_upload_outlined, size: 16),
+                      const SizedBox(width: 8),
+                    ],
                     Text(
                       '${weight.weight.toStringAsFixed(1)} kg',
                       style: AppTypography.bodyMedium.copyWith(

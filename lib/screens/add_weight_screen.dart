@@ -132,10 +132,40 @@ class _AddWeightScreenState extends State<AddWeightScreen> {
 
   void _save() async {
     final weight = double.tryParse(_weightController.text.replaceAll(',', '.'));
-    if (weight == null || weight <= 0) return;
+    if (weight == null || weight < 20 || weight > 400) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Bitte ein Gewicht zwischen 20 und 400 kg eingeben.')),
+      );
+      return;
+    }
 
     final provider = context.read<AppProvider>();
-    await provider.saveWeight(WeightModel(date: _selectedDate, weight: weight));
+    final previous = provider.weights.isEmpty ? null : provider.weights.first.weight;
+    if (previous != null &&
+        (weight - previous).abs() > 10 &&
+        (weight - previous).abs() / previous > 0.1) {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Großer Gewichtssprung'),
+          content: Text('Von ${previous.toStringAsFixed(1)} auf ${weight.toStringAsFixed(1)} kg speichern?'),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(context, false), child: Text(context.l10n.cancel)),
+            TextButton(onPressed: () => Navigator.pop(context, true), child: Text(context.l10n.save)),
+          ],
+        ),
+      );
+      if (confirmed != true) return;
+    }
+
+    try {
+      await provider.saveWeight(WeightModel(date: _selectedDate, weight: weight));
+    } on FormatException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
+      }
+      return;
+    }
 
     if (mounted) {
       Navigator.pop(context);

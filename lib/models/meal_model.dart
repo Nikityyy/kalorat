@@ -93,6 +93,9 @@ class MealModel extends HiveObject {
   @HiveField(20)
   final String? mealContext;
 
+  @HiveField(21)
+  final DateTime updatedAt;
+
   MealModel({
     required this.id,
     required this.timestamp,
@@ -115,7 +118,8 @@ class MealModel extends HiveObject {
     this.carbsPer100g,
     this.fatsPer100g,
     this.mealContext,
-  });
+    DateTime? updatedAt,
+  }) : updatedAt = updatedAt ?? DateTime.now();
 
   MealModel copyWith({
     String? id,
@@ -139,6 +143,7 @@ class MealModel extends HiveObject {
     double? carbsPer100g,
     double? fatsPer100g,
     String? mealContext,
+    DateTime? updatedAt,
   }) {
     return MealModel(
       id: id ?? this.id,
@@ -162,7 +167,49 @@ class MealModel extends HiveObject {
       carbsPer100g: carbsPer100g ?? this.carbsPer100g,
       fatsPer100g: fatsPer100g ?? this.fatsPer100g,
       mealContext: mealContext ?? this.mealContext,
+      updatedAt: updatedAt ?? this.updatedAt,
     );
+  }
+
+  void validate() {
+    if (id.trim().isEmpty || mealName.length > 200) {
+      throw const FormatException('Ungültige Mahlzeit.');
+    }
+    final values = <String, double>{
+      'Kalorien': calories,
+      'Protein': protein,
+      'Kohlenhydrate': carbs,
+      'Fett': fats,
+      'Portionsfaktor': portionMultiplier,
+      'Menge pro Einheit': quantityPerUnit,
+    };
+    for (final entry in values.entries) {
+      if (!entry.value.isFinite || entry.value < 0) {
+        throw FormatException('${entry.key} darf nicht negativ sein.');
+      }
+    }
+    if (calories > 10000 || protein > 1000 || carbs > 1000 || fats > 1000) {
+      throw const FormatException('Unrealistische Nährwerte.');
+    }
+    if (portionMultiplier <= 0 || portionMultiplier > 1000 ||
+        quantityPerUnit <= 0 || quantityPerUnit > 100000) {
+      throw const FormatException('Unrealistische Portionsgröße.');
+    }
+    for (final value in [
+      caloriesPer100g,
+      proteinPer100g,
+      carbsPer100g,
+      fatsPer100g,
+    ]) {
+      if (value != null && (!value.isFinite || value < 0 || value > 1000)) {
+        throw const FormatException('Ungültige Nährwerte pro 100 g.');
+      }
+    }
+    if ([proteinPer100g, carbsPer100g, fatsPer100g]
+        .whereType<double>()
+        .any((value) => value > 100)) {
+      throw const FormatException('Makros pro 100 g dürfen 100 g nicht überschreiten.');
+    }
   }
 
   Map<String, dynamic> toJson() => {
@@ -187,6 +234,7 @@ class MealModel extends HiveObject {
     'carbsPer100g': carbsPer100g,
     'fatsPer100g': fatsPer100g,
     'mealContext': mealContext,
+    'updatedAt': updatedAt.toIso8601String(),
   };
 
   factory MealModel.fromJson(Map<String, dynamic> json) => MealModel(
@@ -215,5 +263,6 @@ class MealModel extends HiveObject {
     carbsPer100g: (json['carbsPer100g'] as num?)?.toDouble(),
     fatsPer100g: (json['fatsPer100g'] as num?)?.toDouble(),
     mealContext: json['mealContext'],
+    updatedAt: DateTime.tryParse(json['updatedAt'] ?? ''),
   );
 }

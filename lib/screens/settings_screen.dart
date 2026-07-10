@@ -822,7 +822,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         );
                       }
                     }
-                    await provider.syncService.syncToCloud();
+                    await provider.syncService.syncNow();
                     if (mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
@@ -993,6 +993,39 @@ class _SettingsScreenState extends State<SettingsScreen> {
           }
         },
       ),
+      if (provider.hasImportBackup)
+        ListTile(
+          leading: const Icon(Icons.restore, color: AppColors.primary),
+          title: Text(
+            provider.language == 'de'
+                ? 'Letztes Import-Backup wiederherstellen'
+                : 'Restore last import backup',
+            style: const TextStyle(color: AppColors.slate),
+          ),
+          onTap: () async {
+            try {
+              await provider.restoreLastImportBackup();
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      provider.language == 'de'
+                          ? 'Backup wiederhergestellt.'
+                          : 'Backup restored.',
+                    ),
+                    backgroundColor: AppColors.success,
+                  ),
+                );
+              }
+            } catch (e) {
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(e.toString()), backgroundColor: AppColors.error),
+                );
+              }
+            }
+          },
+        ),
     ]);
   }
 

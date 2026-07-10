@@ -65,9 +65,7 @@ class DatabaseService {
       return await Hive.openBox<T>(boxName);
     } catch (e) {
       AppLogger.error('DatabaseService', 'Failed to open box $boxName', e);
-      // Delete box and try again
-      await Hive.deleteBoxFromDisk(boxName);
-      return await Hive.openBox<T>(boxName);
+      rethrow;
     }
   }
 
@@ -95,9 +93,7 @@ class DatabaseService {
         'Failed to build indices (corruption?)',
         e,
       );
-      // Attempt to clear corrupted box
-      await _mealsBox.clear();
-      // Indices safe to leave empty
+      rethrow;
     }
   }
 
@@ -261,6 +257,8 @@ class DatabaseService {
   }
 
   Future<void> saveMeal(MealModel meal) async {
+    meal.validate();
+    meal = meal.copyWith(updatedAt: DateTime.now());
     final existingKey = _findMealKey(meal.id);
 
     // Update Indices
@@ -338,6 +336,7 @@ class DatabaseService {
   Future<void> saveMealsBatch(List<MealModel> meals) async {
     final Map<dynamic, MealModel> mealsMap = {};
     for (final meal in meals) {
+      meal.validate();
       final existingKey = _findMealKey(meal.id);
       final key = existingKey ?? meal.id;
       mealsMap[key] = meal;
@@ -357,6 +356,7 @@ class DatabaseService {
     final List<WeightModel> weightsToAdd = [];
 
     for (final weight in weights) {
+      weight.validate();
       final existingIndex = currentWeights.indexWhere(
         (w) =>
             w.date.year == weight.date.year &&
@@ -399,6 +399,8 @@ class DatabaseService {
   }
 
   Future<void> saveWeight(WeightModel weight) async {
+    weight.validate();
+    weight = weight.copyWith(updatedAt: DateTime.now(), isPending: true);
     final existingIndex = _weightsBox.values.toList().indexWhere(
       (w) =>
           w.date.year == weight.date.year &&
@@ -436,44 +438,106 @@ class DatabaseService {
     };
   }
 
+  Map<String, dynamic>? getLastImportBackup() {
+    final value = Hive.box('settings_box').get('last_import_backup');
+    return value is Map ? Map<String, dynamic>.from(value) : null;
+  }
+
+  Future<void> restoreLastImportBackup() async {
+    final backup = getLastImportBackup();
+    if (backup == null) throw StateError('Kein Import-Backup vorhanden.');
+    await _replaceAll(backup, createBackup: false);
+  }
+
   // Import all data
   Future<void> importAll(Map<String, dynamic> data) async {
-    // Clear existing data
-    await _mealsBox.clear();
-    await _weightsBox.clear();
+    await _replaceAll(data, createBackup: true);
+  }
 
-    // Import user
-    if (data['user'] != null) {
-      final user = UserModel.fromJson(data['user']);
-      await saveUser(user);
+  Future<void> _replaceAll(
+    Map<String, dynamic> data, {
+    required bool createBackup,
+  }) async {
+    final user = data['user'] == null
+        ? null
+        : UserModel.fromJson(Map<String, dynamic>.from(data['user'] as Map));
+    final meals = (data['meals'] as List? ?? const [])
+        .map(
+          (json) => MealModel.fromJson(Map<String, dynamic>.from(json as Map)),
+        )
+        .toList();
+    final weights = (data['weights'] as List? ?? const [])
+        .map(
+          (json) =>
+              WeightModel.fromJson(Map<String, dynamic>.from(json as Map)),
+        )
+        .toList();
+    for (final meal in meals) {
+      meal.validate();
+    }
+    for (final weight in weights) {
+      weight.validate();
+    }
+    if (meals.map((meal) => meal.id).toSet().length != meals.length) {
+      throw const FormatException('Doppelte Mahlzeiten-IDs im Import.');
     }
 
-    // Import meals
-    if (data['meals'] != null) {
-      for (final mealJson in data['meals']) {
-        try {
-          final meal = MealModel.fromJson(mealJson);
-          await _mealsBox.put(meal.id, meal); // Use ID as key
-        } catch (e) {
-          // Skip invalid meal
-          continue;
-        }
-      }
+    final oldUser = _userBox.toMap();
+    final oldMeals = _mealsBox.toMap();
+    final oldWeights = _weightsBox.toMap();
+    if (createBackup) {
+      await Hive.box('settings_box').put('last_import_backup', exportAll());
     }
-    _buildIndices();
 
-    // Import weights
-    if (data['weights'] != null) {
-      for (final weightJson in data['weights']) {
-        try {
-          final weight = WeightModel.fromJson(weightJson);
-          await _weightsBox.add(weight);
-        } catch (e) {
-          // Skip invalid weight
-          continue;
-        }
-      }
+    try {
+      await _userBox.clear();
+      await _mealsBox.clear();
+      await _weightsBox.clear();
+      if (user != null) await _userBox.add(user);
+      await _mealsBox.putAll({for (final meal in meals) meal.id: meal});
+      await _weightsBox.addAll(weights);
+      await _buildIndices();
+    } catch (_) {
+      await _userBox.clear();
+      await _mealsBox.clear();
+      await _weightsBox.clear();
+      await _userBox.putAll(oldUser);
+      await _mealsBox.putAll(oldMeals);
+      await _weightsBox.putAll(oldWeights);
+      await _buildIndices();
+      rethrow;
     }
+  }
+
+  List<Map<String, dynamic>> getSyncQueue() {
+    final raw = Hive.box(
+      'settings_box',
+    ).get('sync_queue', defaultValue: const []);
+    return (raw as List)
+        .map((item) => Map<String, dynamic>.from(item as Map))
+        .toList();
+  }
+
+  Future<void> queueSync(String type, String id) async {
+    final entity = type.split('_').first;
+    final queue = getSyncQueue()
+      ..removeWhere(
+        (item) =>
+            item['id'] == id &&
+            item['type'].toString().startsWith('${entity}_'),
+      )
+      ..add({
+        'type': type,
+        'id': id,
+        'queuedAt': DateTime.now().toIso8601String(),
+      });
+    await Hive.box('settings_box').put('sync_queue', queue);
+  }
+
+  Future<void> removeFromSyncQueue(String type, String id) async {
+    final queue = getSyncQueue()
+      ..removeWhere((item) => item['type'] == type && item['id'] == id);
+    await Hive.box('settings_box').put('sync_queue', queue);
   }
 
   // Clear all data

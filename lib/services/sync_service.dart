@@ -21,6 +21,7 @@ class SyncService {
   Future<void> syncToCloud() async {
     final userId = _userId;
     if (userId == null) return;
+    await _processSyncQueue();
 
     // Sync user profile
     final user = _db.getUser();
@@ -31,34 +32,9 @@ class SyncService {
     // 1. Bulk Sync Meals to Supabase
     final meals = _db.getAllMeals();
     if (meals.isNotEmpty) {
-      final mealsData = meals
-          .map(
-            (meal) => {
-              'id': meal.id,
-              'user_id': userId,
-              'timestamp': meal.timestamp.toIso8601String(),
-              'meal_name': meal.mealName,
-              'calories': meal.calories,
-              'protein': meal.protein,
-              'carbs': meal.carbs,
-              'fats': meal.fats,
-              'vitamins': meal.vitamins,
-              'minerals': meal.minerals,
-              'is_pending': meal.isPending,
-              'is_manual_entry': meal.isManualEntry,
-              'is_calorie_override': meal.isCalorieOverride,
-              'portion_multiplier': meal.portionMultiplier,
-              'portion_unit': meal.portionUnit,
-              'quantity_per_unit': meal.quantityPerUnit,
-            },
-          )
-          .toList();
+      final mealsData = meals.map((meal) => _mealData(userId, meal)).toList();
 
-      try {
-        await _client.from('meals').upsert(mealsData);
-      } catch (e) {
-        AppLogger.error('SyncService', 'Failed to bulk sync meals to cloud', e);
-      }
+      await _client.from('meals').upsert(mealsData);
     }
 
     // 2. Bulk Sync Weights (Delta sync) to Supabase
@@ -72,23 +48,16 @@ class SyncService {
           'user_id': userId,
           'date': weight.date.toIso8601String(),
           'weight': weight.weight,
+          'note': weight.note,
+          'updated_at': weight.updatedAt.toIso8601String(),
         };
       }).toList();
 
-      try {
-        await _client.from('weights').upsert(weightsData);
-        // Mark as synced locally in a single batch
-        final updatedWeights = pendingWeights
-            .map((w) => w.copyWith(isPending: false))
-            .toList();
-        await _db.saveWeightsBatch(updatedWeights);
-      } catch (e) {
-        AppLogger.error(
-          'SyncService',
-          'Failed to bulk sync weights to cloud',
-          e,
-        );
-      }
+      await _client.from('weights').upsert(weightsData);
+      final updatedWeights = pendingWeights
+          .map((w) => w.copyWith(isPending: false))
+          .toList();
+      await _db.saveWeightsBatch(updatedWeights);
     }
 
     // Update last sync timestamp
@@ -102,6 +71,8 @@ class SyncService {
   Future<void> syncFromCloud() async {
     final userId = _userId;
     if (userId == null) return;
+    await _processSyncQueue();
+    await _applyTombstones(userId);
 
     // Fetch profile
     final profileData = await _client
@@ -176,10 +147,14 @@ class SyncService {
     final List<MealModel> mealsToSave = [];
     for (final mealData in mealsData) {
       final cloudMeal = _mealFromSupabase(mealData);
+      final localMeal = _db.getMealById(cloudMeal.id);
+      if (localMeal != null &&
+          !cloudMeal.updatedAt.isAfter(localMeal.updatedAt)) {
+        continue;
+      }
       MealModel finalMeal = cloudMeal;
 
       // Preserve local photo paths if they exist
-      final localMeal = _db.getMealById(cloudMeal.id);
       if (localMeal != null && localMeal.photoPaths.isNotEmpty) {
         finalMeal = cloudMeal.copyWith(photoPaths: localMeal.photoPaths);
       }
@@ -200,6 +175,8 @@ class SyncService {
     final List<WeightModel> weightsToSave = [];
     for (final weightData in weightsData) {
       final weight = _weightFromSupabase(weightData);
+      final local = _db.getWeightByDate(weight.date);
+      if (local != null && !weight.updatedAt.isAfter(local.updatedAt)) continue;
       weightsToSave.add(weight);
     }
 
@@ -225,6 +202,11 @@ class SyncService {
     await syncFromCloud();
 
     // Then push local data (upsert won't duplicate)
+    await syncToCloud();
+  }
+
+  Future<void> syncNow() async {
+    await syncFromCloud();
     await syncToCloud();
   }
 
@@ -311,6 +293,12 @@ class SyncService {
           (data['portion_multiplier'] as num?)?.toDouble() ?? 1.0,
       portionUnit: data['portion_unit'] ?? 'serving',
       quantityPerUnit: (data['quantity_per_unit'] as num?)?.toDouble() ?? 1.0,
+      caloriesPer100g: (data['calories_per_100g'] as num?)?.toDouble(),
+      proteinPer100g: (data['protein_per_100g'] as num?)?.toDouble(),
+      carbsPer100g: (data['carbs_per_100g'] as num?)?.toDouble(),
+      fatsPer100g: (data['fats_per_100g'] as num?)?.toDouble(),
+      mealContext: data['meal_context'] as String?,
+      updatedAt: DateTime.tryParse(data['updated_at'] ?? ''),
     );
   }
 
@@ -318,7 +306,9 @@ class SyncService {
     return WeightModel(
       date: DateTime.parse(data['date']),
       weight: (data['weight'] as num).toDouble(),
+      note: data['note'] as String?,
       isPending: false, // Content from cloud is by definition synced
+      updatedAt: DateTime.tryParse(data['updated_at'] ?? ''),
     );
   }
 
@@ -327,28 +317,16 @@ class SyncService {
   /// Sync a single meal to cloud (create or update).
   /// Returns true if successful, false otherwise.
   Future<bool> syncMeal(MealModel meal) async {
+    await _db.queueSync('meal_upsert', meal.id);
     final userId = _userId;
     if (userId == null) return false;
 
     try {
-      await _client.from('meals').upsert({
-        'id': meal.id,
-        'user_id': userId,
-        'timestamp': meal.timestamp.toIso8601String(),
-        'meal_name': meal.mealName,
-        'calories': meal.calories,
-        'protein': meal.protein,
-        'carbs': meal.carbs,
-        'fats': meal.fats,
-        'vitamins': meal.vitamins,
-        'minerals': meal.minerals,
-        'is_pending': meal.isPending,
-        'is_manual_entry': meal.isManualEntry,
-        'is_calorie_override': meal.isCalorieOverride,
-        'portion_multiplier': meal.portionMultiplier,
-        'portion_unit': meal.portionUnit,
-        'quantity_per_unit': meal.quantityPerUnit,
-      });
+      final current = _db.getMealById(meal.id) ?? meal;
+      if (await _canUpsert(userId, 'meal', meal.id, current.updatedAt)) {
+        await _client.from('meals').upsert(_mealData(userId, current));
+      }
+      await _db.removeFromSyncQueue('meal_upsert', meal.id);
       return true;
     } catch (e) {
       // Log error but don't throw - local operation should succeed
@@ -359,18 +337,25 @@ class SyncService {
 
   /// Sync a single weight entry to cloud (create or update).
   Future<bool> syncWeight(WeightModel weight) async {
+    final dateKey = weight.date.toIso8601String().split('T')[0];
+    await _db.queueSync('weight_upsert', dateKey);
     final userId = _userId;
     if (userId == null) return false;
 
     try {
-      final dateKey = weight.date.toIso8601String().split('T')[0];
-      await _client.from('weights').upsert({
-        'id': '${userId}_$dateKey',
-        'user_id': userId,
-        'date': weight.date.toIso8601String(),
-        'weight': weight.weight,
-      });
-      await _db.saveWeight(weight.copyWith(isPending: false));
+      final current = _db.getWeightByDate(weight.date) ?? weight;
+      if (await _canUpsert(userId, 'weight', dateKey, current.updatedAt)) {
+        await _client.from('weights').upsert({
+          'id': '${userId}_$dateKey',
+          'user_id': userId,
+          'date': current.date.toIso8601String(),
+          'weight': current.weight,
+          'note': current.note,
+          'updated_at': current.updatedAt.toIso8601String(),
+        });
+      }
+      await _db.saveWeightsBatch([current.copyWith(isPending: false)]);
+      await _db.removeFromSyncQueue('weight_upsert', dateKey);
       return true;
     } catch (e) {
       AppLogger.error('SyncService', 'Failed to sync weight', e);
@@ -398,11 +383,13 @@ class SyncService {
 
   /// Delete a meal from cloud storage.
   Future<bool> deleteMealFromCloud(String mealId) async {
+    await _db.queueSync('meal_delete', mealId);
     final userId = _userId;
     if (userId == null) return false;
 
     try {
-      await _client.from('meals').delete().eq('id', mealId);
+      await _deleteWithTombstone(userId, 'meal', mealId);
+      await _db.removeFromSyncQueue('meal_delete', mealId);
       return true;
     } catch (e) {
       AppLogger.error(
@@ -416,16 +403,153 @@ class SyncService {
 
   /// Delete a weight entry from cloud storage.
   Future<bool> deleteWeightFromCloud(DateTime date) async {
+    final dateKey = date.toIso8601String().split('T')[0];
+    await _db.queueSync('weight_delete', dateKey);
     final userId = _userId;
     if (userId == null) return false;
 
     try {
-      final dateKey = date.toIso8601String().split('T')[0];
-      await _client.from('weights').delete().eq('id', '${userId}_$dateKey');
+      await _deleteWithTombstone(userId, 'weight', dateKey);
+      await _db.removeFromSyncQueue('weight_delete', dateKey);
       return true;
     } catch (e) {
       AppLogger.error('SyncService', 'Failed to delete weight from cloud', e);
       return false;
     }
+  }
+
+  Map<String, dynamic> _mealData(String userId, MealModel meal) => {
+    'id': meal.id,
+    'user_id': userId,
+    'timestamp': meal.timestamp.toIso8601String(),
+    'meal_name': meal.mealName,
+    'calories': meal.calories,
+    'protein': meal.protein,
+    'carbs': meal.carbs,
+    'fats': meal.fats,
+    'vitamins': meal.vitamins,
+    'minerals': meal.minerals,
+    'is_pending': meal.isPending,
+    'is_manual_entry': meal.isManualEntry,
+    'is_calorie_override': meal.isCalorieOverride,
+    'portion_multiplier': meal.portionMultiplier,
+    'portion_unit': meal.portionUnit,
+    'quantity_per_unit': meal.quantityPerUnit,
+    'calories_per_100g': meal.caloriesPer100g,
+    'protein_per_100g': meal.proteinPer100g,
+    'carbs_per_100g': meal.carbsPer100g,
+    'fats_per_100g': meal.fatsPer100g,
+    'meal_context': meal.mealContext,
+    'updated_at': meal.updatedAt.toIso8601String(),
+  };
+
+  Future<void> _deleteWithTombstone(
+    String userId,
+    String entityType,
+    String entityId,
+  ) async {
+    await _client.from('sync_tombstones').upsert({
+      'user_id': userId,
+      'entity_type': entityType,
+      'entity_id': entityId,
+      'deleted_at': DateTime.now().toIso8601String(),
+    });
+    if (entityType == 'meal') {
+      await _client
+          .from('meals')
+          .delete()
+          .eq('id', entityId)
+          .eq('user_id', userId);
+    } else {
+      await _client.from('weights').delete().eq('id', '${userId}_$entityId');
+    }
+  }
+
+  Future<void> _processSyncQueue() async {
+    final userId = _userId;
+    if (userId == null) return;
+    for (final item in List<Map<String, dynamic>>.from(_db.getSyncQueue())) {
+      final type = item['type'] as String;
+      final id = item['id'] as String;
+      if (type == 'meal_delete') {
+        await _deleteWithTombstone(userId, 'meal', id);
+      } else if (type == 'weight_delete') {
+        await _deleteWithTombstone(userId, 'weight', id);
+      } else if (type == 'meal_upsert') {
+        final meal = _db.getMealById(id);
+        if (meal != null &&
+            await _canUpsert(userId, 'meal', id, meal.updatedAt)) {
+          await _client.from('meals').upsert(_mealData(userId, meal));
+        }
+      } else if (type == 'weight_upsert') {
+        final date = DateTime.parse(id);
+        final weight = _db.getWeightByDate(date);
+        if (weight != null &&
+            await _canUpsert(userId, 'weight', id, weight.updatedAt)) {
+          await _client.from('weights').upsert({
+            'id': '${userId}_$id',
+            'user_id': userId,
+            'date': weight.date.toIso8601String(),
+            'weight': weight.weight,
+            'note': weight.note,
+            'updated_at': weight.updatedAt.toIso8601String(),
+          });
+        }
+      }
+      await _db.removeFromSyncQueue(type, id);
+    }
+  }
+
+  Future<void> _applyTombstones(String userId) async {
+    final rows = await _client
+        .from('sync_tombstones')
+        .select()
+        .eq('user_id', userId);
+    for (final row in rows) {
+      final type = row['entity_type'];
+      final id = row['entity_id'] as String;
+      final deletedAt = DateTime.parse(row['deleted_at']);
+      if (type == 'meal') {
+        final local = _db.getMealById(id);
+        if (local != null && deletedAt.isAfter(local.updatedAt)) {
+          await _db.deleteMeal(id);
+        }
+      } else if (type == 'weight') {
+        final date = DateTime.parse(id);
+        final local = _db.getWeightByDate(date);
+        if (local != null && deletedAt.isAfter(local.updatedAt)) {
+          await _db.deleteWeight(date);
+        }
+      }
+    }
+  }
+
+  Future<bool> _canUpsert(
+    String userId,
+    String entityType,
+    String entityId,
+    DateTime localUpdatedAt,
+  ) async {
+    final tombstone = await _client
+        .from('sync_tombstones')
+        .select('deleted_at')
+        .eq('user_id', userId)
+        .eq('entity_type', entityType)
+        .eq('entity_id', entityId)
+        .maybeSingle();
+    if (tombstone != null &&
+        !localUpdatedAt.isAfter(DateTime.parse(tombstone['deleted_at']))) {
+      return false;
+    }
+
+    final table = entityType == 'meal' ? 'meals' : 'weights';
+    final cloudId = entityType == 'meal' ? entityId : '${userId}_$entityId';
+    final remote = await _client
+        .from(table)
+        .select('updated_at')
+        .eq('id', cloudId)
+        .maybeSingle();
+    return remote == null ||
+        localUpdatedAt.isAfter(DateTime.parse(remote['updated_at']));
   }
 }

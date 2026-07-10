@@ -239,6 +239,10 @@ class AppProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  bool isMealSyncPending(String id) => _databaseService.getSyncQueue().any(
+    (item) => item['id'] == id && item['type'].toString().startsWith('meal_'),
+  );
+
   Future<void> loginWithSupabase({
     required String userId,
     required String email,
@@ -554,6 +558,15 @@ class AppProvider extends ChangeNotifier {
     }
     return success;
   }
+
+  Future<void> restoreLastImportBackup() async {
+    await _databaseService.restoreLastImportBackup();
+    _user = _databaseService.getUser();
+    _invalidateStatsCache();
+    notifyListeners();
+  }
+
+  bool get hasImportBackup => _databaseService.getLastImportBackup() != null;
 
   // Stats helpers
   Map<String, double> getStatsForDateRange(DateTime start, DateTime end) {

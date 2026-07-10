@@ -528,8 +528,16 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
       portionMultiplier: _portionMultiplier,
     );
 
-    // saveMeal handles both create and update
-    await provider.saveMeal(finalMeal);
+    try {
+      await provider.saveMeal(finalMeal);
+    } on FormatException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(e.message)));
+      }
+      return;
+    }
 
     if (mounted) {
       Navigator.of(context).pop(finalMeal); // Return to previous screen

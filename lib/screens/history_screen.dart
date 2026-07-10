@@ -228,6 +228,9 @@ class _HistoryScreenState extends State<HistoryScreen> {
                           padding: const EdgeInsets.only(bottom: 12.0),
                           child: MealCard(
                             meal: filteredMeals[i],
+                            syncPending: provider.isMealSyncPending(
+                              filteredMeals[i].id,
+                            ),
                             onTap: filteredMeals[i].isPending
                                 ? null
                                 : () async {

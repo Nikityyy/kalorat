@@ -277,5 +277,26 @@ void main() {
         expect(restored.portionMultiplier, original.portionMultiplier);
       });
     });
+
+    test('rejects negative macros and impossible portions', () {
+      expect(
+        () => MealModel(
+          id: 'invalid',
+          timestamp: DateTime(2026, 2, 6),
+          photoPaths: const [],
+          protein: -1,
+        ).validate(),
+        throwsFormatException,
+      );
+      expect(
+        () => MealModel(
+          id: 'invalid-portion',
+          timestamp: DateTime(2026, 2, 6),
+          photoPaths: const [],
+          portionMultiplier: 0,
+        ).validate(),
+        throwsFormatException,
+      );
+    });
   });
 }
