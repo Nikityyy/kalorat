@@ -102,7 +102,7 @@ void main() {
         String? firstModelCalled;
         final trackingClient = MockClient((request) async {
           final path = request.url.path;
-          if (path.contains('/models') && !path.contains(':generateContent')) {
+          if (path.contains('/models') && !path.contains(':generateContent') && !path.contains(':streamGenerateContent')) {
             return http.StreamedResponse(
               Stream.value(utf8.encode(modelsResponse)),
               200,
@@ -110,33 +110,22 @@ void main() {
           }
           // Track first generateContent call
           firstModelCalled ??= path;
+          final resultJson = jsonEncode({
+            'analysis_note': 'test',
+            'meal_name': 'Test',
+            'calories': 100,
+            'protein': 10,
+            'carbs': 10,
+            'fats': 5,
+            'detected_quantity': 1,
+            'detected_unit': 'serving',
+          });
+          final chunks = [
+            _sseTextEvent('```json\n'),
+            _sseTextEvent('$resultJson\n```'),
+          ];
           return http.StreamedResponse(
-            Stream.value(
-              utf8.encode(
-                jsonEncode({
-                  'candidates': [
-                    {
-                      'content': {
-                        'parts': [
-                          {
-                            'text': jsonEncode({
-                              'analysis_note': 'test',
-                              'meal_name': 'Test',
-                              'calories': 100,
-                              'protein': 10,
-                              'carbs': 10,
-                              'fats': 5,
-                              'detected_quantity': 1,
-                              'detected_unit': 'serving',
-                            }),
-                          },
-                        ],
-                      },
-                    },
-                  ],
-                }),
-              ),
-            ),
+            Stream.fromIterable(chunks.map(utf8.encode)),
             200,
           );
         });

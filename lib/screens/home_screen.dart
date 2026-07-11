@@ -388,6 +388,11 @@ class _HomeScreenState extends State<HomeScreen>
       return;
     }
 
+    if (_capturedPhotos.length >= 5) {
+      _showMessage(context.l10n.rateLimitPhotos);
+      return;
+    }
+
     setState(() => _isCapturing = true);
 
     try {
@@ -602,6 +607,12 @@ class _HomeScreenState extends State<HomeScreen>
     );
 
     if (images.isNotEmpty) {
+      if (!mounted) return;
+      if (_capturedPhotos.length + images.length > 5) {
+        _showMessage(context.l10n.rateLimitPhotos);
+        return;
+      }
+
       // On web, use Base64 string
       // On mobile, copy to app documents directory
       if (PlatformUtils.isWeb) {
@@ -794,11 +805,16 @@ class _HomeScreenState extends State<HomeScreen>
   }) async {
     if (_capturedPhotos.isEmpty) return;
 
+    final l10n = context.l10n;
+    if (_capturedPhotos.length > 5) {
+      _showMessage(l10n.rateLimitPhotos);
+      return;
+    }
+
     final provider = context.read<AppProvider>();
     final isOnline = provider.isOnline;
     final apiKey = provider.apiKey;
     final language = provider.language;
-    final l10n = context.l10n;
 
     final mealId = DateTime.now().millisecondsSinceEpoch.toString();
 

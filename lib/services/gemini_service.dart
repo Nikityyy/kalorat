@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'package:cross_file/cross_file.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
-import 'package:hive_flutter/hive_flutter.dart';
 import '../utils/app_logger.dart';
 import '../utils/nutrition_units.dart';
 import '../utils/platform_utils.dart';
@@ -145,19 +144,6 @@ class GeminiService {
     'gemini-flash-lite-latest',
   ];
 
-  // Cache for available models to avoid fetching on every request
-  List<String>? _cachedModels;
-  DateTime? _lastModelFetchTime;
-
-  // Track rate limited models: Model Name -> Time when it will be available again
-  final Map<String, DateTime> _rateLimitedModels = {};
-
-  // Cooldown duration for a rate-limited model
-  static const Duration _rateLimitCooldown = Duration(minutes: 1);
-
-  static const String _settingsBoxName = 'gemini_settings_box';
-  static const String _lastModelKey = 'last_used_model_name';
-
   final String apiKey;
   final String language;
 
@@ -186,14 +172,6 @@ class GeminiService {
 
   /// Fetches available models from the API, filtering for Flash.
   Future<List<String>> _getAvailableModels() async {
-    // Return cached models if valid (e.g., fetched within last hour)
-    if (_cachedModels != null &&
-        _lastModelFetchTime != null &&
-        DateTime.now().difference(_lastModelFetchTime!) <
-            const Duration(hours: 1)) {
-      return _cachedModels!;
-    }
-
     try {
       final url = '$_baseUrlBase?key=$apiKey';
       final response = await _client.get(Uri.parse(url));
@@ -240,11 +218,8 @@ class GeminiService {
           }
         }
 
-        _cachedModels = supportedModels;
-        _lastModelFetchTime = DateTime.now();
-
-        AppLogger.info('GeminiService', 'Discovered models: $_cachedModels');
-        return _cachedModels!;
+        AppLogger.info('GeminiService', 'Discovered models: $supportedModels');
+        return supportedModels;
       } else {
         AppLogger.error(
           'GeminiService',
@@ -307,90 +282,20 @@ class GeminiService {
     if (apiKey.isEmpty) {
       throw GeminiError(GeminiErrorType.invalidApiKey, 'API key is not set');
     }
-
-    // Get fresh list of models
-    final candidates = _orderedModelsForMode(
-      await _getAvailableModels(),
+    Map<String, dynamic>? lastResult;
+    await for (final progress in analyzeMealStream(
+      imagePaths,
+      useGrams: useGrams,
+      mealContext: mealContext,
       useAccurateMode: useAccurateMode,
-    );
-
-    // Filter out currently rate-limited models
-    final now = DateTime.now();
-    final availableModels = candidates.where((model) {
-      if (_rateLimitedModels.containsKey(model)) {
-        if (now.isBefore(_rateLimitedModels[model]!)) {
-          return false; // Still in cooldown
-        } else {
-          _rateLimitedModels.remove(model); // Cooldown expired
-          return true;
-        }
-      }
-      return true;
-    }).toList();
-
-    if (availableModels.isEmpty) {
-      // If all models are rate limited, clear one to try anyway or throw specific error
-      throw GeminiError(
-        GeminiErrorType.rateLimited,
-        'All available models are currently rate limited. Please try again later.',
-      );
-    }
-
-    final box = await Hive.openBox(_settingsBoxName);
-
-    // Try models in sequence
-    for (final model in availableModels) {
-      try {
-        final result = await _makeRequest(
-          model,
-          imagePaths,
-          useGrams: useGrams,
-          mealContext: mealContext,
-          useAccurateMode: useAccurateMode,
-          allowEstimateVariation: allowEstimateVariation,
-          previousAnalysis: previousAnalysis,
-        );
-
-        final verified = await _verifyAnalysis(
-          model,
-          result,
-          imageCount: imagePaths.length,
-          useGrams: useGrams,
-          mealContext: mealContext,
-          useAccurateMode: useAccurateMode,
-          allowEstimateVariation: allowEstimateVariation,
-          previousAnalysis: previousAnalysis,
-        );
-
-        // Success! Save this model as preferred
-        await box.put(_lastModelKey, model);
-        return verified;
-      } catch (e) {
-        // Check if this was a rate limit error
-        if (e is GeminiError && e.type == GeminiErrorType.rateLimited) {
-          AppLogger.warning(
-            'GeminiService',
-            'Model $model rate limited. Backing off for ${_rateLimitCooldown.inSeconds}s.',
-          );
-          _rateLimitedModels[model] = DateTime.now().add(_rateLimitCooldown);
-          // Continue to next model
-          continue;
-        }
-
-        // For other errors (network, parsing), we might want to retry or just log
-        AppLogger.warning(
-          'GeminiService',
-          'Model $model failed: $e. Trying next...',
-        );
-        continue;
+      allowEstimateVariation: allowEstimateVariation,
+      previousAnalysis: previousAnalysis,
+    )) {
+      if (progress is AnalysisResult) {
+        lastResult = progress.data;
       }
     }
-
-    // If we get here, all models failed
-    throw GeminiError(
-      GeminiErrorType.unknown,
-      'Failed to analyze image with any available model.',
-    );
+    return lastResult;
   }
 
   /// Streaming version of analyzeMeal that yields [AnalysisProgress] events.
@@ -415,27 +320,7 @@ class GeminiService {
       useAccurateMode: useAccurateMode,
     );
 
-    final now = DateTime.now();
-    final availableModels = candidates.where((model) {
-      if (_rateLimitedModels.containsKey(model)) {
-        if (now.isBefore(_rateLimitedModels[model]!)) {
-          return false;
-        } else {
-          _rateLimitedModels.remove(model);
-          return true;
-        }
-      }
-      return true;
-    }).toList();
-
-    if (availableModels.isEmpty) {
-      throw GeminiError(
-        GeminiErrorType.rateLimited,
-        'All available models are currently rate limited. Please try again later.',
-      );
-    }
-
-    final box = await Hive.openBox(_settingsBoxName);
+    final availableModels = candidates.isNotEmpty ? candidates : ['gemini-flash-lite-latest'];
 
     for (final model in availableModels) {
       try {
@@ -477,18 +362,9 @@ class GeminiService {
           }
         }
         if (gotResult) {
-          await box.put(_lastModelKey, model);
           return;
         }
       } catch (e) {
-        if (e is GeminiError && e.type == GeminiErrorType.rateLimited) {
-          AppLogger.warning(
-            'GeminiService',
-            'Stream: Model $model rate limited.',
-          );
-          _rateLimitedModels[model] = DateTime.now().add(_rateLimitCooldown);
-          continue;
-        }
         AppLogger.warning(
           'GeminiService',
           'Stream: Model $model failed: $e. Trying next...',
@@ -700,320 +576,7 @@ class GeminiService {
     }
   }
 
-  Future<Map<String, dynamic>?> _makeRequest(
-    String modelName,
-    List<String> imagePaths, {
-    bool useGrams = false,
-    String? mealContext,
-    bool useAccurateMode = true,
-    bool allowEstimateVariation = false,
-    Map<String, dynamic>? previousAnalysis,
-  }) async {
-    try {
-      // Prepare image parts in background to avoid UI jank
-      // Prepare image parts in parallel
-      final futures = imagePaths.map((path) async {
-        try {
-          final List<int> bytes;
-          String mimeType = 'image/jpeg';
 
-          if (PlatformUtils.isWeb) {
-            if (path.startsWith('blob:')) {
-              final file = XFile(path);
-              bytes = await file.readAsBytes();
-              mimeType = _getMimeType(path);
-            } else {
-              bytes = base64Decode(path);
-            }
-          } else {
-            final file = XFile(path);
-            bytes = await file.readAsBytes();
-            mimeType = _getMimeType(path);
-          }
-
-          if (bytes.isNotEmpty) {
-            // Encode in background isolate
-            final base64Image = await compute(_encodeImageBytes, bytes);
-            return {
-              'inline_data': {'mime_type': mimeType, 'data': base64Image},
-            };
-          }
-        } catch (e) {
-          AppLogger.error('GeminiService', 'Error reading image $path', e);
-        }
-        return null;
-      });
-
-      final results = await Future.wait(futures);
-      final imageParts = results.whereType<Map<String, dynamic>>().toList();
-
-      if (imageParts.isEmpty) {
-        throw GeminiError(GeminiErrorType.noFood, 'No valid images found');
-      }
-
-      // Build prompt based on language
-      final prompt = _getPrompt(
-        language,
-        useGrams: useGrams,
-        allowEstimateVariation: allowEstimateVariation,
-      );
-
-      // Build config
-      final Map<String, dynamic> generationConfig = {
-        ..._generationControls(allowEstimateVariation: allowEstimateVariation),
-        'maxOutputTokens': 1536,
-        'responseMimeType': 'application/json',
-        'responseSchema': {
-          'type': 'OBJECT',
-          'properties': {
-            'analysis_note': {'type': 'STRING'},
-            'meal_name': {'type': 'STRING'},
-            'calories': {'type': 'NUMBER'},
-            'protein': {'type': 'NUMBER'},
-            'carbs': {'type': 'NUMBER'},
-            'fats': {'type': 'NUMBER'},
-            'calories_per_100g': {'type': 'NUMBER'},
-            'protein_per_100g': {'type': 'NUMBER'},
-            'carbs_per_100g': {'type': 'NUMBER'},
-            'fats_per_100g': {'type': 'NUMBER'},
-            'detected_quantity': {'type': 'NUMBER'},
-            'detected_unit': {
-              'type': 'STRING',
-              'enum': ['gram', 'ml', 'serving'],
-            },
-            'photo_interpretation': {'type': 'STRING'},
-            'confidence_score': {'type': 'NUMBER'},
-          },
-          'required': [
-            'analysis_note',
-            'meal_name',
-            'calories',
-            'protein',
-            'carbs',
-            'fats',
-            'calories_per_100g',
-            'protein_per_100g',
-            'carbs_per_100g',
-            'fats_per_100g',
-            'detected_quantity',
-            'detected_unit',
-            'photo_interpretation',
-            'confidence_score',
-          ],
-        },
-      };
-
-      // Configurable thinking mode based on selected toggles
-      generationConfig['thinkingConfig'] = {
-        'thinkingLevel': useAccurateMode ? 'HIGH' : 'MINIMAL',
-      };
-
-      // Build request body
-      final Map<String, dynamic> requestBody;
-
-      // Build content parts: images + optional user context note
-      final List<Map<String, dynamic>> contentParts = [...imageParts];
-      contentParts.add({'text': _analysisContextNote(imageParts.length)});
-      if (mealContext != null && mealContext.trim().isNotEmpty) {
-        contentParts.add({'text': 'User note: ${mealContext.trim()}'});
-      }
-      if (previousAnalysis != null) {
-        contentParts.add({
-          'text':
-              'Previous estimate to challenge and revise if needed: ${jsonEncode(previousAnalysis)}',
-        });
-      }
-
-      // Standard Gemini models support system_instruction
-      requestBody = {
-        'system_instruction': {
-          'parts': [
-            {'text': prompt},
-          ],
-        },
-        'contents': [
-          {'parts': contentParts},
-        ],
-        'generationConfig': generationConfig,
-      };
-
-      final url = '$_baseUrlBase/$modelName:generateContent?key=$apiKey';
-
-      // Use a longer timeout for accurate (high-thinking) mode
-      final timeout = useAccurateMode
-          ? const Duration(seconds: 120)
-          : const Duration(seconds: 45);
-
-      final response = await _client
-          .post(
-            Uri.parse(url),
-            headers: {'Content-Type': 'application/json'},
-            body: jsonEncode(requestBody),
-          )
-          .timeout(
-            timeout,
-            onTimeout: () {
-              throw GeminiError(
-                GeminiErrorType.timedOut,
-                'Analysis timed out. Please try again.',
-              );
-            },
-          );
-
-      if (response.statusCode == 200) {
-        final responseData = jsonDecode(response.body);
-        final text =
-            responseData['candidates']?[0]?['content']?['parts']?[0]?['text']
-                as String?;
-
-        if (text != null) {
-          AppLogger.debug(
-            'GeminiService',
-            'Gemini Response ($modelName): ${text.substring(0, text.length.clamp(0, 200))}...',
-          );
-
-          final parsed = _parseJsonFromText(text);
-          if (parsed != null) return parsed;
-
-          throw GeminiError(
-            GeminiErrorType.parseError,
-            'Failed to parse JSON response',
-            technicalDetails:
-                'Raw: ${text.substring(0, text.length.clamp(0, 200))}',
-          );
-        } else {
-          throw GeminiError(
-            GeminiErrorType.unknown,
-            'Empty response from Gemini',
-          );
-        }
-      } else {
-        // Throw exception with status code to catch it in analyzeMeal
-        AppLogger.error('GeminiService', 'API error ${response.statusCode}');
-        final errorType = response.statusCode == 429
-            ? GeminiErrorType.rateLimited
-            : response.statusCode == 401 || response.statusCode == 403
-            ? GeminiErrorType.invalidApiKey
-            : GeminiErrorType.networkError;
-        throw GeminiError(
-          errorType,
-          'API error: ${response.statusCode}',
-          technicalDetails: response.body,
-        );
-      }
-    } catch (e) {
-      rethrow;
-    } finally {
-      // client.close(); // Do not close injected client
-    }
-  }
-
-  Future<Map<String, dynamic>> _verifyAnalysis(
-    String modelName,
-    Map<String, dynamic>? draft, {
-    required int imageCount,
-    required bool useGrams,
-    required bool useAccurateMode,
-    required bool allowEstimateVariation,
-    String? mealContext,
-    Map<String, dynamic>? previousAnalysis,
-  }) async {
-    if (draft == null || draft['error'] == 'no_food_detected') {
-      return draft ?? {'error': 'no_food_detected'};
-    }
-
-    final verificationPrompt = language == 'de'
-        ? '''Pruefe den Analyse-Entwurf als zweiter, strenger Verifikationsschritt.
-
-Aufgaben:
-- Entscheide, ob $imageCount Foto(s) dieselbe Mahlzeit aus mehreren Winkeln zeigen oder mehrere unterschiedliche Mahlzeiten, die summiert werden muessen.
-- Wenn es mehrere Mahlzeiten sind: summiere calories, protein, carbs, fats und setze einen passenden gemeinsamen meal_name.
-- Wenn es dieselbe Mahlzeit ist: nutze die Fotos als zusaetzliche Winkel, nicht als doppelte Portion.
-- Pruefe portion/detected_quantity/detected_unit und korrigiere unplausible Werte.
-- Pruefe kcal grob gegen protein*4 + carbs*4 + fats*9.
-- Gib per-100g Referenzwerte fuer die gesamte sichtbare Mahlzeit aus. Bei fluessigen Mahlzeiten entspricht per_100g per_100ml.
-- Retry-Modus: ${allowEstimateVariation ? 'Challenge den vorherigen Wert und korrigiere die wahrscheinlichste falsche Annahme, aber bleibe plausibel.' : 'Bewahre stabile, konservative Schaetzungen.'}
-
-Antwort NUR als JSON im geforderten Schema.'''
-        : '''Verify the draft as a strict second analysis pass.
-
-Tasks:
-- Decide whether the $imageCount photo(s) show the same meal from different angles or multiple different meals that must be summed.
-- If they are multiple meals: sum calories, protein, carbs, fats and set a suitable combined meal_name.
-- If they are the same meal: use the photos as extra angles, not duplicate portions.
-- Check portion/detected_quantity/detected_unit and correct implausible values.
-- Check kcal roughly against protein*4 + carbs*4 + fats*9.
-- Return per-100g reference values for the whole visible meal. For liquid meals, per_100g means per_100ml.
-- Retry mode: ${allowEstimateVariation ? 'Challenge the previous value and correct the most likely wrong assumption, while staying plausible.' : 'Keep estimates stable and conservative.'}
-
-Return ONLY JSON in the required schema.''';
-
-    final content = <Map<String, dynamic>>[
-      {'text': _analysisContextNote(imageCount)},
-      if (mealContext != null && mealContext.trim().isNotEmpty)
-        {'text': 'User note: ${mealContext.trim()}'},
-      if (previousAnalysis != null)
-        {'text': 'Previous estimate: ${jsonEncode(previousAnalysis)}'},
-      {'text': 'Draft estimate to verify: ${jsonEncode(draft)}'},
-    ];
-
-    final requestBody = {
-      'system_instruction': {
-        'parts': [
-          {'text': verificationPrompt},
-        ],
-      },
-      'contents': [
-        {'parts': content},
-      ],
-      'generationConfig': {
-        ..._generationControls(allowEstimateVariation: allowEstimateVariation),
-        'maxOutputTokens': 1536,
-        'responseMimeType': 'application/json',
-        'responseSchema': _analysisResponseSchema(),
-        'thinkingConfig': {
-          'thinkingLevel': useAccurateMode ? 'HIGH' : 'MINIMAL',
-        },
-      },
-    };
-
-    try {
-      final timeout = useAccurateMode
-          ? const Duration(seconds: 90)
-          : const Duration(seconds: 45);
-      final response = await _client
-          .post(
-            Uri.parse('$_baseUrlBase/$modelName:generateContent?key=$apiKey'),
-            headers: {'Content-Type': 'application/json'},
-            body: jsonEncode(requestBody),
-          )
-          .timeout(timeout);
-
-      if (response.statusCode != 200) {
-        AppLogger.warning(
-          'GeminiService',
-          'Verification failed with HTTP ${response.statusCode}. Using draft.',
-        );
-        return _normalizeAnalysisResult(draft);
-      }
-
-      final data = jsonDecode(response.body) as Map<String, dynamic>;
-      final text =
-          data['candidates']?[0]?['content']?['parts']?[0]?['text'] as String?;
-      if (text == null || text.trim().isEmpty) {
-        return _normalizeAnalysisResult(draft);
-      }
-
-      final parsed = _parseJsonFromText(text);
-      return _normalizeAnalysisResult(parsed ?? draft);
-    } catch (e) {
-      AppLogger.warning(
-        'GeminiService',
-        'Verification failed: $e. Using draft.',
-      );
-      return _normalizeAnalysisResult(draft);
-    }
-  }
 
   Stream<AnalysisProgress> _verifyAnalysisStream(
     String modelName,
@@ -1171,46 +734,7 @@ Stream short verification notes as thoughts and finish with JSON in the required
     }
   }
 
-  Map<String, dynamic> _analysisResponseSchema() {
-    return {
-      'type': 'OBJECT',
-      'properties': {
-        'analysis_note': {'type': 'STRING'},
-        'meal_name': {'type': 'STRING'},
-        'calories': {'type': 'NUMBER'},
-        'protein': {'type': 'NUMBER'},
-        'carbs': {'type': 'NUMBER'},
-        'fats': {'type': 'NUMBER'},
-        'calories_per_100g': {'type': 'NUMBER'},
-        'protein_per_100g': {'type': 'NUMBER'},
-        'carbs_per_100g': {'type': 'NUMBER'},
-        'fats_per_100g': {'type': 'NUMBER'},
-        'detected_quantity': {'type': 'NUMBER'},
-        'detected_unit': {
-          'type': 'STRING',
-          'enum': ['gram', 'ml', 'serving'],
-        },
-        'photo_interpretation': {'type': 'STRING'},
-        'confidence_score': {'type': 'NUMBER'},
-      },
-      'required': [
-        'analysis_note',
-        'meal_name',
-        'calories',
-        'protein',
-        'carbs',
-        'fats',
-        'calories_per_100g',
-        'protein_per_100g',
-        'carbs_per_100g',
-        'fats_per_100g',
-        'detected_quantity',
-        'detected_unit',
-        'photo_interpretation',
-        'confidence_score',
-      ],
-    };
-  }
+
 
   String _analysisContextNote(int imageCount) {
     return 'Photo count: $imageCount. Determine whether multiple photos are different angles of the same meal or different meals to sum.';

@@ -223,47 +223,7 @@ class DatabaseService {
     return meals;
   }
 
-  /// Get paginated meals for infinite scroll / lazy loading
-  /// Returns meals sorted by timestamp (newest first), with offset and limit
-  List<MealModel> getMealsPaginated({
-    required int offset,
-    required int limit,
-    DateTime? startDate,
-    DateTime? endDate,
-  }) {
-    var meals = _mealsBox.values.toList();
 
-    // Apply date filters if provided
-    if (startDate != null || endDate != null) {
-      meals = meals.where((meal) {
-        if (startDate != null && meal.timestamp.isBefore(startDate)) {
-          return false;
-        }
-        if (endDate != null && meal.timestamp.isAfter(endDate)) return false;
-        return true;
-      }).toList();
-    }
-
-    // Sort by newest first
-    meals.sort(compareMealsNewestFirst);
-
-    // Apply pagination
-    if (offset >= meals.length) return [];
-    final end = (offset + limit).clamp(0, meals.length);
-    return meals.sublist(offset, end);
-  }
-
-  /// Total meal count for pagination calculations
-  int getMealCount({DateTime? startDate, DateTime? endDate}) {
-    if (startDate == null && endDate == null) {
-      return _mealsBox.length;
-    }
-    return _mealsBox.values.where((meal) {
-      if (startDate != null && meal.timestamp.isBefore(startDate)) return false;
-      if (endDate != null && meal.timestamp.isAfter(endDate)) return false;
-      return true;
-    }).length;
-  }
 
   List<MealModel> getPendingMeals() {
     return _mealsBox.values.where((meal) => meal.isPending).toList();
@@ -405,11 +365,7 @@ class DatabaseService {
     }
   }
 
-  List<WeightModel> getWeightsByDateRange(DateTime start, DateTime end) {
-    return _weightsBox.values.where((w) {
-      return !w.date.isBefore(start) && w.date.isBefore(end);
-    }).toList()..sort((a, b) => a.date.compareTo(b.date));
-  }
+
 
   Future<void> saveWeight(WeightModel weight) async {
     weight.validate();

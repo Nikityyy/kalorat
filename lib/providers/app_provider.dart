@@ -529,8 +529,7 @@ class AppProvider extends ChangeNotifier {
   WeightModel? getWeightByDate(DateTime date) =>
       _databaseService.getWeightByDate(date);
 
-  List<WeightModel> getWeightsByDateRange(DateTime start, DateTime end) =>
-      _databaseService.getWeightsByDateRange(start, end);
+
 
   Future<void> saveWeight(WeightModel weight) async {
     await _databaseService.saveWeight(weight);

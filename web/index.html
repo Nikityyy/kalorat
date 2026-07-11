@@ -132,63 +132,39 @@
     <div class="splash-text">Kalorat</div>
   </div>
   <script>
-    let serviceWorkerRegistration;
-    let isUpdatePending = false;
-
-    function registerServiceWorker() {
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', function () {
-          navigator.serviceWorker.register('flutter_service_worker.js?v=' + new Date().getTime())
-            .then((reg) => {
-              serviceWorkerRegistration = reg;
-
-              // Check if there is already a waiting service worker
-              if (reg.waiting) {
-                notifyFlutterUpdateAvailable();
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistration().then((reg) => {
+        if (!reg) return;
+        reg.addEventListener('updatefound', () => {
+          const installingWorker = reg.installing;
+          if (installingWorker) {
+            installingWorker.addEventListener('statechange', () => {
+              if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                window.dispatchEvent(new CustomEvent('flutter-pwa-update-available'));
               }
-
-              reg.onupdatefound = () => {
-                const installingWorker = reg.installing;
-                installingWorker.onstatechange = () => {
-                  if (installingWorker.state === 'installed') {
-                    if (navigator.serviceWorker.controller) {
-                      notifyFlutterUpdateAvailable();
-                    }
-                  }
-                };
-              };
             });
-        });
-
-        // The controllerchange event fires when the service worker taking control changes
-        // (e.g. after skipWaiting is called)
-        let refreshing = false;
-        navigator.serviceWorker.addEventListener('controllerchange', () => {
-          if (!refreshing && isUpdatePending) {
-            window.location.reload();
-            refreshing = true;
           }
         });
-      }
-    }
-
-    function notifyFlutterUpdateAvailable() {
-      if (!isUpdatePending) {
-        isUpdatePending = true;
-        window.dispatchEvent(new CustomEvent('flutter-pwa-update-available'));
-      }
+        if (reg.waiting) {
+          window.dispatchEvent(new CustomEvent('flutter-pwa-update-available'));
+        }
+      });
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        window.location.reload();
+      });
     }
 
     window.skipWaitingAndReload = function () {
-      if (serviceWorkerRegistration && serviceWorkerRegistration.waiting) {
-        serviceWorkerRegistration.waiting.postMessage('skipWaiting');
-        // Handle fallback if controllerchange doesn't fire
-        setTimeout(() => {
+      navigator.serviceWorker.getRegistration().then((reg) => {
+        if (reg && reg.waiting) {
+          reg.waiting.postMessage('skipWaiting');
+          setTimeout(() => {
+            window.location.reload();
+          }, 2000);
+        } else {
           window.location.reload();
-        }, 2000);
-      } else {
-        window.location.reload();
-      }
+        }
+      });
     };
 
     window.kaloratCameraPermissionGranted = async function () {
@@ -198,18 +174,6 @@
         return false;
       }
     };
-
-    registerServiceWorker();
-
-    // Auto-hide splash when Flutter engine is ready
-    window.addEventListener('load', function () {
-      // Create a timeout fallback just in case Flutter takes too long or fails silently
-      // But typically _flutter.loader.loadEntrypoint will handle this.
-      // Since we use flutter_bootstrap.js, we should hook into the app running.
-
-      // Ideally we'd use onEntrypointLoaded, but with the default index.html structure
-      // we can just listen for the first frame or set a reasonable timeout if we don't have hooks.
-    });
   </script>
   <script src="https://github.com/corbado/flutter-passkeys/releases/download/2.4.0/bundle.js"
     type="application/javascript"></script>
