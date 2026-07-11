@@ -288,13 +288,25 @@ class _HomeScreenState extends State<HomeScreen>
 
       if (_cameras == null || forceRestart) {
         try {
-          _cameras = await availableCameras();
+          final allCameras = await availableCameras();
+          final filtered = <CameraDescription>[];
+          final backIdx = allCameras.indexWhere((c) => c.lensDirection == CameraLensDirection.back);
+          if (backIdx != -1) filtered.add(allCameras[backIdx]);
+          final frontIdx = allCameras.indexWhere((c) => c.lensDirection == CameraLensDirection.front);
+          if (frontIdx != -1) filtered.add(allCameras[frontIdx]);
+          _cameras = filtered.isNotEmpty ? filtered : allCameras;
         } catch (e) {
           debugPrint('Error accessing cameras: $e');
           if (PlatformUtils.isWeb) {
             await Future<void>.delayed(const Duration(milliseconds: 350));
             try {
-              _cameras = await availableCameras();
+              final allCameras = await availableCameras();
+              final filtered = <CameraDescription>[];
+              final backIdx = allCameras.indexWhere((c) => c.lensDirection == CameraLensDirection.back);
+              if (backIdx != -1) filtered.add(allCameras[backIdx]);
+              final frontIdx = allCameras.indexWhere((c) => c.lensDirection == CameraLensDirection.front);
+              if (frontIdx != -1) filtered.add(allCameras[frontIdx]);
+              _cameras = filtered.isNotEmpty ? filtered : allCameras;
             } catch (retryError) {
               debugPrint('Camera retry failed: $retryError');
               _cameras = [];
