@@ -5,12 +5,12 @@ import '../../theme/app_colors.dart';
 import '../../utils/platform_utils.dart';
 import 'welcome_step.dart';
 import 'name_step.dart';
-import 'gender_step.dart';
-import 'age_step.dart';
-import 'height_step.dart';
-import 'weight_step.dart';
 import 'goal_step.dart';
+import 'demographics_step.dart';
+import 'loading_teaser_step.dart';
+import 'metrics_step.dart';
 import 'activity_level_step.dart';
+import 'teaser_analysis_step.dart';
 import 'health_step.dart';
 import 'api_key_step.dart';
 import 'login_step.dart';
@@ -34,9 +34,9 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
   DateTime _birthdate = DateTime(2000, 1, 1);
   int _age = 25;
   double _height = 170.0;
-  double _weight = 70.0; // Double for precision
+  double _weight = 70.0; 
   int _goalIndex = 1; // 0: Lose, 1: Maintain, 2: Gain
-  int _activityLevel = 0; // 0: Sedentary ... 4: Very Active
+  int _activityLevel = 0; 
   String _apiKey = '';
   bool _healthSyncEnabled = false;
 
@@ -51,7 +51,6 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
     if (user != null) {
       _name = user.name;
       _birthdate = user.birthdate;
-      // Calculate age from birthdate
       final now = DateTime.now();
       _age = now.year - user.birthdate.year;
       if (now.month < user.birthdate.month ||
@@ -67,7 +66,6 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
       _healthSyncEnabled = user.healthSyncEnabled;
     }
 
-    // Restore current step
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final savedStep = provider.databaseService.getOnboardingStep();
       if (savedStep > 0 && savedStep < _totalSteps) {
@@ -77,10 +75,8 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
     });
   }
 
-  // Total steps depends on platform: 11 on web, 13 on mobile (with health + notification)
   int get _totalSteps => PlatformUtils.isWeb ? 11 : 13;
 
-  // The last step index (analysis) for hiding back button and progress
   int get _lastStepIndex => _totalSteps - 1;
 
   @override
@@ -92,7 +88,6 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
   void _nextPage() {
     FocusScope.of(context).unfocus();
     final nextStep = _currentPage + 1;
-    // Save progress
     context.read<AppProvider>().databaseService.saveOnboardingStep(nextStep);
 
     _pageController.nextPage(
@@ -103,14 +98,26 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
 
   void _previousPage() {
     FocusScope.of(context).unfocus();
-    _pageController.previousPage(
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeInOut,
-    );
+    
+    int prevIndex = _currentPage - 1;
+    final steps = _buildOnboardingSteps();
+    
+    if (prevIndex >= 0 && steps[prevIndex] is LoadingTeaserStep) {
+      prevIndex--; // Skip the loading step when going backward
+    }
+    
+    if (prevIndex >= 0) {
+      _pageController.animateToPage(
+        prevIndex,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
+    }
   }
 
   List<Widget> _buildOnboardingSteps() {
     final steps = <Widget>[
+      // Step 0
       WelcomeStep(
         language: _language,
         onLanguageChanged: (lang) {
@@ -119,6 +126,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
         },
         onNext: _nextPage,
       ),
+      // Step 1
       NameStep(
         language: _language,
         initialValue: _name,
@@ -128,50 +136,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
           _nextPage();
         },
       ),
-      GenderStep(
-        language: _language,
-        initialIndex: _genderIndex,
-        onNext: (index) {
-          setState(() => _genderIndex = index);
-          context.read<AppProvider>().updateUser(gender: index);
-          _nextPage();
-        },
-      ),
-      AgeStep(
-        language: _language,
-        initialValue: _age,
-        onNext: (value) {
-          setState(() => _age = value);
-          setState(() => _age = value);
-          // Approximate birthdate from age ONLY if we don't have a more precise one set
-          // Or simpler: always approximate if user changes age manually here,
-          // but if they login later with a real birthdate, we'll overwrite it.
-          final now = DateTime.now();
-          final birthdate = DateTime(now.year - value, now.month, now.day);
-          setState(() => _birthdate = birthdate);
-
-          context.read<AppProvider>().updateUser(birthdate: birthdate);
-          _nextPage();
-        },
-      ),
-      HeightStep(
-        language: _language,
-        initialValue: _height,
-        onNext: (value) {
-          setState(() => _height = value);
-          context.read<AppProvider>().updateUser(height: value);
-          _nextPage();
-        },
-      ),
-      WeightStep(
-        language: _language,
-        initialValue: _weight,
-        onNext: (value) {
-          setState(() => _weight = value);
-          context.read<AppProvider>().updateUser(weight: value);
-          _nextPage();
-        },
-      ),
+      // Step 2
       GoalStep(
         language: _language,
         initialIndex: _goalIndex,
@@ -181,6 +146,40 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
           _nextPage();
         },
       ),
+      // Step 3
+      DemographicsStep(
+        language: _language,
+        initialAge: _age,
+        initialGenderIndex: _genderIndex,
+        onNext: (age, genderIndex) {
+          setState(() {
+            _age = age;
+            _genderIndex = genderIndex;
+            final now = DateTime.now();
+            _birthdate = DateTime(now.year - age, now.month, now.day);
+          });
+          context.read<AppProvider>().updateUser(
+            birthdate: _birthdate,
+            gender: genderIndex,
+          );
+          _nextPage();
+        },
+      ),
+      // Step 4
+      MetricsStep(
+        language: _language,
+        initialHeight: _height,
+        initialWeight: _weight,
+        onNext: (height, weight) {
+          setState(() {
+            _height = height;
+            _weight = weight;
+          });
+          context.read<AppProvider>().updateUser(height: height, weight: weight);
+          _nextPage();
+        },
+      ),
+      // Step 5
       ActivityLevelStep(
         initialLevel: _activityLevel,
         onNext: (level) {
@@ -189,9 +188,50 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
           _nextPage();
         },
       ),
+      // Step 6
+      LoadingTeaserStep(
+        onNext: _nextPage,
+      ),
+      // Step 7: The "Aha!" Teaser
+      TeaserAnalysisStep(
+        age: _age,
+        genderIndex: _genderIndex,
+        height: _height,
+        weight: _weight,
+        activityLevelIndex: _activityLevel,
+        goalIndex: _goalIndex,
+        onNext: _nextPage,
+      ),
+      // Step 8: Login
+      LoginStep(
+        language: _language,
+        onNext: _nextPage,
+        onLoginSuccess: () {
+          final user = context.read<AppProvider>().user;
+          if (user != null) {
+            setState(() {
+              _name = user.name;
+              _birthdate = user.birthdate;
+              _height = user.height;
+              _weight = user.weight;
+              _goalIndex = user.goalIndex;
+              _genderIndex = user.genderIndex ?? 0;
+              _activityLevel = user.activityLevelIndex;
+              _healthSyncEnabled = user.healthSyncEnabled;
+
+              final now = DateTime.now();
+              _age = now.year - user.birthdate.year;
+              if (now.month < user.birthdate.month ||
+                  (now.month == user.birthdate.month &&
+                      now.day < user.birthdate.day)) {
+                _age--;
+              }
+            });
+          }
+        },
+      ),
     ];
 
-    // Only add HealthStep on mobile platforms
     if (!PlatformUtils.isWeb) {
       steps.add(
         HealthStep(
@@ -200,6 +240,18 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
             setState(() => _healthSyncEnabled = connected);
             context.read<AppProvider>().updateUser(
               healthSyncEnabled: connected,
+            );
+            _nextPage();
+          },
+        ),
+      );
+      steps.add(
+        NotificationStep(
+          language: _language,
+          onNext: (enabled) {
+            context.read<AppProvider>().updateUser(
+              mealRemindersEnabled: enabled,
+              weightRemindersEnabled: enabled,
             );
             _nextPage();
           },
@@ -217,53 +269,6 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
           _nextPage();
         },
       ),
-      LoginStep(
-        language: _language,
-        onNext: _nextPage,
-        onLoginSuccess: () {
-          // Refresh local state from provider after login
-          final user = context.read<AppProvider>().user;
-          if (user != null) {
-            setState(() {
-              _name = user.name;
-              _birthdate = user.birthdate;
-              _height = user.height;
-              _weight = user.weight;
-              _goalIndex = user.goalIndex;
-              _genderIndex = user.genderIndex ?? 0;
-              _activityLevel = user.activityLevelIndex;
-              _healthSyncEnabled = user.healthSyncEnabled;
-
-              // Recalculate age for display consistency
-              final now = DateTime.now();
-              _age = now.year - user.birthdate.year;
-              if (now.month < user.birthdate.month ||
-                  (now.month == user.birthdate.month &&
-                      now.day < user.birthdate.day)) {
-                _age--;
-              }
-            });
-          }
-        },
-      ),
-    ]);
-
-    if (!PlatformUtils.isWeb) {
-      steps.add(
-        NotificationStep(
-          language: _language,
-          onNext: (enabled) {
-            context.read<AppProvider>().updateUser(
-              mealRemindersEnabled: enabled,
-              weightRemindersEnabled: enabled,
-            );
-            _nextPage();
-          },
-        ),
-      );
-    }
-
-    steps.add(
       AnalysisStep(
         language: _language,
         name: _name,
@@ -275,7 +280,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
         apiKey: _apiKey,
         healthSyncEnabled: _healthSyncEnabled,
       ),
-    );
+    ]);
 
     return steps;
   }
@@ -283,17 +288,14 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor:
-          AppColors.limestone, // Or white if pursuing "Cal AI" stricter look
+      backgroundColor: AppColors.limestone, 
       body: SafeArea(
         child: Column(
           children: [
-            // Header (Back + Progress)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
               child: Row(
                 children: [
-                  // Hide back button on welcome (0) and analysis (last step)
                   if (_currentPage > 0 && _currentPage < _lastStepIndex)
                     GestureDetector(
                       onTap: _previousPage,
@@ -305,9 +307,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
                   else
                     const SizedBox(width: 24),
 
-                  if (_currentPage > 0 &&
-                      _currentPage <
-                          _lastStepIndex) // Hide on welcome and analysis
+                  if (_currentPage > 0 && _currentPage < _lastStepIndex)
                     Expanded(
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -338,8 +338,6 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
             Expanded(
               child: GestureDetector(
                 onHorizontalDragEnd: (details) {
-                  // Swipe Right (velocity > 0) -> Previous Page
-                  // Restrict swipe left (forward) to force valid input via buttons
                   if (details.primaryVelocity! > 200) {
                     if (_currentPage > 0) {
                       _previousPage();
@@ -348,8 +346,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
                 },
                 child: PageView(
                   controller: _pageController,
-                  physics:
-                      const NeverScrollableScrollPhysics(), // Disable native swipe
+                  physics: const NeverScrollableScrollPhysics(),
                   onPageChanged: (index) =>
                       setState(() => _currentPage = index),
                   children: _buildOnboardingSteps(),

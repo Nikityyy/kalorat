@@ -938,4 +938,65 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get close => 'Schließen';
+
+  @override
+  String get primaryGoal => 'Primäres Ziel';
+
+  @override
+  String get secondaryOutcomes => 'Sekundäre Ziele (Optional)';
+
+  @override
+  String get boostEnergy => 'Mehr Energie';
+
+  @override
+  String get boostEnergySubtitle => 'Fühl dich weniger müde';
+
+  @override
+  String get improveSleep => 'Besserer Schlaf';
+
+  @override
+  String get improveSleepSubtitle => 'Wach erfrischt auf';
+
+  @override
+  String get buildHabits => 'Gewohnheiten';
+
+  @override
+  String get buildHabitsSubtitle => 'Konsistenz aufbauen';
+
+  @override
+  String get aBitAboutYou => 'Über dich';
+
+  @override
+  String get biologicalSex => 'Biologisches Geschlecht';
+
+  @override
+  String get yourMeasurements => 'Deine Maße';
+
+  @override
+  String get analyzingBiometrics => 'Analysiere dein Profil...';
+
+  @override
+  String get calculatingMetabolicRate => 'Berechne Stoffwechselrate...';
+
+  @override
+  String get personalizingPlan => 'Personalisiere deinen Plan...';
+
+  @override
+  String get almostReady => 'Fast fertig...';
+
+  @override
+  String get planReady => 'Dein Plan ist fertig!';
+
+  @override
+  String get basedOnProfile =>
+      'Basierend auf deinem Profil ist hier dein Ziel:';
+
+  @override
+  String get dailyCalorieTarget => 'Tägliches Kalorienziel';
+
+  @override
+  String get signUpToSave => 'Erstelle ein Konto, um deinen Plan zu speichern.';
+
+  @override
+  String get createAccount => 'Konto erstellen';
 }

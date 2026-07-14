@@ -332,7 +332,9 @@
   "showAllWeights": "Show all {count} weights",
   "@showAllWeights": {
     "placeholders": {
-      "count": {"type": "int"}
+      "count": {
+        "type": "int"
+      }
     }
   },
   "editWeight": "Edit weight",
@@ -341,13 +343,21 @@
   "confirmWeightJump": "Save the change from {previous} to {next} kg?",
   "@confirmWeightJump": {
     "placeholders": {
-      "previous": {"type": "String"},
-      "next": {"type": "String"}
+      "previous": {
+        "type": "String"
+      },
+      "next": {
+        "type": "String"
+      }
     }
   },
   "weeklyDifference": "7-day change: {difference} kg",
   "@weeklyDifference": {
-    "placeholders": {"difference": {"type": "String"}}
+    "placeholders": {
+      "difference": {
+        "type": "String"
+      }
+    }
   },
   "switchCamera": "Switch camera",
   "flash": "Flash",
@@ -355,12 +365,36 @@
   "analysisUpdated": "Analysis updated!",
   "retryFailed": "Retry failed: {error}",
   "@retryFailed": {
-    "placeholders": {"error": {"type": "String"}}
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
   },
   "retryAnalysis": "Restart analysis",
   "syncData": "Sync data",
   "downloadStarted": "Download started",
   "restoreImportBackup": "Restore last import backup",
   "backupRestored": "Backup restored.",
-  "close": "Close"
+  "close": "Close",
+  "primaryGoal": "Primary Goal",
+  "secondaryOutcomes": "Secondary Outcomes (Optional)",
+  "boostEnergy": "Boost Energy",
+  "boostEnergySubtitle": "Feel less tired during the day",
+  "improveSleep": "Improve Sleep",
+  "improveSleepSubtitle": "Wake up refreshed",
+  "buildHabits": "Build Habits",
+  "buildHabitsSubtitle": "Consistency over time",
+  "aBitAboutYou": "A bit about you",
+  "biologicalSex": "Biological Sex",
+  "yourMeasurements": "Your measurements",
+  "analyzingBiometrics": "Analyzing your biometric profile...",
+  "calculatingMetabolicRate": "Calculating metabolic rate...",
+  "personalizingPlan": "Personalizing your recommendations...",
+  "almostReady": "Almost ready...",
+  "planReady": "Your plan is ready!",
+  "basedOnProfile": "Based on your profile, here is your target:",
+  "dailyCalorieTarget": "Daily Calorie Target",
+  "signUpToSave": "Sign up to save your plan and unlock AI features.",
+  "createAccount": "Create Account"
 }

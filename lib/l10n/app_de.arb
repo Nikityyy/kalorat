@@ -332,7 +332,9 @@
   "showAllWeights": "Alle {count} Gewichte anzeigen",
   "@showAllWeights": {
     "placeholders": {
-      "count": {"type": "int"}
+      "count": {
+        "type": "int"
+      }
     }
   },
   "editWeight": "Gewicht bearbeiten",
@@ -341,13 +343,21 @@
   "confirmWeightJump": "Änderung von {previous} auf {next} kg speichern?",
   "@confirmWeightJump": {
     "placeholders": {
-      "previous": {"type": "String"},
-      "next": {"type": "String"}
+      "previous": {
+        "type": "String"
+      },
+      "next": {
+        "type": "String"
+      }
     }
   },
   "weeklyDifference": "7-Tage-Differenz: {difference} kg",
   "@weeklyDifference": {
-    "placeholders": {"difference": {"type": "String"}}
+    "placeholders": {
+      "difference": {
+        "type": "String"
+      }
+    }
   },
   "switchCamera": "Kamera wechseln",
   "flash": "Blitz",
@@ -355,12 +365,36 @@
   "analysisUpdated": "Analyse aktualisiert!",
   "retryFailed": "Erneuter Versuch fehlgeschlagen: {error}",
   "@retryFailed": {
-    "placeholders": {"error": {"type": "String"}}
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
   },
   "retryAnalysis": "Analyse neu starten",
   "syncData": "Daten synchronisieren",
   "downloadStarted": "Download gestartet",
   "restoreImportBackup": "Letztes Import-Backup wiederherstellen",
   "backupRestored": "Backup wiederhergestellt.",
-  "close": "Schließen"
+  "close": "Schließen",
+  "primaryGoal": "Primäres Ziel",
+  "secondaryOutcomes": "Sekundäre Ziele (Optional)",
+  "boostEnergy": "Mehr Energie",
+  "boostEnergySubtitle": "Fühl dich weniger müde",
+  "improveSleep": "Besserer Schlaf",
+  "improveSleepSubtitle": "Wach erfrischt auf",
+  "buildHabits": "Gewohnheiten",
+  "buildHabitsSubtitle": "Konsistenz aufbauen",
+  "aBitAboutYou": "Über dich",
+  "biologicalSex": "Biologisches Geschlecht",
+  "yourMeasurements": "Deine Maße",
+  "analyzingBiometrics": "Analysiere dein Profil...",
+  "calculatingMetabolicRate": "Berechne Stoffwechselrate...",
+  "personalizingPlan": "Personalisiere deinen Plan...",
+  "almostReady": "Fast fertig...",
+  "planReady": "Dein Plan ist fertig!",
+  "basedOnProfile": "Basierend auf deinem Profil ist hier dein Ziel:",
+  "dailyCalorieTarget": "Tägliches Kalorienziel",
+  "signUpToSave": "Erstelle ein Konto, um deinen Plan zu speichern.",
+  "createAccount": "Konto erstellen"
 }

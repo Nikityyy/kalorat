@@ -22,12 +22,23 @@ class GoalStep extends StatefulWidget {
 }
 
 class _GoalStepState extends State<GoalStep> {
-  late int _selectedIndex;
+  late int _primaryGoalIndex;
+  final Set<int> _secondaryGoals = {};
 
   @override
   void initState() {
     super.initState();
-    _selectedIndex = widget.initialIndex;
+    _primaryGoalIndex = widget.initialIndex;
+  }
+
+  void _toggleSecondary(int index) {
+    setState(() {
+      if (_secondaryGoals.contains(index)) {
+        _secondaryGoals.remove(index);
+      } else {
+        _secondaryGoals.add(index);
+      }
+    });
   }
 
   @override
@@ -36,52 +47,77 @@ class _GoalStepState extends State<GoalStep> {
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const SizedBox(height: 24),
-          Text(l10n.whatIsYourGoal, style: AppTypography.displayMedium),
-          const SizedBox(height: 32),
-
-          _buildOption(
-            0,
-            l10n.loseWeight,
-            l10n.burnFatSubtitle,
-            Icons.arrow_downward,
+      child: CustomScrollView(
+        slivers: [
+          SliverToBoxAdapter(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 24),
+                Text(l10n.whatIsYourGoal, style: AppTypography.displayMedium),
+                const SizedBox(height: 32),
+                
+                Text(
+                  l10n.primaryGoal, 
+                  style: AppTypography.labelLarge.copyWith(color: AppColors.slate),
+                ),
+                const SizedBox(height: 16),
+                _buildPrimaryOption(0, l10n.loseWeight, l10n.burnFatSubtitle, Icons.arrow_downward),
+                const SizedBox(height: 12),
+                _buildPrimaryOption(1, l10n.maintainWeight, l10n.maintainSubtitle, Icons.check),
+                const SizedBox(height: 12),
+                _buildPrimaryOption(2, l10n.gainMuscle, l10n.buildMassSubtitle, Icons.arrow_upward),
+                
+                const SizedBox(height: 32),
+                Text(
+                  l10n.secondaryOutcomes, 
+                  style: AppTypography.labelLarge.copyWith(color: AppColors.slate),
+                ),
+                const SizedBox(height: 16),
+                _buildSecondaryOption(3, l10n.boostEnergy, l10n.boostEnergySubtitle, Icons.bolt),
+                const SizedBox(height: 12),
+                _buildSecondaryOption(4, l10n.improveSleep, l10n.improveSleepSubtitle, Icons.nightlight_round),
+                const SizedBox(height: 12),
+                _buildSecondaryOption(5, l10n.buildHabits, l10n.buildHabitsSubtitle, Icons.loop),
+                const SizedBox(height: 32),
+              ],
+            ),
           ),
-          const SizedBox(height: 16),
-          _buildOption(
-            1,
-            l10n.maintainWeight,
-            l10n.maintainSubtitle,
-            Icons.check,
+          SliverFillRemaining(
+            hasScrollBody: false,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                ActionButton(
+                  text: l10n.continueButton,
+                  onPressed: () => widget.onNext(_primaryGoalIndex),
+                ),
+                const SizedBox(height: 32),
+              ],
+            ),
           ),
-          const SizedBox(height: 16),
-          _buildOption(
-            2,
-            l10n.gainMuscle,
-            l10n.buildMassSubtitle,
-            Icons.arrow_upward,
-          ),
-
-          const Spacer(),
-          ActionButton(
-            text: l10n.createPlan,
-            onPressed: () => widget.onNext(_selectedIndex),
-          ),
-          const SizedBox(height: 32),
         ],
       ),
     );
   }
 
-  Widget _buildOption(int index, String title, String subtitle, IconData icon) {
+  Widget _buildPrimaryOption(int index, String title, String subtitle, IconData icon) {
     return BespokeSelectionCard(
       title: title,
       subtitle: subtitle,
       icon: Icon(icon, color: AppColors.slate, size: 28),
-      isSelected: _selectedIndex == index,
-      onTap: () => setState(() => _selectedIndex = index),
+      isSelected: _primaryGoalIndex == index,
+      onTap: () => setState(() => _primaryGoalIndex = index),
+    );
+  }
+
+  Widget _buildSecondaryOption(int index, String title, String subtitle, IconData icon) {
+    return BespokeSelectionCard(
+      title: title,
+      subtitle: subtitle,
+      icon: Icon(icon, color: AppColors.slate, size: 28),
+      isSelected: _secondaryGoals.contains(index),
+      onTap: () => _toggleSecondary(index),
     );
   }
 }

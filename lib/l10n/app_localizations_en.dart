@@ -926,4 +926,65 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get close => 'Close';
+
+  @override
+  String get primaryGoal => 'Primary Goal';
+
+  @override
+  String get secondaryOutcomes => 'Secondary Outcomes (Optional)';
+
+  @override
+  String get boostEnergy => 'Boost Energy';
+
+  @override
+  String get boostEnergySubtitle => 'Feel less tired during the day';
+
+  @override
+  String get improveSleep => 'Improve Sleep';
+
+  @override
+  String get improveSleepSubtitle => 'Wake up refreshed';
+
+  @override
+  String get buildHabits => 'Build Habits';
+
+  @override
+  String get buildHabitsSubtitle => 'Consistency over time';
+
+  @override
+  String get aBitAboutYou => 'A bit about you';
+
+  @override
+  String get biologicalSex => 'Biological Sex';
+
+  @override
+  String get yourMeasurements => 'Your measurements';
+
+  @override
+  String get analyzingBiometrics => 'Analyzing your biometric profile...';
+
+  @override
+  String get calculatingMetabolicRate => 'Calculating metabolic rate...';
+
+  @override
+  String get personalizingPlan => 'Personalizing your recommendations...';
+
+  @override
+  String get almostReady => 'Almost ready...';
+
+  @override
+  String get planReady => 'Your plan is ready!';
+
+  @override
+  String get basedOnProfile => 'Based on your profile, here is your target:';
+
+  @override
+  String get dailyCalorieTarget => 'Daily Calorie Target';
+
+  @override
+  String get signUpToSave =>
+      'Sign up to save your plan and unlock AI features.';
+
+  @override
+  String get createAccount => 'Create Account';
 }

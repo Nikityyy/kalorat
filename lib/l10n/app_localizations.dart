@@ -1861,6 +1861,126 @@ abstract class AppLocalizations {
   /// In de, this message translates to:
   /// **'Schließen'**
   String get close;
+
+  /// No description provided for @primaryGoal.
+  ///
+  /// In de, this message translates to:
+  /// **'Primäres Ziel'**
+  String get primaryGoal;
+
+  /// No description provided for @secondaryOutcomes.
+  ///
+  /// In de, this message translates to:
+  /// **'Sekundäre Ziele (Optional)'**
+  String get secondaryOutcomes;
+
+  /// No description provided for @boostEnergy.
+  ///
+  /// In de, this message translates to:
+  /// **'Mehr Energie'**
+  String get boostEnergy;
+
+  /// No description provided for @boostEnergySubtitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Fühl dich weniger müde'**
+  String get boostEnergySubtitle;
+
+  /// No description provided for @improveSleep.
+  ///
+  /// In de, this message translates to:
+  /// **'Besserer Schlaf'**
+  String get improveSleep;
+
+  /// No description provided for @improveSleepSubtitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Wach erfrischt auf'**
+  String get improveSleepSubtitle;
+
+  /// No description provided for @buildHabits.
+  ///
+  /// In de, this message translates to:
+  /// **'Gewohnheiten'**
+  String get buildHabits;
+
+  /// No description provided for @buildHabitsSubtitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Konsistenz aufbauen'**
+  String get buildHabitsSubtitle;
+
+  /// No description provided for @aBitAboutYou.
+  ///
+  /// In de, this message translates to:
+  /// **'Über dich'**
+  String get aBitAboutYou;
+
+  /// No description provided for @biologicalSex.
+  ///
+  /// In de, this message translates to:
+  /// **'Biologisches Geschlecht'**
+  String get biologicalSex;
+
+  /// No description provided for @yourMeasurements.
+  ///
+  /// In de, this message translates to:
+  /// **'Deine Maße'**
+  String get yourMeasurements;
+
+  /// No description provided for @analyzingBiometrics.
+  ///
+  /// In de, this message translates to:
+  /// **'Analysiere dein Profil...'**
+  String get analyzingBiometrics;
+
+  /// No description provided for @calculatingMetabolicRate.
+  ///
+  /// In de, this message translates to:
+  /// **'Berechne Stoffwechselrate...'**
+  String get calculatingMetabolicRate;
+
+  /// No description provided for @personalizingPlan.
+  ///
+  /// In de, this message translates to:
+  /// **'Personalisiere deinen Plan...'**
+  String get personalizingPlan;
+
+  /// No description provided for @almostReady.
+  ///
+  /// In de, this message translates to:
+  /// **'Fast fertig...'**
+  String get almostReady;
+
+  /// No description provided for @planReady.
+  ///
+  /// In de, this message translates to:
+  /// **'Dein Plan ist fertig!'**
+  String get planReady;
+
+  /// No description provided for @basedOnProfile.
+  ///
+  /// In de, this message translates to:
+  /// **'Basierend auf deinem Profil ist hier dein Ziel:'**
+  String get basedOnProfile;
+
+  /// No description provided for @dailyCalorieTarget.
+  ///
+  /// In de, this message translates to:
+  /// **'Tägliches Kalorienziel'**
+  String get dailyCalorieTarget;
+
+  /// No description provided for @signUpToSave.
+  ///
+  /// In de, this message translates to:
+  /// **'Erstelle ein Konto, um deinen Plan zu speichern.'**
+  String get signUpToSave;
+
+  /// No description provided for @createAccount.
+  ///
+  /// In de, this message translates to:
+  /// **'Konto erstellen'**
+  String get createAccount;
 }
 
 class _AppLocalizationsDelegate
