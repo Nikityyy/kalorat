@@ -82,10 +82,11 @@ class _MeScreenState extends State<MeScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildProfileHeader(user, provider.currentStreak),
+              _buildProfileHeader(user, provider.streakData),
               const SizedBox(height: 24),
               _buildBMISection(user),
               const SizedBox(height: 24),
+              _buildZeigarnikBlock(provider),
               _buildSectionHeader(l10n.today),
               const SizedBox(height: 12),
               const TodayStatsGrid(),
@@ -126,7 +127,7 @@ class _MeScreenState extends State<MeScreen> {
     );
   }
 
-  Widget _buildProfileHeader(UserModel user, int streak) {
+  Widget _buildProfileHeader(UserModel user, StreakData streakData) {
     final l10n = context.l10n;
     return Row(
       children: [
@@ -154,44 +155,196 @@ class _MeScreenState extends State<MeScreen> {
                 user.name,
                 style: AppTypography.displayMedium.copyWith(fontSize: 20),
               ),
-              if (streak > 0) ...[
-                const SizedBox(height: 4),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppColors.amber.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: AppColors.amber.withValues(alpha: 0.3),
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(
-                        Icons.local_fire_department,
-                        size: 14,
-                        color: AppColors.amber,
+              const SizedBox(height: 4),
+              Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
                       ),
-                      const SizedBox(width: 4),
-                      Text(
-                        l10n.streakDays(streak),
-                        style: AppTypography.labelLarge.copyWith(
-                          color: AppColors.amber,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12,
+                      decoration: BoxDecoration(
+                        color: AppColors.amber.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: AppColors.amber.withValues(alpha: 0.3),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.local_fire_department,
+                            size: 14,
+                            color: AppColors.amber,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            l10n.streakDays(streakData.streak),
+                            style: AppTypography.labelLarge.copyWith(
+                              color: AppColors.amber,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (streakData.availableFreezes > 0) ...[
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.blue.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: Colors.blue.withValues(alpha: 0.3),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.ac_unit,
+                              size: 14,
+                              color: Colors.blue,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              '${streakData.availableFreezes}',
+                              style: AppTypography.labelLarge.copyWith(
+                                color: Colors.blue,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ],
-                  ),
+                  ],
                 ),
               ],
+            ),
+          ),
+        ],
+      );
+    }
+
+  Widget _buildZeigarnikBlock(AppProvider provider) {
+    final streakData = provider.streakData;
+    final offset = provider.user?.dayStartHour ?? 0;
+    final now = DateTime.now();
+    final logicalNow = now.subtract(Duration(hours: offset));
+    final today = DateTime(logicalNow.year, logicalNow.month, logicalNow.day, 12 + offset);
+    
+    // Find Monday of the current week (logicalNow.weekday gives 1 for Mon, 7 for Sun)
+    final startOfWeek = today.subtract(Duration(days: logicalNow.weekday - 1));
+    
+    final isDe = provider.language == 'de';
+    final dayLabels = isDe ? ['MO', 'DI', 'MI', 'DO', 'FR', 'SA', 'SO'] : ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSectionHeader(isDe ? 'Wochenziel' : 'This Week'),
+        const SizedBox(height: 12),
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: AppColors.glacialWhite,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: AppColors.slate.withValues(alpha: 0.15),
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                streakData.streak == 0
+                    ? (isDe ? 'Beginne deine Woche stark.' : 'Start your week strong.')
+                    : (isDe ? 'Bleib dran!' : 'Keep the momentum going!'),
+                style: AppTypography.labelLarge.copyWith(
+                  color: AppColors.slate,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: List.generate(7, (index) {
+                  final day = startOfWeek.add(Duration(days: index));
+                  final isFuture = day.isAfter(today);
+                  final isToday = day.isAtSameMomentAs(today);
+                  
+                  // Check if logged
+                  final meals = provider.getMealsByDate(day);
+                  final hasMeals = meals.where((m) => !m.isPending).isNotEmpty;
+                  final isFrozen = streakData.frozenDays.contains(day);
+
+                  Color boxColor;
+                  Color? borderColor;
+                  
+                  if (isFuture) {
+                    boxColor = Colors.transparent;
+                    borderColor = AppColors.slate.withValues(alpha: 0.15);
+                  } else if (hasMeals) {
+                    boxColor = AppColors.primary;
+                  } else if (isFrozen) {
+                    boxColor = Colors.blue;
+                  } else if (isToday) {
+                    boxColor = Colors.transparent;
+                    borderColor = AppColors.slate.withValues(alpha: 0.4); // Zeigarnik tension
+                  } else {
+                    boxColor = AppColors.pebble; // Missed past day
+                  }
+
+                  return Column(
+                    children: [
+                      Text(
+                        dayLabels[index],
+                        style: TextStyle(
+                          fontFamily: 'JetBrains Mono',
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: isToday ? AppColors.slate : AppColors.slate.withValues(alpha: 0.4),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Container(
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          color: boxColor,
+                          borderRadius: BorderRadius.circular(8),
+                          border: borderColor != null
+                              ? Border.all(
+                                  color: borderColor,
+                                  width: isToday ? 2.0 : 1.0,
+                                  style: isFuture ? BorderStyle.solid : BorderStyle.solid,
+                                )
+                              : null,
+                        ),
+                        child: (hasMeals || isFrozen)
+                            ? Icon(
+                                isFrozen ? Icons.ac_unit : Icons.check,
+                                size: 18,
+                                color: Colors.white,
+                              )
+                            : null,
+                      ),
+                    ],
+                  );
+                }),
+              ),
             ],
           ),
         ),
+        const SizedBox(height: 24),
       ],
     );
   }

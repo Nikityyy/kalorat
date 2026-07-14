@@ -7,6 +7,20 @@ import '../models/models.dart';
 import '../services/services.dart';
 import '../utils/app_logger.dart';
 
+class StreakData {
+  final int streak;
+  final int availableFreezes;
+  final Set<DateTime> frozenDays;
+  final List<bool> last7DaysPresence; // true = logged or frozen, false = missed (for Zeigarnik block)
+
+  StreakData({
+    required this.streak,
+    required this.availableFreezes,
+    required this.frozenDays,
+    required this.last7DaysPresence,
+  });
+}
+
 class AppProvider extends ChangeNotifier {
   final DatabaseService _databaseService;
   late final OfflineQueueService _offlineQueueService;
@@ -35,6 +49,8 @@ class AppProvider extends ChangeNotifier {
   int _cachedWeekVersion = -1;
   Map<String, double>? _cachedMonthStats;
   int _cachedMonthVersion = -1;
+  StreakData? _cachedStreakData;
+  int _cachedStreakVersion = -1;
 
   /// Constructor with optional DI for testing.
   AppProvider({
@@ -679,28 +695,104 @@ class AppProvider extends ChangeNotifier {
     return _cachedMonthStats!;
   }
 
-  /// Computes streak: consecutive days (ending today) with at least 1 meal
-  int get currentStreak {
-    int streak = 0;
-    final now = DateTime.now();
-    final offset = _user?.dayStartHour ?? 0;
-    final logicalNow = now.subtract(Duration(hours: offset));
-
-    // Check at 12:00 PM of each logical day to safely map to the correct bucket
-    var checkDay = DateTime(
-      logicalNow.year,
-      logicalNow.month,
-      logicalNow.day,
-      12 + offset,
-    );
-
-    while (true) {
-      final meals = _databaseService.getMealsByDate(checkDay);
-      if (meals.where((m) => !m.isPending).isEmpty) break;
-      streak++;
-      checkDay = checkDay.subtract(const Duration(days: 1));
+  /// Computes streak data forwards from the beginning of time
+  StreakData get streakData {
+    if (_cachedStreakData != null && _cachedStreakVersion == _statsCacheVersion) {
+      return _cachedStreakData!;
     }
-    return streak;
+
+    final allMeals = _databaseService.getAllMeals();
+    if (allMeals.isEmpty) {
+      _cachedStreakData = StreakData(
+        streak: 0,
+        availableFreezes: 0,
+        frozenDays: {},
+        last7DaysPresence: List.generate(7, (_) => false),
+      );
+      _cachedStreakVersion = _statsCacheVersion;
+      return _cachedStreakData!;
+    }
+
+    final offset = _user?.dayStartHour ?? 0;
+    final uniqueDays = <DateTime>{};
+    for (final m in allMeals) {
+      if (!m.isPending) {
+        final adjusted = m.timestamp.subtract(Duration(hours: offset));
+        uniqueDays.add(DateTime(adjusted.year, adjusted.month, adjusted.day, 12 + offset));
+      }
+    }
+
+    if (uniqueDays.isEmpty) {
+      _cachedStreakData = StreakData(
+        streak: 0,
+        availableFreezes: 0,
+        frozenDays: {},
+        last7DaysPresence: List.generate(7, (_) => false),
+      );
+      _cachedStreakVersion = _statsCacheVersion;
+      return _cachedStreakData!;
+    }
+
+    final sortedDays = uniqueDays.toList()..sort((a, b) => a.compareTo(b));
+    
+    int streak = 0;
+    int availableFreezes = 0;
+    int consecutiveDaysForFreeze = 0;
+    Set<DateTime> frozenDays = {};
+
+    final firstDay = sortedDays.first;
+    final now = DateTime.now();
+    final logicalNow = now.subtract(Duration(hours: offset));
+    final today = DateTime(logicalNow.year, logicalNow.month, logicalNow.day, 12 + offset);
+
+    DateTime checkDay = firstDay;
+
+    while (!checkDay.isAfter(today)) {
+      if (uniqueDays.contains(checkDay)) {
+        streak++;
+        consecutiveDaysForFreeze++;
+        if (consecutiveDaysForFreeze >= 7) {
+          availableFreezes = (availableFreezes + 1).clamp(0, 2);
+          consecutiveDaysForFreeze = 0;
+        }
+      } else {
+        if (checkDay == today) {
+          // Do nothing, day isn't over.
+        } else if (availableFreezes > 0) {
+          availableFreezes--;
+          streak++;
+          frozenDays.add(checkDay);
+          consecutiveDaysForFreeze = 0;
+        } else {
+          streak = 0;
+          consecutiveDaysForFreeze = 0;
+          frozenDays.clear();
+          availableFreezes = 0;
+        }
+      }
+      checkDay = checkDay.add(const Duration(days: 1));
+    }
+
+    // Calculate last 7 days presence for Zeigarnik UI
+    // Days are [today - 6, today - 5, ..., today]
+    List<bool> last7 = [];
+    for (int i = 6; i >= 0; i--) {
+      final d = today.subtract(Duration(days: i));
+      if (uniqueDays.contains(d) || frozenDays.contains(d)) {
+        last7.add(true);
+      } else {
+        last7.add(false);
+      }
+    }
+
+    _cachedStreakData = StreakData(
+      streak: streak,
+      availableFreezes: availableFreezes,
+      frozenDays: frozenDays,
+      last7DaysPresence: last7,
+    );
+    _cachedStreakVersion = _statsCacheVersion;
+    return _cachedStreakData!;
   }
 
   /// Returns stats with daily averages for a date range

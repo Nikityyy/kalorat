@@ -15,6 +15,7 @@ import 'health_step.dart';
 import 'api_key_step.dart';
 import 'login_step.dart';
 import 'notification_step.dart';
+import 'contract_step.dart';
 import 'analysis_step.dart';
 
 class OnboardingFlow extends StatefulWidget {
@@ -75,7 +76,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
     });
   }
 
-  int get _totalSteps => PlatformUtils.isWeb ? 11 : 13;
+  int get _totalSteps => PlatformUtils.isWeb ? 12 : 14;
 
   int get _lastStepIndex => _totalSteps - 1;
 
@@ -268,6 +269,11 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
           context.read<AppProvider>().updateUser(apiKey: key);
           _nextPage();
         },
+      ),
+      ContractStep(
+        language: _language,
+        name: _name,
+        onNext: _nextPage,
       ),
       AnalysisStep(
         language: _language,
