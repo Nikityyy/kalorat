@@ -1,4 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="ic_launcher_background">#FFFFFF</color>
+    
+    <!-- Widget Color Palette (Light Theme) -->
+    <color name="widget_background">#FAFAFA</color>
+    <color name="widget_border">#E4E4E7</color>
+    <color name="text_primary">#18181B</color>
+    <color name="text_secondary">#71717A</color>
+    <color name="widget_divider">#E4E4E7</color>
+    
+    <color name="flame_tracked">#0F5838</color>
+    <color name="flame_tracked_fill">#120F5838</color>
+    <color name="flame_untracked">#ED2939</color>
 </resources>

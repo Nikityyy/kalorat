@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Widget Color Palette (Dark Theme) -->
+    <color name="widget_background">#0A0A0A</color>
+    <color name="widget_border">#27272A</color>
+    <color name="text_primary">#FFFFFF</color>
+    <color name="text_secondary">#A1A1AA</color>
+    <color name="widget_divider">#27272A</color>
+    
+    <color name="flame_tracked">#0F5838</color>
+    <color name="flame_tracked_fill">#150F5838</color>
+    <color name="flame_untracked">#ED2939</color>
+</resources>

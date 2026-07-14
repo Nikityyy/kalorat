@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:ui' as ui;
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
@@ -537,6 +538,21 @@ class AppProvider extends ChangeNotifier {
   /// Clears all cached stats - called when meals are modified
   void _invalidateStatsCache() {
     _statsCacheVersion++;
+    
+    // Sync to native home widgets
+    try {
+      final currentStreakData = streakData;
+      // Use the last element (today) to check if tracked today
+      final isTrackedToday = currentStreakData.last7DaysPresence.isNotEmpty && currentStreakData.last7DaysPresence.last;
+      
+      WidgetService.updateWidgetData(
+        streak: currentStreakData.streak,
+        isTrackedToday: isTrackedToday,
+        weekHistoryJson: jsonEncode(currentStreakData.last7DaysPresence),
+      );
+    } catch (e) {
+      AppLogger.error('AppProvider', 'Failed to update widgets', e);
+    }
   }
 
   // Weight operations

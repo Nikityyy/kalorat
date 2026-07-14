@@ -7,3 +7,4 @@ export 'offline_queue_service.dart';
 export 'storage_service.dart';
 export 'sync_service.dart';
 export 'pwa_service.dart';
+export 'widget_service.dart';

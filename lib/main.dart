@@ -8,6 +8,7 @@ import 'screens/main_screen.dart';
 import 'screens/onboarding/onboarding_flow.dart';
 import 'theme/app_colors.dart';
 import 'theme/app_theme.dart';
+import 'services/widget_service.dart';
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
@@ -15,6 +16,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await WidgetService.initialize();
 
   // Lock to portrait mode only
   await SystemChrome.setPreferredOrientations([
