@@ -734,7 +734,7 @@ class AppProvider extends ChangeNotifier {
     for (final m in allMeals) {
       if (!m.isPending) {
         final adjusted = m.timestamp.subtract(Duration(hours: offset));
-        uniqueDays.add(DateTime(adjusted.year, adjusted.month, adjusted.day, 12 + offset));
+        uniqueDays.add(DateTime.utc(adjusted.year, adjusted.month, adjusted.day));
       }
     }
 
@@ -759,7 +759,7 @@ class AppProvider extends ChangeNotifier {
     final firstDay = sortedDays.first;
     final now = DateTime.now();
     final logicalNow = now.subtract(Duration(hours: offset));
-    final today = DateTime(logicalNow.year, logicalNow.month, logicalNow.day, 12 + offset);
+    final today = DateTime.utc(logicalNow.year, logicalNow.month, logicalNow.day);
 
     DateTime checkDay = firstDay;
 
@@ -772,7 +772,7 @@ class AppProvider extends ChangeNotifier {
           consecutiveDaysForFreeze = 0;
         }
       } else {
-        if (checkDay == today) {
+        if (checkDay.isAtSameMomentAs(today)) {
           // Do nothing, day isn't over.
         } else if (availableFreezes > 0) {
           availableFreezes--;
@@ -786,14 +786,14 @@ class AppProvider extends ChangeNotifier {
           availableFreezes = 0;
         }
       }
-      checkDay = checkDay.add(const Duration(days: 1));
+      checkDay = DateTime.utc(checkDay.year, checkDay.month, checkDay.day + 1);
     }
 
     // Calculate last 7 days presence for Zeigarnik UI
     // Days are [today - 6, today - 5, ..., today]
     List<bool> last7 = [];
     for (int i = 6; i >= 0; i--) {
-      final d = today.subtract(Duration(days: i));
+      final d = DateTime.utc(today.year, today.month, today.day - i);
       if (uniqueDays.contains(d) || frozenDays.contains(d)) {
         last7.add(true);
       } else {
