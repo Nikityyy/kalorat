@@ -87,4 +87,25 @@ void main() {
     );
     expect(database.getMealsByDate(DateTime(2026, 7, 8)), isEmpty);
   });
+
+  test('meal at 3am is attributed to previous day when dayStartHour is 4', () async {
+    await database.setDayStartHour(4);
+    final lateNightMeal = MealModel(
+      id: 'late_night',
+      timestamp: DateTime(2026, 7, 19, 3), // 19th July 3:00 AM
+      photoPaths: const [],
+      mealName: 'Late Snack',
+    );
+    await database.saveMeal(lateNightMeal);
+
+    // Should appear in history of 18th July
+    final mealsOn18th = database.getMealsByDate(DateTime(2026, 7, 18));
+    expect(mealsOn18th.map((m) => m.id), contains('late_night'));
+
+    final mealsByRangeOn18th = database.getMealsByDateRange(
+      DateTime(2026, 7, 18, 4),
+      DateTime(2026, 7, 19, 4),
+    );
+    expect(mealsByRangeOn18th.map((m) => m.id), contains('late_night'));
+  });
 }

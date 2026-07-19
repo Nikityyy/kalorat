@@ -40,9 +40,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
     final logicalNow = now.subtract(Duration(hours: offset));
 
     // Ensure _selectedDate is aligned with logical today if it was initialized to physical now
-    if (_selectedDate.year == now.year &&
-        _selectedDate.month == now.month &&
-        _selectedDate.day == now.day) {
+    if (_selectedDate.hour != 0 || _selectedDate.minute != 0) {
       _selectedDate = DateTime(
         logicalNow.year,
         logicalNow.month,
@@ -66,8 +64,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
         break;
       case 1: // Week
         // Start of week (Monday)
-        final startOfWeek = logicalNow.subtract(
-          Duration(days: logicalNow.weekday - 1),
+        final startOfWeek = _selectedDate.subtract(
+          Duration(days: _selectedDate.weekday - 1),
         );
         start = DateTime(
           startOfWeek.year,
@@ -79,13 +77,13 @@ class _HistoryScreenState extends State<HistoryScreen> {
         filteredMeals = provider.getMealsByDateRange(start, end);
         break;
       case 2: // Month
-        start = DateTime(logicalNow.year, logicalNow.month, 1, offset);
-        end = DateTime(logicalNow.year, logicalNow.month + 1, 1, offset);
+        start = DateTime(_selectedDate.year, _selectedDate.month, 1, offset);
+        end = DateTime(_selectedDate.year, _selectedDate.month + 1, 1, offset);
         filteredMeals = provider.getMealsByDateRange(start, end);
         break;
       case 3: // Year
-        start = DateTime(logicalNow.year, 1, 1, offset);
-        end = DateTime(logicalNow.year + 1, 1, 1, offset);
+        start = DateTime(_selectedDate.year, 1, 1, offset);
+        end = DateTime(_selectedDate.year + 1, 1, 1, offset);
         filteredMeals = provider.getMealsByDateRange(start, end);
         break;
     }

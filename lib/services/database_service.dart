@@ -70,6 +70,10 @@ class DatabaseService {
     _weightsBox = await _openBoxWithFallback<WeightModel>(weightsBoxName);
     await _openBoxWithFallback('settings_box');
 
+    if (_userBox.isNotEmpty) {
+      _dayStartHour = _userBox.getAt(0)?.dayStartHour ?? 0;
+    }
+
     await _buildIndices();
   }
 
@@ -88,7 +92,7 @@ class DatabaseService {
 
     try {
       for (final meal in _mealsBox.values) {
-        final dateKey = _getDateKey(meal.timestamp);
+        final dateKey = _getTimestampDateKey(meal.timestamp);
         if (!_mealsDateIndex.containsKey(dateKey)) {
           _mealsDateIndex[dateKey] = [];
         }
@@ -110,11 +114,22 @@ class DatabaseService {
     }
   }
 
-  /// Returns the date key for a given timestamp, adjusted by [_dayStartHour].
-  /// A meal at 02:30 with dayStartHour=4 is attributed to the previous day.
-  String _getDateKey(DateTime date) {
-    final adjusted = date.subtract(Duration(hours: _dayStartHour));
+  /// Always converts a physical meal timestamp to its logical date key.
+  String _getTimestampDateKey(DateTime timestamp) {
+    final adjusted = timestamp.subtract(Duration(hours: _dayStartHour));
     return '${adjusted.year}-${adjusted.month.toString().padLeft(2, '0')}-${adjusted.day.toString().padLeft(2, '0')}';
+  }
+
+  /// Returns the logical date key for a given timestamp or date lookup.
+  String _getDateKey(DateTime date) {
+    if (date.hour == 0 &&
+        date.minute == 0 &&
+        date.second == 0 &&
+        date.millisecond == 0 &&
+        date.microsecond == 0) {
+      return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+    }
+    return _getTimestampDateKey(date);
   }
 
   // Settings operations
@@ -150,6 +165,7 @@ class DatabaseService {
   }
 
   Future<void> saveUser(UserModel user) async {
+    final oldDayStart = _dayStartHour;
     if (!Hive.isBoxOpen(userBoxName)) {
       // Re-init if needed or return
       _userBox = await Hive.openBox<UserModel>(userBoxName);
@@ -158,6 +174,10 @@ class DatabaseService {
       await _userBox.add(user);
     } else {
       await _userBox.putAt(0, user);
+    }
+    _dayStartHour = user.dayStartHour;
+    if (oldDayStart != _dayStartHour) {
+      await _buildIndices();
     }
   }
 
@@ -239,7 +259,7 @@ class DatabaseService {
     if (existingKey != null) {
       final oldMeal = _mealsBox.get(existingKey);
       if (oldMeal != null) {
-        final oldDateKey = _getDateKey(oldMeal.timestamp);
+        final oldDateKey = _getTimestampDateKey(oldMeal.timestamp);
         _mealsDateIndex[oldDateKey]?.removeWhere((m) => m.id == meal.id);
         if ((_mealsDateIndex[oldDateKey]?.isEmpty ?? true)) {
           _daysWithMeals.remove(oldDateKey);
@@ -248,7 +268,7 @@ class DatabaseService {
     }
 
     // Add new version to index
-    final newDateKey = _getDateKey(meal.timestamp);
+    final newDateKey = _getTimestampDateKey(meal.timestamp);
     if (!_mealsDateIndex.containsKey(newDateKey)) {
       _mealsDateIndex[newDateKey] = [];
     }
@@ -270,7 +290,7 @@ class DatabaseService {
     final meal = _mealsBox.get(key);
 
     if (meal != null) {
-      final dateKey = _getDateKey(meal.timestamp);
+      final dateKey = _getTimestampDateKey(meal.timestamp);
       _mealsDateIndex[dateKey]?.removeWhere((m) => m.id == mealId);
       if ((_mealsDateIndex[dateKey]?.isEmpty ?? true)) {
         _daysWithMeals.remove(dateKey);
