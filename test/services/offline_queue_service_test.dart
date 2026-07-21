@@ -20,7 +20,10 @@ class _QueueDatabase extends DatabaseService {
   bool hasMeal(String mealId) => meal?.id == mealId;
 
   @override
-  Future<void> saveMeal(MealModel meal) async => this.meal = meal;
+  Future<MealModel> saveMeal(MealModel meal) async {
+    this.meal = meal;
+    return meal;
+  }
 }
 
 void main() {

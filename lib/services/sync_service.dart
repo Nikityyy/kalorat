@@ -7,7 +7,7 @@ import '../utils/app_logger.dart';
 import 'database_service.dart';
 
 bool shouldReplaceVersion(DateTime candidate, DateTime current) =>
-    candidate.isAfter(current);
+    candidate.toUtc().isAfter(current.toUtc());
 
 /// Cloud sync service using Supabase PostgreSQL.
 /// Handles bidirectional sync between local Hive storage and Supabase.
@@ -304,7 +304,9 @@ class SyncService {
       carbsPer100g: (data['carbs_per_100g'] as num?)?.toDouble(),
       fatsPer100g: (data['fats_per_100g'] as num?)?.toDouble(),
       mealContext: data['meal_context'] as String?,
-      updatedAt: DateTime.tryParse(data['updated_at'] ?? ''),
+      updatedAt: data['updated_at'] != null
+          ? DateTime.parse(data['updated_at']).toUtc()
+          : null,
     );
   }
 
@@ -314,7 +316,9 @@ class SyncService {
       weight: (data['weight'] as num).toDouble(),
       note: data['note'] as String?,
       isPending: false, // Content from cloud is by definition synced
-      updatedAt: DateTime.tryParse(data['updated_at'] ?? ''),
+      updatedAt: data['updated_at'] != null
+          ? DateTime.parse(data['updated_at']).toUtc()
+          : null,
     );
   }
 
@@ -446,7 +450,7 @@ class SyncService {
     'carbs_per_100g': meal.carbsPer100g,
     'fats_per_100g': meal.fatsPer100g,
     'meal_context': meal.mealContext,
-    'updated_at': meal.updatedAt.toIso8601String(),
+    'updated_at': meal.updatedAt.toUtc().toIso8601String(),
   };
 
   Future<void> _deleteWithTombstone(
@@ -546,7 +550,7 @@ class SyncService {
     if (tombstone != null &&
         !shouldReplaceVersion(
           localUpdatedAt,
-          DateTime.parse(tombstone['deleted_at']),
+          DateTime.parse(tombstone['deleted_at']).toUtc(),
         )) {
       return false;
     }
@@ -561,7 +565,7 @@ class SyncService {
     return remote == null ||
         shouldReplaceVersion(
           localUpdatedAt,
-          DateTime.parse(remote['updated_at']),
+          DateTime.parse(remote['updated_at']).toUtc(),
         );
   }
 }

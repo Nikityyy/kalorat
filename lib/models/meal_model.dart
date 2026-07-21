@@ -119,7 +119,7 @@ class MealModel extends HiveObject {
     this.fatsPer100g,
     this.mealContext,
     DateTime? updatedAt,
-  }) : updatedAt = updatedAt ?? DateTime.now();
+  }) : updatedAt = updatedAt?.toUtc() ?? DateTime.now().toUtc();
 
   MealModel copyWith({
     String? id,
@@ -167,7 +167,7 @@ class MealModel extends HiveObject {
       carbsPer100g: carbsPer100g ?? this.carbsPer100g,
       fatsPer100g: fatsPer100g ?? this.fatsPer100g,
       mealContext: mealContext ?? this.mealContext,
-      updatedAt: updatedAt ?? this.updatedAt,
+      updatedAt: updatedAt?.toUtc() ?? this.updatedAt.toUtc(),
     );
   }
 
@@ -234,7 +234,7 @@ class MealModel extends HiveObject {
     'carbsPer100g': carbsPer100g,
     'fatsPer100g': fatsPer100g,
     'mealContext': mealContext,
-    'updatedAt': updatedAt.toIso8601String(),
+    'updatedAt': updatedAt.toUtc().toIso8601String(),
   };
 
   factory MealModel.fromJson(Map<String, dynamic> json) => MealModel(
@@ -263,6 +263,8 @@ class MealModel extends HiveObject {
     carbsPer100g: (json['carbsPer100g'] as num?)?.toDouble(),
     fatsPer100g: (json['fatsPer100g'] as num?)?.toDouble(),
     mealContext: json['mealContext'],
-    updatedAt: DateTime.tryParse(json['updatedAt'] ?? ''),
+    updatedAt: json['updatedAt'] != null
+        ? DateTime.tryParse(json['updatedAt'])?.toUtc()
+        : null,
   );
 }

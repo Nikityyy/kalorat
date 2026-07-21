@@ -249,10 +249,10 @@ class DatabaseService {
     return _mealsBox.values.where((meal) => meal.isPending).toList();
   }
 
-  Future<void> saveMeal(MealModel meal) async {
+  Future<MealModel> saveMeal(MealModel meal) async {
     meal.validate();
-    meal = meal.copyWith(updatedAt: DateTime.now());
-    final existingKey = _findMealKey(meal.id);
+    final updatedMeal = meal.copyWith(updatedAt: DateTime.now().toUtc());
+    final existingKey = _findMealKey(updatedMeal.id);
 
     // Update Indices
     // If updating, remove old version from index
@@ -260,7 +260,7 @@ class DatabaseService {
       final oldMeal = _mealsBox.get(existingKey);
       if (oldMeal != null) {
         final oldDateKey = _getTimestampDateKey(oldMeal.timestamp);
-        _mealsDateIndex[oldDateKey]?.removeWhere((m) => m.id == meal.id);
+        _mealsDateIndex[oldDateKey]?.removeWhere((m) => m.id == updatedMeal.id);
         if ((_mealsDateIndex[oldDateKey]?.isEmpty ?? true)) {
           _daysWithMeals.remove(oldDateKey);
         }
@@ -268,21 +268,22 @@ class DatabaseService {
     }
 
     // Add new version to index
-    final newDateKey = _getTimestampDateKey(meal.timestamp);
+    final newDateKey = _getTimestampDateKey(updatedMeal.timestamp);
     if (!_mealsDateIndex.containsKey(newDateKey)) {
       _mealsDateIndex[newDateKey] = [];
     }
-    _mealsDateIndex[newDateKey]!.add(meal);
+    _mealsDateIndex[newDateKey]!.add(updatedMeal);
     // Sort to keep order
     _mealsDateIndex[newDateKey]!.sort(compareMealsNewestFirst);
     _daysWithMeals.add(newDateKey);
 
     // Save to Hive
     if (existingKey != null) {
-      await _mealsBox.put(existingKey, meal);
+      await _mealsBox.put(existingKey, updatedMeal);
     } else {
-      await _mealsBox.put(meal.id, meal);
+      await _mealsBox.put(updatedMeal.id, updatedMeal);
     }
+    return updatedMeal;
   }
 
   Future<void> deleteMeal(String mealId) async {
@@ -389,7 +390,7 @@ class DatabaseService {
 
   Future<void> saveWeight(WeightModel weight) async {
     weight.validate();
-    weight = weight.copyWith(updatedAt: DateTime.now(), isPending: true);
+    weight = weight.copyWith(updatedAt: DateTime.now().toUtc(), isPending: true);
     final existingIndex = _weightsBox.values.toList().indexWhere(
       (w) =>
           w.date.year == weight.date.year &&

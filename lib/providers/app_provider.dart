@@ -505,19 +505,19 @@ class AppProvider extends ChangeNotifier {
       }
     }
 
-    await _databaseService.saveMeal(meal);
+    final savedMeal = await _databaseService.saveMeal(meal);
     _invalidateStatsCache(); // Invalidate on meal change
 
     // Sync meal to cloud (fire-and-forget, only if not pending and not guest)
-    if (!meal.isPending && !(_user?.isGuest ?? true)) {
-      _syncService.syncMeal(meal);
+    if (!savedMeal.isPending && !(_user?.isGuest ?? true)) {
+      _syncService.syncMeal(savedMeal);
     }
 
     // Sync to health platform if enabled
     if (_user?.healthSyncEnabled == true &&
         _user?.syncMealsToHealth == true &&
-        !meal.isPending) {
-      await _healthService.writeMealData(meal);
+        !savedMeal.isPending) {
+      await _healthService.writeMealData(savedMeal);
     }
 
     notifyListeners();

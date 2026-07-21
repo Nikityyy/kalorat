@@ -25,7 +25,7 @@ class WeightModel extends HiveObject {
     this.note,
     this.isPending = true,
     DateTime? updatedAt,
-  }) : updatedAt = updatedAt ?? DateTime.now();
+  }) : updatedAt = updatedAt?.toUtc() ?? DateTime.now().toUtc();
 
   WeightModel copyWith({
     DateTime? date,
@@ -39,7 +39,7 @@ class WeightModel extends HiveObject {
       weight: weight ?? this.weight,
       note: note ?? this.note,
       isPending: isPending ?? this.isPending,
-      updatedAt: updatedAt ?? this.updatedAt,
+      updatedAt: updatedAt?.toUtc() ?? this.updatedAt.toUtc(),
     );
   }
 
@@ -57,7 +57,7 @@ class WeightModel extends HiveObject {
     'weight': weight,
     'note': note,
     'isPending': isPending,
-    'updatedAt': updatedAt.toIso8601String(),
+    'updatedAt': updatedAt.toUtc().toIso8601String(),
   };
 
   factory WeightModel.fromJson(Map<String, dynamic> json) => WeightModel(
@@ -65,6 +65,8 @@ class WeightModel extends HiveObject {
     weight: (json['weight'] ?? 0).toDouble(),
     note: json['note'],
     isPending: json['isPending'] ?? false, // Default to synced if from cloud
-    updatedAt: DateTime.tryParse(json['updatedAt'] ?? ''),
+    updatedAt: json['updatedAt'] != null
+        ? DateTime.tryParse(json['updatedAt'])?.toUtc()
+        : null,
   );
 }
