@@ -155,7 +155,7 @@ class MealCard extends StatelessWidget {
                         children: [
                           if (!meal.isPending) ...[
                             Text(
-                              '${meal.calories.toInt()} ${l10n.kcal}',
+                              '${meal.calories.round()} ${l10n.kcal}',
                               style: AppTypography.dataMedium.copyWith(
                                 fontSize: 20,
                                 fontWeight: FontWeight.bold,

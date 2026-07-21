@@ -26,7 +26,7 @@ class TodayStatsGrid extends StatelessWidget {
               child: _buildStatCard(
                 title: l10n.calories,
                 value:
-                    '${stats['calories']!.toInt()} / ${user.dailyCalorieTarget.toInt()}',
+                    '${stats['calories']!.round()} / ${user.dailyCalorieTarget.round()}',
                 unit: l10n.kcal,
                 icon: Icons.local_fire_department_outlined,
                 color: AppColors.primary,
@@ -38,7 +38,7 @@ class TodayStatsGrid extends StatelessWidget {
               child: _buildStatCard(
                 title: l10n.protein,
                 value:
-                    '${stats['protein']!.toInt()} / ${user.dailyProteinTarget.toInt()}',
+                    '${stats['protein']!.round()} / ${user.dailyProteinTarget.round()}',
                 unit: l10n.grams,
                 icon: Icons.fitness_center_outlined,
                 color: AppColors.styrianForest,
@@ -54,7 +54,7 @@ class TodayStatsGrid extends StatelessWidget {
               child: _buildStatCard(
                 title: l10n.carbs,
                 value:
-                    '${stats['carbs']!.toInt()} / ${user.dailyCarbTarget.toInt()}',
+                    '${stats['carbs']!.round()} / ${user.dailyCarbTarget.round()}',
                 unit: l10n.grams,
                 icon: Icons.bakery_dining_outlined,
                 color: AppColors.limestone,
@@ -66,7 +66,7 @@ class TodayStatsGrid extends StatelessWidget {
               child: _buildStatCard(
                 title: l10n.fats,
                 value:
-                    '${stats['fats']!.toInt()} / ${user.dailyFatTarget.toInt()}',
+                    '${stats['fats']!.round()} / ${user.dailyFatTarget.round()}',
                 unit: l10n.grams,
                 icon: Icons.opacity_outlined,
                 color: AppColors.limestone,

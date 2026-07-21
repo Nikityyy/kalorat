@@ -339,7 +339,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
     int divisor = 1,
   }) {
     // Helper to divide and format
-    String fmt(double? val) => ((val ?? 0) / divisor).toStringAsFixed(0);
+    String fmt(double? val) => ((val ?? 0) / divisor).round().toString();
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceAround,

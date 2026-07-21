@@ -624,7 +624,7 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
   }
 
   void _showEditCaloriesDialog() {
-    final currentCal = (_meal.calories * _portionMultiplier).toInt();
+    final currentCal = (_meal.calories * _portionMultiplier).round();
     final controller = TextEditingController(text: currentCal.toString());
 
     showDialog(
@@ -1019,7 +1019,7 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
                                         child: Text(
                                           _meal.portionUnit == 'serving'
                                               ? '${_portionMultiplier.toStringAsFixed(1)}x'
-                                              : '${(_portionMultiplier * _meal.quantityPerUnit).toInt()} ${displayUnitFor(_meal.portionUnit)}',
+                                              : '${(_portionMultiplier * _meal.quantityPerUnit).round()} ${displayUnitFor(_meal.portionUnit)}',
                                           style: AppTypography.bodyMedium
                                               .copyWith(
                                                 fontWeight: FontWeight.bold,
