@@ -4,6 +4,7 @@ import android.appwidget.AppWidgetManager
 import android.content.Context
 import android.content.SharedPreferences
 import android.widget.RemoteViews
+import es.antonborri.home_widget.HomeWidgetLaunchIntent
 import es.antonborri.home_widget.HomeWidgetProvider
 import org.json.JSONArray
 
@@ -20,6 +21,9 @@ class KaloratWidgetMediumProvider : HomeWidgetProvider() {
             val isTrackedToday = widgetData.getBoolean("is_tracked_today", false)
             
             val views = RemoteViews(context.packageName, R.layout.widget_medium)
+            
+            val pendingIntent = HomeWidgetLaunchIntent.getActivity(context, MainActivity::class.java)
+            views.setOnClickPendingIntent(R.id.widget_container, pendingIntent)
             
             // Update Medium Widget
             views.setTextViewText(R.id.widget_medium_streak_text, streak.toString())

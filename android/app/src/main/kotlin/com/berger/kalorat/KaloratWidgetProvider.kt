@@ -4,6 +4,7 @@ import android.appwidget.AppWidgetManager
 import android.content.Context
 import android.content.SharedPreferences
 import android.widget.RemoteViews
+import es.antonborri.home_widget.HomeWidgetLaunchIntent
 import es.antonborri.home_widget.HomeWidgetProvider
 import org.json.JSONArray
 
@@ -27,6 +28,9 @@ class KaloratWidgetProvider : HomeWidgetProvider() {
             // HomeWidget automatically handles basic data binding, but we need custom logic for the UI.
             
             val views = RemoteViews(context.packageName, R.layout.widget_small)
+            
+            val pendingIntent = HomeWidgetLaunchIntent.getActivity(context, MainActivity::class.java)
+            views.setOnClickPendingIntent(R.id.widget_container, pendingIntent)
             
             // Update Small Widget
             val streakText = if (streak == 1) "1 Day" else "$streak Days"

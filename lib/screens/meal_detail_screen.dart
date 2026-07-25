@@ -1180,11 +1180,11 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
             child: Column(
               children: [
                 _MacroSummaryRow(
-                  label: l10n.protein,
-                  value: '${protein.toStringAsFixed(1)}g',
-                  percent: percent(proteinCalories),
-                  color: const Color(0xFF2F73D9),
-                  onTap: _editProtein,
+                  label: l10n.fats,
+                  value: '${fats.toStringAsFixed(1)}g',
+                  percent: percent(fatCalories),
+                  color: const Color(0xFFFF5A5F),
+                  onTap: _editFats,
                 ),
                 const SizedBox(height: 12),
                 _MacroSummaryRow(
@@ -1196,11 +1196,11 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
                 ),
                 const SizedBox(height: 12),
                 _MacroSummaryRow(
-                  label: l10n.fats,
-                  value: '${fats.toStringAsFixed(1)}g',
-                  percent: percent(fatCalories),
-                  color: const Color(0xFFFF5A5F),
-                  onTap: _editFats,
+                  label: l10n.protein,
+                  value: '${protein.toStringAsFixed(1)}g',
+                  percent: percent(proteinCalories),
+                  color: const Color(0xFF2F73D9),
+                  onTap: _editProtein,
                 ),
               ],
             ),
@@ -1359,8 +1359,8 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
               ),
               const SizedBox(height: 12),
               field(
-                controller: proteinController,
-                label: context.l10n.proteinShort.toUpperCase(),
+                controller: fatsController,
+                label: context.l10n.fatsShort.toUpperCase(),
                 suffix: 'g',
               ),
               const SizedBox(height: 12),
@@ -1371,8 +1371,8 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
               ),
               const SizedBox(height: 12),
               field(
-                controller: fatsController,
-                label: context.l10n.fatsShort.toUpperCase(),
+                controller: proteinController,
+                label: context.l10n.proteinShort.toUpperCase(),
                 suffix: 'g',
               ),
             ],
@@ -1487,16 +1487,16 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
                 value: _meal.caloriesPer100g?.toStringAsFixed(0) ?? '-',
               ),
               _Per100Value(
-                label: l10n.proteinShort.toUpperCase(),
-                value: _formatPer100Macro(_meal.proteinPer100g),
+                label: l10n.fatsShort.toUpperCase(),
+                value: _formatPer100Macro(_meal.fatsPer100g),
               ),
               _Per100Value(
                 label: l10n.carbsShort.toUpperCase(),
                 value: _formatPer100Macro(_meal.carbsPer100g),
               ),
               _Per100Value(
-                label: l10n.fatsShort.toUpperCase(),
-                value: _formatPer100Macro(_meal.fatsPer100g),
+                label: l10n.proteinShort.toUpperCase(),
+                value: _formatPer100Macro(_meal.proteinPer100g),
               ),
             ],
           ),
@@ -1623,9 +1623,9 @@ class _MacroCalorieRingPainter extends CustomPainter {
     var startAngle = -math.pi / 2;
     const gap = 0.035;
     final segments = [
-      MapEntry(proteinCalories, _proteinColor),
-      MapEntry(carbsCalories, _carbsColor),
       MapEntry(fatCalories, _fatColor),
+      MapEntry(carbsCalories, _carbsColor),
+      MapEntry(proteinCalories, _proteinColor),
     ];
 
     for (final segment in segments) {

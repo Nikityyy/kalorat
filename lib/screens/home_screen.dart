@@ -1302,6 +1302,10 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   Widget _buildCameraPreview(CameraController controller) {
+    final previewAspectRatio = controller.value.aspectRatio > 1
+        ? (1 / controller.value.aspectRatio)
+        : controller.value.aspectRatio;
+
     return KeyedSubtree(
       key: ValueKey(_cameraPreviewKey),
       child: LayoutBuilder(
@@ -1325,9 +1329,7 @@ class _HomeScreenState extends State<HomeScreen>
                         fit: BoxFit.cover,
                         child: SizedBox(
                           width: constraints.maxWidth,
-                          height:
-                              constraints.maxWidth /
-                              controller.value.aspectRatio,
+                          height: constraints.maxWidth / previewAspectRatio,
                           child: CameraPreview(controller),
                         ),
                       ),

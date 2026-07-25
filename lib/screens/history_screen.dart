@@ -367,14 +367,14 @@ class _HistoryScreenState extends State<HistoryScreen> {
         Column(
           children: [
             Text(
-              '${fmt(stats['protein'])}${l10n.grams}',
+              '${fmt(stats['fats'])}${l10n.grams}',
               style: AppTypography.heroNumber.copyWith(
                 fontSize: 18,
                 color: AppColors.styrianForest,
               ),
             ),
             Text(
-              l10n.protein,
+              l10n.fats,
               style: TextStyle(
                 fontSize: 12,
                 color: AppColors.slate.withValues(alpha: 0.6),
@@ -403,14 +403,14 @@ class _HistoryScreenState extends State<HistoryScreen> {
         Column(
           children: [
             Text(
-              '${fmt(stats['fats'])}${l10n.grams}',
+              '${fmt(stats['protein'])}${l10n.grams}',
               style: AppTypography.heroNumber.copyWith(
                 fontSize: 18,
                 color: AppColors.styrianForest,
               ),
             ),
             Text(
-              l10n.fats,
+              l10n.protein,
               style: TextStyle(
                 fontSize: 12,
                 color: AppColors.slate.withValues(alpha: 0.6),
