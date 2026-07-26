@@ -1453,6 +1453,37 @@ class _HomeScreenState extends State<HomeScreen>
             ),
           ),
 
+        // Top Center Logo
+        if (canShowCamera)
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 16,
+            left: 80,
+            right: 80,
+            child: IgnorePointer(
+              child: SizedBox(
+                height: 52,
+                child: Center(
+                  child: Image.asset(
+                    'assets/kalorat-textlogo.webp',
+                    color: Colors.white,
+                    colorBlendMode: BlendMode.srcIn,
+                    height: 26,
+                    fit: BoxFit.contain,
+                    errorBuilder: (context, error, stackTrace) => const Text(
+                      'kalorat',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+
         // Camera tools
         if (canShowCamera)
           Positioned(
@@ -1519,6 +1550,11 @@ class _HomeScreenState extends State<HomeScreen>
               ),
             ),
           ),
+
+        // Meal Framing Guide & Info Text Overlay
+        if (canShowCamera && !_isAnalyzing && _capturedPhotos.isEmpty)
+          MealGuideOverlay(guideText: l10n.cameraGuideText),
+
 
         // Simple Top Bar
         if (_capturedPhotos.isNotEmpty)

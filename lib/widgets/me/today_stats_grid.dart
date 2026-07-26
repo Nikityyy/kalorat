@@ -36,13 +36,13 @@ class TodayStatsGrid extends StatelessWidget {
             const SizedBox(width: 12),
             Expanded(
               child: _buildStatCard(
-                title: l10n.fats,
+                title: l10n.protein,
                 value:
-                    '${stats['fats']!.round()} / ${user.dailyFatTarget.round()}',
+                    '${stats['protein']!.round()} / ${user.dailyProteinTarget.round()}',
                 unit: l10n.grams,
-                icon: Icons.opacity_outlined,
+                icon: Icons.fitness_center_outlined,
                 color: AppColors.styrianForest,
-                progress: stats['fats']! / user.dailyFatTarget,
+                progress: stats['protein']! / user.dailyProteinTarget,
               ),
             ),
           ],
@@ -64,13 +64,13 @@ class TodayStatsGrid extends StatelessWidget {
             const SizedBox(width: 12),
             Expanded(
               child: _buildStatCard(
-                title: l10n.protein,
+                title: l10n.fats,
                 value:
-                    '${stats['protein']!.round()} / ${user.dailyProteinTarget.round()}',
+                    '${stats['fats']!.round()} / ${user.dailyFatTarget.round()}',
                 unit: l10n.grams,
-                icon: Icons.fitness_center_outlined,
+                icon: Icons.opacity_outlined,
                 color: AppColors.limestone,
-                progress: stats['protein']! / user.dailyProteinTarget,
+                progress: stats['fats']! / user.dailyFatTarget,
               ),
             ),
           ],

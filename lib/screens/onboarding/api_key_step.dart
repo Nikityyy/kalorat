@@ -128,7 +128,7 @@ class _ApiKeyStepState extends State<ApiKeyStep> {
             isLoading: _isValidating,
             onPressed: _validateAndProceed,
           ),
-          const SizedBox(height: 32),
+          const SizedBox(height: 24),
         ],
       ),
     );

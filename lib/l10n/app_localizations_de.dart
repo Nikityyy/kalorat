@@ -999,4 +999,8 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get createAccount => 'Konto erstellen';
+
+  @override
+  String get cameraGuideText =>
+      'Zentriere deine Mahlzeit im Rahmen für präzises Tracking.';
 }

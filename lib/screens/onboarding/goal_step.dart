@@ -45,11 +45,11 @@ class _GoalStepState extends State<GoalStep> {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24.0),
-      child: CustomScrollView(
-        slivers: [
-          SliverToBoxAdapter(
+    return Column(
+      children: [
+        Expanded(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 24.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -79,25 +79,20 @@ class _GoalStepState extends State<GoalStep> {
                 _buildSecondaryOption(4, l10n.improveSleep, l10n.improveSleepSubtitle, Icons.nightlight_round),
                 const SizedBox(height: 12),
                 _buildSecondaryOption(5, l10n.buildHabits, l10n.buildHabitsSubtitle, Icons.loop),
-                const SizedBox(height: 32),
+                const SizedBox(height: 24),
               ],
             ),
           ),
-          SliverFillRemaining(
-            hasScrollBody: false,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                ActionButton(
-                  text: l10n.continueButton,
-                  onPressed: () => widget.onNext(_primaryGoalIndex),
-                ),
-                const SizedBox(height: 32),
-              ],
-            ),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24.0),
+          child: ActionButton(
+            text: l10n.continueButton,
+            onPressed: () => widget.onNext(_primaryGoalIndex),
           ),
-        ],
-      ),
+        ),
+        const SizedBox(height: 24),
+      ],
     );
   }
 

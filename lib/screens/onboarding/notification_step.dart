@@ -108,7 +108,7 @@ class _NotificationStepState extends State<NotificationStep> {
               ),
             ),
           ),
-          const SizedBox(height: 32),
+          const SizedBox(height: 24),
         ],
       ),
     );

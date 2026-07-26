@@ -1981,6 +1981,12 @@ abstract class AppLocalizations {
   /// In de, this message translates to:
   /// **'Konto erstellen'**
   String get createAccount;
+
+  /// No description provided for @cameraGuideText.
+  ///
+  /// In de, this message translates to:
+  /// **'Zentriere deine Mahlzeit im Rahmen für präzises Tracking.'**
+  String get cameraGuideText;
 }
 
 class _AppLocalizationsDelegate

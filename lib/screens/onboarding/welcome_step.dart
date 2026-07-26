@@ -60,7 +60,7 @@ class WelcomeStep extends StatelessWidget {
             text: AppLocalizations.of(context)!.getStarted,
             onPressed: onNext,
           ),
-          const SizedBox(height: 32),
+          const SizedBox(height: 24),
         ],
       ),
     );

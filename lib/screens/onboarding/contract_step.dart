@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_typography.dart';
-import '../../widgets/common/primary_button.dart';
+import '../../widgets/inputs/action_button.dart';
 
 class ContractStep extends StatefulWidget {
   final String language;
@@ -28,13 +28,21 @@ class _ContractStepState extends State<ContractStep> with SingleTickerProviderSt
   @override
   void initState() {
     super.initState();
+    final nameText = widget.name.isEmpty ? (widget.language == 'de' ? 'Ich' : 'Me') : widget.name;
+    final int charCount = nameText.length;
+    final int durationMs = (2500 + (charCount * 350)).clamp(3000, 8000);
+
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1500),
+      duration: Duration(milliseconds: durationMs),
     );
     _opacity = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeIn),
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
     );
+
+    GoogleFonts.pendingFonts([
+      GoogleFonts.caveat(fontSize: 42, fontWeight: FontWeight.bold),
+    ]);
   }
 
   @override
@@ -43,12 +51,18 @@ class _ContractStepState extends State<ContractStep> with SingleTickerProviderSt
     super.dispose();
   }
 
-  void _signContract() {
+  void _signContract() async {
     setState(() {
       _signed = true;
     });
+    try {
+      await GoogleFonts.pendingFonts([
+        GoogleFonts.caveat(fontSize: 42, fontWeight: FontWeight.bold),
+      ]).timeout(const Duration(milliseconds: 1500));
+    } catch (_) {}
+    if (!mounted) return;
     _controller.forward().then((_) {
-      Future.delayed(const Duration(milliseconds: 600), () {
+      Future.delayed(const Duration(milliseconds: 1200), () {
         if (mounted) {
           widget.onNext();
         }
@@ -60,11 +74,11 @@ class _ContractStepState extends State<ContractStep> with SingleTickerProviderSt
   Widget build(BuildContext context) {
     final isDe = widget.language == 'de';
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+      padding: const EdgeInsets.symmetric(horizontal: 24.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const SizedBox(height: 24),
+          const SizedBox(height: 16),
           const Icon(Icons.gavel, size: 48, color: AppColors.primary),
           const SizedBox(height: 24),
           Text(
@@ -116,55 +130,49 @@ class _ContractStepState extends State<ContractStep> with SingleTickerProviderSt
                             SizedBox(
                               width: 220,
                               height: 50,
-                              child: _signed
-                                  ? AnimatedBuilder(
-                                      animation: _opacity,
-                                      builder: (context, child) {
-                                        return Align(
-                                          alignment: Alignment.centerLeft,
-                                          child: ClipRect(
-                                            child: Align(
-                                              alignment: Alignment.centerLeft,
-                                              widthFactor: _opacity.value,
-                                              child: SizedBox(
-                                                width: 220,
-                                                child: child,
-                                              ),
+                              child: Center(
+                                child: _signed
+                                    ? AnimatedBuilder(
+                                        animation: _opacity,
+                                        builder: (context, child) {
+                                          return ClipRect(
+                                            clipper: _SignatureClipper(_opacity.value),
+                                            child: child,
+                                          );
+                                        },
+                                        child: Padding(
+                                          padding: const EdgeInsets.only(bottom: 4.0),
+                                          child: Text(
+                                            widget.name.isEmpty ? (isDe ? 'Ich' : 'Me') : widget.name,
+                                            style: GoogleFonts.caveat(
+                                              fontSize: 42,
+                                              fontWeight: FontWeight.bold,
+                                              color: AppColors.primary,
+                                              height: 1.0,
                                             ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.visible,
                                           ),
-                                        );
-                                      },
-                                      child: Padding(
-                                        padding: const EdgeInsets.only(bottom: 4.0),
-                                        child: Text(
-                                          widget.name.isEmpty ? (isDe ? 'Ich' : 'Me') : widget.name,
-                                          style: GoogleFonts.caveat(
-                                            fontSize: 42,
-                                            fontWeight: FontWeight.bold,
-                                            color: AppColors.primary,
-                                            height: 1.0,
+                                        ),
+                                      )
+                                    : Opacity(
+                                        opacity: 0.0,
+                                        child: Padding(
+                                          padding: const EdgeInsets.only(bottom: 4.0),
+                                          child: Text(
+                                            widget.name.isEmpty ? (isDe ? 'Ich' : 'Me') : widget.name,
+                                            style: GoogleFonts.caveat(
+                                              fontSize: 42,
+                                              fontWeight: FontWeight.bold,
+                                              color: AppColors.primary,
+                                              height: 1.0,
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.visible,
                                           ),
-                                          textAlign: TextAlign.center,
-                                          maxLines: 1,
-                                          overflow: TextOverflow.visible,
                                         ),
                                       ),
-                                    )
-                                  : Opacity(
-                                      opacity: 0.0,
-                                      child: Text(
-                                        widget.name.isEmpty ? (isDe ? 'Ich' : 'Me') : widget.name,
-                                        style: GoogleFonts.caveat(
-                                          fontSize: 42,
-                                          fontWeight: FontWeight.bold,
-                                          color: AppColors.primary,
-                                          height: 1.0,
-                                        ),
-                                        textAlign: TextAlign.center,
-                                        maxLines: 1,
-                                        overflow: TextOverflow.visible,
-                                      ),
-                                    ),
+                              ),
                             ),
                             Container(
                               width: 220,
@@ -194,15 +202,29 @@ class _ContractStepState extends State<ContractStep> with SingleTickerProviderSt
           ),
           const Spacer(),
           if (!_signed)
-            PrimaryButton(
+            ActionButton(
               text: isDe ? 'Ich verpflichte mich' : 'Commit to my goal',
               onPressed: _signContract,
             ),
           if (_signed)
-            const SizedBox(height: 56), // Placeholder for button height
-          const SizedBox(height: 16),
+            const SizedBox(height: 64),
+          const SizedBox(height: 24),
         ],
       ),
     );
   }
+}
+
+class _SignatureClipper extends CustomClipper<Rect> {
+  final double progress;
+
+  _SignatureClipper(this.progress);
+
+  @override
+  Rect getClip(Size size) {
+    return Rect.fromLTWH(0, -20, size.width * progress, size.height + 40);
+  }
+
+  @override
+  bool shouldReclip(_SignatureClipper oldClipper) => oldClipper.progress != progress;
 }

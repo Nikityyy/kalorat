@@ -219,7 +219,7 @@ class _LoginStepState extends State<LoginStep> {
               ),
             ),
           ),
-          const SizedBox(height: 32),
+          const SizedBox(height: 24),
         ],
       ),
     );

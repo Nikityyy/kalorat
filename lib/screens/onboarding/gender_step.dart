@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../theme/app_typography.dart';
-import '../../theme/app_colors.dart';
 import '../../extensions/l10n_extension.dart';
 import '../../widgets/inputs/action_button.dart';
 import '../../widgets/inputs/bespoke_selection_card.dart';
@@ -45,9 +44,9 @@ class _GenderStepState extends State<GenderStep> {
           Text(l10n.calculateMetabolicRate, style: AppTypography.bodyMedium),
           const SizedBox(height: 32),
 
-          _buildOption(0, l10n.male, Icons.male),
+          _buildOption(0, l10n.male),
           const SizedBox(height: 16),
-          _buildOption(1, l10n.female, Icons.female),
+          _buildOption(1, l10n.female),
 
           const Spacer(),
           ActionButton(
@@ -60,10 +59,9 @@ class _GenderStepState extends State<GenderStep> {
     );
   }
 
-  Widget _buildOption(int index, String title, IconData icon) {
+  Widget _buildOption(int index, String title) {
     return BespokeSelectionCard(
       title: title,
-      icon: Icon(icon, color: AppColors.slate, size: 28),
       isSelected: _selectedIndex == index,
       onTap: () => setState(() => _selectedIndex = index),
     );

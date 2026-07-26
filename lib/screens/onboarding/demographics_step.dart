@@ -57,7 +57,6 @@ class _DemographicsStepState extends State<DemographicsStep> {
               Expanded(
                 child: BespokeSelectionCard(
                   title: l10n.male,
-                  icon: const Icon(Icons.male, color: AppColors.slate, size: 28),
                   isSelected: _genderIndex == 0,
                   onTap: () => setState(() => _genderIndex = 0),
                 ),
@@ -66,7 +65,6 @@ class _DemographicsStepState extends State<DemographicsStep> {
               Expanded(
                 child: BespokeSelectionCard(
                   title: l10n.female,
-                  icon: const Icon(Icons.female, color: AppColors.slate, size: 28),
                   isSelected: _genderIndex == 1,
                   onTap: () => setState(() => _genderIndex = 1),
                 ),

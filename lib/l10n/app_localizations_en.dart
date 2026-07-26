@@ -987,4 +987,8 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get createAccount => 'Create Account';
+
+  @override
+  String get cameraGuideText =>
+      'Center your food inside the frame for accurate tracking.';
 }

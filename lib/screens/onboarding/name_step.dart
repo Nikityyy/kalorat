@@ -86,7 +86,7 @@ class _NameStepState extends State<NameStep> {
               widget.onNext(name);
             },
           ),
-          const SizedBox(height: 32),
+          const SizedBox(height: 24),
         ],
       ),
     );

@@ -212,7 +212,7 @@ class _HealthStepState extends State<HealthStep> {
             ),
           ),
 
-          const SizedBox(height: 32),
+          const SizedBox(height: 24),
         ],
       ),
     );

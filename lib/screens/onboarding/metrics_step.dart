@@ -48,11 +48,11 @@ class _MetricsStepState extends State<MetricsStep> {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24.0),
-      child: CustomScrollView(
-        slivers: [
-          SliverToBoxAdapter(
+    return Column(
+      children: [
+        Expanded(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 24.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -63,7 +63,7 @@ class _MetricsStepState extends State<MetricsStep> {
                 Text(l10n.height, style: AppTypography.labelLarge.copyWith(color: AppColors.slate)),
                 const SizedBox(height: 16),
                 SizedBox(
-                  height: 220, // Increased height for ruler to fix overflow
+                  height: 220,
                   child: RulerPicker(
                     minValue: 100,
                     maxValue: 250,
@@ -83,25 +83,20 @@ class _MetricsStepState extends State<MetricsStep> {
                   unit: l10n.kg,
                   onValueChanged: (value) => setState(() => _currentWeight = value),
                 ),
-                const SizedBox(height: 32),
+                const SizedBox(height: 24),
               ],
             ),
           ),
-          SliverFillRemaining(
-            hasScrollBody: false,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                ActionButton(
-                  text: l10n.continueButton,
-                  onPressed: () => widget.onNext(_currentHeight, _currentWeight),
-                ),
-                const SizedBox(height: 32),
-              ],
-            ),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24.0),
+          child: ActionButton(
+            text: l10n.continueButton,
+            onPressed: () => widget.onNext(_currentHeight, _currentWeight),
           ),
-        ],
-      ),
+        ),
+        const SizedBox(height: 24),
+      ],
     );
   }
 }
