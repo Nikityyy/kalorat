@@ -233,6 +233,48 @@ class AppLocalizationsEn extends AppLocalizations {
   String get exportData => 'Export data';
 
   @override
+  String get exportMarkdown => 'Export Markdown';
+
+  @override
+  String get reportTitle => 'Kalorat - Nutrition Report';
+
+  @override
+  String get reportGeneratedOn => 'Generated on';
+
+  @override
+  String get reportUserProfile => 'User Profile';
+
+  @override
+  String get reportGoal => 'Goal';
+
+  @override
+  String get reportActivityLevel => 'Activity Level';
+
+  @override
+  String get reportDailyCalories => 'Daily Calories Target';
+
+  @override
+  String get reportDailyProtein => 'Daily Protein Target';
+
+  @override
+  String get reportDailyCarbs => 'Daily Carbs Target';
+
+  @override
+  String get reportDailyFats => 'Daily Fat Target';
+
+  @override
+  String get reportMealsLog => 'Meals Log';
+
+  @override
+  String get reportNoMeals => '*No meals recorded.*';
+
+  @override
+  String get reportDailyTotal => 'Daily Total';
+
+  @override
+  String get reportUnnamedMeal => 'Unnamed Meal';
+
+  @override
   String get importData => 'Import data';
 
   @override

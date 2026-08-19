@@ -542,6 +542,90 @@ abstract class AppLocalizations {
   /// **'Daten exportieren'**
   String get exportData;
 
+  /// No description provided for @exportMarkdown.
+  ///
+  /// In de, this message translates to:
+  /// **'Markdown exportieren'**
+  String get exportMarkdown;
+
+  /// No description provided for @reportTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Kalorat - Ernährungsbericht'**
+  String get reportTitle;
+
+  /// No description provided for @reportGeneratedOn.
+  ///
+  /// In de, this message translates to:
+  /// **'Erstellt am'**
+  String get reportGeneratedOn;
+
+  /// No description provided for @reportUserProfile.
+  ///
+  /// In de, this message translates to:
+  /// **'Benutzerprofil'**
+  String get reportUserProfile;
+
+  /// No description provided for @reportGoal.
+  ///
+  /// In de, this message translates to:
+  /// **'Ziel'**
+  String get reportGoal;
+
+  /// No description provided for @reportActivityLevel.
+  ///
+  /// In de, this message translates to:
+  /// **'Aktivitätslevel'**
+  String get reportActivityLevel;
+
+  /// No description provided for @reportDailyCalories.
+  ///
+  /// In de, this message translates to:
+  /// **'Tägliches Kalorienziel'**
+  String get reportDailyCalories;
+
+  /// No description provided for @reportDailyProtein.
+  ///
+  /// In de, this message translates to:
+  /// **'Tägliches Proteinziel'**
+  String get reportDailyProtein;
+
+  /// No description provided for @reportDailyCarbs.
+  ///
+  /// In de, this message translates to:
+  /// **'Tägliches Kohlenhydrateziel'**
+  String get reportDailyCarbs;
+
+  /// No description provided for @reportDailyFats.
+  ///
+  /// In de, this message translates to:
+  /// **'Tägliches Fettziel'**
+  String get reportDailyFats;
+
+  /// No description provided for @reportMealsLog.
+  ///
+  /// In de, this message translates to:
+  /// **'Mahlzeitenprotokoll'**
+  String get reportMealsLog;
+
+  /// No description provided for @reportNoMeals.
+  ///
+  /// In de, this message translates to:
+  /// **'*Keine Mahlzeiten aufgezeichnet.*'**
+  String get reportNoMeals;
+
+  /// No description provided for @reportDailyTotal.
+  ///
+  /// In de, this message translates to:
+  /// **'Tagesgesamt'**
+  String get reportDailyTotal;
+
+  /// No description provided for @reportUnnamedMeal.
+  ///
+  /// In de, this message translates to:
+  /// **'Unbenannte Mahlzeit'**
+  String get reportUnnamedMeal;
+
   /// No description provided for @importData.
   ///
   /// In de, this message translates to:

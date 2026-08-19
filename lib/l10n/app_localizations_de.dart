@@ -234,6 +234,48 @@ class AppLocalizationsDe extends AppLocalizations {
   String get exportData => 'Daten exportieren';
 
   @override
+  String get exportMarkdown => 'Markdown exportieren';
+
+  @override
+  String get reportTitle => 'Kalorat - Ernährungsbericht';
+
+  @override
+  String get reportGeneratedOn => 'Erstellt am';
+
+  @override
+  String get reportUserProfile => 'Benutzerprofil';
+
+  @override
+  String get reportGoal => 'Ziel';
+
+  @override
+  String get reportActivityLevel => 'Aktivitätslevel';
+
+  @override
+  String get reportDailyCalories => 'Tägliches Kalorienziel';
+
+  @override
+  String get reportDailyProtein => 'Tägliches Proteinziel';
+
+  @override
+  String get reportDailyCarbs => 'Tägliches Kohlenhydrateziel';
+
+  @override
+  String get reportDailyFats => 'Tägliches Fettziel';
+
+  @override
+  String get reportMealsLog => 'Mahlzeitenprotokoll';
+
+  @override
+  String get reportNoMeals => '*Keine Mahlzeiten aufgezeichnet.*';
+
+  @override
+  String get reportDailyTotal => 'Tagesgesamt';
+
+  @override
+  String get reportUnnamedMeal => 'Unbenannte Mahlzeit';
+
+  @override
   String get importData => 'Daten importieren';
 
   @override

@@ -974,6 +974,27 @@ class _SettingsScreenState extends State<SettingsScreen> {
         },
       ),
       ListTile(
+        leading: const Icon(Icons.description_outlined, color: AppColors.primary),
+        title: Text(
+          l10n.exportMarkdown,
+          style: const TextStyle(color: AppColors.slate),
+        ),
+        onTap: () async {
+          final path = await provider.exportMarkdownReport(l10n);
+          if (path != null && mounted) {
+            if (path == 'web_download') {
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(SnackBar(content: Text(l10n.downloadStarted)));
+            } else {
+              await SharePlus.instance.share(
+                ShareParams(files: [XFile(path)], text: 'Kalorat Markdown Report'),
+              );
+            }
+          }
+        },
+      ),
+      ListTile(
         leading: const Icon(Icons.download, color: AppColors.primary),
         title: Text(
           l10n.importData,

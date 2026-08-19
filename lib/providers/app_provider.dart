@@ -604,6 +604,8 @@ class AppProvider extends ChangeNotifier {
   // Export/Import
   Future<String?> exportData() => _exportImportService.exportData();
 
+  Future<String?> exportMarkdownReport(dynamic l10n) => _exportImportService.exportMarkdownReport(l10n);
+
   Future<bool> importData() async {
     final success = await _exportImportService.importData();
     if (success) {
