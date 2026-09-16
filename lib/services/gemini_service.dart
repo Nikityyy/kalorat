@@ -120,14 +120,6 @@ class _ModelCapabilityCacheEntry {
 class GeminiService {
   static const String _baseUrlBase =
       'https://generativelanguage.googleapis.com/v1beta/models';
-  static const String _analysisBackendUrl = String.fromEnvironment(
-    'KALORAT_ANALYSIS_BACKEND_URL',
-    defaultValue: '',
-  );
-  static const String _analysisBackendToken = String.fromEnvironment(
-    'KALORAT_ANALYSIS_BACKEND_TOKEN',
-    defaultValue: '',
-  );
   static const Duration _modelCapabilityTtl = Duration(minutes: 30);
   static final Map<String, _ModelCapabilityCacheEntry> _modelCache = {};
   static final Map<String, DateTime> _modelUnavailableUntil = {};
@@ -154,10 +146,6 @@ class GeminiService {
   }) : _client = client ?? _sharedClient;
 
   String get _modelCacheKey => '${apiKey.length}:${apiKey.hashCode}';
-
-  String get _backendBaseUrl => _analysisBackendUrl.endsWith('/')
-      ? _analysisBackendUrl.substring(0, _analysisBackendUrl.length - 1)
-      : _analysisBackendUrl;
 
   /// Resolves stable aliases once per key and reuses the routing list.
   /// A short cooldown removes aliases that recently returned a provider error.
@@ -441,35 +429,19 @@ class GeminiService {
       },
     };
 
-    final requestId =
-        '${DateTime.now().microsecondsSinceEpoch}-${modelName.hashCode}';
-    final usingBackend = _backendBaseUrl.isNotEmpty;
-    final directUrl =
+    final url =
         '$_baseUrlBase/$modelName:streamGenerateContent?alt=sse&key=$apiKey';
-    final url = usingBackend ? '$_backendBaseUrl/v1/analyze' : directUrl;
     // Streaming keeps the analysis panel responsive by delivering the model's
-    // short thought summaries before the final structured JSON. The outer
-    // The request timeout still bounds the total analysis duration.
+    // short thought summaries before the final structured JSON. The request
+    // timeout still bounds the total analysis duration.
     final timeout = useAccurateMode
         ? const Duration(seconds: 30)
         : const Duration(seconds: 20);
 
-    final requestHeaders = {
-      'Content-Type': 'application/json',
-      'x-kalorat-request-id': requestId,
-      if (usingBackend && _analysisBackendToken.isNotEmpty)
-        'x-kalorat-relay-token': _analysisBackendToken,
-    };
+    final requestHeaders = {'Content-Type': 'application/json'};
 
     Future<Stream<String>> sendRequest(Map<String, dynamic> payload) async {
-      final body = usingBackend
-          ? jsonEncode({
-              'apiKey': apiKey,
-              'model': modelName,
-              'stream': true,
-              'request': payload,
-            })
-          : jsonEncode(payload);
+      final body = jsonEncode(payload);
       return makeStreamRequestPlatform(
         client: _client,
         url: url,
@@ -890,27 +862,6 @@ class GeminiService {
   Future<bool> validateApiKey(String key) async {
     if (key.isEmpty) return false;
 
-    final backend = _backendBaseUrl;
-    if (backend.isNotEmpty) {
-      try {
-        final response = await _client.post(
-          Uri.parse('$backend/v1/validate-key'),
-          headers: {
-            'Content-Type': 'application/json',
-            if (_analysisBackendToken.isNotEmpty)
-              'x-kalorat-relay-token': _analysisBackendToken,
-          },
-          body: jsonEncode({'apiKey': key}),
-        );
-        if (response.statusCode != 200) return false;
-        final decoded = jsonDecode(response.body);
-        return decoded is Map && decoded['valid'] == true;
-      } catch (_) {
-        return false;
-      }
-    }
-
-    // Direct mode remains available for local/native BYOK use.
     final url = '$_baseUrlBase?key=$key';
     try {
       final response = await _client.get(
