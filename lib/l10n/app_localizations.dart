@@ -341,7 +341,7 @@ abstract class AppLocalizations {
   /// No description provided for @analyzing.
   ///
   /// In de, this message translates to:
-  /// **'Prüfe...'**
+  /// **'Analysiere...'**
   String get analyzing;
 
   /// No description provided for @mealName.
@@ -409,6 +409,24 @@ abstract class AppLocalizations {
   /// In de, this message translates to:
   /// **'Verarbeite ausstehende Mahlzeiten...'**
   String get processingQueue;
+
+  /// No description provided for @analysisWaitingForResume.
+  ///
+  /// In de, this message translates to:
+  /// **'Wartet darauf, dass Kalorat fortgesetzt wird'**
+  String get analysisWaitingForResume;
+
+  /// No description provided for @analysisFailedTapToRetry.
+  ///
+  /// In de, this message translates to:
+  /// **'Analyse fehlgeschlagen · zum Wiederholen tippen'**
+  String get analysisFailedTapToRetry;
+
+  /// No description provided for @analysisRetrying.
+  ///
+  /// In de, this message translates to:
+  /// **'Neuer Versuch ({attempt}/3)'**
+  String analysisRetrying(int attempt);
 
   /// No description provided for @today.
   ///
@@ -1015,12 +1033,6 @@ abstract class AppLocalizations {
   /// In de, this message translates to:
   /// **'Möchtest du diese Mahlzeit wirklich löschen?'**
   String get deleteMealConfirmation;
-
-  /// No description provided for @analyzingMeal.
-  ///
-  /// In de, this message translates to:
-  /// **'Mahlzeit wird geprüft...'**
-  String get analyzingMeal;
 
   /// No description provided for @cameraNeeded.
   ///
@@ -1769,7 +1781,7 @@ abstract class AppLocalizations {
   /// No description provided for @mealSavedBackground.
   ///
   /// In de, this message translates to:
-  /// **'Gespeichert. Analyse läuft im Hintergrund.'**
+  /// **'Gespeichert. Die Analyse läuft weiter, sobald Kalorat geöffnet und online ist.'**
   String get mealSavedBackground;
 
   /// No description provided for @ml.
@@ -1825,12 +1837,6 @@ abstract class AppLocalizations {
   /// In de, this message translates to:
   /// **'Analyse abgebrochen. Bitte erneut versuchen.'**
   String get analysisTimedOut;
-
-  /// No description provided for @verifyingEstimate.
-  ///
-  /// In de, this message translates to:
-  /// **'Schätzung prüfen'**
-  String get verifyingEstimate;
 
   /// No description provided for @reference.
   ///
@@ -1903,6 +1909,12 @@ abstract class AppLocalizations {
   /// In de, this message translates to:
   /// **'Analyse aktualisiert!'**
   String get analysisUpdated;
+
+  /// No description provided for @analysisConfidence.
+  ///
+  /// In de, this message translates to:
+  /// **'KI-Sicherheit: {percent}%'**
+  String analysisConfidence(int percent);
 
   /// No description provided for @retryFailed.
   ///

@@ -22,6 +22,7 @@ dependencies:
   camera_web: ^0.3.5+4
   image_picker: ^1.1.2
   gal: ^2.3.0
+  image: ^4.5.4
 
   # Networking
   http: ^1.2.2

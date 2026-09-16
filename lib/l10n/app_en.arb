@@ -52,6 +52,16 @@
   "offlineMessage": "You are offline. The AI will analyze your meal once you are back online and open the app.",
   "pendingAnalysis": "Pending analyses",
   "processingQueue": "Processing pending meals...",
+  "analysisWaitingForResume": "Waiting for Kalorat to resume",
+  "analysisFailedTapToRetry": "Analysis failed · tap to retry",
+  "analysisRetrying": "Retrying ({attempt}/3)",
+  "@analysisRetrying": {
+    "placeholders": {
+      "attempt": {
+        "type": "int"
+      }
+    }
+  },
   "today": "Today",
   "thisWeek": "This week",
   "thisMonth": "This month",
@@ -184,7 +194,6 @@
   "noMealsRecorded": "Your journal is empty.",
   "deleteQuestion": "Delete?",
   "deleteMealConfirmation": "Do you really want to delete this meal?",
-  "analyzingMeal": "Analyzing meal...",
   "cameraNeeded": "Camera Access Needed",
   "cameraPermissionText": "To analyze your meals, Kalorat needs access to your camera.",
   "backToSelection": "Back to selection",
@@ -330,7 +339,7 @@
   "mealContextSkip": "No note",
   "mealContextAnalyze": "Analyze",
   "mealContextBackground": "In background",
-  "mealSavedBackground": "Meal saved. Analysis running in background.",
+  "mealSavedBackground": "Meal saved. Analysis will continue when Kalorat is open and online.",
   "ml": "ml",
   "saveToGallery": "Save photo",
   "saveToGallerySuccess": "Photo saved to gallery!",
@@ -340,7 +349,6 @@
   "aiThinkingTitle": "AI Reasoning",
   "aiThinkingLabel": "AI is thinking...",
   "analysisTimedOut": "Analysis timed out. Please try again.",
-  "verifyingEstimate": "Verifying estimate",
   "reference": "Reference",
   "showLess": "Show less",
   "showAllWeights": "Show all {count} weights",
@@ -377,6 +385,14 @@
   "flash": "Flash",
   "flashUnavailable": "Flash unavailable",
   "analysisUpdated": "Analysis updated!",
+  "analysisConfidence": "AI confidence: {percent}%",
+  "@analysisConfidence": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
   "retryFailed": "Retry failed: {error}",
   "@retryFailed": {
     "placeholders": {

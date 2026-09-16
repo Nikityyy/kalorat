@@ -167,6 +167,17 @@ class AppLocalizationsEn extends AppLocalizations {
   String get processingQueue => 'Processing pending meals...';
 
   @override
+  String get analysisWaitingForResume => 'Waiting for Kalorat to resume';
+
+  @override
+  String get analysisFailedTapToRetry => 'Analysis failed · tap to retry';
+
+  @override
+  String analysisRetrying(int attempt) {
+    return 'Retrying ($attempt/3)';
+  }
+
+  @override
   String get today => 'Today';
 
   @override
@@ -477,9 +488,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get deleteMealConfirmation =>
       'Do you really want to delete this meal?';
-
-  @override
-  String get analyzingMeal => 'Analyzing meal...';
 
   @override
   String get cameraNeeded => 'Camera Access Needed';
@@ -871,7 +879,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get mealSavedBackground =>
-      'Meal saved. Analysis running in background.';
+      'Meal saved. Analysis will continue when Kalorat is open and online.';
 
   @override
   String get ml => 'ml';
@@ -900,9 +908,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get analysisTimedOut => 'Analysis timed out. Please try again.';
-
-  @override
-  String get verifyingEstimate => 'Verifying estimate';
 
   @override
   String get reference => 'Reference';
@@ -945,6 +950,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get analysisUpdated => 'Analysis updated!';
+
+  @override
+  String analysisConfidence(int percent) {
+    return 'AI confidence: $percent%';
+  }
 
   @override
   String retryFailed(String error) {

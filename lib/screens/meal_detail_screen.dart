@@ -42,7 +42,6 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
   late double _portionMultiplier;
   bool _isAnalyzing = false;
   String _liveThoughtText = '';
-  AnalysisPhase _analysisPhase = AnalysisPhase.drafting;
   String? _mealContext;
   ImageProvider? _analysisHeroImageProvider;
 
@@ -323,7 +322,6 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
           ? _mealPhotoImageProvider(_meal.photoPaths.first)
           : null;
       _liveThoughtText = '';
-      _analysisPhase = AnalysisPhase.drafting;
     });
 
     Map<String, dynamic>? result;
@@ -342,16 +340,7 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
 
       await for (final event in stream) {
         if (!mounted) break;
-        if (event is AnalysisPhaseChanged) {
-          setState(() {
-            _analysisPhase = event.phase;
-            if (event.phase == AnalysisPhase.verifying &&
-                !_liveThoughtText.contains(context.l10n.verifyingEstimate)) {
-              _liveThoughtText =
-                  '${_liveThoughtText.trimRight()}\n\n## ${context.l10n.verifyingEstimate}\n\n';
-            }
-          });
-        } else if (event is ThoughtChunk) {
+        if (event is ThoughtChunk) {
           setState(() {
             _liveThoughtText += event.text;
           });
@@ -413,6 +402,13 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
             proteinPer100g: (analysis['protein_per_100g'] as num?)?.toDouble(),
             carbsPer100g: (analysis['carbs_per_100g'] as num?)?.toDouble(),
             fatsPer100g: (analysis['fats_per_100g'] as num?)?.toDouble(),
+            analysisNote:
+                analysis['uncertainty_note']?.toString().trim().isNotEmpty ==
+                    true
+                ? analysis['uncertainty_note'].toString().trim()
+                : null,
+            caloriesMin: (analysis['calories_min'] as num?)?.toDouble(),
+            caloriesMax: (analysis['calories_max'] as num?)?.toDouble(),
             vitamins: analysis['vitamins'] != null
                 ? Map<String, double>.from(
                     (analysis['vitamins'] as Map).map(
@@ -798,12 +794,6 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
                     thinkingLabel: l10n.aiThinkingLabel,
                   ),
                   const SizedBox(height: 24),
-                  AnalysisPhaseIndicator(
-                    phase: _analysisPhase,
-                    draftingLabel: l10n.analyzingMeal,
-                    verifyingLabel: l10n.verifyingEstimate,
-                  ),
-                  const SizedBox(height: 16),
                 ],
               ),
             ),
@@ -1056,6 +1046,11 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
 
                           _buildNutritionOverview(),
 
+                          if (_hasUncertaintyNote()) ...[
+                            const SizedBox(height: 16),
+                            _buildUncertaintyNote(),
+                          ],
+
                           if (_hasPer100Reference() ||
                               _canEditPer100Reference()) ...[
                             const SizedBox(height: 16),
@@ -1119,6 +1114,71 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
                 ),
               ),
             ),
+        ],
+      ),
+    );
+  }
+
+  bool _hasUncertaintyNote() {
+    final note = _meal.analysisNote?.trim() ?? '';
+    final low = _meal.caloriesMin;
+    final high = _meal.caloriesMax;
+    final confidence = _meal.analysisConfidence;
+    return note.isNotEmpty ||
+        (low != null && high != null && (high - low).abs() >= 1) ||
+        (confidence != null && confidence < 0.75);
+  }
+
+  Widget _buildUncertaintyNote() {
+    final low = _meal.caloriesMin;
+    final high = _meal.caloriesMax;
+    final scale = _portionMultiplier;
+    final range = low != null && high != null
+        ? '${(low * scale).round()}–${(high * scale).round()} kcal'
+        : null;
+    final note = _meal.analysisNote?.trim() ?? '';
+    final confidence = _meal.analysisConfidence;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.pebble.withValues(alpha: 0.25),
+        borderRadius: BorderRadius.circular(AppTheme.borderRadius),
+        border: Border.all(color: AppColors.borderGrey),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(Icons.info_outline, color: AppColors.styrianForest),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (confidence != null)
+                  Text(
+                    context.l10n.analysisConfidence((confidence * 100).round()),
+                    style: AppTypography.bodySmall.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                if (range != null) ...[
+                  if (confidence != null) const SizedBox(height: 4),
+                  Text(
+                    'Estimated range: $range',
+                    style: AppTypography.bodyMedium.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+                if (note.isNotEmpty) ...[
+                  if (range != null) const SizedBox(height: 4),
+                  Text(note, style: AppTypography.bodySmall),
+                ],
+              ],
+            ),
+          ),
         ],
       ),
     );

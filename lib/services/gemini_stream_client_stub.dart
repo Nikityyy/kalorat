@@ -20,5 +20,5 @@ Stream<String> makeStreamRequestPlatform({
     throw Exception('HTTP ${streamedResponse.statusCode}: $responseBody');
   }
 
-  yield* streamedResponse.stream.transform(utf8.decoder);
+  yield* streamedResponse.stream.transform(utf8.decoder).timeout(timeout);
 }

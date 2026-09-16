@@ -14,14 +14,18 @@ class MealCard extends StatelessWidget {
   final MealModel meal;
   final VoidCallback? onTap;
   final VoidCallback? onDelete;
+  final VoidCallback? onRetry;
   final bool syncPending;
+  final bool analysisWorkerActive;
 
   const MealCard({
     super.key,
     required this.meal,
     this.onTap,
     this.onDelete,
+    this.onRetry,
     this.syncPending = false,
+    this.analysisWorkerActive = false,
   });
 
   String _formatDateTime(DateTime timestamp) {
@@ -62,6 +66,23 @@ class MealCard extends StatelessWidget {
         fit: BoxFit.cover,
         errorBuilder: (_, _, _) => _buildPlaceholder(),
       );
+    }
+  }
+
+  String _analysisLabel(BuildContext context) {
+    final l10n = context.l10n;
+    switch (meal.analysisStatus) {
+      case 'running':
+        return analysisWorkerActive
+            ? l10n.analyzing
+            : l10n.analysisWaitingForResume;
+      case 'retrying':
+        return l10n.analysisRetrying(meal.analysisAttempts);
+      case 'failed':
+        return l10n.analysisFailedTapToRetry;
+      case 'queued':
+      default:
+        return l10n.pendingAnalysis;
     }
   }
 
@@ -117,14 +138,18 @@ class MealCard extends StatelessWidget {
                           Expanded(
                             child: Text(
                               meal.isPending
-                                  ? l10n.pendingAnalysis
+                                  ? _analysisLabel(context)
                                   : meal.mealName.isNotEmpty
                                   ? meal.mealName
                                   : l10n.mealName,
                               style: AppTypography.bodyMedium.copyWith(
                                 fontWeight: FontWeight.w600,
-                                color: meal.isPending
+                                color:
+                                    meal.isPending &&
+                                        meal.analysisStatus == 'failed'
                                     ? AppColors.error
+                                    : meal.isPending
+                                    ? AppColors.warning
                                     : AppColors.frost,
                               ),
                               maxLines: 1,
@@ -165,24 +190,52 @@ class MealCard extends StatelessWidget {
                           ] else
                             Row(
                               children: [
-                                const SizedBox(
-                                  width: 16,
-                                  height: 16,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
+                                if (meal.analysisStatus == 'failed')
+                                  const Icon(
+                                    Icons.error_outline,
+                                    size: 17,
                                     color: AppColors.error,
+                                  )
+                                else if (meal.analysisStatus == 'running' &&
+                                    analysisWorkerActive)
+                                  const SizedBox(
+                                    width: 16,
+                                    height: 16,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: AppColors.primary,
+                                    ),
+                                  )
+                                else
+                                  const Icon(
+                                    Icons.schedule_outlined,
+                                    size: 17,
+                                    color: AppColors.primary,
                                   ),
-                                ),
                                 const SizedBox(width: 8),
                                 Text(
-                                  l10n.analyzing,
+                                  _analysisLabel(context),
                                   style: AppTypography.bodyMedium.copyWith(
                                     fontSize: 12,
-                                    color: AppColors.frost.withValues(
-                                      alpha: 0.6,
-                                    ),
+                                    color: meal.analysisStatus == 'failed'
+                                        ? AppColors.error
+                                        : AppColors.frost.withValues(
+                                            alpha: 0.6,
+                                          ),
                                   ),
                                 ),
+                                if (meal.analysisStatus == 'failed' &&
+                                    onRetry != null) ...[
+                                  const SizedBox(width: 6),
+                                  IconButton(
+                                    visualDensity: VisualDensity.compact,
+                                    padding: EdgeInsets.zero,
+                                    constraints: const BoxConstraints(),
+                                    icon: const Icon(Icons.refresh, size: 18),
+                                    color: AppColors.primary,
+                                    onPressed: onRetry,
+                                  ),
+                                ],
                               ],
                             ),
 

@@ -12,7 +12,8 @@ class StreakData {
   final int streak;
   final int availableFreezes;
   final Set<DateTime> frozenDays;
-  final List<bool> last7DaysPresence; // true = logged or frozen, false = missed (for Zeigarnik block)
+  final List<bool>
+  last7DaysPresence; // true = logged or frozen, false = missed (for Zeigarnik block)
 
   StreakData({
     required this.streak,
@@ -22,7 +23,7 @@ class StreakData {
   });
 }
 
-class AppProvider extends ChangeNotifier {
+class AppProvider extends ChangeNotifier with WidgetsBindingObserver {
   final DatabaseService _databaseService;
   late final OfflineQueueService _offlineQueueService;
   late final ExportImportService _exportImportService;
@@ -70,6 +71,7 @@ class AppProvider extends ChangeNotifier {
   bool get isInitialized => _isInitialized;
   bool get isOnboardingCompleted => _user?.onboardingCompleted ?? false;
   bool get isMealAnalysisActive => _isMealAnalysisActive;
+  bool get isProcessingQueue => _isProcessingQueue;
   String get language {
     if (_user != null) return _user!.language;
     if (_languageOverride != null) return _languageOverride!;
@@ -118,6 +120,7 @@ class AppProvider extends ChangeNotifier {
   HealthService get healthService => _healthService;
 
   Future<void> init() async {
+    WidgetsBinding.instance.addObserver(this);
     _pwaService.init();
     _pwaService.updateAvailableStream.listen((available) {
       if (available) notifyListeners();
@@ -225,7 +228,21 @@ class AppProvider extends ChangeNotifier {
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed && _isInitialized) {
+      unawaited(_resumeAndProcessQueue());
+    }
+  }
+
+  Future<void> _resumeAndProcessQueue() async {
+    _isOnline = await _offlineQueueService.isOnline();
+    notifyListeners();
+    if (_isOnline) await processOfflineQueue();
+  }
+
+  @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _connectivitySubscription?.cancel();
     _pwaService.dispose();
     super.dispose();
@@ -399,6 +416,9 @@ class AppProvider extends ChangeNotifier {
     }
 
     await _databaseService.saveUser(_user!);
+    if (apiKey != null && _isInitialized) {
+      unawaited(processOfflineQueue());
+    }
 
     // Sync profile to cloud (fire-and-forget, only if not guest)
     if (!(_user!.isGuest)) {
@@ -445,6 +465,10 @@ class AppProvider extends ChangeNotifier {
         language,
         useGrams: _user?.useGramsByDefault ?? false,
         useAccurateMode: _user?.useAccurateMode ?? true,
+        onMealUpdated: (meal) async {
+          _invalidateStatsCache();
+          notifyListeners();
+        },
         onMealProcessed: (meal) async {
           // Update UI incrementally as each meal completes.
           _invalidateStatsCache();
@@ -467,6 +491,17 @@ class AppProvider extends ChangeNotifier {
       _invalidateStatsCache();
       notifyListeners();
     }
+  }
+
+  Future<void> retryMealAnalysis(String mealId) async {
+    await _offlineQueueService.retryMeal(
+      mealId,
+      onMealUpdated: (_) async {
+        _invalidateStatsCache();
+        notifyListeners();
+      },
+    );
+    if (apiKey.isNotEmpty && _isOnline) unawaited(processOfflineQueue());
   }
 
   // Meal operations
@@ -538,13 +573,15 @@ class AppProvider extends ChangeNotifier {
   /// Clears all cached stats - called when meals are modified
   void _invalidateStatsCache() {
     _statsCacheVersion++;
-    
+
     // Sync to native home widgets
     try {
       final currentStreakData = streakData;
       // Use the last element (today) to check if tracked today
-      final isTrackedToday = currentStreakData.last7DaysPresence.isNotEmpty && currentStreakData.last7DaysPresence.last;
-      
+      final isTrackedToday =
+          currentStreakData.last7DaysPresence.isNotEmpty &&
+          currentStreakData.last7DaysPresence.last;
+
       WidgetService.updateWidgetData(
         streak: currentStreakData.streak,
         isTrackedToday: isTrackedToday,
@@ -560,8 +597,6 @@ class AppProvider extends ChangeNotifier {
 
   WeightModel? getWeightByDate(DateTime date) =>
       _databaseService.getWeightByDate(date);
-
-
 
   Future<void> saveWeight(WeightModel weight) async {
     await _databaseService.saveWeight(weight);
@@ -604,7 +639,8 @@ class AppProvider extends ChangeNotifier {
   // Export/Import
   Future<String?> exportData() => _exportImportService.exportData();
 
-  Future<String?> exportMarkdownReport(dynamic l10n) => _exportImportService.exportMarkdownReport(l10n);
+  Future<String?> exportMarkdownReport(dynamic l10n) =>
+      _exportImportService.exportMarkdownReport(l10n);
 
   Future<bool> importData() async {
     final success = await _exportImportService.importData();
@@ -715,7 +751,8 @@ class AppProvider extends ChangeNotifier {
 
   /// Computes streak data forwards from the beginning of time
   StreakData get streakData {
-    if (_cachedStreakData != null && _cachedStreakVersion == _statsCacheVersion) {
+    if (_cachedStreakData != null &&
+        _cachedStreakVersion == _statsCacheVersion) {
       return _cachedStreakData!;
     }
 
@@ -736,7 +773,9 @@ class AppProvider extends ChangeNotifier {
     for (final m in allMeals) {
       if (!m.isPending) {
         final adjusted = m.timestamp.subtract(Duration(hours: offset));
-        uniqueDays.add(DateTime.utc(adjusted.year, adjusted.month, adjusted.day));
+        uniqueDays.add(
+          DateTime.utc(adjusted.year, adjusted.month, adjusted.day),
+        );
       }
     }
 
@@ -752,7 +791,7 @@ class AppProvider extends ChangeNotifier {
     }
 
     final sortedDays = uniqueDays.toList()..sort((a, b) => a.compareTo(b));
-    
+
     int streak = 0;
     int availableFreezes = 0;
     int consecutiveDaysForFreeze = 0;
@@ -761,7 +800,11 @@ class AppProvider extends ChangeNotifier {
     final firstDay = sortedDays.first;
     final now = DateTime.now();
     final logicalNow = now.subtract(Duration(hours: offset));
-    final today = DateTime.utc(logicalNow.year, logicalNow.month, logicalNow.day);
+    final today = DateTime.utc(
+      logicalNow.year,
+      logicalNow.month,
+      logicalNow.day,
+    );
 
     DateTime checkDay = firstDay;
 

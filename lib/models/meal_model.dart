@@ -28,6 +28,8 @@ int compareMealsNewestFirst(MealModel a, MealModel b) {
   return b.id.compareTo(a.id);
 }
 
+const _copyWithUnset = Object();
+
 @HiveType(typeId: 1)
 class MealModel extends HiveObject {
   @HiveField(0)
@@ -96,6 +98,34 @@ class MealModel extends HiveObject {
   @HiveField(21)
   final DateTime updatedAt;
 
+  /// Persisted lifecycle state for analysis recovery and user-visible status.
+  @HiveField(22)
+  final String analysisStatus;
+
+  @HiveField(23)
+  final String? analysisError;
+
+  @HiveField(24)
+  final int analysisAttempts;
+
+  @HiveField(25)
+  final DateTime? analysisStartedAt;
+
+  @HiveField(26)
+  final DateTime? analysisNextRetryAt;
+
+  @HiveField(27)
+  final double? analysisConfidence;
+
+  @HiveField(28)
+  final String? analysisNote;
+
+  @HiveField(29)
+  final double? caloriesMin;
+
+  @HiveField(30)
+  final double? caloriesMax;
+
   MealModel({
     required this.id,
     required this.timestamp,
@@ -118,8 +148,20 @@ class MealModel extends HiveObject {
     this.carbsPer100g,
     this.fatsPer100g,
     this.mealContext,
+    String? analysisStatus,
+    this.analysisError,
+    this.analysisAttempts = 0,
+    DateTime? analysisStartedAt,
+    DateTime? analysisNextRetryAt,
+    this.analysisConfidence,
+    this.analysisNote,
+    this.caloriesMin,
+    this.caloriesMax,
     DateTime? updatedAt,
-  }) : updatedAt = updatedAt?.toUtc() ?? DateTime.now().toUtc();
+  }) : analysisStatus = analysisStatus ?? (isPending ? 'queued' : 'completed'),
+       analysisStartedAt = analysisStartedAt?.toUtc(),
+       analysisNextRetryAt = analysisNextRetryAt?.toUtc(),
+       updatedAt = updatedAt?.toUtc() ?? DateTime.now().toUtc();
 
   MealModel copyWith({
     String? id,
@@ -130,19 +172,28 @@ class MealModel extends HiveObject {
     double? protein,
     double? carbs,
     double? fats,
-    Map<String, double>? vitamins,
-    Map<String, double>? minerals,
+    Object? vitamins = _copyWithUnset,
+    Object? minerals = _copyWithUnset,
     bool? isPending,
     bool? isManualEntry,
     bool? isCalorieOverride,
     double? portionMultiplier,
     String? portionUnit,
     double? quantityPerUnit,
-    double? caloriesPer100g,
-    double? proteinPer100g,
-    double? carbsPer100g,
-    double? fatsPer100g,
-    String? mealContext,
+    Object? caloriesPer100g = _copyWithUnset,
+    Object? proteinPer100g = _copyWithUnset,
+    Object? carbsPer100g = _copyWithUnset,
+    Object? fatsPer100g = _copyWithUnset,
+    Object? mealContext = _copyWithUnset,
+    String? analysisStatus,
+    Object? analysisError = _copyWithUnset,
+    int? analysisAttempts,
+    Object? analysisStartedAt = _copyWithUnset,
+    Object? analysisNextRetryAt = _copyWithUnset,
+    Object? analysisConfidence = _copyWithUnset,
+    Object? analysisNote = _copyWithUnset,
+    Object? caloriesMin = _copyWithUnset,
+    Object? caloriesMax = _copyWithUnset,
     DateTime? updatedAt,
   }) {
     return MealModel(
@@ -154,19 +205,56 @@ class MealModel extends HiveObject {
       protein: protein ?? this.protein,
       carbs: carbs ?? this.carbs,
       fats: fats ?? this.fats,
-      vitamins: vitamins ?? this.vitamins,
-      minerals: minerals ?? this.minerals,
+      vitamins: identical(vitamins, _copyWithUnset)
+          ? this.vitamins
+          : vitamins as Map<String, double>?,
+      minerals: identical(minerals, _copyWithUnset)
+          ? this.minerals
+          : minerals as Map<String, double>?,
       isPending: isPending ?? this.isPending,
       isManualEntry: isManualEntry ?? this.isManualEntry,
       isCalorieOverride: isCalorieOverride ?? this.isCalorieOverride,
       portionMultiplier: portionMultiplier ?? this.portionMultiplier,
       portionUnit: portionUnit ?? this.portionUnit,
       quantityPerUnit: quantityPerUnit ?? this.quantityPerUnit,
-      caloriesPer100g: caloriesPer100g ?? this.caloriesPer100g,
-      proteinPer100g: proteinPer100g ?? this.proteinPer100g,
-      carbsPer100g: carbsPer100g ?? this.carbsPer100g,
-      fatsPer100g: fatsPer100g ?? this.fatsPer100g,
-      mealContext: mealContext ?? this.mealContext,
+      caloriesPer100g: identical(caloriesPer100g, _copyWithUnset)
+          ? this.caloriesPer100g
+          : caloriesPer100g as double?,
+      proteinPer100g: identical(proteinPer100g, _copyWithUnset)
+          ? this.proteinPer100g
+          : proteinPer100g as double?,
+      carbsPer100g: identical(carbsPer100g, _copyWithUnset)
+          ? this.carbsPer100g
+          : carbsPer100g as double?,
+      fatsPer100g: identical(fatsPer100g, _copyWithUnset)
+          ? this.fatsPer100g
+          : fatsPer100g as double?,
+      mealContext: identical(mealContext, _copyWithUnset)
+          ? this.mealContext
+          : mealContext as String?,
+      analysisStatus: analysisStatus ?? this.analysisStatus,
+      analysisError: identical(analysisError, _copyWithUnset)
+          ? this.analysisError
+          : analysisError as String?,
+      analysisAttempts: analysisAttempts ?? this.analysisAttempts,
+      analysisStartedAt: identical(analysisStartedAt, _copyWithUnset)
+          ? this.analysisStartedAt
+          : analysisStartedAt as DateTime?,
+      analysisNextRetryAt: identical(analysisNextRetryAt, _copyWithUnset)
+          ? this.analysisNextRetryAt
+          : analysisNextRetryAt as DateTime?,
+      analysisConfidence: identical(analysisConfidence, _copyWithUnset)
+          ? this.analysisConfidence
+          : analysisConfidence as double?,
+      analysisNote: identical(analysisNote, _copyWithUnset)
+          ? this.analysisNote
+          : analysisNote as String?,
+      caloriesMin: identical(caloriesMin, _copyWithUnset)
+          ? this.caloriesMin
+          : caloriesMin as double?,
+      caloriesMax: identical(caloriesMax, _copyWithUnset)
+          ? this.caloriesMax
+          : caloriesMax as double?,
       updatedAt: updatedAt?.toUtc() ?? this.updatedAt.toUtc(),
     );
   }
@@ -191,8 +279,10 @@ class MealModel extends HiveObject {
     if (calories > 10000 || protein > 1000 || carbs > 1000 || fats > 1000) {
       throw const FormatException('Unrealistische Nährwerte.');
     }
-    if (portionMultiplier <= 0 || portionMultiplier > 1000 ||
-        quantityPerUnit <= 0 || quantityPerUnit > 100000) {
+    if (portionMultiplier <= 0 ||
+        portionMultiplier > 1000 ||
+        quantityPerUnit <= 0 ||
+        quantityPerUnit > 100000) {
       throw const FormatException('Unrealistische Portionsgröße.');
     }
     for (final value in [
@@ -205,10 +295,14 @@ class MealModel extends HiveObject {
         throw const FormatException('Ungültige Nährwerte pro 100 g.');
       }
     }
-    if ([proteinPer100g, carbsPer100g, fatsPer100g]
-        .whereType<double>()
-        .any((value) => value > 100)) {
-      throw const FormatException('Makros pro 100 g dürfen 100 g nicht überschreiten.');
+    if ([
+      proteinPer100g,
+      carbsPer100g,
+      fatsPer100g,
+    ].whereType<double>().any((value) => value > 100)) {
+      throw const FormatException(
+        'Makros pro 100 g dürfen 100 g nicht überschreiten.',
+      );
     }
   }
 
@@ -234,6 +328,15 @@ class MealModel extends HiveObject {
     'carbsPer100g': carbsPer100g,
     'fatsPer100g': fatsPer100g,
     'mealContext': mealContext,
+    'analysisStatus': analysisStatus,
+    'analysisError': analysisError,
+    'analysisAttempts': analysisAttempts,
+    'analysisStartedAt': analysisStartedAt?.toUtc().toIso8601String(),
+    'analysisNextRetryAt': analysisNextRetryAt?.toUtc().toIso8601String(),
+    'analysisConfidence': analysisConfidence,
+    'analysisNote': analysisNote,
+    'caloriesMin': caloriesMin,
+    'caloriesMax': caloriesMax,
     'updatedAt': updatedAt.toUtc().toIso8601String(),
   };
 
@@ -263,6 +366,19 @@ class MealModel extends HiveObject {
     carbsPer100g: (json['carbsPer100g'] as num?)?.toDouble(),
     fatsPer100g: (json['fatsPer100g'] as num?)?.toDouble(),
     mealContext: json['mealContext'],
+    analysisStatus: json['analysisStatus'],
+    analysisError: json['analysisError'],
+    analysisAttempts: (json['analysisAttempts'] as num?)?.toInt() ?? 0,
+    analysisStartedAt: json['analysisStartedAt'] != null
+        ? DateTime.tryParse(json['analysisStartedAt'])?.toUtc()
+        : null,
+    analysisNextRetryAt: json['analysisNextRetryAt'] != null
+        ? DateTime.tryParse(json['analysisNextRetryAt'])?.toUtc()
+        : null,
+    analysisConfidence: (json['analysisConfidence'] as num?)?.toDouble(),
+    analysisNote: json['analysisNote']?.toString(),
+    caloriesMin: (json['caloriesMin'] as num?)?.toDouble(),
+    caloriesMax: (json['caloriesMax'] as num?)?.toDouble(),
     updatedAt: json['updatedAt'] != null
         ? DateTime.tryParse(json['updatedAt'])?.toUtc()
         : null,

@@ -17,10 +17,10 @@ class WeightModelAdapter extends TypeAdapter<WeightModel> {
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
     return WeightModel(
-      date: fields[0] as DateTime? ?? DateTime.now(),
-      weight: (fields[1] as num?)?.toDouble() ?? 0.0,
+      date: fields[0] as DateTime,
+      weight: fields[1] as double,
       note: fields[2] as String?,
-      isPending: fields[3] as bool? ?? false,
+      isPending: fields[3] as bool,
       updatedAt: fields[4] as DateTime?,
     );
   }

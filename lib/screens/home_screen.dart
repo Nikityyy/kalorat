@@ -65,7 +65,6 @@ class _HomeScreenState extends State<HomeScreen>
 
   // Live thought summary text accumulated during streaming analysis
   String _liveThoughtText = '';
-  AnalysisPhase _analysisPhase = AnalysisPhase.drafting;
   ImageProvider? _analysisHeroImageProvider;
 
   // FocusNode for context textarea — avoids the autofocus keyboard-jump bug
@@ -290,9 +289,13 @@ class _HomeScreenState extends State<HomeScreen>
         try {
           final allCameras = await availableCameras();
           final filtered = <CameraDescription>[];
-          final backIdx = allCameras.indexWhere((c) => c.lensDirection == CameraLensDirection.back);
+          final backIdx = allCameras.indexWhere(
+            (c) => c.lensDirection == CameraLensDirection.back,
+          );
           if (backIdx != -1) filtered.add(allCameras[backIdx]);
-          final frontIdx = allCameras.indexWhere((c) => c.lensDirection == CameraLensDirection.front);
+          final frontIdx = allCameras.indexWhere(
+            (c) => c.lensDirection == CameraLensDirection.front,
+          );
           if (frontIdx != -1) filtered.add(allCameras[frontIdx]);
           _cameras = filtered.isNotEmpty ? filtered : allCameras;
         } catch (e) {
@@ -302,9 +305,13 @@ class _HomeScreenState extends State<HomeScreen>
             try {
               final allCameras = await availableCameras();
               final filtered = <CameraDescription>[];
-              final backIdx = allCameras.indexWhere((c) => c.lensDirection == CameraLensDirection.back);
+              final backIdx = allCameras.indexWhere(
+                (c) => c.lensDirection == CameraLensDirection.back,
+              );
               if (backIdx != -1) filtered.add(allCameras[backIdx]);
-              final frontIdx = allCameras.indexWhere((c) => c.lensDirection == CameraLensDirection.front);
+              final frontIdx = allCameras.indexWhere(
+                (c) => c.lensDirection == CameraLensDirection.front,
+              );
               if (frontIdx != -1) filtered.add(allCameras[frontIdx]);
               _cameras = filtered.isNotEmpty ? filtered : allCameras;
             } catch (retryError) {
@@ -830,6 +837,21 @@ class _HomeScreenState extends State<HomeScreen>
 
     final mealId = DateTime.now().millisecondsSinceEpoch.toString();
 
+    // Persist the job before foreground inference too. If the PWA is closed,
+    // the next startup can reclaim and analyze it instead of losing the meal.
+    if (!background && isOnline && apiKey.isNotEmpty) {
+      await provider.saveMeal(
+        MealModel(
+          id: mealId,
+          timestamp: DateTime.now(),
+          photoPaths: List.from(_capturedPhotos),
+          isPending: true,
+          analysisStatus: 'queued',
+          mealContext: mealContext,
+        ),
+      );
+    }
+
     if (background || !isOnline || apiKey.isEmpty) {
       // Save as pending
       final meal = MealModel(
@@ -869,7 +891,6 @@ class _HomeScreenState extends State<HomeScreen>
           ? _photoImageProvider(_capturedPhotos.first)
           : null;
       _liveThoughtText = '';
-      _analysisPhase = AnalysisPhase.drafting;
     });
     provider.setMealAnalysisActive(true);
 
@@ -886,16 +907,7 @@ class _HomeScreenState extends State<HomeScreen>
 
       await for (final event in stream) {
         if (!mounted) break;
-        if (event is AnalysisPhaseChanged) {
-          setState(() {
-            _analysisPhase = event.phase;
-            if (event.phase == AnalysisPhase.verifying &&
-                !_liveThoughtText.contains(l10n.verifyingEstimate)) {
-              _liveThoughtText =
-                  '${_liveThoughtText.trimRight()}\n\n## ${l10n.verifyingEstimate}\n\n';
-            }
-          });
-        } else if (event is ThoughtChunk) {
+        if (event is ThoughtChunk) {
           setState(() {
             _liveThoughtText += event.text;
           });
@@ -978,6 +990,13 @@ class _HomeScreenState extends State<HomeScreen>
           proteinPer100g: (result['protein_per_100g'] as num?)?.toDouble(),
           carbsPer100g: (result['carbs_per_100g'] as num?)?.toDouble(),
           fatsPer100g: (result['fats_per_100g'] as num?)?.toDouble(),
+          analysisConfidence: (result['confidence_score'] as num?)?.toDouble(),
+          analysisNote:
+              result['uncertainty_note']?.toString().trim().isNotEmpty == true
+              ? result['uncertainty_note'].toString().trim()
+              : null,
+          caloriesMin: (result['calories_min'] as num?)?.toDouble(),
+          caloriesMax: (result['calories_max'] as num?)?.toDouble(),
           vitamins: result['vitamins'] != null
               ? Map<String, double>.from(
                   (result['vitamins'] as Map).map(
@@ -1220,13 +1239,6 @@ class _HomeScreenState extends State<HomeScreen>
                   ),
 
                   const SizedBox(height: 24),
-
-                  AnalysisPhaseIndicator(
-                    phase: _analysisPhase,
-                    draftingLabel: l10n.analyzingMeal,
-                    verifyingLabel: l10n.verifyingEstimate,
-                  ),
-                  const SizedBox(height: 16),
                 ],
               ),
             ),
@@ -1360,7 +1372,7 @@ class _HomeScreenState extends State<HomeScreen>
                       ),
                     if (_showZoomIndicator && _canZoom)
                       Positioned(
-                        top: MediaQuery.of(context).padding.top + 24,
+                        top: MediaQuery.of(context).padding.top + 78,
                         left: 0,
                         right: 0,
                         child: IgnorePointer(
@@ -1552,9 +1564,10 @@ class _HomeScreenState extends State<HomeScreen>
           ),
 
         // Meal Framing Guide & Info Text Overlay
-        if (canShowCamera && !_isAnalyzing && _capturedPhotos.isEmpty)
+        if (canShowCamera &&
+            !_isAnalyzing &&
+            (_capturedPhotos.isEmpty || _isTakingMore))
           MealGuideOverlay(guideText: l10n.cameraGuideText),
-
 
         // Simple Top Bar
         if (_capturedPhotos.isNotEmpty)

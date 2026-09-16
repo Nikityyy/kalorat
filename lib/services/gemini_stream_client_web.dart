@@ -61,20 +61,27 @@ Stream<String> makeStreamRequestPlatform({
       final stream = ReadableStream(response.body);
       final reader = ReadableStreamDefaultReader(stream.getReader());
 
+      final deadline = DateTime.now().add(timeout);
+      final decoder = utf8.decoder.startChunkedConversion(
+        StringConversionSink.withCallback(controller.add),
+      );
       while (true) {
+        final remaining = deadline.difference(DateTime.now());
+        if (remaining <= Duration.zero) {
+          throw TimeoutException('Gemini stream timed out');
+        }
         final readPromise = reader.read();
-        final readResultObj = await readPromise.toDart.timeout(timeout);
+        final readResultObj = await readPromise.toDart.timeout(remaining);
         final readResult = ReadableStreamReadResult(readResultObj);
 
         if (readResult.done) {
+          decoder.close();
           break;
         }
 
         final uint8Array = readResult.value;
         if (uint8Array != null) {
-          final uint8List = uint8Array.toDart;
-          final decoded = utf8.decode(uint8List);
-          controller.add(decoded);
+          decoder.add(uint8Array.toDart);
         }
       }
       controller.close();

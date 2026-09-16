@@ -38,6 +38,15 @@ class MealModelAdapter extends TypeAdapter<MealModel> {
       carbsPer100g: fields[18] as double?,
       fatsPer100g: fields[19] as double?,
       mealContext: fields[20] as String?,
+      analysisStatus: fields[22] as String?,
+      analysisError: fields[23] as String?,
+      analysisAttempts: fields[24] as int? ?? 0,
+      analysisStartedAt: fields[25] as DateTime?,
+      analysisNextRetryAt: fields[26] as DateTime?,
+      analysisConfidence: fields[27] as double?,
+      analysisNote: fields[28] as String?,
+      caloriesMin: fields[29] as double?,
+      caloriesMax: fields[30] as double?,
       updatedAt: fields[21] as DateTime?,
     );
   }
@@ -45,7 +54,7 @@ class MealModelAdapter extends TypeAdapter<MealModel> {
   @override
   void write(BinaryWriter writer, MealModel obj) {
     writer
-      ..writeByte(22)
+      ..writeByte(31)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -89,7 +98,25 @@ class MealModelAdapter extends TypeAdapter<MealModel> {
       ..writeByte(20)
       ..write(obj.mealContext)
       ..writeByte(21)
-      ..write(obj.updatedAt);
+      ..write(obj.updatedAt)
+      ..writeByte(22)
+      ..write(obj.analysisStatus)
+      ..writeByte(23)
+      ..write(obj.analysisError)
+      ..writeByte(24)
+      ..write(obj.analysisAttempts)
+      ..writeByte(25)
+      ..write(obj.analysisStartedAt)
+      ..writeByte(26)
+      ..write(obj.analysisNextRetryAt)
+      ..writeByte(27)
+      ..write(obj.analysisConfidence)
+      ..writeByte(28)
+      ..write(obj.analysisNote)
+      ..writeByte(29)
+      ..write(obj.caloriesMin)
+      ..writeByte(30)
+      ..write(obj.caloriesMax);
   }
 
   @override

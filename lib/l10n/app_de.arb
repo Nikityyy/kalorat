@@ -40,7 +40,7 @@
   "takePhoto": "Foto aufnehmen",
   "addMorePhotos": "Weitere Fotos hinzufügen",
   "analyzeMeal": "Mahlzeit checken",
-  "analyzing": "Prüfe...",
+  "analyzing": "Analysiere...",
   "mealName": "Mahlzeit",
   "calories": "Kalorien",
   "protein": "Eiweiß",
@@ -52,6 +52,16 @@
   "offlineMessage": "Du bist offline. Die AI wird die Mahlzeit analysieren, sobald du wieder online bist und die App öffnest.",
   "pendingAnalysis": "Ausstehende Analysen",
   "processingQueue": "Verarbeite ausstehende Mahlzeiten...",
+  "analysisWaitingForResume": "Wartet darauf, dass Kalorat fortgesetzt wird",
+  "analysisFailedTapToRetry": "Analyse fehlgeschlagen · zum Wiederholen tippen",
+  "analysisRetrying": "Neuer Versuch ({attempt}/3)",
+  "@analysisRetrying": {
+    "placeholders": {
+      "attempt": {
+        "type": "int"
+      }
+    }
+  },
   "today": "Heute",
   "thisWeek": "Diese Woche",
   "thisMonth": "Dieser Monat",
@@ -184,7 +194,6 @@
   "noMealsRecorded": "Dein Journal ist leer.",
   "deleteQuestion": "Löschen?",
   "deleteMealConfirmation": "Möchtest du diese Mahlzeit wirklich löschen?",
-  "analyzingMeal": "Mahlzeit wird geprüft...",
   "cameraNeeded": "Kamera benötigt",
   "cameraPermissionText": "Damit Kalorat deine Mahlzeiten analysieren kann, benötigen wir Zugriff auf deine Kamera.",
   "backToSelection": "Zurück zur Auswahl",
@@ -330,7 +339,7 @@
   "mealContextSkip": "Ohne Hinweis",
   "mealContextAnalyze": "Analysieren",
   "mealContextBackground": "Im Hintergrund",
-  "mealSavedBackground": "Gespeichert. Analyse läuft im Hintergrund.",
+  "mealSavedBackground": "Gespeichert. Die Analyse läuft weiter, sobald Kalorat geöffnet und online ist.",
   "ml": "ml",
   "saveToGallery": "Foto speichern",
   "saveToGallerySuccess": "Foto in Galerie gespeichert!",
@@ -340,7 +349,6 @@
   "aiThinkingTitle": "KI-Analyse",
   "aiThinkingLabel": "KI denkt nach...",
   "analysisTimedOut": "Analyse abgebrochen. Bitte erneut versuchen.",
-  "verifyingEstimate": "Schätzung prüfen",
   "reference": "Referenz",
   "showLess": "Weniger anzeigen",
   "showAllWeights": "Alle {count} Gewichte anzeigen",
@@ -377,6 +385,14 @@
   "flash": "Blitz",
   "flashUnavailable": "Blitz nicht verfügbar",
   "analysisUpdated": "Analyse aktualisiert!",
+  "analysisConfidence": "KI-Sicherheit: {percent}%",
+  "@analysisConfidence": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
   "retryFailed": "Erneuter Versuch fehlgeschlagen: {error}",
   "@retryFailed": {
     "placeholders": {

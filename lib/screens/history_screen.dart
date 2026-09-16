@@ -149,6 +149,27 @@ class _HistoryScreenState extends State<HistoryScreen> {
               ),
             ),
 
+            if (provider.isProcessingQueue)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(24, 0, 24, 8),
+                child: Row(
+                  children: [
+                    const SizedBox(
+                      width: 14,
+                      height: 14,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        l10n.processingQueue,
+                        style: AppTypography.bodySmall,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
             // Custom Period Switcher
             Container(
               margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
@@ -216,6 +237,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                       onRefresh: () async {
                         final provider = context.read<AppProvider>();
                         await provider.syncService.syncFromCloud();
+                        await provider.processOfflineQueue();
                         if (mounted) setState(() {});
                       },
                       child: ListView.builder(
@@ -229,8 +251,15 @@ class _HistoryScreenState extends State<HistoryScreen> {
                             syncPending: provider.isMealSyncPending(
                               filteredMeals[i].id,
                             ),
+                            analysisWorkerActive:
+                                provider.isProcessingQueue &&
+                                filteredMeals[i].analysisStatus == 'running',
                             onTap: filteredMeals[i].isPending
-                                ? null
+                                ? (filteredMeals[i].analysisStatus == 'failed'
+                                      ? () => provider.retryMealAnalysis(
+                                          filteredMeals[i].id,
+                                        )
+                                      : null)
                                 : () async {
                                     await Navigator.push<MealModel>(
                                       context,
@@ -248,6 +277,13 @@ class _HistoryScreenState extends State<HistoryScreen> {
                               filteredMeals[i],
                               provider,
                             ),
+                            onRetry:
+                                filteredMeals[i].isPending &&
+                                    filteredMeals[i].analysisStatus == 'failed'
+                                ? () => provider.retryMealAnalysis(
+                                    filteredMeals[i].id,
+                                  )
+                                : null,
                           ),
                         ),
                       ),

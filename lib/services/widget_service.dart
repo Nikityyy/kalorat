@@ -1,5 +1,6 @@
 import 'package:home_widget/home_widget.dart';
 import 'package:flutter/foundation.dart';
+import '../utils/platform_utils.dart';
 
 class WidgetService {
   static const String androidWidgetName = 'KaloratWidgetProvider';
@@ -8,6 +9,8 @@ class WidgetService {
   static const String appGroupId = 'group.com.hope.kalorat'; // Important for iOS! Must match the App Group created in Xcode.
 
   static Future<void> initialize() async {
+    if (PlatformUtils.isWeb) return;
+
     try {
       await HomeWidget.setAppGroupId(appGroupId);
     } catch (e) {
@@ -20,6 +23,8 @@ class WidgetService {
     required bool isTrackedToday,
     required String weekHistoryJson, // JSON list of bools for the last 7 days [true, false, true...]
   }) async {
+    if (PlatformUtils.isWeb) return;
+
     try {
       // Save data to the native Key-Value store
       await HomeWidget.saveWidgetData<int>('streak_count', streak);

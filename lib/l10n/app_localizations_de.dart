@@ -131,7 +131,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get analyzeMeal => 'Mahlzeit checken';
 
   @override
-  String get analyzing => 'Prüfe...';
+  String get analyzing => 'Analysiere...';
 
   @override
   String get mealName => 'Mahlzeit';
@@ -166,6 +166,19 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get processingQueue => 'Verarbeite ausstehende Mahlzeiten...';
+
+  @override
+  String get analysisWaitingForResume =>
+      'Wartet darauf, dass Kalorat fortgesetzt wird';
+
+  @override
+  String get analysisFailedTapToRetry =>
+      'Analyse fehlgeschlagen · zum Wiederholen tippen';
+
+  @override
+  String analysisRetrying(int attempt) {
+    return 'Neuer Versuch ($attempt/3)';
+  }
 
   @override
   String get today => 'Heute';
@@ -481,9 +494,6 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get deleteMealConfirmation =>
       'Möchtest du diese Mahlzeit wirklich löschen?';
-
-  @override
-  String get analyzingMeal => 'Mahlzeit wird geprüft...';
 
   @override
   String get cameraNeeded => 'Kamera benötigt';
@@ -882,7 +892,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get mealSavedBackground =>
-      'Gespeichert. Analyse läuft im Hintergrund.';
+      'Gespeichert. Die Analyse läuft weiter, sobald Kalorat geöffnet und online ist.';
 
   @override
   String get ml => 'ml';
@@ -911,9 +921,6 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get analysisTimedOut => 'Analyse abgebrochen. Bitte erneut versuchen.';
-
-  @override
-  String get verifyingEstimate => 'Schätzung prüfen';
 
   @override
   String get reference => 'Referenz';
@@ -957,6 +964,11 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get analysisUpdated => 'Analyse aktualisiert!';
+
+  @override
+  String analysisConfidence(int percent) {
+    return 'KI-Sicherheit: $percent%';
+  }
 
   @override
   String retryFailed(String error) {

@@ -1,0 +1,9 @@
+{
+  "name": "kalorat-analysis-relay",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Optional BYOK Gemini relay with connection reuse and latency telemetry",
+  "main": "server.js",
+  "scripts": { "start": "node server.js" },
+  "engines": { "node": ">=18" }
+}

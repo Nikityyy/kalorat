@@ -20,26 +20,36 @@ class ContractStep extends StatefulWidget {
   State<ContractStep> createState() => _ContractStepState();
 }
 
-class _ContractStepState extends State<ContractStep> with SingleTickerProviderStateMixin {
+class _ContractStepState extends State<ContractStep>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
+  late Animation<double> _revealProgress;
   late Animation<double> _opacity;
   bool _signed = false;
 
   @override
   void initState() {
     super.initState();
-    final nameText = widget.name.isEmpty ? (widget.language == 'de' ? 'Ich' : 'Me') : widget.name;
-    final int charCount = nameText.length;
-    final int durationMs = (2500 + (charCount * 350)).clamp(3000, 8000);
+    final nameText = widget.name.isEmpty
+        ? (widget.language == 'de' ? 'Ich' : 'Me')
+        : widget.name;
+    final charCount = nameText.runes.length.clamp(1, 32);
+    // A signature should feel handwritten, not like a loading screen. Keep a
+    // short base stroke and add only a small amount for longer names.
+    final durationMs = (680 + (charCount * 90)).clamp(850, 2200).toInt();
 
     _controller = AnimationController(
       vsync: this,
       duration: Duration(milliseconds: durationMs),
     );
-    _opacity = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    _revealProgress = CurvedAnimation(
+      parent: _controller,
+      curve: Curves.linear,
     );
+    _opacity = CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic);
 
+    // Start immediately; waiting here used to add up to 1.5 seconds before
+    // the animation even began on a cold web font cache.
     GoogleFonts.pendingFonts([
       GoogleFonts.caveat(fontSize: 42, fontWeight: FontWeight.bold),
     ]);
@@ -51,23 +61,35 @@ class _ContractStepState extends State<ContractStep> with SingleTickerProviderSt
     super.dispose();
   }
 
-  void _signContract() async {
+  void _signContract() {
     setState(() {
       _signed = true;
     });
-    try {
-      await GoogleFonts.pendingFonts([
-        GoogleFonts.caveat(fontSize: 42, fontWeight: FontWeight.bold),
-      ]).timeout(const Duration(milliseconds: 1500));
-    } catch (_) {}
-    if (!mounted) return;
-    _controller.forward().then((_) {
-      Future.delayed(const Duration(milliseconds: 1200), () {
-        if (mounted) {
-          widget.onNext();
-        }
+    _controller.forward(from: 0).then((_) {
+      Future.delayed(const Duration(milliseconds: 360), () {
+        if (mounted) widget.onNext();
       });
     });
+  }
+
+  Widget _signatureText(bool isDe) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4.0),
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        alignment: Alignment.center,
+        child: Text(
+          widget.name.isEmpty ? (isDe ? 'Ich' : 'Me') : widget.name,
+          style: GoogleFonts.caveat(
+            fontSize: 42,
+            fontWeight: FontWeight.bold,
+            color: AppColors.primary,
+            height: 1.0,
+          ),
+          maxLines: 1,
+        ),
+      ),
+    );
   }
 
   @override
@@ -94,7 +116,10 @@ class _ContractStepState extends State<ContractStep> with SingleTickerProviderSt
                 padding: const EdgeInsets.all(32),
                 decoration: BoxDecoration(
                   color: AppColors.glacialWhite,
-                  border: Border.all(color: AppColors.slate.withValues(alpha: 0.15), width: 1),
+                  border: Border.all(
+                    color: AppColors.slate.withValues(alpha: 0.15),
+                    width: 1,
+                  ),
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
                     BoxShadow(
@@ -133,44 +158,23 @@ class _ContractStepState extends State<ContractStep> with SingleTickerProviderSt
                               child: Center(
                                 child: _signed
                                     ? AnimatedBuilder(
-                                        animation: _opacity,
+                                        animation: _controller,
                                         builder: (context, child) {
-                                          return ClipRect(
-                                            clipper: _SignatureClipper(_opacity.value),
-                                            child: child,
+                                          return Opacity(
+                                            opacity: _opacity.value,
+                                            child: ClipRect(
+                                              clipper: _SignatureClipper(
+                                                _revealProgress.value,
+                                              ),
+                                              child: child,
+                                            ),
                                           );
                                         },
-                                        child: Padding(
-                                          padding: const EdgeInsets.only(bottom: 4.0),
-                                          child: Text(
-                                            widget.name.isEmpty ? (isDe ? 'Ich' : 'Me') : widget.name,
-                                            style: GoogleFonts.caveat(
-                                              fontSize: 42,
-                                              fontWeight: FontWeight.bold,
-                                              color: AppColors.primary,
-                                              height: 1.0,
-                                            ),
-                                            maxLines: 1,
-                                            overflow: TextOverflow.visible,
-                                          ),
-                                        ),
+                                        child: _signatureText(isDe),
                                       )
                                     : Opacity(
                                         opacity: 0.0,
-                                        child: Padding(
-                                          padding: const EdgeInsets.only(bottom: 4.0),
-                                          child: Text(
-                                            widget.name.isEmpty ? (isDe ? 'Ich' : 'Me') : widget.name,
-                                            style: GoogleFonts.caveat(
-                                              fontSize: 42,
-                                              fontWeight: FontWeight.bold,
-                                              color: AppColors.primary,
-                                              height: 1.0,
-                                            ),
-                                            maxLines: 1,
-                                            overflow: TextOverflow.visible,
-                                          ),
-                                        ),
+                                        child: _signatureText(isDe),
                                       ),
                               ),
                             ),
@@ -206,8 +210,7 @@ class _ContractStepState extends State<ContractStep> with SingleTickerProviderSt
               text: isDe ? 'Ich verpflichte mich' : 'Commit to my goal',
               onPressed: _signContract,
             ),
-          if (_signed)
-            const SizedBox(height: 64),
+          if (_signed) const SizedBox(height: 64),
           const SizedBox(height: 24),
         ],
       ),
@@ -226,5 +229,6 @@ class _SignatureClipper extends CustomClipper<Rect> {
   }
 
   @override
-  bool shouldReclip(_SignatureClipper oldClipper) => oldClipper.progress != progress;
+  bool shouldReclip(_SignatureClipper oldClipper) =>
+      oldClipper.progress != progress;
 }

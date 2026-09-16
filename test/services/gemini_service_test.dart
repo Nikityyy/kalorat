@@ -84,31 +84,16 @@ void main() {
         await tempDir.delete(recursive: true);
       });
 
-      test('lite Flash model comes before full Flash model', () async {
+      test('accurate mode still uses Flash Lite by default', () async {
         // Create a real temp file for the image so XFile.readAsBytes works on non-web
         final testFile = File('${tempDir.path}/test_image.jpg');
         await testFile.writeAsBytes(base64Decode(_dummyBase64Jpeg));
 
-        // Simulate the API returning a mixed list: non-lite first, then lite.
-        // The service should sort them so lite model is first.
-        final modelsResponse = jsonEncode({
-          'models': [
-            {'name': 'models/gemini-flash-latest'},
-            {'name': 'models/gemini-flash-lite-latest'},
-          ],
-        });
-
-        // trackingClient handles both model-list and generateContent requests.
+        // Accurate Mode changes thinking depth, while the default model remains Flash Lite.
         String? firstModelCalled;
         final trackingClient = MockClient((request) async {
           final path = request.url.path;
-          if (path.contains('/models') && !path.contains(':generateContent') && !path.contains(':streamGenerateContent')) {
-            return http.StreamedResponse(
-              Stream.value(utf8.encode(modelsResponse)),
-              200,
-            );
-          }
-          // Track first generateContent call
+          // Track the single analysis request.
           firstModelCalled ??= path;
           final resultJson = jsonEncode({
             'analysis_note': 'test',
@@ -139,143 +124,264 @@ void main() {
           expect(
             firstModelCalled!.toLowerCase().contains('lite'),
             isTrue,
-            reason: 'First model tried should not be a non-Lite model',
+            reason: 'Accurate mode should use Flash Lite by default',
           );
         }
       });
 
       test(
-        'streaming thoughts do not expose split JSON fence marker',
+        'aggregates complete item nutrition and preserves uncertainty range',
         () async {
-          final testFile = File('${tempDir.path}/stream_test_image.jpg');
+          final testFile = File('${tempDir.path}/aggregation_test.jpg');
           await testFile.writeAsBytes(base64Decode(_dummyBase64Jpeg));
-
-          final resultJson = jsonEncode({
-            'analysis_note': 'test',
-            'meal_name': 'Test',
-            'calories': 100,
-            'protein': 10,
-            'carbs': 10,
-            'fats': 5,
-            'detected_quantity': 1,
-            'detected_unit': 'serving',
-          });
-
-          var streamRequestCount = 0;
+          var getCount = 0;
+          Map<String, dynamic>? requestPayload;
           final client = MockClient((request) async {
-            if (request.method == 'GET') {
-              return http.StreamedResponse(
-                Stream.value(
-                  utf8.encode(
-                    jsonEncode({
-                      'models': [
-                        {'name': 'models/gemini-flash-lite-latest'},
-                      ],
-                    }),
-                  ),
-                ),
-                200,
-              );
+            if (request.method == 'GET') getCount++;
+            if (request is http.Request && request.method == 'POST') {
+              requestPayload = jsonDecode(request.body) as Map<String, dynamic>;
             }
-
-            streamRequestCount += 1;
-            final chunks = streamRequestCount == 1
-                ? [
-                    _sseTextEvent('### Analyse der Mahlzeit\n'),
-                    _sseTextEvent('```json\n'),
-                    _sseTextEvent('$resultJson\n```'),
-                  ]
-                : [_sseTextEvent(resultJson)];
-
+            final resultJson = jsonEncode({
+              'analysis_note': 'test',
+              'uncertainty_note': 'Oil amount is not fully visible.',
+              'meal_name': 'Rice bowl',
+              'calories': 999,
+              'protein': 99,
+              'carbs': 99,
+              'fats': 99,
+              'calories_per_100g': 999,
+              'protein_per_100g': 99,
+              'carbs_per_100g': 99,
+              'fats_per_100g': 99,
+              'detected_quantity': 2,
+              'detected_unit': 'serving',
+              'photo_interpretation': 'clear',
+              'confidence_score': 0.8,
+              'items': [
+                {
+                  'name': 'Rice',
+                  'estimated_quantity': 1,
+                  'unit': 'serving',
+                  'calories': 300,
+                  'protein': 6,
+                  'carbs': 60,
+                  'fats': 2,
+                  'calories_min': 300,
+                  'calories_max': 300,
+                  'confidence': 0.9,
+                  'assumption': '',
+                },
+                {
+                  'name': 'Cooking oil',
+                  'estimated_quantity': 1,
+                  'unit': 'tsp',
+                  'calories': 90,
+                  'protein': 0,
+                  'carbs': 0,
+                  'fats': 10,
+                  'calories_min': 20,
+                  'calories_max': 120,
+                  'confidence': 0.4,
+                  'assumption': 'Amount hidden by the food.',
+                },
+              ],
+            });
             return http.StreamedResponse(
-              Stream.fromIterable(chunks.map(utf8.encode)),
+              Stream.value(utf8.encode(_sseTextEvent(resultJson))),
               200,
             );
           });
 
-          final service = GeminiService(apiKey: 'test_key', client: client);
-          final thoughts = <String>[];
+          final result = await GeminiService(
+            apiKey: 'aggregation_key',
+            client: client,
+          ).analyzeMeal([testFile.path]);
 
-          await for (final event in service.analyzeMealStream([
-            testFile.path,
-          ])) {
-            if (event is ThoughtChunk) {
-              thoughts.add(event.text);
-            }
-          }
-
-          final visibleThoughtText = thoughts.join();
-          expect(visibleThoughtText, contains('Analyse der Mahlzeit'));
-          expect(visibleThoughtText, isNot(contains('```json')));
-          expect(visibleThoughtText, isNot(contains('```')));
+          expect(
+            getCount,
+            0,
+            reason: 'Stable aliases must avoid model discovery',
+          );
+          expect(result, isNotNull);
+          expect(result!['calories'], 195);
+          expect(result['protein'], 3);
+          expect(result['carbs'], 30);
+          expect(result['fats'], 6);
+          expect(result['calories_min'], 160);
+          expect(result['calories_max'], 210);
+          expect(result['uncertainty_note'], contains('Oil'));
+          final generationConfig =
+              requestPayload!['generationConfig'] as Map<String, dynamic>;
+          final thinkingConfig =
+              generationConfig['thinkingConfig'] as Map<String, dynamic>;
+          expect(thinkingConfig['thinkingLevel'], 'medium');
+          expect(thinkingConfig['includeThoughts'], true);
+          expect(generationConfig['maxOutputTokens'], 3072);
         },
       );
 
-      test(
-        'streaming thoughts hide format chatter from visible summary',
-        () async {
-          final testFile = File('${tempDir.path}/stream_thought_image.jpg');
-          await testFile.writeAsBytes(base64Decode(_dummyBase64Jpeg));
+      test('fast mode uses low thinking level', () async {
+        final testFile = File('${tempDir.path}/fast_mode_image.jpg');
+        await testFile.writeAsBytes(base64Decode(_dummyBase64Jpeg));
+        final resultJson = jsonEncode({
+          'analysis_note': 'test',
+          'meal_name': 'Test',
+          'calories': 100,
+          'protein': 10,
+          'carbs': 10,
+          'fats': 5,
+          'detected_quantity': 1,
+          'detected_unit': 'serving',
+        });
+        Map<String, dynamic>? requestPayload;
+        final modelPaths = <String>[];
+        final client = MockClient((request) async {
+          final concreteRequest = request as http.Request;
+          modelPaths.add(concreteRequest.url.path);
+          requestPayload =
+              jsonDecode(concreteRequest.body) as Map<String, dynamic>;
+          return http.StreamedResponse(
+            Stream.value(utf8.encode(_sseTextEvent(resultJson))),
+            200,
+          );
+        });
 
-          final resultJson = jsonEncode({
-            'analysis_note': 'test',
-            'meal_name': 'Test',
-            'calories': 100,
-            'protein': 10,
-            'carbs': 10,
-            'fats': 5,
-            'detected_quantity': 1,
-            'detected_unit': 'serving',
-          });
+        final result = await GeminiService(
+          apiKey: 'fast_mode_key',
+          client: client,
+        ).analyzeMeal([testFile.path], useAccurateMode: false);
 
-          var streamRequestCount = 0;
-          final client = MockClient((request) async {
-            if (request.method == 'GET') {
-              return http.StreamedResponse(
-                Stream.value(
-                  utf8.encode(
-                    jsonEncode({
-                      'models': [
-                        {'name': 'models/gemini-flash-lite-latest'},
-                      ],
-                    }),
-                  ),
-                ),
-                200,
-              );
-            }
+        expect(result, isNotNull);
+        expect(modelPaths.first, contains('gemini-flash-lite-latest'));
+        final generationConfig =
+            requestPayload!['generationConfig'] as Map<String, dynamic>;
+        final thinkingConfig =
+            generationConfig['thinkingConfig'] as Map<String, dynamic>;
+        expect(thinkingConfig['thinkingLevel'], 'low');
+        expect(generationConfig['maxOutputTokens'], 2048);
+      });
 
-            streamRequestCount += 1;
-            final chunks = streamRequestCount == 1
-                ? [
-                    _sseThoughtEvent('- Ich erkenne Brot und Kaese.\n'),
-                    _sseThoughtEvent('- JSON wird vorbereitet.\n'),
-                    _sseTextEvent(resultJson),
-                  ]
-                : [_sseTextEvent(resultJson)];
+      test('structured output does not expose thought transcript', () async {
+        final testFile = File('${tempDir.path}/stream_test_image.jpg');
+        await testFile.writeAsBytes(base64Decode(_dummyBase64Jpeg));
 
+        final resultJson = jsonEncode({
+          'analysis_note': 'test',
+          'meal_name': 'Test',
+          'calories': 100,
+          'protein': 10,
+          'carbs': 10,
+          'fats': 5,
+          'detected_quantity': 1,
+          'detected_unit': 'serving',
+        });
+
+        var streamRequestCount = 0;
+        final client = MockClient((request) async {
+          if (request.method == 'GET') {
             return http.StreamedResponse(
-              Stream.fromIterable(chunks.map(utf8.encode)),
+              Stream.value(
+                utf8.encode(
+                  jsonEncode({
+                    'models': [
+                      {'name': 'models/gemini-flash-lite-latest'},
+                    ],
+                  }),
+                ),
+              ),
               200,
             );
-          });
-
-          final service = GeminiService(apiKey: 'test_key', client: client);
-          final thoughts = <String>[];
-
-          await for (final event in service.analyzeMealStream([
-            testFile.path,
-          ])) {
-            if (event is ThoughtChunk) {
-              thoughts.add(event.text);
-            }
           }
 
-          final visibleThoughtText = thoughts.join();
-          expect(visibleThoughtText, contains('Brot und Kaese'));
-          expect(visibleThoughtText.toLowerCase(), isNot(contains('json')));
-        },
-      );
+          streamRequestCount += 1;
+          final chunks = streamRequestCount == 1
+              ? [
+                  _sseTextEvent('### Analyse der Mahlzeit\n'),
+                  _sseTextEvent('```json\n'),
+                  _sseTextEvent('$resultJson\n```'),
+                ]
+              : [_sseTextEvent(resultJson)];
+
+          return http.StreamedResponse(
+            Stream.fromIterable(chunks.map(utf8.encode)),
+            200,
+          );
+        });
+
+        final service = GeminiService(apiKey: 'test_key', client: client);
+        final thoughts = <String>[];
+
+        await for (final event in service.analyzeMealStream([testFile.path])) {
+          if (event is ThoughtChunk) {
+            thoughts.add(event.text);
+          }
+        }
+
+        final visibleThoughtText = thoughts.join();
+        expect(visibleThoughtText, isEmpty);
+        expect(streamRequestCount, 1);
+      });
+
+      test('structured output exposes thought summaries', () async {
+        final testFile = File('${tempDir.path}/stream_thought_image.jpg');
+        await testFile.writeAsBytes(base64Decode(_dummyBase64Jpeg));
+
+        final resultJson = jsonEncode({
+          'analysis_note': 'test',
+          'meal_name': 'Test',
+          'calories': 100,
+          'protein': 10,
+          'carbs': 10,
+          'fats': 5,
+          'detected_quantity': 1,
+          'detected_unit': 'serving',
+        });
+
+        var streamRequestCount = 0;
+        final client = MockClient((request) async {
+          if (request.method == 'GET') {
+            return http.StreamedResponse(
+              Stream.value(
+                utf8.encode(
+                  jsonEncode({
+                    'models': [
+                      {'name': 'models/gemini-flash-lite-latest'},
+                    ],
+                  }),
+                ),
+              ),
+              200,
+            );
+          }
+
+          streamRequestCount += 1;
+          final chunks = streamRequestCount == 1
+              ? [
+                  _sseThoughtEvent('- Ich erkenne Brot und Kaese.\n'),
+                  _sseThoughtEvent('- JSON wird vorbereitet.\n'),
+                  _sseTextEvent(resultJson),
+                ]
+              : [_sseTextEvent(resultJson)];
+
+          return http.StreamedResponse(
+            Stream.fromIterable(chunks.map(utf8.encode)),
+            200,
+          );
+        });
+
+        final service = GeminiService(apiKey: 'test_key', client: client);
+        final thoughts = <String>[];
+
+        await for (final event in service.analyzeMealStream([testFile.path])) {
+          if (event is ThoughtChunk) {
+            thoughts.add(event.text);
+          }
+        }
+
+        final visibleThoughtText = thoughts.join();
+        expect(visibleThoughtText, contains('Ich erkenne Brot'));
+        expect(streamRequestCount, 1);
+      });
     });
   });
 }

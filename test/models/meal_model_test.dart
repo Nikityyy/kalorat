@@ -100,6 +100,39 @@ void main() {
         expect(copy.mealContext, 'extra sauce');
         expect(copy.portionMultiplier, 1.5);
       });
+
+      test('can explicitly clear nullable analysis state', () {
+        final original = MealModel(
+          id: 'test-id',
+          timestamp: DateTime(2026, 2, 6),
+          photoPaths: const ['/test/photo.jpg'],
+          mealContext: 'old note',
+          analysisError: 'old error',
+          analysisStartedAt: DateTime(2026, 2, 6),
+          analysisNextRetryAt: DateTime(2026, 2, 7),
+          analysisNote: 'old note',
+          caloriesMin: 100,
+          caloriesMax: 200,
+        );
+
+        final cleared = original.copyWith(
+          mealContext: null,
+          analysisError: null,
+          analysisStartedAt: null,
+          analysisNextRetryAt: null,
+          analysisNote: null,
+          caloriesMin: null,
+          caloriesMax: null,
+        );
+
+        expect(cleared.mealContext, isNull);
+        expect(cleared.analysisError, isNull);
+        expect(cleared.analysisStartedAt, isNull);
+        expect(cleared.analysisNextRetryAt, isNull);
+        expect(cleared.analysisNote, isNull);
+        expect(cleared.caloriesMin, isNull);
+        expect(cleared.caloriesMax, isNull);
+      });
     });
 
     group('compareMealsNewestFirst', () {
