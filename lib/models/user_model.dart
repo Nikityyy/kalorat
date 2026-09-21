@@ -104,8 +104,8 @@ class UserModel extends HiveObject {
     this.onboardingCompleted = false,
     this.mealRemindersEnabled = true,
     this.weightRemindersEnabled = true,
-    int goal = 1,
-    int? gender,
+    int? goalIndex,
+    int? genderIndex,
     this.healthSyncEnabled = false,
     this.syncMealsToHealth = true,
     this.syncWeightToHealth = true,
@@ -115,17 +115,29 @@ class UserModel extends HiveObject {
     this.lastSyncTimestamp,
     this.photoUrl,
     this.useGramsByDefault = false,
-    int activityLevel = 0,
-    this.dayStartHour = 0,
-    this.useAccurateMode = true,
+    int? activityLevelIndex,
+    // Legacy aliases retained for existing callers and imported data.
+    int? goal,
+    int? gender,
+    int? activityLevel,
+    int? dayStartHour,
+    bool? useAccurateMode,
   }) : height = height.clamp(50.0, 300.0),
        weight = weight.clamp(1.0, 500.0),
-       goalIndex = goal.clamp(0, Goal.values.length - 1),
-       genderIndex = gender?.clamp(0, Gender.values.length - 1),
-       activityLevelIndex = activityLevel.clamp(
+       goalIndex = (goalIndex ?? goal ?? 1).clamp(
+         0,
+         Goal.values.length - 1,
+       ),
+       genderIndex = (genderIndex ?? gender)?.clamp(
+         0,
+         Gender.values.length - 1,
+       ),
+       activityLevelIndex = (activityLevelIndex ?? activityLevel ?? 0).clamp(
          0,
          ActivityLevel.values.length - 1,
-       );
+       ),
+       dayStartHour = dayStartHour ?? 0,
+       useAccurateMode = useAccurateMode ?? true;
 
   /// Named constructor for enum-typed callers.
   UserModel.withEnums({

@@ -8,6 +8,7 @@ import 'package:kalorat/services/database_service.dart';
 void main() {
   late Directory directory;
   late DatabaseService database;
+  late Box<UserModel> userBox;
 
   setUp(() async {
     directory = await Directory.systemTemp.createTemp('kalorat_database_test_');
@@ -22,7 +23,7 @@ void main() {
       Hive.registerAdapter(WeightModelAdapter());
     }
     await Hive.openBox<dynamic>('settings_box');
-    final userBox = await Hive.openBox<UserModel>('test_users');
+    userBox = await Hive.openBox<UserModel>(DatabaseService.userBoxName);
     final mealsBox = await Hive.openBox<MealModel>('test_meals');
     final weightsBox = await Hive.openBox<WeightModel>('test_weights');
     database = DatabaseService();
@@ -36,6 +37,29 @@ void main() {
   tearDown(() async {
     await Hive.close();
     await directory.delete(recursive: true);
+  });
+
+  test('persists activity level through a Hive reload', () async {
+    await database.saveUser(
+      UserModel(
+        name: 'Activity Test',
+        birthdate: DateTime(1990, 1, 1),
+        height: 175,
+        weight: 70,
+        activityLevel: 3,
+      ),
+    );
+
+    await userBox.flush();
+    expect(userBox.length, 1);
+
+    await userBox.close();
+    final reopened = await Hive.openBox<UserModel>(DatabaseService.userBoxName);
+    final reloaded = reopened.getAt(0);
+
+    expect(reloaded, isNotNull);
+    expect(reloaded!.activityLevelIndex, 3);
+    expect(reloaded.activityLevel, ActivityLevel.active);
   });
 
   test('invalid import leaves existing meals and weights untouched', () async {

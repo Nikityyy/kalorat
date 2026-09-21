@@ -26,6 +26,8 @@ class UserModelAdapter extends TypeAdapter<UserModel> {
       onboardingCompleted: fields[6] as bool,
       mealRemindersEnabled: fields[7] as bool,
       weightRemindersEnabled: fields[8] as bool,
+      goalIndex: fields[9] as int?,
+      genderIndex: fields[10] as int?,
       healthSyncEnabled: fields[11] as bool,
       syncMealsToHealth: fields[12] as bool,
       syncWeightToHealth: fields[13] as bool,
@@ -35,8 +37,9 @@ class UserModelAdapter extends TypeAdapter<UserModel> {
       lastSyncTimestamp: fields[17] as DateTime?,
       photoUrl: fields[18] as String?,
       useGramsByDefault: fields[19] as bool,
-      dayStartHour: fields[21] as int,
-      useAccurateMode: fields[22] as bool,
+      activityLevelIndex: fields[20] as int?,
+      dayStartHour: fields[21] as int?,
+      useAccurateMode: fields[22] as bool?,
     );
   }
 

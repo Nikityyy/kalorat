@@ -106,6 +106,8 @@ class SyncService {
           isGuest: false,
           supabaseUserId: userId,
           photoUrl: profileData['photo_url'],
+          activityLevel:
+              (profileData['activity_level'] as num?)?.toInt() ?? 0,
           dayStartHour: profileData['day_start_hour'] ?? 0,
           useAccurateMode: profileData['use_accurate_mode'] ?? true,
         );
@@ -121,6 +123,8 @@ class SyncService {
             ? DateTime.tryParse(profileData['birthdate'])
             : null;
         final cloudPhoto = profileData['photo_url'] as String?;
+        final cloudActivityLevel =
+            (profileData['activity_level'] as num?)?.toInt();
         final cloudDayStart = profileData['day_start_hour'] as int?;
         final cloudAccurateMode = profileData['use_accurate_mode'] as bool?;
 
@@ -134,6 +138,8 @@ class SyncService {
           goal: cloudGoal ?? currentUser.goalIndex,
           gender: cloudGender ?? currentUser.genderIndex,
           photoUrl: cloudPhoto ?? currentUser.photoUrl,
+          activityLevel:
+              cloudActivityLevel ?? currentUser.activityLevelIndex,
           dayStartHour: cloudDayStart ?? currentUser.dayStartHour,
           useAccurateMode: cloudAccurateMode ?? currentUser.useAccurateMode,
         );
@@ -260,7 +266,7 @@ class SyncService {
   // --- Private helpers ---
 
   Future<void> _upsertProfile(String userId, UserModel user) async {
-    await _client.from('profiles').upsert({
+    final profile = <String, dynamic>{
       'id': userId,
       'name': user.name,
       'birthdate': user.birthdate.toIso8601String(),
@@ -272,8 +278,23 @@ class SyncService {
       'day_start_hour': user.dayStartHour,
       'updated_at': DateTime.now().toIso8601String(),
       'photo_url': user.photoUrl,
+      'activity_level': user.activityLevelIndex,
       'use_accurate_mode': user.useAccurateMode,
-    });
+    };
+
+    try {
+      await _client.from('profiles').upsert(profile);
+    } on PostgrestException catch (error) {
+      // Older Supabase schemas may not have activity_level yet. Keep all
+      // existing profile sync working while local Hive still persists it.
+      final missingActivityColumn =
+          error.code == 'PGRST204' &&
+          error.message.contains('activity_level');
+      if (!missingActivityColumn) rethrow;
+
+      profile.remove('activity_level');
+      await _client.from('profiles').upsert(profile);
+    }
   }
 
   MealModel _mealFromSupabase(Map<String, dynamic> data) {
