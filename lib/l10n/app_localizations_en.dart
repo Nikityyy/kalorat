@@ -277,6 +277,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get reportMealsLog => 'Meals Log';
 
   @override
+  String get reportWeight => 'Weight';
+
+  @override
+  String get reportDailyLog => 'Daily Log';
+
+  @override
   String get reportNoMeals => '*No meals recorded.*';
 
   @override

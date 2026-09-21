@@ -19,87 +19,112 @@ class FakePathProviderPlatform extends Fake
 class MockDatabaseService extends Fake implements DatabaseService {
   UserModel? user;
   List<MealModel> meals = [];
+  List<WeightModel> weights = [];
 
   @override
   UserModel? getUser() => user;
 
   @override
   List<MealModel> getAllMeals() => meals;
+
+  @override
+  List<WeightModel> getAllWeights() => weights;
 }
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   PathProviderPlatform.instance = FakePathProviderPlatform();
 
-  test('ExportImportService generates correctly formatted and ordered markdown report', () async {
-    final mockDb = MockDatabaseService();
-    final service = ExportImportService(mockDb);
-    final l10n = AppLocalizationsEn();
+  test(
+    'ExportImportService generates correctly formatted and ordered markdown report',
+    () async {
+      final mockDb = MockDatabaseService();
+      final service = ExportImportService(mockDb);
+      final l10n = AppLocalizationsEn();
 
-    mockDb.user = UserModel(
-      name: 'Test',
-      height: 180,
-      weight: 75,
-      goal: 1, // maintain
-      gender: 0, // male
-      birthdate: DateTime(1995, 1, 1),
-    );
+      mockDb.user = UserModel(
+        name: 'Test',
+        height: 180,
+        weight: 75,
+        goal: 1, // maintain
+        gender: 0, // male
+        birthdate: DateTime(1995, 1, 1),
+      );
 
-    mockDb.meals = [
-      MealModel(
-        id: '1',
-        mealName: 'Dinner',
-        calories: 800,
-        protein: 50,
-        carbs: 70,
-        fats: 20,
-        timestamp: DateTime(2026, 8, 20, 19, 30),
-        photoPaths: [],
-      ),
-      MealModel(
-        id: '2',
-        mealName: 'Breakfast',
-        calories: 400,
-        protein: 30,
-        carbs: 40,
-        fats: 10,
-        timestamp: DateTime(2026, 8, 20, 8, 0),
-        photoPaths: [],
-      ),
-      MealModel(
-        id: '3',
-        mealName: 'Yesterday Lunch',
-        calories: 600,
-        protein: 40,
-        carbs: 50,
-        fats: 15,
-        timestamp: DateTime(2026, 8, 19, 12, 0),
-        photoPaths: [],
-      ),
-    ];
+      mockDb.weights = [
+        WeightModel(date: DateTime(2026, 8, 20), weight: 74.8),
+        WeightModel(date: DateTime(2026, 8, 21), weight: 75.0),
+      ];
 
-    final path = await service.exportMarkdownReport(l10n);
-    expect(path, isNotNull);
+      mockDb.meals = [
+        MealModel(
+          id: '1',
+          mealName: 'Dinner',
+          calories: 800,
+          protein: 50,
+          carbs: 70,
+          fats: 20,
+          timestamp: DateTime(2026, 8, 20, 19, 30),
+          photoPaths: [],
+        ),
+        MealModel(
+          id: '2',
+          mealName: 'Breakfast',
+          calories: 400,
+          protein: 30,
+          carbs: 40,
+          fats: 10,
+          timestamp: DateTime(2026, 8, 20, 8, 0),
+          photoPaths: [],
+        ),
+        MealModel(
+          id: '3',
+          mealName: 'Yesterday Lunch',
+          calories: 600,
+          protein: 40,
+          carbs: 50,
+          fats: 15,
+          timestamp: DateTime(2026, 8, 19, 12, 0),
+          photoPaths: [],
+        ),
+      ];
 
-    final file = File(path!);
-    expect(await file.exists(), isTrue);
+      final path = await service.exportMarkdownReport(l10n);
+      expect(path, isNotNull);
 
-    final content = await file.readAsString();
-    expect(content, contains('# Kalorat - Nutrition Report'));
-    expect(content, contains('### 2026-08-19'));
-    expect(content, contains('### 2026-08-20'));
-    
-    // Check that 2026-08-19 appears BEFORE 2026-08-20 in the content
-    final idx19 = content.indexOf('### 2026-08-19');
-    final idx20 = content.indexOf('### 2026-08-20');
-    expect(idx19 < idx20, isTrue);
+      final file = File(path!);
+      expect(await file.exists(), isTrue);
 
-    // Check that Breakfast appears BEFORE Dinner for 2026-08-20
-    final idxBreakfast = content.indexOf('[08:00] Breakfast');
-    final idxDinner = content.indexOf('[19:30] Dinner');
-    expect(idxBreakfast < idxDinner, isTrue);
+      final content = await file.readAsString();
+      expect(content, contains('# Kalorat - Nutrition Report'));
+      expect(content, contains('## Daily Log'));
+      expect(content, contains('**Weight:** 74.8 kg'));
+      expect(content, contains('**Weight:** 75.0 kg'));
+      expect(
+        content,
+        contains('### 2026-08-21\n**Weight:** 75.0 kg\n*No meals recorded.*'),
+      );
+      expect(content, isNot(contains('### 2026-08-19\n**Weight:')));
+      expect(content, contains('### 2026-08-19'));
+      expect(content, contains('### 2026-08-20'));
 
-    // Check macros math
-    expect(content, contains('**Daily Total:** 1200 kcal | P: 80.0g | C: 110.0g | F: 30.0g'));
-  });
+      // Check that 2026-08-19 appears BEFORE 2026-08-20 in the content
+      final idx19 = content.indexOf('### 2026-08-19');
+      final idx20 = content.indexOf('### 2026-08-20');
+      expect(idx19 < idx20, isTrue);
+
+      // Check that Breakfast appears BEFORE Dinner for 2026-08-20
+      final idxBreakfast = content.indexOf('[08:00] Breakfast');
+      final idxDinner = content.indexOf('[19:30] Dinner');
+      expect(idxBreakfast < idxDinner, isTrue);
+
+      // Check macros math
+      expect(
+        content,
+        contains(
+          '**Daily Total:** 1200 kcal | P: 80.0g | C: 110.0g | F: 30.0g',
+        ),
+      );
+    },
+  );
 }

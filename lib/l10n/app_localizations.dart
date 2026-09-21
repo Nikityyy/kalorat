@@ -626,6 +626,18 @@ abstract class AppLocalizations {
   /// **'Mahlzeitenprotokoll'**
   String get reportMealsLog;
 
+  /// No description provided for @reportWeight.
+  ///
+  /// In de, this message translates to:
+  /// **'Gewicht'**
+  String get reportWeight;
+
+  /// No description provided for @reportDailyLog.
+  ///
+  /// In de, this message translates to:
+  /// **'Tagesprotokoll'**
+  String get reportDailyLog;
+
   /// No description provided for @reportNoMeals.
   ///
   /// In de, this message translates to:

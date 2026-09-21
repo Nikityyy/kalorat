@@ -95,6 +95,8 @@
   "reportDailyCarbs": "Tägliches Kohlenhydrateziel",
   "reportDailyFats": "Tägliches Fettziel",
   "reportMealsLog": "Mahlzeitenprotokoll",
+  "reportWeight": "Gewicht",
+  "reportDailyLog": "Tagesprotokoll",
   "reportNoMeals": "*Keine Mahlzeiten aufgezeichnet.*",
   "reportDailyTotal": "Tagesgesamt",
   "reportUnnamedMeal": "Unbenannte Mahlzeit",

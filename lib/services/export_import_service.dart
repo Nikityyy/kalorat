@@ -5,7 +5,8 @@ import 'database_service.dart';
 import '../models/models.dart';
 
 // Conditional imports for web vs mobile
-import 'export_import_web.dart' if (dart.library.io) 'export_import_native.dart';
+import 'export_import_web.dart'
+    if (dart.library.io) 'export_import_native.dart';
 
 class ExportImportService {
   final DatabaseService _databaseService;
@@ -35,66 +36,115 @@ class ExportImportService {
     try {
       final user = _databaseService.getUser();
       final meals = _databaseService.getAllMeals();
-      
+
       final sb = StringBuffer();
-      
+
       sb.writeln('# ${l10n.reportTitle}');
-      sb.writeln('${l10n.reportGeneratedOn}: ${DateTime.now().toIso8601String().split('T').first}');
+      sb.writeln(
+        '${l10n.reportGeneratedOn}: ${DateTime.now().toIso8601String().split('T').first}',
+      );
       sb.writeln();
 
       if (user != null) {
         sb.writeln('## ${l10n.reportUserProfile}');
         sb.writeln('- **${l10n.reportGoal}:** ${user.goal.name}');
-        sb.writeln('- **${l10n.reportActivityLevel}:** ${user.activityLevel.name}');
-        sb.writeln('- **${l10n.reportDailyCalories}:** ${user.dailyCalorieTarget.round()} kcal');
-        sb.writeln('- **${l10n.reportDailyProtein}:** ${user.dailyProteinTarget.toStringAsFixed(1)} g');
-        sb.writeln('- **${l10n.reportDailyCarbs}:** ${user.dailyCarbTarget.toStringAsFixed(1)} g');
-        sb.writeln('- **${l10n.reportDailyFats}:** ${user.dailyFatTarget.toStringAsFixed(1)} g');
+        sb.writeln(
+          '- **${l10n.reportActivityLevel}:** ${user.activityLevel.name}',
+        );
+        sb.writeln(
+          '- **${l10n.reportDailyCalories}:** ${user.dailyCalorieTarget.round()} kcal',
+        );
+        sb.writeln(
+          '- **${l10n.reportDailyProtein}:** ${user.dailyProteinTarget.toStringAsFixed(1)} g',
+        );
+        sb.writeln(
+          '- **${l10n.reportDailyCarbs}:** ${user.dailyCarbTarget.toStringAsFixed(1)} g',
+        );
+        sb.writeln(
+          '- **${l10n.reportDailyFats}:** ${user.dailyFatTarget.toStringAsFixed(1)} g',
+        );
         sb.writeln();
       }
 
-      sb.writeln('## ${l10n.reportMealsLog}');
+      sb.writeln('## ${l10n.reportDailyLog}');
       sb.writeln();
 
-      if (meals.isEmpty) {
+      // Group meals by date using the user's configured day boundary.
+      final Map<String, List<MealModel>> mealsByDate = {};
+      for (final meal in meals) {
+        final adjusted = meal.timestamp.subtract(
+          Duration(hours: user?.dayStartHour ?? 0),
+        );
+        final dateStr =
+            '${adjusted.year}-${adjusted.month.toString().padLeft(2, '0')}-${adjusted.day.toString().padLeft(2, '0')}';
+        mealsByDate.putIfAbsent(dateStr, () => []).add(meal);
+      }
+
+      // Weights belong to their actual calendar date; unlike meals, they are
+      // not shifted by the user's day-start setting.
+      final Map<String, List<WeightModel>> weightsByDate = {};
+      for (final weight in _databaseService.getAllWeights()) {
+        final dateStr =
+            '${weight.date.year}-${weight.date.month.toString().padLeft(2, '0')}-${weight.date.day.toString().padLeft(2, '0')}';
+        weightsByDate.putIfAbsent(dateStr, () => []).add(weight);
+      }
+
+      final dates = <String>{
+        ...mealsByDate.keys,
+        ...weightsByDate.keys,
+      }.toList()..sort();
+
+      if (dates.isEmpty) {
         sb.writeln('${l10n.reportNoMeals}');
       } else {
-        // Group meals by date (YYYY-MM-DD)
-        final Map<String, List<MealModel>> mealsByDate = {};
-        for (final meal in meals) {
-          // Adjust for user dayStartHour
-          final adjusted = meal.timestamp.subtract(Duration(hours: user?.dayStartHour ?? 0));
-          final dateStr = '${adjusted.year}-${adjusted.month.toString().padLeft(2, '0')}-${adjusted.day.toString().padLeft(2, '0')}';
-          mealsByDate.putIfAbsent(dateStr, () => []).add(meal);
-        }
+        for (final date in dates) {
+          final dailyMeals = mealsByDate[date]
+            ?..sort((a, b) => a.timestamp.compareTo(b.timestamp));
+          final dailyWeights = weightsByDate[date]
+            ?..sort((a, b) => a.date.compareTo(b.date));
 
-        // Sort dates ascending (oldest first)
-        final sortedDates = mealsByDate.keys.toList()..sort();
+          sb.writeln('### $date');
 
-        for (final date in sortedDates) {
-          // Sort daily meals chronologically (oldest meal first)
-          final dailyMeals = mealsByDate[date]!..sort((a, b) => a.timestamp.compareTo(b.timestamp));
-          
+          if (dailyWeights != null && dailyWeights.isNotEmpty) {
+            for (final weight in dailyWeights) {
+              sb.writeln(
+                '**${l10n.reportWeight}:** ${weight.weight.toStringAsFixed(1)} kg',
+              );
+            }
+          }
+
+          if (dailyMeals == null || dailyMeals.isEmpty) {
+            sb.writeln('${l10n.reportNoMeals}');
+            sb.writeln();
+            continue;
+          }
+
           double dailyCals = 0;
           double dailyProtein = 0;
           double dailyCarbs = 0;
           double dailyFats = 0;
 
-          for (final m in dailyMeals) {
-            dailyCals += m.calories;
-            dailyProtein += m.protein;
-            dailyCarbs += m.carbs;
-            dailyFats += m.fats;
+          for (final meal in dailyMeals) {
+            dailyCals += meal.calories;
+            dailyProtein += meal.protein;
+            dailyCarbs += meal.carbs;
+            dailyFats += meal.fats;
           }
 
-          sb.writeln('### $date');
-          sb.writeln('**${l10n.reportDailyTotal}:** ${dailyCals.round()} kcal | P: ${dailyProtein.toStringAsFixed(1)}g | C: ${dailyCarbs.toStringAsFixed(1)}g | F: ${dailyFats.toStringAsFixed(1)}g');
+          sb.writeln(
+            '**${l10n.reportDailyTotal}:** ${dailyCals.round()} kcal | P: ${dailyProtein.toStringAsFixed(1)}g | C: ${dailyCarbs.toStringAsFixed(1)}g | F: ${dailyFats.toStringAsFixed(1)}g',
+          );
           sb.writeln();
 
-          for (final m in dailyMeals) {
-            final timeStr = '${m.timestamp.hour.toString().padLeft(2, '0')}:${m.timestamp.minute.toString().padLeft(2, '0')}';
-            sb.writeln('- **[$timeStr] ${m.mealName.isEmpty ? l10n.reportUnnamedMeal : m.mealName}**');
-            sb.writeln('  - ${m.calories.round()} kcal | P: ${m.protein.toStringAsFixed(1)}g | C: ${m.carbs.toStringAsFixed(1)}g | F: ${m.fats.toStringAsFixed(1)}g');
+          for (final meal in dailyMeals) {
+            final timeStr =
+                '${meal.timestamp.hour.toString().padLeft(2, '0')}:${meal.timestamp.minute.toString().padLeft(2, '0')}';
+            sb.writeln(
+              '- **[$timeStr] ${meal.mealName.isEmpty ? l10n.reportUnnamedMeal : meal.mealName}**',
+            );
+            sb.writeln(
+              '  - ${meal.calories.round()} kcal | P: ${meal.protein.toStringAsFixed(1)}g | C: ${meal.carbs.toStringAsFixed(1)}g | F: ${meal.fats.toStringAsFixed(1)}g',
+            );
           }
           sb.writeln();
         }

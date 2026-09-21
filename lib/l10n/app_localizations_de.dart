@@ -280,6 +280,12 @@ class AppLocalizationsDe extends AppLocalizations {
   String get reportMealsLog => 'Mahlzeitenprotokoll';
 
   @override
+  String get reportWeight => 'Gewicht';
+
+  @override
+  String get reportDailyLog => 'Tagesprotokoll';
+
+  @override
   String get reportNoMeals => '*Keine Mahlzeiten aufgezeichnet.*';
 
   @override

@@ -95,6 +95,8 @@
   "reportDailyCarbs": "Daily Carbs Target",
   "reportDailyFats": "Daily Fat Target",
   "reportMealsLog": "Meals Log",
+  "reportWeight": "Weight",
+  "reportDailyLog": "Daily Log",
   "reportNoMeals": "*No meals recorded.*",
   "reportDailyTotal": "Daily Total",
   "reportUnnamedMeal": "Unnamed Meal",
