@@ -9,6 +9,22 @@ import 'database_service.dart';
 bool shouldReplaceVersion(DateTime candidate, DateTime current) =>
     candidate.toUtc().isAfter(current.toUtc());
 
+/// A cloud profile only supersedes a locally saved activity level when the
+/// cloud profile changed after this device last synced. Older profiles can
+/// contain the default "sedentary" value even when the local choice is newer.
+bool shouldUseCloudActivityLevel({
+  required bool localUserIsGuest,
+  required DateTime? localLastSyncTimestamp,
+  required DateTime? cloudProfileUpdatedAt,
+}) {
+  if (localUserIsGuest) return false;
+  if (localLastSyncTimestamp == null) return true;
+  if (cloudProfileUpdatedAt == null) return false;
+  return cloudProfileUpdatedAt
+      .toUtc()
+      .isAfter(localLastSyncTimestamp.toUtc());
+}
+
 /// Cloud sync service using Supabase PostgreSQL.
 /// Handles bidirectional sync between local Hive storage and Supabase.
 class SyncService {
@@ -125,6 +141,14 @@ class SyncService {
         final cloudPhoto = profileData['photo_url'] as String?;
         final cloudActivityLevel =
             (profileData['activity_level'] as num?)?.toInt();
+        final cloudProfileUpdatedAt = profileData['updated_at'] is String
+            ? DateTime.tryParse(profileData['updated_at'] as String)
+            : null;
+        final useCloudActivityLevel = shouldUseCloudActivityLevel(
+          localUserIsGuest: currentUser.isGuest,
+          localLastSyncTimestamp: currentUser.lastSyncTimestamp,
+          cloudProfileUpdatedAt: cloudProfileUpdatedAt,
+        );
         final cloudDayStart = profileData['day_start_hour'] as int?;
         final cloudAccurateMode = profileData['use_accurate_mode'] as bool?;
 
@@ -138,8 +162,9 @@ class SyncService {
           goal: cloudGoal ?? currentUser.goalIndex,
           gender: cloudGender ?? currentUser.genderIndex,
           photoUrl: cloudPhoto ?? currentUser.photoUrl,
-          activityLevel:
-              cloudActivityLevel ?? currentUser.activityLevelIndex,
+          activityLevel: useCloudActivityLevel && cloudActivityLevel != null
+              ? cloudActivityLevel
+              : currentUser.activityLevelIndex,
           dayStartHour: cloudDayStart ?? currentUser.dayStartHour,
           useAccurateMode: cloudAccurateMode ?? currentUser.useAccurateMode,
         );
