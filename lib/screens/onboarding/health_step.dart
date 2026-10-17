@@ -98,17 +98,6 @@ class _HealthStepState extends State<HealthStep> {
                     ? const Color(0xFFFF2D55) // Apple Health red
                     : AppColors.primary, // Health Connect green
                 borderRadius: BorderRadius.circular(24),
-                boxShadow: [
-                  BoxShadow(
-                    color:
-                        (PlatformUtils.isIOS
-                                ? const Color(0xFFFF2D55)
-                                : AppColors.primary)
-                            .withValues(alpha: 0.3),
-                    blurRadius: 20,
-                    offset: const Offset(0, 8),
-                  ),
-                ],
               ),
               child: const Icon(Icons.favorite, color: Colors.white, size: 48),
             ),

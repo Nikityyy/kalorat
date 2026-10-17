@@ -1405,12 +1405,6 @@ class _HomeScreenState extends State<HomeScreen>
                                 width: 2,
                               ),
                               borderRadius: BorderRadius.circular(34),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.25),
-                                  blurRadius: 8,
-                                ),
-                              ],
                             ),
                           ),
                         ),

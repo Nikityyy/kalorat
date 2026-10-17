@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../theme/app_colors.dart';
+import '../theme/app_typography.dart';
 
 class LiveThoughtPanel extends StatefulWidget {
   final String thoughtText;
@@ -208,7 +208,8 @@ class _PanelHeader extends StatelessWidget {
         const SizedBox(width: 10),
         Text(
           title.toUpperCase(),
-          style: GoogleFonts.jetBrainsMono(
+          style: TextStyle(
+            fontFamily: AppTypography.mono,
             fontSize: 11,
             fontWeight: FontWeight.w700,
             color: AppColors.styrianForest,
@@ -236,7 +237,8 @@ class _ThinkingPlaceholder extends StatelessWidget {
       children: [
         Text(
           label,
-          style: GoogleFonts.outfit(
+          style: TextStyle(
+            fontFamily: AppTypography.outfit,
             fontSize: 14,
             fontWeight: FontWeight.w500,
             color: AppColors.deepSpaceBlack.withValues(alpha: 0.58),
@@ -412,7 +414,8 @@ class _Cursor extends StatelessWidget {
   }
 }
 
-final TextStyle _bodyStyle = GoogleFonts.outfit(
+final TextStyle _bodyStyle = TextStyle(
+  fontFamily: AppTypography.outfit,
   fontSize: 14,
   fontWeight: FontWeight.w400,
   color: AppColors.deepSpaceBlack.withValues(alpha: 0.74),
@@ -420,7 +423,8 @@ final TextStyle _bodyStyle = GoogleFonts.outfit(
   letterSpacing: 0,
 );
 
-final TextStyle _headingStyle = GoogleFonts.outfit(
+final TextStyle _headingStyle = TextStyle(
+  fontFamily: AppTypography.outfit,
   fontSize: 15,
   fontWeight: FontWeight.w700,
   color: AppColors.deepSpaceBlack,

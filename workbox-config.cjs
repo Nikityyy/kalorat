@@ -22,15 +22,4 @@ module.exports = {
   clientsClaim: true,
   cleanupOutdatedCaches: true,
   inlineWorkboxRuntime: true,
-  runtimeCaching: [
-    {
-      urlPattern: ({ url }) => url.origin === 'https://fonts.gstatic.com',
-      handler: 'CacheFirst',
-      options: {
-        cacheName: 'google-fonts',
-        expiration: { maxEntries: 30, maxAgeSeconds: 365 * 24 * 60 * 60 },
-        cacheableResponse: { statuses: [0, 200] },
-      },
-    },
-  ],
 };

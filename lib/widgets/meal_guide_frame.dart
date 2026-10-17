@@ -140,21 +140,30 @@ class MealGuideOverlay extends StatelessWidget {
                 top: boxTop + boxSize + 18.0,
                 left: 20.0,
                 right: 20.0,
-                child: Text(
-                  guideText,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    height: 1.35,
-                    shadows: [
-                      Shadow(
-                        blurRadius: 8,
-                        color: Colors.black87,
-                        offset: Offset(0, 1),
+                child: Center(
+                  // A flat plate keeps the text readable over any camera image
+                  // without a drop shadow.
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.5),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
                       ),
-                    ],
+                      child: Text(
+                        guideText,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          height: 1.35,
+                        ),
+                      ),
+                    ),
                   ),
                 ),
               ),
