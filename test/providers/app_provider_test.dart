@@ -19,7 +19,22 @@ class _MemoryDatabase extends DatabaseService {
     );
     weights.add(weight);
   }
+
+  final Map<String, MealModel> meals = {};
+
+  @override
+  MealModel? getMealById(String mealId) => meals[mealId];
+
+  @override
+  Future<void> deleteMeal(String mealId) async => meals.remove(mealId);
 }
+
+MealModel _meal(String id, {required bool isPending}) => MealModel(
+  id: id,
+  timestamp: DateTime(2026, 7, 10, 12),
+  photoPaths: const [],
+  isPending: isPending,
+);
 
 void main() {
   test('AppProvider updates an existing weight entry', () async {
@@ -35,4 +50,20 @@ void main() {
 
     expect(database.weights.single.weight, 69.5);
   });
+
+  test(
+    'discardPendingMeal removes only meals still awaiting analysis',
+    () async {
+      final database = _MemoryDatabase();
+      database.meals['queued'] = _meal('queued', isPending: true);
+      database.meals['logged'] = _meal('logged', isPending: false);
+      final provider = AppProvider(databaseService: database);
+
+      await provider.discardPendingMeal('queued');
+      await provider.discardPendingMeal('logged');
+      await provider.discardPendingMeal('missing');
+
+      expect(database.meals.keys, ['logged']);
+    },
+  );
 }

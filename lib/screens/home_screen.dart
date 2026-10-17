@@ -15,6 +15,7 @@ import '../extensions/l10n_extension.dart';
 import '../models/models.dart';
 import '../providers/app_provider.dart';
 import '../services/database_service.dart';
+import '../services/offline_queue_service.dart';
 import '../services/photo_store.dart';
 import '../utils/photo_downscale.dart';
 import '../services/gemini_service.dart';
@@ -842,7 +843,9 @@ class _HomeScreenState extends State<HomeScreen>
 
     // Persist the job before foreground inference too. If the PWA is closed,
     // the next startup can reclaim and analyze it instead of losing the meal.
+    // The claim keeps the queue from analyzing it in parallel meanwhile.
     if (!background && isOnline && apiKey.isNotEmpty) {
+      OfflineQueueService.claim(mealId);
       await provider.saveMeal(
         MealModel(
           id: mealId,
@@ -888,6 +891,31 @@ class _HomeScreenState extends State<HomeScreen>
       return;
     }
 
+    // The queued copy only guards against the app closing mid-analysis. Any
+    // outcome other than logging the meal (back, discard, error, no food)
+    // removes it, or the offline queue would analyze and log it later.
+    try {
+      await _runForegroundAnalysis(
+        provider: provider,
+        mealId: mealId,
+        mealContext: mealContext,
+        apiKey: apiKey,
+        language: language,
+      );
+    } finally {
+      await provider.discardPendingMeal(mealId);
+      OfflineQueueService.release(mealId);
+    }
+  }
+
+  Future<void> _runForegroundAnalysis({
+    required AppProvider provider,
+    required String mealId,
+    required String? mealContext,
+    required String apiKey,
+    required String language,
+  }) async {
+    final l10n = context.l10n;
     setState(() {
       _isAnalyzing = true;
       _analysisHeroImageProvider = _capturedPhotos.isNotEmpty
@@ -1039,21 +1067,35 @@ class _HomeScreenState extends State<HomeScreen>
 
         if (mounted) {
           debugPrint('Pushing MealDetailScreen...');
-          setState(() {
-            _isAnalyzing = false;
-            _analysisHeroImageProvider = null;
-          });
-          provider.setMealAnalysisActive(false);
-          await Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => MealDetailScreen(
-                meal: mealWithPortion,
-                isNewEntry: true,
-                initialMealContext: mealContext,
-              ),
+          void endAnalysis() {
+            if (!mounted || !_isAnalyzing) return;
+            setState(() {
+              _isAnalyzing = false;
+              _analysisHeroImageProvider = null;
+            });
+            provider.setMealAnalysisActive(false);
+          }
+
+          // Keep the analysis screen underneath until the result fully covers
+          // it; ending it earlier flashes the photo review screen.
+          final route = MaterialPageRoute<void>(
+            builder: (_) => MealDetailScreen(
+              meal: mealWithPortion,
+              isNewEntry: true,
+              initialMealContext: mealContext,
             ),
           );
+          final popped = Navigator.push(context, route);
+          void onRouteShown(AnimationStatus status) {
+            if (status != AnimationStatus.completed) return;
+            route.animation?.removeStatusListener(onRouteShown);
+            endAnalysis();
+          }
+
+          route.animation?.addStatusListener(onRouteShown);
+          await popped;
+          route.animation?.removeStatusListener(onRouteShown);
+          endAnalysis();
           debugPrint('Returned from MealDetailScreen');
           await _resetCaptureState();
         }

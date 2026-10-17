@@ -108,6 +108,26 @@ void main() {
     expect(await photos.read(ref), isNull);
   });
 
+  test('deleting a meal keeps photos still used elsewhere', () async {
+    final shared = await photos.save(Uint8List.fromList([1]));
+    final pendingCapture = await photos.save(Uint8List.fromList([2]));
+    await database.saveMeal(
+      TestData.sampleMeal(id: 'm1', photoPaths: [shared, pendingCapture]),
+    );
+    await database.saveMeal(
+      TestData.sampleMeal(id: 'm2', photoPaths: [shared]),
+    );
+    final pending = await Hive.openBox<dynamic>(
+      DatabaseService.pendingPhotosBoxName,
+    );
+    await pending.put(DatabaseService.pendingPhotosKey, [pendingCapture]);
+
+    await database.deleteMeal('m1');
+
+    expect(await photos.read(shared), [1], reason: 'meal m2 still shows it');
+    expect(await photos.read(pendingCapture), [2], reason: 'still in review');
+  });
+
   test('import stores inline photos and export inlines them again', () async {
     final photo = inlinePhoto(3);
     await database.importAll({

@@ -581,6 +581,12 @@ class AppProvider extends ChangeNotifier with WidgetsBindingObserver {
     notifyListeners();
   }
 
+  /// Deletes [mealId] if it is still waiting for analysis; logged meals stay.
+  Future<void> discardPendingMeal(String mealId) async {
+    if (_databaseService.getMealById(mealId)?.isPending != true) return;
+    await deleteMeal(mealId);
+  }
+
   /// Clears all cached stats - called when meals are modified
   void _invalidateStatsCache() {
     _statsCacheVersion++;

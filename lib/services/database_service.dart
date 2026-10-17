@@ -631,16 +631,16 @@ class DatabaseService {
   }
 
   Future<void> _deleteUnreferencedPhotos(List<String> paths) async {
-    final backupRefs = _backupPhotoRefs();
+    final referenced = await _referencedPhotoPaths();
     for (final path in paths) {
-      if (PhotoStore.isRef(path) && !backupRefs.contains(path)) {
+      if (PhotoStore.isRef(path) && !referenced.contains(path)) {
         await PhotoStore.instance.delete(path);
       }
     }
   }
 
-  /// Removes stored photos left behind by crashes or interrupted captures.
-  Future<int> deleteOrphanPhotos() async {
+  /// Photos still used by a meal, the import backup or an unsent capture.
+  Future<Set<String>> _referencedPhotoPaths() async {
     final referenced = <String>{
       for (final meal in _mealsBox.values) ...meal.photoPaths,
       ..._backupPhotoRefs(),
@@ -650,8 +650,12 @@ class DatabaseService {
     if (pendingPaths is List) {
       referenced.addAll(pendingPaths.whereType<String>());
     }
-    return PhotoStore.instance.deleteOrphans(referenced);
+    return referenced;
   }
+
+  /// Removes stored photos left behind by crashes or interrupted captures.
+  Future<int> deleteOrphanPhotos() async =>
+      PhotoStore.instance.deleteOrphans(await _referencedPhotoPaths());
 
   List<Map<String, dynamic>> getSyncQueue() {
     final raw = Hive.box(

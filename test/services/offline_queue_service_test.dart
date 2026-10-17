@@ -68,4 +68,53 @@ void main() {
     expect(database.meal?.mealName, 'Soup');
     expect(database.meal?.calories, 120);
   });
+
+  test('offline queue skips a meal claimed by a foreground analysis', () async {
+    final database = _QueueDatabase()
+      ..meal = MealModel(
+        id: 'foreground',
+        timestamp: DateTime(2026, 7, 10),
+        photoPaths: const ['photo'],
+        isPending: true,
+        analysisStatus: 'queued',
+      );
+    final gemini = _MockGeminiService();
+    when(
+      () => gemini.analyzeMealStream(
+        any(),
+        useGrams: any(named: 'useGrams'),
+        useAccurateMode: any(named: 'useAccurateMode'),
+        mealContext: any(named: 'mealContext'),
+      ),
+    ).thenAnswer(
+      (_) => Stream.value(
+        const AnalysisResult({'meal_name': 'Soup', 'calories': 120}),
+      ),
+    );
+    final queue = OfflineQueueService(
+      database,
+      onlineCheck: () async => true,
+      geminiFactory: (_, _) => gemini,
+    );
+
+    expect(OfflineQueueService.claim('foreground'), isTrue);
+    expect(OfflineQueueService.claim('foreground'), isFalse);
+    await queue
+        .processQueue('key', 'en')
+        .timeout(const Duration(seconds: 2)); // must not spin
+    verifyNever(
+      () => gemini.analyzeMealStream(
+        any(),
+        useGrams: any(named: 'useGrams'),
+        useAccurateMode: any(named: 'useAccurateMode'),
+        mealContext: any(named: 'mealContext'),
+      ),
+    );
+    expect(database.meal?.isPending, isTrue);
+
+    // If the app closed mid-analysis, the next run still analyzes the meal.
+    OfflineQueueService.release('foreground');
+    await queue.processQueue('key', 'en');
+    expect(database.meal?.mealName, 'Soup');
+  });
 }

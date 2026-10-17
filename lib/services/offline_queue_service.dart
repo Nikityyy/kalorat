@@ -37,6 +37,13 @@ class OfflineQueueService {
            ((apiKey, language) =>
                GeminiService(apiKey: apiKey, language: language));
 
+  /// Reserves [mealId] for an analysis running outside the queue (the camera
+  /// screen), so the queue does not analyze the same meal a second time.
+  /// Returns false if it is already being analyzed.
+  static bool claim(String mealId) => _claimedMealIds.add(mealId);
+
+  static void release(String mealId) => _claimedMealIds.remove(mealId);
+
   Future<bool> isOnline() async {
     if (_onlineCheck != null) return _onlineCheck();
     final result = await _connectivity.checkConnectivity();
@@ -77,7 +84,11 @@ class OfflineQueueService {
 
     while (true) {
       final pending = _databaseService.getPendingMeals();
-      final ready = pending.where(_isReadyToRun).toList();
+      final ready = pending
+          .where(
+            (meal) => _isReadyToRun(meal) && !_claimedMealIds.contains(meal.id),
+          )
+          .toList();
       if (ready.isEmpty) {
         final retryTimes = pending
             .where((meal) => meal.analysisStatus == 'retrying')
