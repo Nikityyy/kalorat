@@ -43,11 +43,6 @@ class _AnalysisStepState extends State<AnalysisStep> {
   }
 
   Future<void> _processData() async {
-    // Fake loading delay for engagement
-    await Future.delayed(const Duration(seconds: 3));
-
-    if (!mounted) return;
-
     // Save User
     await context.read<AppProvider>().updateUser(
       name: widget.name,
@@ -90,8 +85,6 @@ class _AnalysisStepState extends State<AnalysisStep> {
           const CircularProgressIndicator(color: AppColors.primary),
           const SizedBox(height: 24),
           Text(l10n.buildingPlan, style: AppTypography.titleLarge),
-          const SizedBox(height: 8),
-          Text(l10n.analyzingMetabolism, style: AppTypography.bodyMedium),
         ],
       ),
     );

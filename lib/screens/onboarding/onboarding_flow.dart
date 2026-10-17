@@ -8,7 +8,6 @@ import 'welcome_step.dart';
 import 'name_step.dart';
 import 'goal_step.dart';
 import 'demographics_step.dart';
-import 'loading_teaser_step.dart';
 import 'metrics_step.dart';
 import 'activity_level_step.dart';
 import 'teaser_analysis_step.dart';
@@ -16,7 +15,6 @@ import 'health_step.dart';
 import 'api_key_step.dart';
 import 'login_step.dart';
 import 'notification_step.dart';
-import 'contract_step.dart';
 import 'analysis_step.dart';
 
 class OnboardingFlow extends StatefulWidget {
@@ -69,7 +67,9 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
     }
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final savedStep = provider.databaseService.getOnboardingStep();
+      final savedStep = provider.databaseService.getOnboardingStep(
+        isWeb: PlatformUtils.isWeb,
+      );
       if (savedStep > 0 && savedStep < _totalSteps) {
         setState(() => _currentPage = savedStep);
         _pageController.jumpToPage(savedStep);
@@ -77,7 +77,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
     });
   }
 
-  int get _totalSteps => PlatformUtils.isWeb ? 12 : 14;
+  int get _totalSteps => PlatformUtils.isWeb ? 10 : 12;
 
   int get _lastStepIndex => _totalSteps - 1;
 
@@ -101,13 +101,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
   void _previousPage() {
     FocusScope.of(context).unfocus();
     
-    int prevIndex = _currentPage - 1;
-    final steps = _buildOnboardingSteps();
-    
-    if (prevIndex >= 0 && steps[prevIndex] is LoadingTeaserStep) {
-      prevIndex--; // Skip the loading step when going backward
-    }
-    
+    final prevIndex = _currentPage - 1;
     if (prevIndex >= 0) {
       _pageController.animateToPage(
         prevIndex,
@@ -190,11 +184,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
           _nextPage();
         },
       ),
-      // Step 6
-      LoadingTeaserStep(
-        onNext: _nextPage,
-      ),
-      // Step 7: The "Aha!" Teaser
+      // Step 6: Daily target
       TeaserAnalysisStep(
         age: _age,
         genderIndex: _genderIndex,
@@ -204,7 +194,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
         goalIndex: _goalIndex,
         onNext: _nextPage,
       ),
-      // Step 8: Login
+      // Step 7: Login
       LoginStep(
         language: _language,
         onNext: _nextPage,
@@ -270,11 +260,6 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
           context.read<AppProvider>().updateUser(apiKey: key);
           _nextPage();
         },
-      ),
-      ContractStep(
-        language: _language,
-        name: _name,
-        onNext: _nextPage,
       ),
       AnalysisStep(
         language: _language,

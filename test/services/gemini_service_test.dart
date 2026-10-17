@@ -48,7 +48,7 @@ String _sseThoughtEvent(String text) {
 
 void main() {
   group('GeminiService', () {
-    test('validateApiKey returns true for 200 response', () async {
+    test('validateApiKey is valid for a 200 response', () async {
       final client = MockClient((request) async {
         expect(request.method, 'GET');
         expect(request.url.queryParameters['key'], 'test_key');
@@ -56,19 +56,49 @@ void main() {
       });
 
       final service = GeminiService(apiKey: 'dummy', client: client);
-      final result = await service.validateApiKey('test_key');
-      expect(result, true);
+      expect(await service.validateApiKey('test_key'), ApiKeyStatus.valid);
     });
 
-    test('validateApiKey returns false for error response', () async {
-      final client = MockClient((request) async {
-        return http.StreamedResponse(Stream.value(utf8.encode('{}')), 400);
-      });
-
-      final service = GeminiService(apiKey: 'dummy', client: client);
-      final result = await service.validateApiKey('bad_key');
-      expect(result, false);
+    test('validateApiKey is invalid when the key is rejected', () async {
+      for (final status in [400, 401, 403]) {
+        final client = MockClient((request) async {
+          return http.StreamedResponse(Stream.value(utf8.encode('{}')), status);
+        });
+        final service = GeminiService(apiKey: 'dummy', client: client);
+        expect(
+          await service.validateApiKey('bad_key'),
+          ApiKeyStatus.invalid,
+          reason: 'HTTP $status',
+        );
+      }
+      final service = GeminiService(apiKey: 'dummy');
+      expect(await service.validateApiKey(''), ApiKeyStatus.invalid);
     });
+
+    test(
+      'validateApiKey is unreachable on network and server errors',
+      () async {
+        for (final status in [429, 500, 503]) {
+          final client = MockClient((request) async {
+            return http.StreamedResponse(
+              Stream.value(utf8.encode('{}')),
+              status,
+            );
+          });
+          final service = GeminiService(apiKey: 'dummy', client: client);
+          expect(
+            await service.validateApiKey('key'),
+            ApiKeyStatus.unreachable,
+            reason: 'HTTP $status',
+          );
+        }
+        final offline = MockClient((request) async {
+          throw const SocketException('offline');
+        });
+        final service = GeminiService(apiKey: 'dummy', client: offline);
+        expect(await service.validateApiKey('key'), ApiKeyStatus.unreachable);
+      },
+    );
 
     group('model sort order', () {
       late Directory tempDir;

@@ -515,7 +515,7 @@ abstract class AppLocalizations {
   /// No description provided for @noMealData.
   ///
   /// In de, this message translates to:
-  /// **'Noch keine Mahlzeiten erfasst'**
+  /// **'Keine Mahlzeiten erfasst.'**
   String get noMealData;
 
   /// No description provided for @mealsLogged.
@@ -815,14 +815,8 @@ abstract class AppLocalizations {
   /// No description provided for @buildingPlan.
   ///
   /// In de, this message translates to:
-  /// **'Wir erstellen deinen Plan...'**
+  /// **'Profil wird gespeichert...'**
   String get buildingPlan;
-
-  /// No description provided for @analyzingMetabolism.
-  ///
-  /// In de, this message translates to:
-  /// **'Dein Stoffwechsel wird analysiert'**
-  String get analyzingMetabolism;
 
   /// No description provided for @apiKeyValidationError.
   ///
@@ -857,19 +851,19 @@ abstract class AppLocalizations {
   /// No description provided for @weightReminderBody.
   ///
   /// In de, this message translates to:
-  /// **'Vergiss nicht, dein Gewicht heute einzutragen.'**
+  /// **'Gewicht von heute erfassen.'**
   String get weightReminderBody;
 
   /// No description provided for @mealReminderTitle.
   ///
   /// In de, this message translates to:
-  /// **'Zeit zum Essen'**
+  /// **'Erinnerung: Mahlzeit'**
   String get mealReminderTitle;
 
   /// No description provided for @mealReminderBody.
   ///
   /// In de, this message translates to:
-  /// **'Denk daran, deine Mahlzeit zu erfassen.'**
+  /// **'Mahlzeit erfassen.'**
   String get mealReminderBody;
 
   /// No description provided for @howOldAreYou.
@@ -887,19 +881,19 @@ abstract class AppLocalizations {
   /// No description provided for @loseWeight.
   ///
   /// In de, this message translates to:
-  /// **'Gesundes Tempo'**
+  /// **'Abnehmen'**
   String get loseWeight;
 
   /// No description provided for @maintainWeight.
   ///
   /// In de, this message translates to:
-  /// **'Pfad halten'**
+  /// **'Gewicht halten'**
   String get maintainWeight;
 
   /// No description provided for @gainMuscle.
   ///
   /// In de, this message translates to:
-  /// **'Kraft aufbauen'**
+  /// **'Muskeln aufbauen'**
   String get gainMuscle;
 
   /// No description provided for @whatsYourGender.
@@ -977,7 +971,7 @@ abstract class AppLocalizations {
   /// No description provided for @reminders.
   ///
   /// In de, this message translates to:
-  /// **'Impulse'**
+  /// **'Erinnerungen'**
   String get reminders;
 
   /// No description provided for @logMeals.
@@ -1031,7 +1025,7 @@ abstract class AppLocalizations {
   /// No description provided for @noMealsRecorded.
   ///
   /// In de, this message translates to:
-  /// **'Dein Journal ist leer.'**
+  /// **'Keine Mahlzeiten erfasst.'**
   String get noMealsRecorded;
 
   /// No description provided for @deleteQuestion.
@@ -1163,19 +1157,19 @@ abstract class AppLocalizations {
   /// No description provided for @burnFatSubtitle.
   ///
   /// In de, this message translates to:
-  /// **'Fett verbrennen'**
+  /// **'Kaloriendefizit'**
   String get burnFatSubtitle;
 
   /// No description provided for @maintainSubtitle.
   ///
   /// In de, this message translates to:
-  /// **'Gesund & fit bleiben'**
+  /// **'Kalorienbalance'**
   String get maintainSubtitle;
 
   /// No description provided for @buildMassSubtitle.
   ///
   /// In de, this message translates to:
-  /// **'Masse & Stärke'**
+  /// **'Kalorienüberschuss'**
   String get buildMassSubtitle;
 
   /// No description provided for @createPlan.
@@ -1241,7 +1235,7 @@ abstract class AppLocalizations {
   /// No description provided for @nameSubtitle.
   ///
   /// In de, this message translates to:
-  /// **'Wir möchten dich persönlich ansprechen.'**
+  /// **'Wird in deinem Profil angezeigt.'**
   String get nameSubtitle;
 
   /// No description provided for @cm.
@@ -1271,7 +1265,7 @@ abstract class AppLocalizations {
   /// No description provided for @weightSaved.
   ///
   /// In de, this message translates to:
-  /// **'Gewicht gespeichert!'**
+  /// **'Gewicht gespeichert'**
   String get weightSaved;
 
   /// No description provided for @goalWeightLoss.
@@ -1391,7 +1385,7 @@ abstract class AppLocalizations {
   /// No description provided for @healthOnboardingDescription.
   ///
   /// In de, this message translates to:
-  /// **'Synchronisiere deine Ernährungs- und Gewichtsdaten mit der Gesundheits-App deines Geräts für einen vollständigen Überblick.'**
+  /// **'Ernährung und Gewicht mit der Gesundheits-App deines Geräts synchronisieren.'**
   String get healthOnboardingDescription;
 
   /// No description provided for @healthOnboardingBenefit1.
@@ -1745,7 +1739,7 @@ abstract class AppLocalizations {
   /// No description provided for @updateReady.
   ///
   /// In de, this message translates to:
-  /// **'Eine neue Version von Kalorat ist bereit. Jetzt aktualisieren für die neuesten Features.'**
+  /// **'Neue Version verfügbar.'**
   String get updateReady;
 
   /// No description provided for @reloadButton.
@@ -1811,7 +1805,7 @@ abstract class AppLocalizations {
   /// No description provided for @saveToGallerySuccess.
   ///
   /// In de, this message translates to:
-  /// **'Foto in Galerie gespeichert!'**
+  /// **'Foto in Galerie gespeichert'**
   String get saveToGallerySuccess;
 
   /// No description provided for @saveToGalleryError.
@@ -1919,7 +1913,7 @@ abstract class AppLocalizations {
   /// No description provided for @analysisUpdated.
   ///
   /// In de, this message translates to:
-  /// **'Analyse aktualisiert!'**
+  /// **'Analyse aktualisiert'**
   String get analysisUpdated;
 
   /// No description provided for @analysisConfidence.
@@ -1970,54 +1964,6 @@ abstract class AppLocalizations {
   /// **'Schließen'**
   String get close;
 
-  /// No description provided for @primaryGoal.
-  ///
-  /// In de, this message translates to:
-  /// **'Primäres Ziel'**
-  String get primaryGoal;
-
-  /// No description provided for @secondaryOutcomes.
-  ///
-  /// In de, this message translates to:
-  /// **'Sekundäre Ziele (Optional)'**
-  String get secondaryOutcomes;
-
-  /// No description provided for @boostEnergy.
-  ///
-  /// In de, this message translates to:
-  /// **'Mehr Energie'**
-  String get boostEnergy;
-
-  /// No description provided for @boostEnergySubtitle.
-  ///
-  /// In de, this message translates to:
-  /// **'Fühl dich weniger müde'**
-  String get boostEnergySubtitle;
-
-  /// No description provided for @improveSleep.
-  ///
-  /// In de, this message translates to:
-  /// **'Besserer Schlaf'**
-  String get improveSleep;
-
-  /// No description provided for @improveSleepSubtitle.
-  ///
-  /// In de, this message translates to:
-  /// **'Wach erfrischt auf'**
-  String get improveSleepSubtitle;
-
-  /// No description provided for @buildHabits.
-  ///
-  /// In de, this message translates to:
-  /// **'Gewohnheiten'**
-  String get buildHabits;
-
-  /// No description provided for @buildHabitsSubtitle.
-  ///
-  /// In de, this message translates to:
-  /// **'Konsistenz aufbauen'**
-  String get buildHabitsSubtitle;
-
   /// No description provided for @aBitAboutYou.
   ///
   /// In de, this message translates to:
@@ -2036,40 +1982,16 @@ abstract class AppLocalizations {
   /// **'Deine Maße'**
   String get yourMeasurements;
 
-  /// No description provided for @analyzingBiometrics.
-  ///
-  /// In de, this message translates to:
-  /// **'Analysiere dein Profil...'**
-  String get analyzingBiometrics;
-
-  /// No description provided for @calculatingMetabolicRate.
-  ///
-  /// In de, this message translates to:
-  /// **'Berechne Stoffwechselrate...'**
-  String get calculatingMetabolicRate;
-
-  /// No description provided for @personalizingPlan.
-  ///
-  /// In de, this message translates to:
-  /// **'Personalisiere deinen Plan...'**
-  String get personalizingPlan;
-
-  /// No description provided for @almostReady.
-  ///
-  /// In de, this message translates to:
-  /// **'Fast fertig...'**
-  String get almostReady;
-
   /// No description provided for @planReady.
   ///
   /// In de, this message translates to:
-  /// **'Dein Plan ist fertig!'**
+  /// **'Plan berechnet'**
   String get planReady;
 
   /// No description provided for @basedOnProfile.
   ///
   /// In de, this message translates to:
-  /// **'Basierend auf deinem Profil ist hier dein Ziel:'**
+  /// **'Basierend auf deinem Profil.'**
   String get basedOnProfile;
 
   /// No description provided for @dailyCalorieTarget.
@@ -2081,20 +2003,26 @@ abstract class AppLocalizations {
   /// No description provided for @signUpToSave.
   ///
   /// In de, this message translates to:
-  /// **'Erstelle ein Konto, um deinen Plan zu speichern.'**
+  /// **'Melde dich an, um deine Daten geräteübergreifend zu behalten.'**
   String get signUpToSave;
 
   /// No description provided for @createAccount.
   ///
   /// In de, this message translates to:
-  /// **'Konto erstellen'**
+  /// **'Weiter'**
   String get createAccount;
 
   /// No description provided for @cameraGuideText.
   ///
   /// In de, this message translates to:
-  /// **'Zentriere deine Mahlzeit im Rahmen für präzises Tracking.'**
+  /// **'Mahlzeit im Rahmen zentrieren.'**
   String get cameraGuideText;
+
+  /// No description provided for @apiKeyUnreachable.
+  ///
+  /// In de, this message translates to:
+  /// **'Google nicht erreichbar. Verbindung prüfen.'**
+  String get apiKeyUnreachable;
 }
 
 class _AppLocalizationsDelegate

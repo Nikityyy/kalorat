@@ -52,14 +52,17 @@ class _ApiKeyStepState extends State<ApiKeyStep> {
       _errorMessage = null;
     });
 
-    final isValid = await GeminiService(apiKey: key).validateApiKey(key);
+    final status = await GeminiService(apiKey: key).validateApiKey(key);
 
     if (mounted) {
       setState(() => _isValidating = false);
-      if (isValid) {
-        widget.onNext(key);
-      } else {
-        setState(() => _errorMessage = context.l10n.invalidApiKeyError);
+      switch (status) {
+        case ApiKeyStatus.valid:
+          widget.onNext(key);
+        case ApiKeyStatus.invalid:
+          setState(() => _errorMessage = context.l10n.invalidApiKeyError);
+        case ApiKeyStatus.unreachable:
+          setState(() => _errorMessage = context.l10n.apiKeyUnreachable);
       }
     }
   }

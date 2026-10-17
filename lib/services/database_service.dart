@@ -146,15 +146,35 @@ class DatabaseService {
   }
 
   // Settings operations
+  /// Onboarding steps were renumbered when the loading and contract steps were
+  /// removed; steps saved before that carry no version marker.
+  static const _onboardingStepsVersion = 2;
+
   Future<void> saveOnboardingStep(int step) async {
     final box = Hive.box('settings_box');
     await box.put('onboarding_step', step);
+    await box.put('onboarding_steps_version', _onboardingStepsVersion);
   }
 
-  int getOnboardingStep() {
+  int getOnboardingStep({required bool isWeb}) {
     if (!Hive.isBoxOpen('settings_box')) return 0;
     final box = Hive.box('settings_box');
-    return box.get('onboarding_step', defaultValue: 0);
+    final step = box.get('onboarding_step', defaultValue: 0) as int;
+    if (box.get('onboarding_steps_version') == _onboardingStepsVersion) {
+      return step;
+    }
+    return migrateLegacyOnboardingStep(step, isWeb: isWeb);
+  }
+
+  /// Maps a step saved by the 12/14 step onboarding to the current one.
+  /// Removed: step 6 (loading) and the contract step before the last one.
+  @visibleForTesting
+  static int migrateLegacyOnboardingStep(int step, {required bool isWeb}) {
+    final legacyContract = isWeb ? 10 : 12;
+    final lastStep = isWeb ? 9 : 11;
+    if (step <= 6) return step;
+    if (step < legacyContract) return step - 1;
+    return lastStep;
   }
 
   bool get needsAccurateModeDefaultMigration =>

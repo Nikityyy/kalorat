@@ -220,7 +220,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get statistics => 'Statistics';
 
   @override
-  String get noMealData => 'No meals recorded yet';
+  String get noMealData => 'No meals recorded.';
 
   @override
   String get mealsLogged => 'meals logged';
@@ -374,16 +374,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get importFailed => 'Import failed';
 
   @override
-  String get buildingPlan => 'Building your plan...';
+  String get buildingPlan => 'Saving profile...';
 
   @override
-  String get analyzingMetabolism => 'Analyzing your metabolism';
+  String get apiKeyValidationError => 'Enter a valid API key.';
 
   @override
-  String get apiKeyValidationError => 'Please enter a valid API key';
-
-  @override
-  String get nameValidationError => 'Please enter your name';
+  String get nameValidationError => 'Enter your name.';
 
   @override
   String analysisError(String error) {
@@ -397,13 +394,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get logYourWeight => 'Log your weight';
 
   @override
-  String get weightReminderBody => 'Don\'t forget to track your weight today!';
+  String get weightReminderBody => 'Log today\'s weight.';
 
   @override
-  String get mealReminderTitle => 'Time to eat!';
+  String get mealReminderTitle => 'Meal reminder';
 
   @override
-  String get mealReminderBody => 'Remember to log your meal.';
+  String get mealReminderBody => 'Log your meal.';
 
   @override
   String get howOldAreYou => 'How old are you?';
@@ -412,13 +409,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get whatsYourGoal => 'What\'s your goal?';
 
   @override
-  String get loseWeight => 'Healthy Pace';
+  String get loseWeight => 'Lose weight';
 
   @override
-  String get maintainWeight => 'Steady Path';
+  String get maintainWeight => 'Maintain weight';
 
   @override
-  String get gainMuscle => 'Building Strength';
+  String get gainMuscle => 'Gain muscle';
 
   @override
   String get whatsYourGender => 'What\'s your gender?';
@@ -459,7 +456,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get fatsShort => 'Fat';
 
   @override
-  String get reminders => 'Nudges';
+  String get reminders => 'Reminders';
 
   @override
   String get logMeals => 'Log meals';
@@ -480,13 +477,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get recentHistory => 'Recent History';
 
   @override
-  String get noFoodDetected => 'No food detected. Please try again.';
+  String get noFoodDetected => 'No food detected. Try again.';
 
   @override
   String get myHistory => 'My History';
 
   @override
-  String get noMealsRecorded => 'Your journal is empty.';
+  String get noMealsRecorded => 'No meals recorded.';
 
   @override
   String get deleteQuestion => 'Delete?';
@@ -554,13 +551,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get whatIsYourGoal => 'What is your goal?';
 
   @override
-  String get burnFatSubtitle => 'Burn fat & get lean';
+  String get burnFatSubtitle => 'Calorie deficit';
 
   @override
-  String get maintainSubtitle => 'Stay healthy & fit';
+  String get maintainSubtitle => 'Calorie balance';
 
   @override
-  String get buildMassSubtitle => 'Gain muscle & strength';
+  String get buildMassSubtitle => 'Calorie surplus';
 
   @override
   String get createPlan => 'Create Plan';
@@ -585,7 +582,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get accountAndData => 'Account & Data';
 
   @override
-  String get enterApiKeyError => 'Please enter an API Key';
+  String get enterApiKeyError => 'Enter an API key.';
 
   @override
   String get invalidApiKeyError => 'Invalid API Key. Please check your input.';
@@ -594,7 +591,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get validateAndContinue => 'Validate & Continue';
 
   @override
-  String get nameSubtitle => 'We\'d like to know how to call you.';
+  String get nameSubtitle => 'Shown in your profile.';
 
   @override
   String get cm => 'cm';
@@ -609,7 +606,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get grams => 'g';
 
   @override
-  String get weightSaved => 'Weight saved!';
+  String get weightSaved => 'Weight saved';
 
   @override
   String get goalWeightLoss => 'Weight Loss';
@@ -671,7 +668,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get healthOnboardingDescription =>
-      'Sync your nutrition and weight data with your device\'s health app for a complete picture of your wellness.';
+      'Sync nutrition and weight with your device\'s health app.';
 
   @override
   String get healthOnboardingBenefit1 => 'Automatic meal logging';
@@ -858,8 +855,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get updateAvailable => 'Update Available';
 
   @override
-  String get updateReady =>
-      'A new version of Kalorat is ready. Update now to get the latest features.';
+  String get updateReady => 'A new version is available.';
 
   @override
   String get reloadButton => 'Reload';
@@ -894,7 +890,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get saveToGallery => 'Save photo';
 
   @override
-  String get saveToGallerySuccess => 'Photo saved to gallery!';
+  String get saveToGallerySuccess => 'Photo saved to gallery';
 
   @override
   String get saveToGalleryError => 'Could not save photo.';
@@ -913,7 +909,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get aiThinkingLabel => 'AI is thinking...';
 
   @override
-  String get analysisTimedOut => 'Analysis timed out. Please try again.';
+  String get analysisTimedOut => 'Analysis timed out. Try again.';
 
   @override
   String get reference => 'Reference';
@@ -955,7 +951,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get flashUnavailable => 'Flash unavailable';
 
   @override
-  String get analysisUpdated => 'Analysis updated!';
+  String get analysisUpdated => 'Analysis updated';
 
   @override
   String analysisConfidence(int percent) {
@@ -986,31 +982,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get close => 'Close';
 
   @override
-  String get primaryGoal => 'Primary Goal';
-
-  @override
-  String get secondaryOutcomes => 'Secondary Outcomes (Optional)';
-
-  @override
-  String get boostEnergy => 'Boost Energy';
-
-  @override
-  String get boostEnergySubtitle => 'Feel less tired during the day';
-
-  @override
-  String get improveSleep => 'Improve Sleep';
-
-  @override
-  String get improveSleepSubtitle => 'Wake up refreshed';
-
-  @override
-  String get buildHabits => 'Build Habits';
-
-  @override
-  String get buildHabitsSubtitle => 'Consistency over time';
-
-  @override
-  String get aBitAboutYou => 'A bit about you';
+  String get aBitAboutYou => 'About you';
 
   @override
   String get biologicalSex => 'Biological Sex';
@@ -1019,34 +991,23 @@ class AppLocalizationsEn extends AppLocalizations {
   String get yourMeasurements => 'Your measurements';
 
   @override
-  String get analyzingBiometrics => 'Analyzing your biometric profile...';
+  String get planReady => 'Plan calculated';
 
   @override
-  String get calculatingMetabolicRate => 'Calculating metabolic rate...';
-
-  @override
-  String get personalizingPlan => 'Personalizing your recommendations...';
-
-  @override
-  String get almostReady => 'Almost ready...';
-
-  @override
-  String get planReady => 'Your plan is ready!';
-
-  @override
-  String get basedOnProfile => 'Based on your profile, here is your target:';
+  String get basedOnProfile => 'Based on your profile.';
 
   @override
   String get dailyCalorieTarget => 'Daily Calorie Target';
 
   @override
-  String get signUpToSave =>
-      'Sign up to save your plan and unlock AI features.';
+  String get signUpToSave => 'Sign in to keep your data across devices.';
 
   @override
-  String get createAccount => 'Create Account';
+  String get createAccount => 'Continue';
 
   @override
-  String get cameraGuideText =>
-      'Center your food inside the frame for accurate tracking.';
+  String get cameraGuideText => 'Center the meal in the frame.';
+
+  @override
+  String get apiKeyUnreachable => 'Google unreachable. Check your connection.';
 }

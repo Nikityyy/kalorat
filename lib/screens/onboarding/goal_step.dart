@@ -23,22 +23,11 @@ class GoalStep extends StatefulWidget {
 
 class _GoalStepState extends State<GoalStep> {
   late int _primaryGoalIndex;
-  final Set<int> _secondaryGoals = {};
 
   @override
   void initState() {
     super.initState();
     _primaryGoalIndex = widget.initialIndex;
-  }
-
-  void _toggleSecondary(int index) {
-    setState(() {
-      if (_secondaryGoals.contains(index)) {
-        _secondaryGoals.remove(index);
-      } else {
-        _secondaryGoals.add(index);
-      }
-    });
   }
 
   @override
@@ -56,29 +45,28 @@ class _GoalStepState extends State<GoalStep> {
                 const SizedBox(height: 24),
                 Text(l10n.whatIsYourGoal, style: AppTypography.displayMedium),
                 const SizedBox(height: 32),
-                
-                Text(
-                  l10n.primaryGoal, 
-                  style: AppTypography.labelLarge.copyWith(color: AppColors.slate),
+
+                _buildPrimaryOption(
+                  0,
+                  l10n.loseWeight,
+                  l10n.burnFatSubtitle,
+                  Icons.arrow_downward,
                 ),
-                const SizedBox(height: 16),
-                _buildPrimaryOption(0, l10n.loseWeight, l10n.burnFatSubtitle, Icons.arrow_downward),
                 const SizedBox(height: 12),
-                _buildPrimaryOption(1, l10n.maintainWeight, l10n.maintainSubtitle, Icons.check),
-                const SizedBox(height: 12),
-                _buildPrimaryOption(2, l10n.gainMuscle, l10n.buildMassSubtitle, Icons.arrow_upward),
-                
-                const SizedBox(height: 32),
-                Text(
-                  l10n.secondaryOutcomes, 
-                  style: AppTypography.labelLarge.copyWith(color: AppColors.slate),
+                _buildPrimaryOption(
+                  1,
+                  l10n.maintainWeight,
+                  l10n.maintainSubtitle,
+                  Icons.check,
                 ),
-                const SizedBox(height: 16),
-                _buildSecondaryOption(3, l10n.boostEnergy, l10n.boostEnergySubtitle, Icons.bolt),
                 const SizedBox(height: 12),
-                _buildSecondaryOption(4, l10n.improveSleep, l10n.improveSleepSubtitle, Icons.nightlight_round),
-                const SizedBox(height: 12),
-                _buildSecondaryOption(5, l10n.buildHabits, l10n.buildHabitsSubtitle, Icons.loop),
+                _buildPrimaryOption(
+                  2,
+                  l10n.gainMuscle,
+                  l10n.buildMassSubtitle,
+                  Icons.arrow_upward,
+                ),
+
                 const SizedBox(height: 24),
               ],
             ),
@@ -96,23 +84,18 @@ class _GoalStepState extends State<GoalStep> {
     );
   }
 
-  Widget _buildPrimaryOption(int index, String title, String subtitle, IconData icon) {
+  Widget _buildPrimaryOption(
+    int index,
+    String title,
+    String subtitle,
+    IconData icon,
+  ) {
     return BespokeSelectionCard(
       title: title,
       subtitle: subtitle,
       icon: Icon(icon, color: AppColors.slate, size: 28),
       isSelected: _primaryGoalIndex == index,
       onTap: () => setState(() => _primaryGoalIndex = index),
-    );
-  }
-
-  Widget _buildSecondaryOption(int index, String title, String subtitle, IconData icon) {
-    return BespokeSelectionCard(
-      title: title,
-      subtitle: subtitle,
-      icon: Icon(icon, color: AppColors.slate, size: 28),
-      isSelected: _secondaryGoals.contains(index),
-      onTap: () => _toggleSecondary(index),
     );
   }
 }

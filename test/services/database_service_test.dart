@@ -132,4 +132,22 @@ void main() {
     );
     expect(mealsByRangeOn18th.map((m) => m.id), contains('late_night'));
   });
+
+  test('onboarding steps saved before the redesign map to the same screen', () {
+    int migrate(int step, bool web) =>
+        DatabaseService.migrateLegacyOnboardingStep(step, isWeb: web);
+
+    // Web: welcome..activity (0-5) unchanged; loading (6) -> daily target (6);
+    // daily target 7 -> 6, login 8 -> 7, api key 9 -> 8; contract and
+    // saving (10, 11) -> saving (9).
+    expect(
+      [for (var i = 0; i <= 11; i++) migrate(i, true)],
+      [0, 1, 2, 3, 4, 5, 6, 6, 7, 8, 9, 9],
+    );
+    // Native has health and notification steps after login.
+    expect(
+      [for (var i = 0; i <= 13; i++) migrate(i, false)],
+      [0, 1, 2, 3, 4, 5, 6, 6, 7, 8, 9, 10, 11, 11],
+    );
+  });
 }

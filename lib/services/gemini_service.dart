@@ -69,6 +69,10 @@ String _sanitizeVisibleThoughtText(String text) {
       .join('\n');
 }
 
+/// Outcome of checking an API key. [unreachable] means the key could not be
+/// checked (network, quota or server problem), which says nothing about it.
+enum ApiKeyStatus { valid, invalid, unreachable }
+
 /// Error types for structured error handling
 enum GeminiErrorType {
   rateLimited,
@@ -851,18 +855,24 @@ class GeminiService {
     }
   }
 
-  Future<bool> validateApiKey(String key) async {
-    if (key.isEmpty) return false;
+  Future<ApiKeyStatus> validateApiKey(String key) async {
+    if (key.isEmpty) return ApiKeyStatus.invalid;
 
     final url = '$_baseUrlBase?key=$key';
     try {
-      final response = await _client.get(
-        Uri.parse(url),
-        headers: {'Content-Type': 'application/json'},
-      );
-      return response.statusCode == 200;
+      final response = await _client
+          .get(Uri.parse(url), headers: {'Content-Type': 'application/json'})
+          .timeout(const Duration(seconds: 15));
+      final status = response.statusCode;
+      if (status == 200) return ApiKeyStatus.valid;
+      // Google answers 400 for a malformed or unknown key, 401/403 for a key
+      // that is rejected. Anything else (429, 5xx) is not about the key.
+      if (status == 400 || status == 401 || status == 403) {
+        return ApiKeyStatus.invalid;
+      }
+      return ApiKeyStatus.unreachable;
     } catch (_) {
-      return false;
+      return ApiKeyStatus.unreachable;
     }
   }
 
