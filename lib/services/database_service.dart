@@ -1,14 +1,20 @@
+import 'dart:convert';
+
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
 import '../utils/app_logger.dart';
 import '../models/models.dart';
 import '../utils/platform_utils.dart';
+import '../utils/photo_downscale.dart';
+import 'photo_store.dart';
 
 class DatabaseService {
   static const String userBoxName = 'user_box';
   static const String mealsBoxName = 'meals_box';
   static const String weightsBoxName = 'weights_box';
+  static const String pendingPhotosBoxName = 'pending_photos_box';
+  static const String pendingPhotosKey = 'pending_photos';
 
   late Box<UserModel> _userBox;
   late Box<MealModel> _mealsBox;
@@ -29,7 +35,9 @@ class DatabaseService {
     required Box<UserModel> userBox,
     required Box<MealModel> mealsBox,
     required Box<WeightModel> weightsBox,
+    PhotoStore? photoStore,
   }) async {
+    if (photoStore != null) PhotoStore.instance = photoStore;
     _userBox = userBox;
     _mealsBox = mealsBox;
     _weightsBox = weightsBox;
@@ -73,6 +81,7 @@ class DatabaseService {
     _userBox = boxes[0] as Box<UserModel>;
     _mealsBox = boxes[1] as Box<MealModel>;
     _weightsBox = boxes[2] as Box<WeightModel>;
+    PhotoStore.instance = await PhotoStore.open();
 
     if (_userBox.isNotEmpty) {
       _dayStartHour = _userBox.getAt(0)?.dayStartHour ?? 0;
@@ -301,6 +310,7 @@ class DatabaseService {
     }
 
     await _mealsBox.delete(key);
+    if (meal != null) await _deleteUnreferencedPhotos(meal.photoPaths);
   }
 
   bool hasMeal(String mealId) {
@@ -419,7 +429,8 @@ class DatabaseService {
     }
   }
 
-  // Export all data
+  // Export all data. Photos stay `kphoto:` references; use
+  // [exportAllWithPhotos] for files that leave the app.
   Map<String, dynamic> exportAll() {
     final user = getUser();
     return {
@@ -429,6 +440,29 @@ class DatabaseService {
       'exportDate': DateTime.now().toIso8601String(),
       'version': '1.0',
     };
+  }
+
+  /// Like [exportAll], with stored photos inlined as base64 so the export is
+  /// self-contained.
+  Future<Map<String, dynamic>> exportAllWithPhotos() async {
+    final data = exportAll();
+    final meals = <Map<String, dynamic>>[];
+    for (final meal in data['meals'] as List) {
+      final json = Map<String, dynamic>.from(meal as Map);
+      final inlined = <String>[];
+      for (final path in List<String>.from(json['photoPaths'] as List)) {
+        if (!PhotoStore.isRef(path)) {
+          inlined.add(path);
+          continue;
+        }
+        final bytes = await PhotoStore.instance.read(path);
+        if (bytes != null) inlined.add(base64Encode(bytes));
+      }
+      json['photoPaths'] = inlined;
+      meals.add(json);
+    }
+    data['meals'] = meals;
+    return data;
   }
 
   Map<String, dynamic>? getLastImportBackup() {
@@ -474,6 +508,13 @@ class DatabaseService {
     if (meals.map((meal) => meal.id).toSet().length != meals.length) {
       throw const FormatException('Doppelte Mahlzeiten-IDs im Import.');
     }
+    final newPhotoRefs = <String>[];
+    for (var i = 0; i < meals.length; i++) {
+      if (!meals[i].photoPaths.any(PhotoStore.isInlineBase64)) continue;
+      final refs = await _storeInlinePhotos(meals[i].photoPaths);
+      newPhotoRefs.addAll(refs.where((r) => !meals[i].photoPaths.contains(r)));
+      meals[i] = meals[i].copyWith(photoPaths: refs);
+    }
 
     final oldUser = _userBox.toMap();
     final oldMeals = _mealsBox.toMap();
@@ -491,6 +532,9 @@ class DatabaseService {
       await _weightsBox.addAll(weights);
       await _buildIndices();
     } catch (_) {
+      for (final ref in newPhotoRefs) {
+        await PhotoStore.instance.delete(ref);
+      }
       await _userBox.clear();
       await _mealsBox.clear();
       await _weightsBox.clear();
@@ -500,6 +544,113 @@ class DatabaseService {
       await _buildIndices();
       rethrow;
     }
+  }
+
+  // --------------- Photos ---------------
+
+  Future<List<String>> _storeInlinePhotos(List<String> paths) async {
+    final result = <String>[];
+    for (final path in paths) {
+      if (!PhotoStore.isInlineBase64(path)) {
+        result.add(path);
+        continue;
+      }
+      final raw = base64Decode(path);
+      final bytes = await downscaleForStorage(raw);
+      result.add(await PhotoStore.instance.save(bytes));
+    }
+    return result;
+  }
+
+  /// Moves photos that older web versions stored inline as base64 into the
+  /// photo store, so existing users get the fast startup too. Safe to
+  /// interrupt: a meal is only rewritten after its photos are stored, and an
+  /// interrupted run continues on the next start. Returns whether anything
+  /// changed.
+  Future<bool> migrateInlinePhotos() async {
+    var changed = false;
+    final keys = _mealsBox.keys
+        .where(
+          (key) =>
+              _mealsBox.get(key)?.photoPaths.any(PhotoStore.isInlineBase64) ??
+              false,
+        )
+        .toList();
+    for (final key in keys) {
+      final original = _mealsBox.get(key);
+      if (original == null) continue;
+      final refs = await _storeInlinePhotos(original.photoPaths);
+      // The meal may have been edited or deleted while photos were stored.
+      final current = _mealsBox.get(key);
+      if (current == null ||
+          !listEquals(current.photoPaths, original.photoPaths)) {
+        for (final ref in refs.where((r) => !original.photoPaths.contains(r))) {
+          await PhotoStore.instance.delete(ref);
+        }
+        continue;
+      }
+      await _mealsBox.put(key, current.copyWith(photoPaths: refs));
+      changed = true;
+    }
+    changed = await _migrateImportBackupPhotos() || changed;
+    if (changed) await _buildIndices();
+    return changed;
+  }
+
+  /// The import backup lives in `settings_box`, which loads at startup.
+  Future<bool> _migrateImportBackupPhotos() async {
+    final settings = Hive.box('settings_box');
+    final backup = getLastImportBackup();
+    final meals = backup?['meals'];
+    if (meals is! List) return false;
+    var changed = false;
+    final migrated = <Map<String, dynamic>>[];
+    for (final meal in meals) {
+      final json = Map<String, dynamic>.from(meal as Map);
+      final paths = List<String>.from(json['photoPaths'] as List? ?? const []);
+      if (paths.any(PhotoStore.isInlineBase64)) {
+        json['photoPaths'] = await _storeInlinePhotos(paths);
+        changed = true;
+      }
+      migrated.add(json);
+    }
+    if (changed) {
+      await settings.put('last_import_backup', {...backup!, 'meals': migrated});
+    }
+    return changed;
+  }
+
+  Set<String> _backupPhotoRefs() {
+    final meals = getLastImportBackup()?['meals'];
+    if (meals is! List) return const {};
+    return {
+      for (final meal in meals)
+        for (final path in (meal as Map)['photoPaths'] as List? ?? const [])
+          if (path is String && PhotoStore.isRef(path)) path,
+    };
+  }
+
+  Future<void> _deleteUnreferencedPhotos(List<String> paths) async {
+    final backupRefs = _backupPhotoRefs();
+    for (final path in paths) {
+      if (PhotoStore.isRef(path) && !backupRefs.contains(path)) {
+        await PhotoStore.instance.delete(path);
+      }
+    }
+  }
+
+  /// Removes stored photos left behind by crashes or interrupted captures.
+  Future<int> deleteOrphanPhotos() async {
+    final referenced = <String>{
+      for (final meal in _mealsBox.values) ...meal.photoPaths,
+      ..._backupPhotoRefs(),
+    };
+    final pending = await Hive.openBox<dynamic>(pendingPhotosBoxName);
+    final pendingPaths = pending.get(pendingPhotosKey);
+    if (pendingPaths is List) {
+      referenced.addAll(pendingPaths.whereType<String>());
+    }
+    return PhotoStore.instance.deleteOrphans(referenced);
   }
 
   List<Map<String, dynamic>> getSyncQueue() {

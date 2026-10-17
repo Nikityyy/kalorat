@@ -1,13 +1,12 @@
 import 'dart:async';
 import 'dart:convert';
-import 'package:cross_file/cross_file.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:image/image.dart' as img;
 import '../utils/app_logger.dart';
 import '../utils/nutrition_units.dart';
-import '../utils/platform_utils.dart';
 import 'gemini_stream_client.dart';
+import 'photo_store.dart';
 
 /// Decode, resize, recompress, and optionally crop an image off the UI isolate.
 /// The crop is only generated when the user note suggests a nutrition/ingredient
@@ -331,15 +330,8 @@ class GeminiService {
     final preparedPerImage = await Future.wait(
       imagePaths.map((path) async {
         try {
-          final List<int> bytes;
-          if (PlatformUtils.isWeb && path.startsWith('blob:')) {
-            bytes = await XFile(path).readAsBytes();
-          } else if (PlatformUtils.isWeb) {
-            bytes = base64Decode(path);
-          } else {
-            bytes = await XFile(path).readAsBytes();
-          }
-          if (bytes.isEmpty) return <Map<String, dynamic>>[];
+          final bytes = await PhotoStore.instance.read(path);
+          if (bytes == null || bytes.isEmpty) return <Map<String, dynamic>>[];
 
           final prepared =
               await compute<Map<String, dynamic>, Map<String, String>>(

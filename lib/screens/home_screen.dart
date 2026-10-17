@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:io' show File;
 import 'package:camera/camera.dart';
 import 'package:flutter/cupertino.dart';
@@ -15,6 +14,9 @@ import 'package:share_plus/share_plus.dart';
 import '../extensions/l10n_extension.dart';
 import '../models/models.dart';
 import '../providers/app_provider.dart';
+import '../services/database_service.dart';
+import '../services/photo_store.dart';
+import '../utils/photo_downscale.dart';
 import '../services/gemini_service.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
@@ -70,8 +72,8 @@ class _HomeScreenState extends State<HomeScreen>
   // FocusNode for context textarea — avoids the autofocus keyboard-jump bug
   final FocusNode _contextFocusNode = FocusNode();
 
-  static const String _pendingPhotosBox = 'pending_photos_box';
-  static const String _pendingPhotosKey = 'pending_photos';
+  static const String _pendingPhotosBox = DatabaseService.pendingPhotosBoxName;
+  static const String _pendingPhotosKey = DatabaseService.pendingPhotosKey;
 
   bool get _cameraTabIsActive =>
       widget.activeListenable?.value ?? widget.isActive;
@@ -419,8 +421,8 @@ class _HomeScreenState extends State<HomeScreen>
 
       String storedPhoto;
       if (PlatformUtils.isWeb) {
-        final bytes = await photo.readAsBytes();
-        storedPhoto = base64Encode(bytes);
+        final bytes = await downscaleForStorage(await photo.readAsBytes());
+        storedPhoto = await PhotoStore.instance.save(bytes);
       } else {
         final appDir = await getApplicationDocumentsDirectory();
         final fileName =
@@ -632,13 +634,12 @@ class _HomeScreenState extends State<HomeScreen>
         return;
       }
 
-      // On web, use Base64 string
+      // On web, store in the photo store
       // On mobile, copy to app documents directory
       if (PlatformUtils.isWeb) {
         for (final image in images) {
-          final bytes = await image.readAsBytes();
-          final base64Image = base64Encode(bytes);
-          _capturedPhotos.add(base64Image);
+          final bytes = await downscaleForStorage(await image.readAsBytes());
+          _capturedPhotos.add(await PhotoStore.instance.save(bytes));
         }
       } else {
         final appDir = await getApplicationDocumentsDirectory();
@@ -665,6 +666,10 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   Future<void> _deleteStoredPhotoIfDisposable(String photoPath) async {
+    if (PhotoStore.isRef(photoPath)) {
+      await PhotoStore.instance.delete(photoPath);
+      return;
+    }
     if (PlatformUtils.isWeb || photoPath.isEmpty) return;
 
     try {
@@ -703,18 +708,16 @@ class _HomeScreenState extends State<HomeScreen>
     }
   }
 
-  ImageProvider _photoImageProvider(String photo) {
-    return PlatformUtils.isWeb
-        ? MemoryImage(base64Decode(photo))
-        : FileImage(File(photo)) as ImageProvider;
-  }
+  ImageProvider _photoImageProvider(String photo, {int? cacheWidth}) =>
+      PhotoStore.instance.imageProvider(photo, cacheWidth: cacheWidth);
 
   Future<void> _saveCapturedPhoto(String photo) async {
     final l10n = context.l10n;
 
     try {
       if (PlatformUtils.isWeb) {
-        final bytes = base64Decode(photo);
+        final bytes = await PhotoStore.instance.read(photo);
+        if (bytes == null) throw StateError('Photo not found');
         await SharePlus.instance.share(
           ShareParams(
             files: [
@@ -1701,12 +1704,10 @@ class _HomeScreenState extends State<HomeScreen>
                                 width: 2,
                               ),
                               image: DecorationImage(
-                                image: PlatformUtils.isWeb
-                                    ? MemoryImage(
-                                        base64Decode(_capturedPhotos.last),
-                                      )
-                                    : FileImage(File(_capturedPhotos.last))
-                                          as ImageProvider,
+                                image: _photoImageProvider(
+                                  _capturedPhotos.last,
+                                  cacheWidth: 180,
+                                ),
                                 fit: BoxFit.cover,
                               ),
                             ),
@@ -1783,15 +1784,12 @@ class _HomeScreenState extends State<HomeScreen>
                             borderRadius: BorderRadius.circular(
                               AppTheme.borderRadius,
                             ),
-                            child: PlatformUtils.isWeb
-                                ? Image.memory(
-                                    base64Decode(_capturedPhotos[index]),
-                                    fit: BoxFit.cover,
-                                  )
-                                : Image.file(
-                                    File(_capturedPhotos[index]),
-                                    fit: BoxFit.cover,
-                                  ),
+                            child: Image(
+                              image: _photoImageProvider(
+                                _capturedPhotos[index],
+                              ),
+                              fit: BoxFit.cover,
+                            ),
                           ),
                         ),
                       ),

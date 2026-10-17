@@ -15,7 +15,7 @@ class ExportImportService {
 
   Future<String?> exportData() async {
     try {
-      final data = _databaseService.exportAll();
+      final data = await _databaseService.exportAllWithPhotos();
       final jsonString = const JsonEncoder.withIndent('  ').convert(data);
       final fileName =
           'kalorat_backup_${DateTime.now().toIso8601String().replaceAll(':', '-')}.json';

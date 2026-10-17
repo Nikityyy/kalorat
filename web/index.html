@@ -157,6 +157,24 @@
       });
     };
 
+    // Downscales a photo to fit maxDimension and re-encodes it as JPEG.
+    // Used before storing web photos (see photo_downscale_web.dart).
+    window.kaloratDownscaleJpeg = async function (bytes, maxDimension, quality) {
+      const bitmap = await createImageBitmap(new Blob([bytes]));
+      const scale = Math.min(1, maxDimension / Math.max(bitmap.width, bitmap.height));
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.round(bitmap.width * scale);
+      canvas.height = Math.round(bitmap.height * scale);
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#FFFFFF'; // JPEG has no alpha
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+      if (bitmap.close) bitmap.close();
+      const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', quality));
+      if (!blob) throw new Error('JPEG encoding failed');
+      return new Uint8Array(await blob.arrayBuffer());
+    };
+
     window.kaloratCameraPermissionGranted = async function () {
       try {
         return (await navigator.permissions.query({ name: 'camera' })).state === 'granted';

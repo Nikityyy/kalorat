@@ -1,13 +1,11 @@
-import 'dart:convert';
-import 'dart:io';
 import 'dart:math' as math;
-import '../utils/platform_utils.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
 import 'package:provider/provider.dart';
 
+import '../services/photo_store.dart';
 import '../services/gemini_service.dart';
 import '../extensions/l10n_extension.dart';
 import '../models/meal_model.dart';
@@ -89,11 +87,8 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
     super.dispose();
   }
 
-  ImageProvider _mealPhotoImageProvider(String photo) {
-    return PlatformUtils.isWeb
-        ? MemoryImage(base64Decode(photo))
-        : FileImage(File(photo)) as ImageProvider;
-  }
+  ImageProvider _mealPhotoImageProvider(String photo) =>
+      PhotoStore.instance.imageProvider(photo);
 
   void _updatePortion(double change) {
     setState(() {
@@ -148,8 +143,9 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
 
     try {
       if (kIsWeb) {
-        // On web: share/download the base64 image via share_plus
-        final bytes = base64Decode(path);
+        // On web: share/download the image via share_plus
+        final bytes = await PhotoStore.instance.read(path);
+        if (bytes == null) throw StateError('Photo not found');
         await SharePlus.instance.share(
           ShareParams(
             files: [
@@ -829,12 +825,10 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
               left: 0,
               right: 0,
               height: screenHeight * 0.35,
-              child: PlatformUtils.isWeb
-                  ? Image.memory(
-                      base64Decode(_meal.photoPaths.first),
-                      fit: BoxFit.cover,
-                    )
-                  : Image.file(File(_meal.photoPaths.first), fit: BoxFit.cover),
+              child: Image(
+                image: _mealPhotoImageProvider(_meal.photoPaths.first),
+                fit: BoxFit.cover,
+              ),
             ),
 
           // 2. Back Button (Overlay)

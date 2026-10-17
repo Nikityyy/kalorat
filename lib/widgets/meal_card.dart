@@ -1,5 +1,3 @@
-import 'dart:convert';
-import 'dart:io' show File;
 import '../utils/platform_utils.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -8,6 +6,7 @@ import '../models/models.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 import '../theme/app_typography.dart';
+import '../services/photo_store.dart';
 import 'common/app_card.dart';
 
 class MealCard extends StatelessWidget {
@@ -43,30 +42,13 @@ class MealCard extends StatelessWidget {
       return _buildPlaceholder();
     }
 
-    if (PlatformUtils.isWeb) {
-      try {
-        // Prepare bytes
-        final bytes = base64Decode(imagePath);
-        return Image.memory(
-          bytes,
-          width: 60,
-          height: 60,
-          fit: BoxFit.cover,
-          errorBuilder: (_, _, _) => _buildPlaceholder(),
-        );
-      } catch (e) {
-        // If it fails (e.g. it's a file path from mobile sync), show placeholder
-        return _buildPlaceholder();
-      }
-    } else {
-      return Image.file(
-        File(imagePath),
-        width: 60,
-        height: 60,
-        fit: BoxFit.cover,
-        errorBuilder: (_, _, _) => _buildPlaceholder(),
-      );
-    }
+    return Image(
+      image: PhotoStore.instance.imageProvider(imagePath, cacheWidth: 180),
+      width: 60,
+      height: 60,
+      fit: BoxFit.cover,
+      errorBuilder: (_, _, _) => _buildPlaceholder(),
+    );
   }
 
   String _analysisLabel(BuildContext context) {

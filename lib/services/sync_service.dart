@@ -262,7 +262,7 @@ class SyncService {
     final userId = _userId;
     if (userId == null) {
       // Export local data only for guests
-      return jsonEncode(_db.exportAll());
+      return jsonEncode(await _db.exportAllWithPhotos());
     }
 
     // Fetch all cloud data

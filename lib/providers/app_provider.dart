@@ -151,6 +151,7 @@ class AppProvider extends ChangeNotifier with WidgetsBindingObserver {
     // without waiting for the network. Cloud sync runs in the background.
     _isInitialized = true;
     notifyListeners();
+    unawaited(_migratePhotoStorage());
 
     // If session exists, sync from cloud in the background (fire-and-forget)
     final session = Supabase.instance.client.auth.currentSession;
@@ -224,6 +225,20 @@ class AppProvider extends ChangeNotifier with WidgetsBindingObserver {
     // Process any pending meals on startup if online
     if (_isOnline) {
       await processOfflineQueue();
+    }
+  }
+
+  /// Moves photos of existing web installs out of the meal records (one-time,
+  /// in the background) and cleans up photos nothing references anymore.
+  Future<void> _migratePhotoStorage() async {
+    try {
+      if (await _databaseService.migrateInlinePhotos()) {
+        _invalidateStatsCache();
+        notifyListeners();
+      }
+      await _databaseService.deleteOrphanPhotos();
+    } catch (e) {
+      AppLogger.error('AppProvider', 'Photo storage migration failed', e);
     }
   }
 
