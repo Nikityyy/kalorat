@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_typography.dart';
+import '../../utils/haptics.dart';
 
 class RulerPicker extends StatefulWidget {
   final double minValue;
@@ -28,6 +28,7 @@ class RulerPicker extends StatefulWidget {
 class _RulerPickerState extends State<RulerPicker> {
   late FixedExtentScrollController _controller;
   late double _currentValue;
+  int? _lastTickItem;
 
   @override
   void initState() {
@@ -106,7 +107,12 @@ class _RulerPickerState extends State<RulerPicker> {
               NotificationListener<ScrollNotification>(
                 onNotification: (notification) {
                   if (notification is ScrollUpdateNotification) {
-                    HapticFeedback.selectionClick();
+                    // One tick per tick mark (10px), not one per frame.
+                    final item = (notification.metrics.pixels / 10).round();
+                    if (item != _lastTickItem) {
+                      _lastTickItem = item;
+                      Haptics.selection();
+                    }
                   }
                   return false;
                 },

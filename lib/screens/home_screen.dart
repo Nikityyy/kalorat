@@ -27,6 +27,7 @@ import '../utils/platform_utils.dart';
 import '../widgets/inputs/action_button.dart';
 import '../widgets/widgets.dart';
 import 'meal_detail_screen.dart';
+import '../utils/haptics.dart';
 
 class HomeScreen extends StatefulWidget {
   final bool isActive;
@@ -1670,7 +1671,10 @@ class _HomeScreenState extends State<HomeScreen>
                 Positioned(
                   left: 40,
                   child: GestureDetector(
-                    onTap: _pickFromGallery,
+                    onTap: () {
+                      Haptics.tick();
+                      _pickFromGallery();
+                    },
                     child: Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
@@ -1688,7 +1692,10 @@ class _HomeScreenState extends State<HomeScreen>
 
                 // Center: Capture
                 GestureDetector(
-                  onTap: _capturePhoto,
+                  onTap: () {
+                    Haptics.confirm();
+                    _capturePhoto();
+                  },
                   child: Container(
                     width: 84,
                     height: 84,

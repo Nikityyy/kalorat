@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_theme.dart';
 import '../../theme/app_typography.dart';
+import '../../utils/haptics.dart';
 
 class BespokeWheelPicker extends StatefulWidget {
   final List<String> options;
@@ -66,7 +66,7 @@ class _BespokeWheelPickerState extends State<BespokeWheelPicker> {
               overAndUnderCenterOpacity: 0.2,
               physics: const FixedExtentScrollPhysics(),
               onSelectedItemChanged: (index) {
-                HapticFeedback.heavyImpact(); // Mechanical click feel
+                Haptics.selection();
                 widget.onValueChanged(index);
               },
               childDelegate: ListWheelChildBuilderDelegate(

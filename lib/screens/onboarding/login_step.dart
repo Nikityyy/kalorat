@@ -9,6 +9,7 @@ import '../../theme/app_colors.dart';
 import '../../theme/app_theme.dart';
 import '../../theme/app_typography.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import '../../utils/haptics.dart';
 
 /// Login step in onboarding flow after API key entry.
 /// Shows Google Sign-In on both platforms, Apple Sign-In on iOS only.
@@ -243,7 +244,12 @@ class _GoogleSignInButton extends StatelessWidget {
       width: double.infinity,
       height: 56, // Standard height for touch targets
       child: ElevatedButton(
-        onPressed: onPressed,
+        onPressed: onPressed == null
+            ? null
+            : () {
+                Haptics.tick();
+                onPressed!();
+              },
         style: ElevatedButton.styleFrom(
           backgroundColor: Colors.white,
           foregroundColor: AppColors.slate,

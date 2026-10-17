@@ -1,11 +1,11 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_typography.dart';
 import '../../extensions/l10n_extension.dart';
 import '../../widgets/inputs/action_button.dart';
 import '../../widgets/inputs/ruler_picker.dart';
+import '../../utils/haptics.dart';
 
 double weightScaleFractionForPoint(Offset point, Size size) {
   final center = Offset(size.width / 2, size.height - 24);
@@ -120,7 +120,7 @@ class WeightScalePicker extends StatelessWidget {
   void _setValue(double next) {
     final snapped = (next.clamp(minValue, maxValue) * 10).round() / 10;
     if (snapped == value) return;
-    HapticFeedback.selectionClick();
+    Haptics.selection();
     onValueChanged(snapped);
   }
 

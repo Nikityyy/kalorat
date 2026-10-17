@@ -1,10 +1,11 @@
 import '../../utils/platform_utils.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_theme.dart';
 import '../../theme/app_typography.dart';
+import '../../utils/haptics.dart';
+import '../inputs/pressable.dart';
 
 class PrimaryButton extends StatelessWidget {
   final String text;
@@ -21,7 +22,10 @@ class PrimaryButton extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) =>
+      Pressable(enabled: !isLoading && onPressed != null, child: _button());
+
+  Widget _button() {
     final bool isIos = PlatformUtils.isIOS;
 
     if (isIos) {
@@ -32,7 +36,7 @@ class PrimaryButton extends StatelessWidget {
         onPressed: isLoading
             ? null
             : () {
-                HapticFeedback.heavyImpact(); // Mechanical click feel
+                Haptics.tick();
                 onPressed?.call();
               },
         child: isLoading
@@ -55,7 +59,7 @@ class PrimaryButton extends StatelessWidget {
       onPressed: isLoading
           ? null
           : () {
-              HapticFeedback.heavyImpact(); // Mechanical click feel
+              Haptics.tick();
               onPressed?.call();
             },
       style: ElevatedButton.styleFrom(

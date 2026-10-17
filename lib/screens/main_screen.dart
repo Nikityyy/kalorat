@@ -8,6 +8,7 @@ import '../theme/app_colors.dart';
 import 'home_screen.dart';
 import 'me_screen.dart';
 import 'history_screen.dart';
+import '../utils/haptics.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -121,6 +122,7 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
             height: hideNavigation ? 0 : 50,
             currentIndex: _currentIndex,
             onTap: (index) {
+              Haptics.tick();
               _cameraTabActive.value = index == 1;
               setState(() => _currentIndex = index);
             },
@@ -225,6 +227,7 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
                 child: NavigationBar(
                   selectedIndex: _currentIndex,
                   onDestinationSelected: (index) {
+                    Haptics.tick();
                     _cameraTabActive.value = index == 1;
                     setState(() => _currentIndex = index);
                     _pageController.animateToPage(
