@@ -1,3 +1,4 @@
+import '../utils/app_version.dart';
 import '../utils/platform_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -158,8 +159,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
             _buildLegalSection(provider, l10n),
             const SizedBox(height: 32),
             PrimaryButton(text: l10n.saveChanges, onPressed: _saveChanges),
+            const SizedBox(height: 24),
+            _buildVersionLabel(l10n),
             const SizedBox(height: 32),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildVersionLabel(dynamic l10n) {
+    final commit = AppVersion.shortCommit;
+    return Center(
+      child: SelectableText(
+        '${l10n.appVersion} ${AppVersion.label}${commit.isEmpty ? '' : ' · $commit'}',
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          fontFamily: AppTypography.mono,
+          fontSize: 12,
+          color: AppColors.slate.withValues(alpha: 0.6),
         ),
       ),
     );

@@ -2023,6 +2023,12 @@ abstract class AppLocalizations {
   /// In de, this message translates to:
   /// **'Google nicht erreichbar. Verbindung prüfen.'**
   String get apiKeyUnreachable;
+
+  /// No description provided for @appVersion.
+  ///
+  /// In de, this message translates to:
+  /// **'Version'**
+  String get appVersion;
 }
 
 class _AppLocalizationsDelegate

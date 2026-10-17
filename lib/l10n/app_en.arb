@@ -420,5 +420,6 @@
   "apiKeyUnreachable": "Google unreachable. Check your connection.",
   "@apiKeyUnreachable": {
     "description": "Shown when the API key could not be checked because of a network or server problem"
-  }
+  },
+  "appVersion": "Version"
 }

@@ -1010,4 +1010,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get apiKeyUnreachable => 'Google unreachable. Check your connection.';
+
+  @override
+  String get appVersion => 'Version';
 }

@@ -27,6 +27,7 @@ import '../utils/platform_utils.dart';
 import '../widgets/inputs/action_button.dart';
 import '../widgets/widgets.dart';
 import 'meal_detail_screen.dart';
+import '../utils/camera_diagnostics.dart';
 import '../utils/camera_preview.dart';
 import '../utils/haptics.dart';
 
@@ -53,6 +54,7 @@ class _HomeScreenState extends State<HomeScreen>
   List<String> _capturedPhotos = [];
   bool _isTakingMore = false;
   int _cameraPreviewKey = 0;
+  BoxConstraints? _lastPreviewConstraints;
   int? _selectedCameraIndex;
   String? _mealContext;
   bool _isTorchOn = false;
@@ -447,6 +449,60 @@ class _HomeScreenState extends State<HomeScreen>
     } finally {
       if (mounted) setState(() => _isCapturing = false);
     }
+  }
+
+  /// Shows the numbers needed to diagnose a camera layout problem that cannot
+  /// be reproduced elsewhere (long press on the logo).
+  void _showCameraDiagnostics() {
+    final controller = _cameraController;
+    final media = MediaQuery.of(context);
+    final lines = <String>[
+      'app size ${media.size.width.toStringAsFixed(1)}x${media.size.height.toStringAsFixed(1)}'
+          ' dpr ${media.devicePixelRatio} padding top ${media.padding.top} bottom ${media.padding.bottom}',
+      'preview area ${_lastPreviewConstraints?.biggest}',
+      if (controller != null && controller.value.isInitialized) ...[
+        'camera aspect ${controller.value.aspectRatio} previewSize ${controller.value.previewSize}',
+        'orientation ${controller.value.deviceOrientation} paused $_isPreviewPaused',
+      ] else
+        'camera not initialized',
+      'key $_cameraPreviewKey tabActive $_cameraTabIsActive',
+      browserCameraDiagnostics(),
+    ];
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          title: const Text('Camera diagnostics'),
+          content: SingleChildScrollView(
+            child: SelectableText(
+              lines.join('\n'),
+              style: const TextStyle(
+                fontFamily: 'JetBrains Mono',
+                fontSize: 10,
+              ),
+            ),
+          ),
+          actions: [
+            if (PlatformUtils.isWeb)
+              TextButton(
+                onPressed: () {
+                  setCameraCanvasPreview(!cameraCanvasPreviewEnabled());
+                  setDialogState(() {});
+                },
+                child: Text(
+                  cameraCanvasPreviewEnabled()
+                      ? 'Canvas preview: on'
+                      : 'Canvas preview: off',
+                ),
+              ),
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: Text(context.l10n.close),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Future<void> _setTorchMode(bool enabled) async {
@@ -1369,6 +1425,7 @@ class _HomeScreenState extends State<HomeScreen>
       key: ValueKey(_cameraPreviewKey),
       child: LayoutBuilder(
         builder: (context, constraints) {
+          _lastPreviewConstraints = constraints;
           return Listener(
             onPointerDown: _handlePreviewPointerDown,
             onPointerUp: _handlePreviewPointerUp,
@@ -1518,7 +1575,11 @@ class _HomeScreenState extends State<HomeScreen>
             top: MediaQuery.of(context).padding.top + 16,
             left: 80,
             right: 80,
-            child: IgnorePointer(
+            // Long press shows camera layout measurements (see
+            // _showCameraDiagnostics); a tap passes through to the preview.
+            child: GestureDetector(
+              behavior: HitTestBehavior.translucent,
+              onLongPress: _showCameraDiagnostics,
               child: SizedBox(
                 height: 52,
                 child: Center(

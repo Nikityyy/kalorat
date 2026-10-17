@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 
 import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
@@ -9,6 +10,9 @@ import 'screens/onboarding/onboarding_flow.dart';
 import 'theme/app_colors.dart';
 import 'theme/app_theme.dart';
 import 'services/widget_service.dart';
+import 'utils/splash_stub.dart'
+    if (dart.library.js_interop) 'utils/splash_web.dart'
+    as splash;
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
@@ -44,6 +48,15 @@ void main() async {
   runApp(const KaloratApp());
 }
 
+bool _splashHidden = false;
+
+/// Fades the web splash out once the first real screen has been painted.
+void _hideSplashOnce() {
+  if (_splashHidden) return;
+  _splashHidden = true;
+  WidgetsBinding.instance.addPostFrameCallback((_) => splash.hideSplash());
+}
+
 class KaloratApp extends StatelessWidget {
   const KaloratApp({super.key});
 
@@ -56,31 +69,36 @@ class KaloratApp extends StatelessWidget {
           builder: (context, provider, _) {
             Widget homeWidget;
             if (!provider.isInitialized) {
-              homeWidget = Scaffold(
-                backgroundColor: AppColors.pureWhite,
-                body: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Image.asset(
-                        'assets/kalorat-favicon-android.webp',
-                        width: 100,
-                        height: 100,
-                        fit: BoxFit.contain,
+              // On the web the splash in index.html is the loading screen. A
+              // second indicator here would show two during the hand-off.
+              homeWidget = kIsWeb
+                  ? const Scaffold(backgroundColor: AppColors.pureWhite)
+                  : Scaffold(
+                      backgroundColor: AppColors.pureWhite,
+                      body: Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Image.asset(
+                              'assets/kalorat-favicon-android.webp',
+                              width: 100,
+                              height: 100,
+                              fit: BoxFit.contain,
+                            ),
+                            const SizedBox(height: 24),
+                            const CircularProgressIndicator(
+                              color: AppColors.styrianForest,
+                            ),
+                          ],
+                        ),
                       ),
-                      const SizedBox(height: 24),
-                      const CircularProgressIndicator(
-                        color: AppColors.styrianForest,
-                      ),
-                    ],
-                  ),
-                ),
-              );
+                    );
             } else if (provider.isOnboardingCompleted) {
               homeWidget = const MainScreen();
             } else {
               homeWidget = const OnboardingFlow();
             }
+            if (provider.isInitialized) _hideSplashOnce();
 
             return MaterialApp(
               debugShowCheckedModeBanner: false,

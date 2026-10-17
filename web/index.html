@@ -65,8 +65,8 @@
       overflow: hidden;
     }
 
-    /* Splash: identical to the Flutter loading screen in main.dart (white,
-       100px logo, 24px gap, forest spinner) so start-up has no visual jump. */
+    /* Splash: the web loading screen. Flutter shows a blank page underneath
+       until the app is ready, then fades this out (see kaloratHideSplash). */
     #splash {
       position: fixed;
       inset: 0;
@@ -188,40 +188,24 @@
     };
   </script>
   <script src="haptics.js"></script>
+  <script src="camera_diagnostics.js"></script>
+  <script src="camera_canvas.js"></script>
   <script src="flutter_bootstrap.js" async onEntrypointLoaded="onEntrypointLoaded"></script>
   <script>
-    // Hook into Flutter bootstrap to remove splash
-    // Note: The actual flutter_bootstrap.js might not expose onEntrypointLoaded as a global callback attribute directly depending on version,
-    // but usually we can customize the loader. 
-    // For standard Flutter Web, typically we inject the app runner.
-
-    // Simplest robust method for PWA: Remove splash when the app is "ready".
-    // Flutter Web apps usually remove the splash automatically if it's configured in manifest/index, 
-    // but here we did a custom one.
-
-    // Let's modify the flutter_bootstrap.js loading slightly to handle the splash removal.
-    // Since we can't easily modify the pre-compiled logic, we'll use a MutationObserver 
-    // to detect when Flutter injects the canvas/semantics.
-
-    const observer = new MutationObserver((mutations) => {
-      for (const mutation of mutations) {
-        for (const node of mutation.addedNodes) {
-          if (node.tagName === 'FLUTTER-VIEW') {
-            // Flutter view added, fade out splash
-            setTimeout(() => {
-              const splash = document.getElementById('splash');
-              if (splash) {
-                splash.classList.add('fade-out');
-                setTimeout(() => splash.remove(), 500);
-              }
-            }, 200); // Slight delay to ensure first frame render
-            observer.disconnect();
-          }
-        }
-      }
-    });
-
-    observer.observe(document.body, { childList: true, subtree: true });
+    // The splash is the only loading indicator on the web: Flutter shows a
+    // blank page until the app is initialised, then calls this once the first
+    // real screen is painted.
+    let splashHidden = false;
+    window.kaloratHideSplash = function () {
+      if (splashHidden) return;
+      splashHidden = true;
+      const splash = document.getElementById('splash');
+      if (!splash) return;
+      splash.classList.add('fade-out');
+      setTimeout(() => splash.remove(), 400);
+    };
+    // Safety net: never leave the splash covering the app if it never signals.
+    setTimeout(window.kaloratHideSplash, 15000);
   </script>
 </body>
 

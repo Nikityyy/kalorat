@@ -417,5 +417,6 @@
   "signUpToSave": "Melde dich an, um deine Daten geräteübergreifend zu behalten.",
   "createAccount": "Weiter",
   "cameraGuideText": "Mahlzeit im Rahmen zentrieren.",
-  "apiKeyUnreachable": "Google nicht erreichbar. Verbindung prüfen."
+  "apiKeyUnreachable": "Google nicht erreichbar. Verbindung prüfen.",
+  "appVersion": "Version"
 }
