@@ -1,0 +1,36 @@
+// Generates build/web/sw.js after `flutter build web`:
+//   npx --yes workbox-cli@7.3.0 generateSW workbox-config.cjs
+module.exports = {
+  globDirectory: 'build/web/',
+  globPatterns: ['**/*.{html,js,json,wasm,png,webp,svg,ttf,otf,frag,bin}'],
+  globIgnores: [
+    'sw.js',
+    'workbox-*.js',
+    'flutter_service_worker.js',
+    '**/*.symbols',
+    'canvaskit/skwasm*',
+    'canvaskit/wimp*',
+    'canvaskit/webparagraph/**',
+    'canvaskit/chromium/**',
+  ],
+  swDest: 'build/web/sw.js',
+  // CanvasKit's wasm is ~7 MB.
+  maximumFileSizeToCacheInBytes: 10 * 1024 * 1024,
+  navigateFallback: 'index.html',
+  // Wait for the user to tap "Update" (SKIP_WAITING message) before switching.
+  skipWaiting: false,
+  clientsClaim: true,
+  cleanupOutdatedCaches: true,
+  inlineWorkboxRuntime: true,
+  runtimeCaching: [
+    {
+      urlPattern: ({ url }) => url.origin === 'https://fonts.gstatic.com',
+      handler: 'CacheFirst',
+      options: {
+        cacheName: 'google-fonts',
+        expiration: { maxEntries: 30, maxAgeSeconds: 365 * 24 * 60 * 60 },
+        cacheableResponse: { statuses: [0, 200] },
+      },
+    },
+  ],
+};

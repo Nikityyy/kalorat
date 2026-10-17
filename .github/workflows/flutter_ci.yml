@@ -59,7 +59,10 @@ jobs:
       run: flutter pub get
 
     - name: Build Flutter web (PWA)
-      run: flutter build web --release --base-href /kalorat/app/
+      run: flutter build web --release --base-href /kalorat/app/ --no-web-resources-cdn
+
+    - name: Generate service worker
+      run: npx --yes workbox-cli@7.3.0 generateSW workbox-config.cjs
 
     - name: Assemble site structure
       run: |

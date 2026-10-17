@@ -63,12 +63,16 @@ class DatabaseService {
       Hive.registerAdapter(WeightModelAdapter());
     }
 
-    // Open boxes
-    // Open boxes with error handling
-    _userBox = await _openBoxWithFallback<UserModel>(userBoxName);
-    _mealsBox = await _openBoxWithFallback<MealModel>(mealsBoxName);
-    _weightsBox = await _openBoxWithFallback<WeightModel>(weightsBoxName);
-    await _openBoxWithFallback('settings_box');
+    // Open boxes in parallel: on web each box is its own IndexedDB database.
+    final boxes = await Future.wait<Box<dynamic>>([
+      _openBoxWithFallback<UserModel>(userBoxName),
+      _openBoxWithFallback<MealModel>(mealsBoxName),
+      _openBoxWithFallback<WeightModel>(weightsBoxName),
+      _openBoxWithFallback('settings_box'),
+    ]);
+    _userBox = boxes[0] as Box<UserModel>;
+    _mealsBox = boxes[1] as Box<MealModel>;
+    _weightsBox = boxes[2] as Box<WeightModel>;
 
     if (_userBox.isNotEmpty) {
       _dayStartHour = _userBox.getAt(0)?.dayStartHour ?? 0;
@@ -243,8 +247,6 @@ class DatabaseService {
     return meals;
   }
 
-
-
   List<MealModel> getPendingMeals() {
     return _mealsBox.values.where((meal) => meal.isPending).toList();
   }
@@ -386,11 +388,12 @@ class DatabaseService {
     }
   }
 
-
-
   Future<void> saveWeight(WeightModel weight) async {
     weight.validate();
-    weight = weight.copyWith(updatedAt: DateTime.now().toUtc(), isPending: true);
+    weight = weight.copyWith(
+      updatedAt: DateTime.now().toUtc(),
+      isPending: true,
+    );
     final existingIndex = _weightsBox.values.toList().indexWhere(
       (w) =>
           w.date.year == weight.date.year &&

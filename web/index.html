@@ -24,8 +24,8 @@
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
-  <!-- Theme Color — Kalorat Accent: Styrian Forest -->
-  <meta name="theme-color" content="#0F5838">
+  <!-- Theme Color — white canvas, matches manifest and splash -->
+  <meta name="theme-color" content="#FFFFFF">
 
   <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
@@ -63,20 +63,18 @@
       overflow: hidden;
     }
 
-    /* Splash Screen Styles — HOPE LLC palette */
+    /* Splash: identical to the Flutter loading screen in main.dart (white,
+       100px logo, 24px gap, forest spinner) so start-up has no visual jump. */
     #splash {
       position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background-color: #0F5838;
+      inset: 0;
+      background-color: #FFFFFF;
       z-index: 9999;
       display: flex;
       flex-direction: column;
       justify-content: center;
       align-items: center;
-      transition: opacity 0.5s ease-out;
+      transition: opacity 0.3s ease-out;
     }
 
     #splash.fade-out {
@@ -85,42 +83,24 @@
     }
 
     .splash-logo {
-      width: 120px;
-      height: 120px;
-      background-image: url('icons/Icon-masked-192.png');
-      /* Fallback */
-      background-image: url('icons/Icon-192.png');
-      background-size: contain;
-      background-position: center;
-      background-repeat: no-repeat;
+      width: 100px;
+      height: 100px;
+      background: url('assets/assets/kalorat-favicon-android.webp') center / contain no-repeat;
       margin-bottom: 24px;
-      animation: pulse 2s infinite ease-in-out;
     }
 
-    .splash-text {
-      color: #FFFFFF;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      font-size: 24px;
-      font-weight: 300;
-      letter-spacing: 4px;
-      text-transform: uppercase;
-      opacity: 0.9;
+    .splash-spinner {
+      width: 28px;
+      height: 28px;
+      border: 4px solid transparent;
+      border-top-color: #0F5838;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
     }
 
-    @keyframes pulse {
-      0% {
-        transform: scale(1);
-        opacity: 1;
-      }
-
-      50% {
-        transform: scale(1.05);
-        opacity: 0.8;
-      }
-
-      100% {
-        transform: scale(1);
-        opacity: 1;
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
       }
     }
   </style>
@@ -129,38 +109,48 @@
 <body>
   <div id="splash">
     <div class="splash-logo"></div>
-    <div class="splash-text">Kalorat</div>
+    <div class="splash-spinner"></div>
   </div>
   <script>
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.getRegistration().then((reg) => {
-        if (!reg) return;
-        reg.addEventListener('updatefound', () => {
-          const installingWorker = reg.installing;
-          if (installingWorker) {
-            installingWorker.addEventListener('statechange', () => {
-              if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                window.dispatchEvent(new CustomEvent('flutter-pwa-update-available'));
+      const notifyUpdate = () =>
+        window.dispatchEvent(new CustomEvent('flutter-pwa-update-available'));
+
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js').then((reg) => {
+          if (reg.waiting && navigator.serviceWorker.controller) notifyUpdate();
+          reg.addEventListener('updatefound', () => {
+            const worker = reg.installing;
+            if (!worker) return;
+            worker.addEventListener('statechange', () => {
+              if (worker.state === 'installed' && navigator.serviceWorker.controller) {
+                notifyUpdate();
               }
             });
-          }
-        });
-        if (reg.waiting) {
-          window.dispatchEvent(new CustomEvent('flutter-pwa-update-available'));
-        }
+          });
+          // Installed PWAs on iOS resume instead of reloading, so check for
+          // a new version whenever the app comes back to the foreground.
+          document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') reg.update().catch(() => {});
+          });
+        }).catch((e) => console.warn('Service worker registration failed:', e));
       });
+
+      // Reload only when the user asked for the update. The first install
+      // also fires controllerchange (clientsClaim) and must not reload.
       navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (!window.kaloratUpdateRequested) return;
+        window.kaloratUpdateRequested = false;
         window.location.reload();
       });
     }
 
     window.skipWaitingAndReload = function () {
+      if (!('serviceWorker' in navigator)) return window.location.reload();
       navigator.serviceWorker.getRegistration().then((reg) => {
         if (reg && reg.waiting) {
-          reg.waiting.postMessage('skipWaiting');
-          setTimeout(() => {
-            window.location.reload();
-          }, 2000);
+          window.kaloratUpdateRequested = true;
+          reg.waiting.postMessage({ type: 'SKIP_WAITING' });
         } else {
           window.location.reload();
         }
@@ -175,8 +165,6 @@
       }
     };
   </script>
-  <script src="https://github.com/corbado/flutter-passkeys/releases/download/2.4.0/bundle.js"
-    type="application/javascript"></script>
   <script src="flutter_bootstrap.js" async onEntrypointLoaded="onEntrypointLoaded"></script>
   <script>
     // Hook into Flutter bootstrap to remove splash
