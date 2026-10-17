@@ -6,10 +6,12 @@ on:
   pull_request:
     branches: [ "main" ]
 
-# Allow only one concurrent deployment, cancel in-progress runs
+# Pushes to main queue up and always finish (a run cancelled while it uploads
+# a release would leave a half-published "latest" release); only superseded
+# pull request runs are cancelled.
 concurrency:
-  group: "pages"
-  cancel-in-progress: true
+  group: ${{ github.event_name == 'pull_request' && format('pr-{0}', github.ref) || 'pages' }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 # Permissions for GitHub Pages deployment
 permissions:
@@ -119,17 +121,34 @@ jobs:
       - name: Decode Keystore
         run: echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > android/app/upload-keystore.jks
 
+      - name: Read version
+        id: version
+        run: |
+          NAME=$(sed -n 's/^version: *\([0-9][0-9.]*\).*/\1/p' pubspec.yaml)
+          echo "name=$NAME" >> "$GITHUB_OUTPUT"
+          echo "tag=v$NAME-b${{ github.run_number }}" >> "$GITHUB_OUTPUT"
+
+      # The run number is the Android versionCode, so every build installs as
+      # an update over the previous one.
       - name: Build APK
-        run: flutter build apk --release
+        run: flutter build apk --release --build-number=${{ github.run_number }}
         env:
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
           STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
           KEYSTORE_PATH: upload-keystore.jks
 
-      - name: Release APK
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: latest
-          name: "Latest Build (Automated)"
-          files: build/app/outputs/flutter-apk/app-release.apk
+      # One release per build. The asset keeps the fixed name app-release.apk,
+      # so releases/latest/download/app-release.apk (the landing page link)
+      # always serves the newest build. gh publishes the release only after the
+      # asset is uploaded, so "latest" never points at a release without it.
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${{ steps.version.outputs.tag }}" \
+            build/app/outputs/flutter-apk/app-release.apk \
+            --title "Kalorat ${{ steps.version.outputs.name }} (build ${{ github.run_number }})" \
+            --generate-notes \
+            --target "$GITHUB_SHA" \
+            --latest
