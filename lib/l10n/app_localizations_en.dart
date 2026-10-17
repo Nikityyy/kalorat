@@ -560,7 +560,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get maintainSubtitle => 'Stay healthy & fit';
 
   @override
-  String get buildMassSubtitle => 'Building Strength';
+  String get buildMassSubtitle => 'Gain muscle & strength';
 
   @override
   String get createPlan => 'Create Plan';

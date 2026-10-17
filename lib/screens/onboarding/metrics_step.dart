@@ -153,6 +153,7 @@ class WeightScalePicker extends StatelessWidget {
                 _setValue(minValue + fraction * (maxValue - minValue));
               },
               child: Container(
+                key: const ValueKey('weight-scale'),
                 color: Colors.transparent, // Ensures the entire area receives hit events
                 height: 200,
                 width: double.infinity,

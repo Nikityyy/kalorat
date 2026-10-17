@@ -28,32 +28,37 @@ class ActionButton extends StatelessWidget {
       ),
       child: Material(
         color: Colors.transparent,
-        child: InkWell(
-          onTap: () {
-            if (!isLoading) {
-              HapticFeedback.heavyImpact(); // Mechanical click
-              onPressed?.call();
-            }
-          },
-          borderRadius: BorderRadius.circular(AppTheme.borderRadius),
-          child: Center(
-            child: isLoading
-                ? const SizedBox(
-                    width: 24,
-                    height: 24,
-                    child: CircularProgressIndicator(
-                      color: AppColors.glacialWhite,
-                      strokeWidth: 2,
+        child: Semantics(
+          container: true,
+          button: true,
+          enabled: onPressed != null && !isLoading,
+          child: InkWell(
+            onTap: () {
+              if (!isLoading) {
+                HapticFeedback.heavyImpact(); // Mechanical click
+                onPressed?.call();
+              }
+            },
+            borderRadius: BorderRadius.circular(AppTheme.borderRadius),
+            child: Center(
+              child: isLoading
+                  ? const SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: CircularProgressIndicator(
+                        color: AppColors.glacialWhite,
+                        strokeWidth: 2,
+                      ),
+                    )
+                  : Text(
+                      text,
+                      style: AppTypography.labelLarge.copyWith(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.glacialWhite,
+                      ),
                     ),
-                  )
-                : Text(
-                    text,
-                    style: AppTypography.labelLarge.copyWith(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.glacialWhite,
-                    ),
-                  ),
+            ),
           ),
         ),
       ),

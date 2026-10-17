@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/app_provider.dart';
+import '../../extensions/l10n_extension.dart';
 import '../../theme/app_colors.dart';
 import '../../utils/platform_utils.dart';
 import 'welcome_step.dart';
@@ -303,11 +304,15 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
               child: Row(
                 children: [
                   if (_currentPage > 0 && _currentPage < _lastStepIndex)
-                    GestureDetector(
-                      onTap: _previousPage,
-                      child: const Icon(
-                        Icons.arrow_back,
-                        color: AppColors.slate,
+                    Semantics(
+                      button: true,
+                      label: context.l10n.back,
+                      child: GestureDetector(
+                        onTap: _previousPage,
+                        child: const Icon(
+                          Icons.arrow_back,
+                          color: AppColors.slate,
+                        ),
                       ),
                     )
                   else

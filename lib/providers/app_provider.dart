@@ -273,14 +273,10 @@ class AppProvider extends ChangeNotifier with WidgetsBindingObserver {
       final allWeights = _databaseService.getAllWeights();
       allWeights.sort((a, b) => b.date.compareTo(a.date));
 
-      if (allWeights.isNotEmpty) {
-        // Revert to the newest available weight
-        if (_user!.weight != allWeights.first.weight) {
-          await updateUser(weight: allWeights.first.weight);
-        }
-      } else {
-        // If all weights are deleted, reset user's weight to null or default
-        await updateUser(weight: null);
+      // Revert to the newest remaining weight. With no entries left, keep the
+      // last known weight: the calorie target still needs one.
+      if (allWeights.isNotEmpty && _user!.weight != allWeights.first.weight) {
+        await updateUser(weight: allWeights.first.weight);
       }
     }
 

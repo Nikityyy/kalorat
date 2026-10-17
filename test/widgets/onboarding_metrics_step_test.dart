@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kalorat/l10n/app_localizations.dart';
-import 'package:kalorat/screens/onboarding/weight_step.dart';
+import 'package:kalorat/screens/onboarding/metrics_step.dart';
 
 void main() {
   test('scale maps the semicircle angle to its value range', () {
@@ -18,16 +18,20 @@ void main() {
     tester,
   ) async {
     double? submitted;
+    tester.view.physicalSize = const Size(500, 1200);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
     await tester.pumpWidget(
       MaterialApp(
         locale: const Locale('en'),
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(
-          body: WeightStep(
-            initialValue: 70,
+          body: MetricsStep(
+            initialHeight: 175,
+            initialWeight: 70,
             language: 'en',
-            onNext: (value) => submitted = value,
+            onNext: (height, weight) => submitted = weight,
           ),
         ),
       ),
