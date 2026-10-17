@@ -45,6 +45,8 @@
   <link rel="dns-prefetch" href="https://generativelanguage.googleapis.com">
 
   <style>
+    /* The camera preview must cover its box; never letterbox the video. */
+    flt-platform-view video { object-fit: cover !important; width: 100% !important; height: 100% !important; background: transparent !important; }
     /* Prevent double-highlight from browser native selection (Flutter renders its own) */
     ::selection {
       background: transparent;

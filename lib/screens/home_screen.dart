@@ -27,6 +27,7 @@ import '../utils/platform_utils.dart';
 import '../widgets/inputs/action_button.dart';
 import '../widgets/widgets.dart';
 import 'meal_detail_screen.dart';
+import '../utils/camera_preview.dart';
 import '../utils/haptics.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -1360,9 +1361,9 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   Widget _buildCameraPreview(CameraController controller) {
-    final previewAspectRatio = controller.value.aspectRatio > 1
-        ? (1 / controller.value.aspectRatio)
-        : controller.value.aspectRatio;
+    final previewAspectRatio = portraitPreviewAspect(
+      controller.value.aspectRatio,
+    );
 
     return KeyedSubtree(
       key: ValueKey(_cameraPreviewKey),
@@ -1383,14 +1384,20 @@ class _HomeScreenState extends State<HomeScreen>
                 child: Stack(
                   children: [
                     SizedBox.expand(
-                      child: FittedBox(
-                        fit: BoxFit.cover,
-                        child: SizedBox(
-                          width: constraints.maxWidth,
-                          height: constraints.maxWidth / previewAspectRatio,
-                          child: CameraPreview(controller),
-                        ),
-                      ),
+                      child: PlatformUtils.isWeb
+                          // The video element covers its box itself
+                          // (object-fit: cover), whatever size the browser
+                          // reports for the stream.
+                          ? controller.buildPreview()
+                          : FittedBox(
+                              fit: BoxFit.cover,
+                              child: SizedBox(
+                                width: constraints.maxWidth,
+                                height:
+                                    constraints.maxWidth / previewAspectRatio,
+                                child: CameraPreview(controller),
+                              ),
+                            ),
                     ),
                     if (_focusIndicatorOffset != null)
                       Positioned(
