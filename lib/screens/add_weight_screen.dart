@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart' show DateFormat;
 import 'package:kalorat/theme/app_colors.dart';
 import 'package:kalorat/extensions/l10n_extension.dart';
+import 'package:kalorat/extensions/validation_l10n.dart';
 import 'package:provider/provider.dart';
 import '../models/models.dart';
 import '../providers/app_provider.dart';
@@ -202,7 +203,11 @@ class _AddWeightScreenState extends State<AddWeightScreen> {
       }
     } on FormatException catch (e) {
       if (mounted) {
-        AppToast.show(context, e.message, kind: AppToastKind.info);
+        AppToast.show(
+          context,
+          errorMessage(context.l10n, e),
+          kind: AppToastKind.info,
+        );
       }
       return;
     }

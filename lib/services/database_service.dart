@@ -492,7 +492,7 @@ class DatabaseService {
 
   Future<void> restoreLastImportBackup() async {
     final backup = getLastImportBackup();
-    if (backup == null) throw StateError('Kein Import-Backup vorhanden.');
+    if (backup == null) throw StateError('No import backup');
     await _replaceAll(backup, createBackup: false);
   }
 
@@ -526,7 +526,7 @@ class DatabaseService {
       weight.validate();
     }
     if (meals.map((meal) => meal.id).toSet().length != meals.length) {
-      throw const FormatException('Doppelte Mahlzeiten-IDs im Import.');
+      throw ValidationException(ValidationIssue.duplicateMealIds);
     }
     final newPhotoRefs = <String>[];
     for (var i = 0; i < meals.length; i++) {

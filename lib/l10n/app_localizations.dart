@@ -2251,6 +2251,210 @@ abstract class AppLocalizations {
   /// In de, this message translates to:
   /// **'Kein Import-Backup vorhanden.'**
   String get restoreBackupMissing;
+
+  /// No description provided for @insightsTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Auswertung'**
+  String get insightsTitle;
+
+  /// No description provided for @weeklySummaryTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Letzte 7 Tage'**
+  String get weeklySummaryTitle;
+
+  /// No description provided for @weeklyAvgIntake.
+  ///
+  /// In de, this message translates to:
+  /// **'Ø Aufnahme pro Tag'**
+  String get weeklyAvgIntake;
+
+  /// No description provided for @weeklyOnTarget.
+  ///
+  /// In de, this message translates to:
+  /// **'Im Ziel'**
+  String get weeklyOnTarget;
+
+  /// No description provided for @weeklyAboveTarget.
+  ///
+  /// In de, this message translates to:
+  /// **'{kcal} kcal über dem Ziel'**
+  String weeklyAboveTarget(String kcal);
+
+  /// No description provided for @weeklyBelowTarget.
+  ///
+  /// In de, this message translates to:
+  /// **'{kcal} kcal unter dem Ziel'**
+  String weeklyBelowTarget(String kcal);
+
+  /// No description provided for @weeklyDaysLogged.
+  ///
+  /// In de, this message translates to:
+  /// **'{count} von {total} Tagen erfasst'**
+  String weeklyDaysLogged(int count, int total);
+
+  /// No description provided for @weeklyTarget.
+  ///
+  /// In de, this message translates to:
+  /// **'Ziel {kcal} kcal'**
+  String weeklyTarget(String kcal);
+
+  /// No description provided for @weeklyWeightSpan.
+  ///
+  /// In de, this message translates to:
+  /// **'in {days} Tagen'**
+  String weeklyWeightSpan(int days);
+
+  /// No description provided for @weeklyWeightNeedMore.
+  ///
+  /// In de, this message translates to:
+  /// **'Zwei Wiegungen zeigen die Entwicklung.'**
+  String get weeklyWeightNeedMore;
+
+  /// No description provided for @weeklyNoMeals.
+  ///
+  /// In de, this message translates to:
+  /// **'In den letzten 7 Tagen wurde keine Mahlzeit erfasst.'**
+  String get weeklyNoMeals;
+
+  /// No description provided for @burnTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Geschätzter Tagesverbrauch'**
+  String get burnTitle;
+
+  /// No description provided for @burnBasis.
+  ///
+  /// In de, this message translates to:
+  /// **'Aus {days} erfassten Tagen und {weighIns} Wiegungen der letzten 4 Wochen.'**
+  String burnBasis(int days, int weighIns);
+
+  /// No description provided for @burnWeightTrend.
+  ///
+  /// In de, this message translates to:
+  /// **'Gewichtstrend: {rate} kg pro Woche'**
+  String burnWeightTrend(String rate);
+
+  /// No description provided for @burnFormula.
+  ///
+  /// In de, this message translates to:
+  /// **'Formel (Mifflin-St Jeor): {kcal} kcal'**
+  String burnFormula(String kcal);
+
+  /// No description provided for @burnNeedsData.
+  ///
+  /// In de, this message translates to:
+  /// **'Für deinen echten Verbrauch braucht es mindestens 3 Wiegungen über 10 Tage und Mahlzeiten an den meisten dieser Tage. Bisher: {days} Tage, {weighIns} Wiegungen.'**
+  String burnNeedsData(int days, int weighIns);
+
+  /// No description provided for @burnImplausible.
+  ///
+  /// In de, this message translates to:
+  /// **'Die Werte passen nicht zusammen. Vermutlich fehlen Mahlzeiten oder Wiegungen.'**
+  String get burnImplausible;
+
+  /// No description provided for @burnDisclaimer.
+  ///
+  /// In de, this message translates to:
+  /// **'Eine Schätzung: Sie ist nur so genau wie deine erfassten Mahlzeiten und Wiegungen.'**
+  String get burnDisclaimer;
+
+  /// No description provided for @correctionPrompt.
+  ///
+  /// In de, this message translates to:
+  /// **'Mit einem Tipp korrigieren'**
+  String get correctionPrompt;
+
+  /// No description provided for @correctionLower.
+  ///
+  /// In de, this message translates to:
+  /// **'Weniger'**
+  String get correctionLower;
+
+  /// No description provided for @correctionCurrent.
+  ///
+  /// In de, this message translates to:
+  /// **'Jetzt'**
+  String get correctionCurrent;
+
+  /// No description provided for @correctionHigher.
+  ///
+  /// In de, this message translates to:
+  /// **'Mehr'**
+  String get correctionHigher;
+
+  /// No description provided for @validationInvalidMeal.
+  ///
+  /// In de, this message translates to:
+  /// **'Ungültige Mahlzeit.'**
+  String get validationInvalidMeal;
+
+  /// No description provided for @validationNegative.
+  ///
+  /// In de, this message translates to:
+  /// **'{field} darf nicht negativ sein.'**
+  String validationNegative(String field);
+
+  /// No description provided for @validationNutrition.
+  ///
+  /// In de, this message translates to:
+  /// **'Unrealistische Nährwerte.'**
+  String get validationNutrition;
+
+  /// No description provided for @validationPortion.
+  ///
+  /// In de, this message translates to:
+  /// **'Unrealistische Portionsgröße.'**
+  String get validationPortion;
+
+  /// No description provided for @validationPer100.
+  ///
+  /// In de, this message translates to:
+  /// **'Ungültige Nährwerte pro 100 g.'**
+  String get validationPer100;
+
+  /// No description provided for @validationMacrosPer100.
+  ///
+  /// In de, this message translates to:
+  /// **'Makros pro 100 g dürfen 100 g nicht überschreiten.'**
+  String get validationMacrosPer100;
+
+  /// No description provided for @validationWeightRange.
+  ///
+  /// In de, this message translates to:
+  /// **'Das Gewicht muss zwischen 20 und 400 kg liegen.'**
+  String get validationWeightRange;
+
+  /// No description provided for @validationWeightFuture.
+  ///
+  /// In de, this message translates to:
+  /// **'Das Gewichtsdatum liegt in der Zukunft.'**
+  String get validationWeightFuture;
+
+  /// No description provided for @validationDuplicateMeals.
+  ///
+  /// In de, this message translates to:
+  /// **'Doppelte Mahlzeiten-IDs im Import.'**
+  String get validationDuplicateMeals;
+
+  /// No description provided for @thisWeekTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Wochenziel'**
+  String get thisWeekTitle;
+
+  /// No description provided for @startWeekStrong.
+  ///
+  /// In de, this message translates to:
+  /// **'Beginne deine Woche stark.'**
+  String get startWeekStrong;
+
+  /// No description provided for @keepMomentum.
+  ///
+  /// In de, this message translates to:
+  /// **'Bleib dran!'**
+  String get keepMomentum;
 }
 
 class _AppLocalizationsDelegate

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart' show DateFormat;
 import 'package:provider/provider.dart';
 import '../models/models.dart';
 import '../providers/app_provider.dart';
@@ -6,6 +7,7 @@ import '../theme/app_colors.dart';
 import '../theme/app_typography.dart';
 import '../extensions/l10n_extension.dart';
 import '../widgets/common/primary_button.dart';
+import '../widgets/me/insights_section.dart';
 import '../widgets/me/today_stats_grid.dart';
 import '../widgets/me/weight_chart.dart';
 import '../widgets/me/weight_list.dart';
@@ -91,6 +93,10 @@ class _MeScreenState extends State<MeScreen> {
               _buildSectionHeader(l10n.today),
               const SizedBox(height: 12),
               const TodayStatsGrid(),
+              const SizedBox(height: 32),
+              _buildSectionHeader(l10n.insightsTitle),
+              const SizedBox(height: 12),
+              const InsightsSection(),
               const SizedBox(height: 32),
               _buildSectionHeader(l10n.weight),
               const SizedBox(height: 12),
@@ -250,15 +256,19 @@ class _MeScreenState extends State<MeScreen> {
     // Find Monday of the current week (logicalNow.weekday gives 1 for Mon, 7 for Sun)
     final startOfWeek = today.subtract(Duration(days: logicalNow.weekday - 1));
 
-    final isDe = provider.language == 'de';
-    final dayLabels = isDe
-        ? ['MO', 'DI', 'MI', 'DO', 'FR', 'SA', 'SO']
-        : ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+    final l10n = context.l10n;
+    final dayFormat = DateFormat.E(provider.language);
+    String dayLabel(DateTime day) {
+      final name = dayFormat
+          .format(day)
+          .replaceAll(RegExp(r'[^\p{L}]', unicode: true), '');
+      return name.substring(0, name.length < 2 ? name.length : 2).toUpperCase();
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSectionHeader(isDe ? 'Wochenziel' : 'This Week'),
+        _buildSectionHeader(l10n.thisWeekTitle),
         const SizedBox(height: 12),
         Container(
           padding: const EdgeInsets.all(16),
@@ -272,10 +282,8 @@ class _MeScreenState extends State<MeScreen> {
             children: [
               Text(
                 streakData.streak == 0
-                    ? (isDe
-                          ? 'Beginne deine Woche stark.'
-                          : 'Start your week strong.')
-                    : (isDe ? 'Bleib dran!' : 'Keep the momentum going!'),
+                    ? l10n.startWeekStrong
+                    : l10n.keepMomentum,
                 style: AppTypography.labelLarge.copyWith(
                   color: AppColors.slate,
                   fontWeight: FontWeight.w500,
@@ -316,7 +324,7 @@ class _MeScreenState extends State<MeScreen> {
                   return Column(
                     children: [
                       Text(
-                        dayLabels[index],
+                        dayLabel(day),
                         style: TextStyle(
                           fontFamily: 'JetBrains Mono',
                           fontSize: 11,

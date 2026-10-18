@@ -497,5 +497,118 @@
   "cameraCanvasPreviewOff": "Canvas-Vorschau: aus",
   "backupShareText": "Kalorat-Backup",
   "reportShareText": "Kalorat-Markdown-Bericht",
-  "restoreBackupMissing": "Kein Import-Backup vorhanden."
+  "restoreBackupMissing": "Kein Import-Backup vorhanden.",
+  "insightsTitle": "Auswertung",
+  "weeklySummaryTitle": "Letzte 7 Tage",
+  "weeklyAvgIntake": "Ø Aufnahme pro Tag",
+  "weeklyOnTarget": "Im Ziel",
+  "weeklyAboveTarget": "{kcal} kcal über dem Ziel",
+  "@weeklyAboveTarget": {
+    "placeholders": {
+      "kcal": {
+        "type": "String"
+      }
+    }
+  },
+  "weeklyBelowTarget": "{kcal} kcal unter dem Ziel",
+  "@weeklyBelowTarget": {
+    "placeholders": {
+      "kcal": {
+        "type": "String"
+      }
+    }
+  },
+  "weeklyDaysLogged": "{count} von {total} Tagen erfasst",
+  "@weeklyDaysLogged": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "weeklyTarget": "Ziel {kcal} kcal",
+  "@weeklyTarget": {
+    "placeholders": {
+      "kcal": {
+        "type": "String"
+      }
+    }
+  },
+  "weeklyWeightSpan": "in {days} Tagen",
+  "@weeklyWeightSpan": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "weeklyWeightNeedMore": "Zwei Wiegungen zeigen die Entwicklung.",
+  "weeklyNoMeals": "In den letzten 7 Tagen wurde keine Mahlzeit erfasst.",
+  "burnTitle": "Geschätzter Tagesverbrauch",
+  "burnBasis": "Aus {days} erfassten Tagen und {weighIns} Wiegungen der letzten 4 Wochen.",
+  "@burnBasis": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      },
+      "weighIns": {
+        "type": "int"
+      }
+    }
+  },
+  "burnWeightTrend": "Gewichtstrend: {rate} kg pro Woche",
+  "@burnWeightTrend": {
+    "placeholders": {
+      "rate": {
+        "type": "String"
+      }
+    }
+  },
+  "burnFormula": "Formel (Mifflin-St Jeor): {kcal} kcal",
+  "@burnFormula": {
+    "placeholders": {
+      "kcal": {
+        "type": "String"
+      }
+    }
+  },
+  "burnNeedsData": "Für deinen echten Verbrauch braucht es mindestens 3 Wiegungen über 10 Tage und Mahlzeiten an den meisten dieser Tage. Bisher: {days} Tage, {weighIns} Wiegungen.",
+  "@burnNeedsData": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      },
+      "weighIns": {
+        "type": "int"
+      }
+    }
+  },
+  "burnImplausible": "Die Werte passen nicht zusammen. Vermutlich fehlen Mahlzeiten oder Wiegungen.",
+  "burnDisclaimer": "Eine Schätzung: Sie ist nur so genau wie deine erfassten Mahlzeiten und Wiegungen.",
+  "correctionPrompt": "Mit einem Tipp korrigieren",
+  "correctionLower": "Weniger",
+  "correctionCurrent": "Jetzt",
+  "correctionHigher": "Mehr",
+  "validationInvalidMeal": "Ungültige Mahlzeit.",
+  "validationNegative": "{field} darf nicht negativ sein.",
+  "@validationNegative": {
+    "placeholders": {
+      "field": {
+        "type": "String"
+      }
+    }
+  },
+  "validationNutrition": "Unrealistische Nährwerte.",
+  "validationPortion": "Unrealistische Portionsgröße.",
+  "validationPer100": "Ungültige Nährwerte pro 100 g.",
+  "validationMacrosPer100": "Makros pro 100 g dürfen 100 g nicht überschreiten.",
+  "validationWeightRange": "Das Gewicht muss zwischen 20 und 400 kg liegen.",
+  "validationWeightFuture": "Das Gewichtsdatum liegt in der Zukunft.",
+  "validationDuplicateMeals": "Doppelte Mahlzeiten-IDs im Import.",
+  "thisWeekTitle": "Wochenziel",
+  "startWeekStrong": "Beginne deine Woche stark.",
+  "keepMomentum": "Bleib dran!"
 }

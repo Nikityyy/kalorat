@@ -11,6 +11,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 import '../extensions/l10n_extension.dart';
+import '../extensions/validation_l10n.dart';
 import '../models/models.dart';
 import '../providers/app_provider.dart';
 import '../services/database_service.dart';
@@ -1787,7 +1788,7 @@ class _HomeScreenState extends State<HomeScreen>
       );
     } catch (e) {
       _showMessage(
-        e.toString().replaceFirst('Exception: ', ''),
+        errorMessage(context.l10n, e),
         kind: AppToastKind.error,
       );
     }

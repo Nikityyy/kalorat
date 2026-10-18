@@ -1157,4 +1157,132 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get restoreBackupMissing => 'Kein Import-Backup vorhanden.';
+
+  @override
+  String get insightsTitle => 'Auswertung';
+
+  @override
+  String get weeklySummaryTitle => 'Letzte 7 Tage';
+
+  @override
+  String get weeklyAvgIntake => 'Ø Aufnahme pro Tag';
+
+  @override
+  String get weeklyOnTarget => 'Im Ziel';
+
+  @override
+  String weeklyAboveTarget(String kcal) {
+    return '$kcal kcal über dem Ziel';
+  }
+
+  @override
+  String weeklyBelowTarget(String kcal) {
+    return '$kcal kcal unter dem Ziel';
+  }
+
+  @override
+  String weeklyDaysLogged(int count, int total) {
+    return '$count von $total Tagen erfasst';
+  }
+
+  @override
+  String weeklyTarget(String kcal) {
+    return 'Ziel $kcal kcal';
+  }
+
+  @override
+  String weeklyWeightSpan(int days) {
+    return 'in $days Tagen';
+  }
+
+  @override
+  String get weeklyWeightNeedMore => 'Zwei Wiegungen zeigen die Entwicklung.';
+
+  @override
+  String get weeklyNoMeals =>
+      'In den letzten 7 Tagen wurde keine Mahlzeit erfasst.';
+
+  @override
+  String get burnTitle => 'Geschätzter Tagesverbrauch';
+
+  @override
+  String burnBasis(int days, int weighIns) {
+    return 'Aus $days erfassten Tagen und $weighIns Wiegungen der letzten 4 Wochen.';
+  }
+
+  @override
+  String burnWeightTrend(String rate) {
+    return 'Gewichtstrend: $rate kg pro Woche';
+  }
+
+  @override
+  String burnFormula(String kcal) {
+    return 'Formel (Mifflin-St Jeor): $kcal kcal';
+  }
+
+  @override
+  String burnNeedsData(int days, int weighIns) {
+    return 'Für deinen echten Verbrauch braucht es mindestens 3 Wiegungen über 10 Tage und Mahlzeiten an den meisten dieser Tage. Bisher: $days Tage, $weighIns Wiegungen.';
+  }
+
+  @override
+  String get burnImplausible =>
+      'Die Werte passen nicht zusammen. Vermutlich fehlen Mahlzeiten oder Wiegungen.';
+
+  @override
+  String get burnDisclaimer =>
+      'Eine Schätzung: Sie ist nur so genau wie deine erfassten Mahlzeiten und Wiegungen.';
+
+  @override
+  String get correctionPrompt => 'Mit einem Tipp korrigieren';
+
+  @override
+  String get correctionLower => 'Weniger';
+
+  @override
+  String get correctionCurrent => 'Jetzt';
+
+  @override
+  String get correctionHigher => 'Mehr';
+
+  @override
+  String get validationInvalidMeal => 'Ungültige Mahlzeit.';
+
+  @override
+  String validationNegative(String field) {
+    return '$field darf nicht negativ sein.';
+  }
+
+  @override
+  String get validationNutrition => 'Unrealistische Nährwerte.';
+
+  @override
+  String get validationPortion => 'Unrealistische Portionsgröße.';
+
+  @override
+  String get validationPer100 => 'Ungültige Nährwerte pro 100 g.';
+
+  @override
+  String get validationMacrosPer100 =>
+      'Makros pro 100 g dürfen 100 g nicht überschreiten.';
+
+  @override
+  String get validationWeightRange =>
+      'Das Gewicht muss zwischen 20 und 400 kg liegen.';
+
+  @override
+  String get validationWeightFuture =>
+      'Das Gewichtsdatum liegt in der Zukunft.';
+
+  @override
+  String get validationDuplicateMeals => 'Doppelte Mahlzeiten-IDs im Import.';
+
+  @override
+  String get thisWeekTitle => 'Wochenziel';
+
+  @override
+  String get startWeekStrong => 'Beginne deine Woche stark.';
+
+  @override
+  String get keepMomentum => 'Bleib dran!';
 }

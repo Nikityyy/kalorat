@@ -226,8 +226,9 @@ class UserModel extends HiveObject {
     return 24.9 * ((height / 100) * (height / 100));
   }
 
-  double get dailyCalorieTarget {
-    // Mifflin-St Jeor Equation
+  /// Calories burnt per day by the formula (Mifflin-St Jeor with the
+  /// activity multiplier), before any goal adjustment.
+  double get maintenanceCalories {
     double bmr = (10 * weight) + (6.25 * height) - (5 * age);
 
     // Gender adjustment
@@ -237,8 +238,11 @@ class UserModel extends HiveObject {
       bmr -= 161;
     }
 
-    // Activity multiplier
-    double tdee = bmr * activityLevel.multiplier;
+    return bmr * activityLevel.multiplier;
+  }
+
+  double get dailyCalorieTarget {
+    final tdee = maintenanceCalories;
 
     // Goal adjustment
     if (goal == Goal.lose) return tdee - 500;

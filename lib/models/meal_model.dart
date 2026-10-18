@@ -1,5 +1,7 @@
 import 'package:hive/hive.dart';
 
+import 'validation_exception.dart';
+
 part 'meal_model.g.dart';
 
 int compareMealsNewestFirst(MealModel a, MealModel b) {
@@ -261,29 +263,36 @@ class MealModel extends HiveObject {
 
   void validate() {
     if (id.trim().isEmpty || mealName.length > 200) {
-      throw const FormatException('Ungültige Mahlzeit.');
+      throw ValidationException(ValidationIssue.invalidMeal);
     }
-    final values = <String, double>{
-      'Kalorien': calories,
-      'Protein': protein,
-      'Kohlenhydrate': carbs,
-      'Fett': fats,
-      'Portionsfaktor': portionMultiplier,
-      'Menge pro Einheit': quantityPerUnit,
+    final values = <ValidationField, double>{
+      ValidationField.calories: calories,
+      ValidationField.protein: protein,
+      ValidationField.carbs: carbs,
+      ValidationField.fats: fats,
     };
     for (final entry in values.entries) {
       if (!entry.value.isFinite || entry.value < 0) {
-        throw FormatException('${entry.key} darf nicht negativ sein.');
+        throw ValidationException(
+          ValidationIssue.negativeValue,
+          field: entry.key,
+        );
       }
     }
+    if (!portionMultiplier.isFinite ||
+        portionMultiplier < 0 ||
+        !quantityPerUnit.isFinite ||
+        quantityPerUnit < 0) {
+      throw ValidationException(ValidationIssue.unrealisticPortion);
+    }
     if (calories > 10000 || protein > 1000 || carbs > 1000 || fats > 1000) {
-      throw const FormatException('Unrealistische Nährwerte.');
+      throw ValidationException(ValidationIssue.unrealisticNutrition);
     }
     if (portionMultiplier <= 0 ||
         portionMultiplier > 1000 ||
         quantityPerUnit <= 0 ||
         quantityPerUnit > 100000) {
-      throw const FormatException('Unrealistische Portionsgröße.');
+      throw ValidationException(ValidationIssue.unrealisticPortion);
     }
     for (final value in [
       caloriesPer100g,
@@ -292,7 +301,7 @@ class MealModel extends HiveObject {
       fatsPer100g,
     ]) {
       if (value != null && (!value.isFinite || value < 0 || value > 1000)) {
-        throw const FormatException('Ungültige Nährwerte pro 100 g.');
+        throw ValidationException(ValidationIssue.invalidPer100);
       }
     }
     if ([
@@ -300,9 +309,7 @@ class MealModel extends HiveObject {
       carbsPer100g,
       fatsPer100g,
     ].whereType<double>().any((value) => value > 100)) {
-      throw const FormatException(
-        'Makros pro 100 g dürfen 100 g nicht überschreiten.',
-      );
+      throw ValidationException(ValidationIssue.macrosPer100TooHigh);
     }
   }
 

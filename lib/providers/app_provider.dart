@@ -529,13 +529,7 @@ class AppProvider extends ChangeNotifier with WidgetsBindingObserver {
   Future<void> saveMeal(MealModel meal) async {
     // RATE LIMIT: Max 5 photos per meal
     if (meal.photoPaths.length > 5) {
-      final isGerman = language == 'de';
-      // Manual fallback if context unavailable, though usually handled by UI
-      throw Exception(
-        isGerman
-            ? "Maximum erreicht. Limit von 5 Fotos pro Mahlzeit."
-            : "Maximum reached. 5 photos per meal limit.",
-      );
+      throw ValidationException(ValidationIssue.photoLimit);
     }
 
     // RATE LIMIT: Max 15 meals per day
@@ -544,12 +538,7 @@ class AppProvider extends ChangeNotifier with WidgetsBindingObserver {
     if (!existingMeal) {
       final todayMeals = _databaseService.getMealsByDate(DateTime.now());
       if (todayMeals.length >= 15) {
-        final isGerman = language == 'de';
-        throw Exception(
-          isGerman
-              ? "Maximum erreicht. Limit von 15 Mahlzeiten pro Tag."
-              : "Maximum reached. 15 meals per day limit.",
-        );
+        throw ValidationException(ValidationIssue.mealLimit);
       }
     }
 

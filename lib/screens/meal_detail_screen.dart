@@ -9,8 +9,11 @@ import 'package:provider/provider.dart';
 import '../services/barcode/barcode_preference.dart';
 import '../services/barcode/food_product.dart';
 import '../services/photo_store.dart';
+import '../utils/haptics.dart';
+import '../utils/meal_correction.dart';
 import '../services/gemini_service.dart';
 import '../extensions/l10n_extension.dart';
+import '../extensions/validation_l10n.dart';
 import '../models/meal_model.dart';
 import '../providers/app_provider.dart';
 import '../theme/app_colors.dart';
@@ -43,6 +46,9 @@ class MealDetailScreen extends StatefulWidget {
 class _MealDetailScreenState extends State<MealDetailScreen> {
   late MealModel _meal;
   late double _portionMultiplier;
+
+  /// The calories before any one-tap correction, so it can be undone.
+  late double _originalCalories;
   bool _isAnalyzing = false;
   String _liveThoughtText = '';
   String? _mealContext;
@@ -84,6 +90,7 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
     } else {
       _meal = widget.meal;
     }
+    _originalCalories = _meal.calories;
   }
 
   @override
@@ -202,7 +209,7 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
     } catch (e) {
       AppToast.show(
         context,
-        e.toString().replaceFirst('Exception: ', ''),
+        errorMessage(context.l10n, e),
         kind: AppToastKind.error,
         top: MediaQuery.paddingOf(context).top + 64,
       );
@@ -499,6 +506,7 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
             quantityPerUnit: baseQuantityPerUnit,
           );
           _portionMultiplier = detectedMultiplier;
+          _originalCalories = _meal.calories;
         });
 
         if (mounted) {
@@ -630,7 +638,11 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
       await provider.saveMeal(finalMeal);
     } on FormatException catch (e) {
       if (mounted) {
-        AppToast.show(context, e.message, kind: AppToastKind.info);
+        AppToast.show(
+          context,
+          errorMessage(context.l10n, e),
+          kind: AppToastKind.info,
+        );
       }
       return;
     }
@@ -1214,6 +1226,7 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
   }
 
   Widget _buildUncertaintyNote() {
+    final l10n = context.l10n;
     final low = _meal.caloriesMin;
     final high = _meal.caloriesMax;
     final scale = _portionMultiplier;
@@ -1222,6 +1235,18 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
         : null;
     final note = _meal.analysisNote?.trim() ?? '';
     final confidence = _meal.analysisConfidence;
+    final choices = calorieChoices(
+      _meal,
+      _portionMultiplier,
+      originalCalories: _originalCalories,
+    );
+    final shown = (_meal.calories * _portionMultiplier).round();
+
+    String choiceLabel(CalorieChoiceKind kind) => switch (kind) {
+      CalorieChoiceKind.lower => l10n.correctionLower,
+      CalorieChoiceKind.original => l10n.correctionCurrent,
+      CalorieChoiceKind.higher => l10n.correctionHigher,
+    };
 
     return Container(
       width: double.infinity,
@@ -1240,24 +1265,48 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (confidence != null)
+                if (confidence != null) ...[
                   Text(
-                    context.l10n.analysisConfidence((confidence * 100).round()),
+                    l10n.analysisConfidence((confidence * 100).round()),
                     style: AppTypography.bodySmall.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
                   ),
+                  const SizedBox(height: 6),
+                  _ConfidenceBar(confidence: confidence),
+                ],
                 if (range != null) ...[
-                  if (confidence != null) const SizedBox(height: 4),
+                  if (confidence != null) const SizedBox(height: 8),
                   Text(
-                    context.l10n.estimatedRange(range),
+                    l10n.estimatedRange(range),
                     style: AppTypography.bodyMedium.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                 ],
+                if (choices.isNotEmpty) ...[
+                  const SizedBox(height: 10),
+                  Text(l10n.correctionPrompt, style: AppTypography.bodySmall),
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      for (var i = 0; i < choices.length; i++) ...[
+                        if (i > 0) const SizedBox(width: 8),
+                        Expanded(
+                          child: _CorrectionChip(
+                            label: choiceLabel(choices[i].kind),
+                            kcal: choices[i].kcal,
+                            selected: choices[i].kcal == shown,
+                            onTap: () =>
+                                _applyCalories(choices[i].kcal.toDouble()),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ],
                 if (note.isNotEmpty) ...[
-                  if (range != null) const SizedBox(height: 4),
+                  if (range != null) const SizedBox(height: 8),
                   Text(note, style: AppTypography.bodySmall),
                 ],
               ],
@@ -1266,6 +1315,18 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
         ],
       ),
     );
+  }
+
+  /// One-tap correction: the calories become [kcal] and the macros follow.
+  void _applyCalories(double kcal) {
+    Haptics.tick();
+    setState(() {
+      _meal = mealWithCalories(
+        _meal,
+        portionMultiplier: _portionMultiplier,
+        calories: kcal,
+      );
+    });
   }
 
   bool _hasPer100Reference() {
@@ -1909,6 +1970,99 @@ class _Per100Value extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// How sure the AI is, as a bar: green when sure, amber and red when not.
+class _ConfidenceBar extends StatelessWidget {
+  final double confidence;
+
+  const _ConfidenceBar({required this.confidence});
+
+  @override
+  Widget build(BuildContext context) {
+    final value = confidence.clamp(0.0, 1.0);
+    final color = value >= 0.75
+        ? AppColors.primary
+        : value >= 0.5
+        ? AppColors.amber
+        : AppColors.kaiserRed;
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(3),
+      child: LinearProgressIndicator(
+        value: value,
+        minHeight: 6,
+        color: color,
+        backgroundColor: AppColors.borderGrey,
+      ),
+    );
+  }
+}
+
+/// One value the calories can be set to with a tap.
+class _CorrectionChip extends StatelessWidget {
+  final String label;
+  final int kcal;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _CorrectionChip({
+    required this.label,
+    required this.kcal,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final foreground = selected ? AppColors.glacialWhite : AppColors.slate;
+    return Semantics(
+      button: true,
+      selected: selected,
+      label: '$label, $kcal kcal',
+      child: ExcludeSemantics(
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(AppTheme.borderRadius),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 44, minWidth: 44),
+            child: Container(
+              alignment: Alignment.center,
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+              decoration: BoxDecoration(
+                color: selected ? AppColors.primary : AppColors.glacialWhite,
+                borderRadius: BorderRadius.circular(AppTheme.borderRadius),
+                border: Border.all(
+                  color: selected ? AppColors.primary : AppColors.borderGrey,
+                ),
+              ),
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      label,
+                      style: AppTypography.bodySmall.copyWith(
+                        fontSize: 12,
+                        color: foreground,
+                      ),
+                    ),
+                    Text(
+                      '$kcal kcal',
+                      style: AppTypography.dataLabel.copyWith(
+                        color: foreground,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

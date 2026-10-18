@@ -1,5 +1,7 @@
 import 'package:hive/hive.dart';
 
+import 'validation_exception.dart';
+
 part 'weight_model.g.dart';
 
 @HiveType(typeId: 2)
@@ -45,10 +47,10 @@ class WeightModel extends HiveObject {
 
   void validate() {
     if (!weight.isFinite || weight < 20 || weight > 400) {
-      throw const FormatException('Das Gewicht muss zwischen 20 und 400 kg liegen.');
+      throw ValidationException(ValidationIssue.weightRange);
     }
     if (date.isAfter(DateTime.now().add(const Duration(days: 1)))) {
-      throw const FormatException('Das Gewichtsdatum liegt in der Zukunft.');
+      throw ValidationException(ValidationIssue.weightInFuture);
     }
   }
 

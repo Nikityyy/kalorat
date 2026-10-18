@@ -1141,4 +1141,128 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get restoreBackupMissing => 'No import backup available.';
+
+  @override
+  String get insightsTitle => 'Insights';
+
+  @override
+  String get weeklySummaryTitle => 'Last 7 days';
+
+  @override
+  String get weeklyAvgIntake => 'Average intake per day';
+
+  @override
+  String get weeklyOnTarget => 'On target';
+
+  @override
+  String weeklyAboveTarget(String kcal) {
+    return '$kcal kcal above target';
+  }
+
+  @override
+  String weeklyBelowTarget(String kcal) {
+    return '$kcal kcal below target';
+  }
+
+  @override
+  String weeklyDaysLogged(int count, int total) {
+    return '$count of $total days logged';
+  }
+
+  @override
+  String weeklyTarget(String kcal) {
+    return 'Target $kcal kcal';
+  }
+
+  @override
+  String weeklyWeightSpan(int days) {
+    return 'over $days days';
+  }
+
+  @override
+  String get weeklyWeightNeedMore => 'Two weigh-ins show the trend.';
+
+  @override
+  String get weeklyNoMeals => 'No meals logged in the last 7 days.';
+
+  @override
+  String get burnTitle => 'Estimated daily burn';
+
+  @override
+  String burnBasis(int days, int weighIns) {
+    return 'From $days logged days and $weighIns weigh-ins in the last 4 weeks.';
+  }
+
+  @override
+  String burnWeightTrend(String rate) {
+    return 'Weight trend: $rate kg per week';
+  }
+
+  @override
+  String burnFormula(String kcal) {
+    return 'Formula (Mifflin-St Jeor): $kcal kcal';
+  }
+
+  @override
+  String burnNeedsData(int days, int weighIns) {
+    return 'Your real burn needs at least 3 weigh-ins over 10 days and meals logged on most of those days. So far: $days days, $weighIns weigh-ins.';
+  }
+
+  @override
+  String get burnImplausible =>
+      'The numbers don\'t add up. Meals or weigh-ins are probably missing.';
+
+  @override
+  String get burnDisclaimer =>
+      'An estimate: only as accurate as your logged meals and weigh-ins.';
+
+  @override
+  String get correctionPrompt => 'Correct with one tap';
+
+  @override
+  String get correctionLower => 'Lower';
+
+  @override
+  String get correctionCurrent => 'Now';
+
+  @override
+  String get correctionHigher => 'Higher';
+
+  @override
+  String get validationInvalidMeal => 'Invalid meal.';
+
+  @override
+  String validationNegative(String field) {
+    return '$field must not be negative.';
+  }
+
+  @override
+  String get validationNutrition => 'Unrealistic nutrition values.';
+
+  @override
+  String get validationPortion => 'Unrealistic portion size.';
+
+  @override
+  String get validationPer100 => 'Invalid values per 100 g.';
+
+  @override
+  String get validationMacrosPer100 => 'Macros per 100 g cannot exceed 100 g.';
+
+  @override
+  String get validationWeightRange => 'Weight must be between 20 and 400 kg.';
+
+  @override
+  String get validationWeightFuture => 'The weight date is in the future.';
+
+  @override
+  String get validationDuplicateMeals => 'Duplicate meal IDs in the import.';
+
+  @override
+  String get thisWeekTitle => 'This week';
+
+  @override
+  String get startWeekStrong => 'Start your week strong.';
+
+  @override
+  String get keepMomentum => 'Keep the momentum going!';
 }
