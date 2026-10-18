@@ -21,9 +21,7 @@ class ExportImportService {
           'kalorat_backup_${DateTime.now().toIso8601String().replaceAll(':', '-')}.json';
 
       if (kIsWeb) {
-        // On web: trigger a browser download directly
-        triggerWebDownload(jsonString, fileName);
-        return 'web_download'; // Non-null means success
+        return 'web_${await saveWebFile(jsonString, fileName, 'application/json')}';
       } else {
         return await writeNativeFile(jsonString, fileName);
       }
@@ -154,8 +152,7 @@ class ExportImportService {
           'kalorat_report_${DateTime.now().toIso8601String().replaceAll(':', '-')}.md';
 
       if (kIsWeb) {
-        triggerWebDownload(sb.toString(), fileName);
-        return 'web_download';
+        return 'web_${await saveWebFile(sb.toString(), fileName, 'text/markdown')}';
       } else {
         return await writeNativeFile(sb.toString(), fileName);
       }

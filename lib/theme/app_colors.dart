@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-// HOPE LLC — Fluid Precision
+// Nikita Berger — Fluid Precision
 
 class AppColors {
   // Primary/Accent
@@ -9,7 +9,7 @@ class AppColors {
   static const Color error = Color(0xFFED2939); // Signal Red
   static const Color surface = Color(0xFFF9FAFB); // Off-White surface
 
-  // HOPE LLC — Fluid Precision
+  // Nikita Berger — Fluid Precision
   // Kalorat Accent: Styrian Forest
   static const Color styrianForestColor = Color(0xFF0F5838); // Primary Accent
   static const Color styrianForestDark = Color(0xFF0A3C26); // Hover state

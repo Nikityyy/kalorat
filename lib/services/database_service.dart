@@ -708,8 +708,24 @@ class DatabaseService {
     await Hive.box('settings_box').put('sync_queue', queue);
   }
 
+  /// Remembers when a cloud sync step last completed (see SyncService).
+  DateTime? getSyncCursor(String key) {
+    final raw = Hive.box('settings_box').get('sync_cursor_$key');
+    return raw is String ? DateTime.tryParse(raw)?.toUtc() : null;
+  }
+
+  Future<void> setSyncCursor(String key, DateTime value) => Hive.box(
+    'settings_box',
+  ).put('sync_cursor_$key', value.toUtc().toIso8601String());
+
   // Clear all data
   Future<void> clearAll() async {
+    final settings = Hive.box('settings_box');
+    for (final key in settings.keys.toList()) {
+      if (key is String && key.startsWith('sync_cursor_')) {
+        await settings.delete(key);
+      }
+    }
     await _userBox.clear();
     await _mealsBox.clear();
     await _weightsBox.clear();

@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:math' as math;
 
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -8,6 +9,31 @@ import 'database_service.dart';
 
 bool shouldReplaceVersion(DateTime candidate, DateTime current) =>
     candidate.toUtc().isAfter(current.toUtc());
+
+/// Picks the cloud rows worth downloading in full: those missing locally or
+/// newer than the local copy. [cloudIndex] holds only `id` and `updated_at`
+/// (plus whatever [localUpdatedAt] needs to find the local copy), so unchanged
+/// rows never cross the network.
+List<String> idsNeedingDownload(
+  Iterable<Map<String, dynamic>> cloudIndex,
+  DateTime? Function(Map<String, dynamic> row) localUpdatedAt,
+) {
+  final ids = <String>[];
+  for (final row in cloudIndex) {
+    final local = localUpdatedAt(row);
+    final cloud = row['updated_at'] is String
+        ? DateTime.tryParse(row['updated_at'] as String)
+        : null;
+    if (local == null || cloud == null || shouldReplaceVersion(cloud, local)) {
+      ids.add(row['id'] as String);
+    }
+  }
+  return ids;
+}
+
+/// Tombstones are re-read from this long before the last completed sync, so a
+/// device with a slightly wrong clock cannot make a deletion slip through.
+const tombstoneOverlap = Duration(days: 1);
 
 /// A cloud profile only supersedes a locally saved activity level when the
 /// cloud profile changed after this device last synced. Older profiles can
@@ -20,9 +46,7 @@ bool shouldUseCloudActivityLevel({
   if (localUserIsGuest) return false;
   if (localLastSyncTimestamp == null) return true;
   if (cloudProfileUpdatedAt == null) return false;
-  return cloudProfileUpdatedAt
-      .toUtc()
-      .isAfter(localLastSyncTimestamp.toUtc());
+  return cloudProfileUpdatedAt.toUtc().isAfter(localLastSyncTimestamp.toUtc());
 }
 
 /// Cloud sync service using Supabase PostgreSQL.
@@ -86,8 +110,15 @@ class SyncService {
     }
   }
 
+  Future<void>? _pull;
+
   /// Sync data from Supabase cloud to local Hive using batch database writes.
-  Future<void> syncFromCloud() async {
+  /// Callers that arrive while a pull is running share it instead of starting
+  /// a second one (app start and pull-to-refresh can overlap).
+  Future<void> syncFromCloud() =>
+      _pull ??= _syncFromCloud().whenComplete(() => _pull = null);
+
+  Future<void> _syncFromCloud() async {
     final userId = _userId;
     if (userId == null) return;
     await _processSyncQueue();
@@ -122,8 +153,7 @@ class SyncService {
           isGuest: false,
           supabaseUserId: userId,
           photoUrl: profileData['photo_url'],
-          activityLevel:
-              (profileData['activity_level'] as num?)?.toInt() ?? 0,
+          activityLevel: (profileData['activity_level'] as num?)?.toInt() ?? 0,
           dayStartHour: profileData['day_start_hour'] ?? 0,
           useAccurateMode: profileData['use_accurate_mode'] ?? true,
         );
@@ -139,8 +169,8 @@ class SyncService {
             ? DateTime.tryParse(profileData['birthdate'])
             : null;
         final cloudPhoto = profileData['photo_url'] as String?;
-        final cloudActivityLevel =
-            (profileData['activity_level'] as num?)?.toInt();
+        final cloudActivityLevel = (profileData['activity_level'] as num?)
+            ?.toInt();
         final cloudProfileUpdatedAt = profileData['updated_at'] is String
             ? DateTime.tryParse(profileData['updated_at'] as String)
             : null;
@@ -172,11 +202,17 @@ class SyncService {
       await _db.saveUser(currentUser);
     }
 
-    // 1. Fetch and batch merge meals
-    final mealsData = await _client
+    // 1. Fetch and batch merge meals. A light index first, then full rows for
+    // the ones that changed.
+    final mealIndex = await _client
         .from('meals')
-        .select()
+        .select('id, updated_at')
         .eq('user_id', userId);
+    final mealIds = idsNeedingDownload(
+      mealIndex,
+      (row) => _db.getMealById(row['id'] as String)?.updatedAt,
+    );
+    final mealsData = await _fetchRows('meals', userId, mealIds);
 
     final List<MealModel> mealsToSave = [];
     for (final mealData in mealsData) {
@@ -200,11 +236,16 @@ class SyncService {
       await _db.saveMealsBatch(mealsToSave);
     }
 
-    // 2. Fetch and batch merge weights
-    final weightsData = await _client
+    // 2. Fetch and batch merge weights the same way
+    final weightIndex = await _client
         .from('weights')
-        .select()
+        .select('id, date, updated_at')
         .eq('user_id', userId);
+    final weightIds = idsNeedingDownload(weightIndex, (row) {
+      final date = DateTime.tryParse(row['date'] as String? ?? '');
+      return date == null ? null : _db.getWeightByDate(date)?.updatedAt;
+    });
+    final weightsData = await _fetchRows('weights', userId, weightIds);
 
     final List<WeightModel> weightsToSave = [];
     for (final weightData in weightsData) {
@@ -313,8 +354,7 @@ class SyncService {
       // Older Supabase schemas may not have activity_level yet. Keep all
       // existing profile sync working while local Hive still persists it.
       final missingActivityColumn =
-          error.code == 'PGRST204' &&
-          error.message.contains('activity_level');
+          error.code == 'PGRST204' && error.message.contains('activity_level');
       if (!missingActivityColumn) rethrow;
 
       profile.remove('activity_level');
@@ -556,11 +596,41 @@ class SyncService {
     }
   }
 
+  /// Full rows for [ids], fetched in chunks that keep the request URL short.
+  Future<List<Map<String, dynamic>>> _fetchRows(
+    String table,
+    String userId,
+    List<String> ids,
+  ) async {
+    const chunkSize = 80;
+    final rows = <Map<String, dynamic>>[];
+    for (var i = 0; i < ids.length; i += chunkSize) {
+      final chunk = ids.sublist(i, math.min(i + chunkSize, ids.length));
+      rows.addAll(
+        await _client
+            .from(table)
+            .select()
+            .eq('user_id', userId)
+            .inFilter('id', chunk),
+      );
+    }
+    return rows;
+  }
+
   Future<void> _applyTombstones(String userId) async {
-    final rows = await _client
+    final started = DateTime.now().toUtc();
+    final cursorKey = 'tombstones_$userId';
+    final cursor = _db.getSyncCursor(cursorKey);
+    final query = _client
         .from('sync_tombstones')
         .select()
         .eq('user_id', userId);
+    final rows = await (cursor == null
+        ? query
+        : query.gte(
+            'deleted_at',
+            cursor.subtract(tombstoneOverlap).toIso8601String(),
+          ));
     for (final row in rows) {
       final type = row['entity_type'];
       final id = row['entity_id'] as String;
@@ -578,6 +648,7 @@ class SyncService {
         }
       }
     }
+    await _db.setSyncCursor(cursorKey, started);
   }
 
   Future<bool> _canUpsert(

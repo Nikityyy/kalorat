@@ -425,8 +425,9 @@ class GeminiService {
       },
     };
 
-    final url =
-        '$_baseUrlBase/$modelName:streamGenerateContent?alt=sse&key=$apiKey';
+    // The key travels in a header, never in the URL: URLs end up in browser
+    // history, proxies and logs.
+    final url = '$_baseUrlBase/$modelName:streamGenerateContent?alt=sse';
     // Streaming keeps the analysis panel responsive by delivering the model's
     // short thought summaries before the final structured JSON. The request
     // timeout still bounds the total analysis duration.
@@ -434,7 +435,10 @@ class GeminiService {
         ? const Duration(seconds: 30)
         : const Duration(seconds: 20);
 
-    final requestHeaders = {'Content-Type': 'application/json'};
+    final requestHeaders = {
+      'Content-Type': 'application/json',
+      'x-goog-api-key': apiKey,
+    };
 
     Future<Stream<String>> sendRequest(Map<String, dynamic> payload) async {
       final body = jsonEncode(payload);
@@ -858,10 +862,15 @@ class GeminiService {
   Future<ApiKeyStatus> validateApiKey(String key) async {
     if (key.isEmpty) return ApiKeyStatus.invalid;
 
-    final url = '$_baseUrlBase?key=$key';
     try {
       final response = await _client
-          .get(Uri.parse(url), headers: {'Content-Type': 'application/json'})
+          .get(
+            Uri.parse(_baseUrlBase),
+            headers: {
+              'Content-Type': 'application/json',
+              'x-goog-api-key': key,
+            },
+          )
           .timeout(const Duration(seconds: 15));
       final status = response.statusCode;
       if (status == 200) return ApiKeyStatus.valid;

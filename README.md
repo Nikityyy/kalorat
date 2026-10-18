@@ -1,6 +1,6 @@
 # Kalorat
 
-**Kalorat** is a nutrition tracking app engineered by **HOPE LLC** (does not exist yet). Because tracking *Kalorien* requires absolute clarity.
+**Kalorat** is a nutrition tracking app engineered by **Nikita Berger**. Because tracking *Kalorien* requires absolute clarity.
 
 Use AI (Google Gemini) to analyze meals from photos and track your weight progress. No noise. Just the data that matters.
 
@@ -8,7 +8,7 @@ Use AI (Google Gemini) to analyze meals from photos and track your weight progre
 
 ## Brand
 
-Kalorat is part of the **"-at" portfolio** by HOPE LLC — a collection of standalone, purpose-built tools. Each app under HOPE LLC is completely independent.
+Kalorat is part of the **"-at" portfolio** by Nikita Berger — a collection of standalone, purpose-built tools. Each app in it is completely independent.
 
 **Accent:** Styrian Forest (`#0F5838`)
 **Type:** Outfit (UI) + JetBrains Mono (Data)

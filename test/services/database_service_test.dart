@@ -150,4 +150,18 @@ void main() {
       [0, 1, 2, 3, 4, 5, 6, 6, 7, 8, 9, 10, 11, 11],
     );
   });
+
+  test('keeps sync cursors per key and clears them with the data', () async {
+    expect(database.getSyncCursor('tombstones_a'), isNull);
+    final first = DateTime.utc(2026, 7, 10, 10);
+    final second = first.add(const Duration(hours: 1));
+    await database.setSyncCursor('tombstones_a', first);
+    await database.setSyncCursor('tombstones_b', second);
+    expect(database.getSyncCursor('tombstones_a'), first);
+    expect(database.getSyncCursor('tombstones_b'), second);
+
+    await database.clearAll();
+    expect(database.getSyncCursor('tombstones_a'), isNull);
+    expect(database.getSyncCursor('tombstones_b'), isNull);
+  });
 }

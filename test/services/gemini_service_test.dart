@@ -51,7 +51,10 @@ void main() {
     test('validateApiKey is valid for a 200 response', () async {
       final client = MockClient((request) async {
         expect(request.method, 'GET');
-        expect(request.url.queryParameters['key'], 'test_key');
+        // The key is sent as a header and never appears in the URL.
+        expect(request.headers['x-goog-api-key'], 'test_key');
+        expect(request.url.toString(), isNot(contains('test_key')));
+        expect(request.url.queryParameters.containsKey('key'), isFalse);
         return http.StreamedResponse(Stream.value(utf8.encode('{}')), 200);
       });
 
@@ -265,9 +268,13 @@ void main() {
         });
         Map<String, dynamic>? requestPayload;
         final modelPaths = <String>[];
+        final requestUrls = <String>[];
+        final requestKeys = <String?>[];
         final client = MockClient((request) async {
           final concreteRequest = request as http.Request;
           modelPaths.add(concreteRequest.url.path);
+          requestUrls.add(concreteRequest.url.toString());
+          requestKeys.add(concreteRequest.headers['x-goog-api-key']);
           requestPayload =
               jsonDecode(concreteRequest.body) as Map<String, dynamic>;
           return http.StreamedResponse(
@@ -282,6 +289,12 @@ void main() {
         ).analyzeMeal([testFile.path], useAccurateMode: false);
 
         expect(result, isNotNull);
+        expect(requestUrls, isNotEmpty);
+        for (final url in requestUrls) {
+          expect(url, isNot(contains('fast_mode_key')));
+          expect(url, isNot(contains('key=')));
+        }
+        expect(requestKeys.toSet(), {'fast_mode_key'});
         expect(modelPaths.first, contains('gemini-flash-lite-latest'));
         final generationConfig =
             requestPayload!['generationConfig'] as Map<String, dynamic>;

@@ -17,6 +17,7 @@ import '../theme/app_typography.dart';
 import '../widgets/common/app_card.dart';
 import '../widgets/common/primary_button.dart';
 import '../widgets/app_toast.dart';
+import 'privacy_policy_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -978,13 +979,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
         onTap: () async {
           final path = await provider.exportData();
           if (path != null && mounted) {
-            if (path == 'web_download') {
-              // Web: file was downloaded via browser, just confirm
-              AppToast.show(
-                context,
-                l10n.downloadStarted,
-                kind: AppToastKind.info,
-              );
+            if (path.startsWith('web_')) {
+              // Web: the browser share sheet or download took the file. Only
+              // a plain download needs a confirmation.
+              if (path == 'web_downloaded') {
+                AppToast.show(
+                  context,
+                  l10n.downloadStarted,
+                  kind: AppToastKind.info,
+                );
+              }
             } else {
               await SharePlus.instance.share(
                 ShareParams(files: [XFile(path)], text: 'Kalorat Backup'),
@@ -1005,12 +1009,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
         onTap: () async {
           final path = await provider.exportMarkdownReport(l10n);
           if (path != null && mounted) {
-            if (path == 'web_download') {
-              AppToast.show(
-                context,
-                l10n.downloadStarted,
-                kind: AppToastKind.info,
-              );
+            if (path.startsWith('web_')) {
+              if (path == 'web_downloaded') {
+                AppToast.show(
+                  context,
+                  l10n.downloadStarted,
+                  kind: AppToastKind.info,
+                );
+              }
             } else {
               await SharePlus.instance.share(
                 ShareParams(
@@ -1138,26 +1144,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
           l10n.privacyPolicy,
           style: const TextStyle(color: AppColors.slate),
         ),
-        trailing: const Icon(Icons.open_in_new, size: 16),
-        onTap: () {
-          // Placeholder for actual URL
-          // In a real app, this would use url_launcher
-          showDialog(
-            context: context,
-            builder: (context) => AlertDialog(
-              title: Text(l10n.privacyPolicy),
-              content: const Text(
-                "Privacy Policy placeholder. Your data is stored locally and optionally synced to Supabase (if logged in). Meal photos are processed by Google's Gemini API.",
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text("OK"),
-                ),
-              ],
-            ),
-          );
-        },
+        trailing: const Icon(Icons.chevron_right, size: 20),
+        onTap: () => Navigator.of(context).push(
+          MaterialPageRoute<void>(
+            builder: (_) => const PrivacyPolicyScreen(),
+          ),
+        ),
       ),
       const Divider(height: 1, indent: 16, endIndent: 16),
       ListTile(

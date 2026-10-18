@@ -1,15 +1,20 @@
-// Web implementation for file download
-// ignore: avoid_web_libraries_in_flutter
-import 'dart:html' as html;
+// Web implementation for file export
+import 'dart:js_interop';
 
-void triggerWebDownload(String content, String fileName) {
-  final bytes = html.Blob([content], 'application/json');
-  final url = html.Url.createObjectUrlFromBlob(bytes);
-  (html.AnchorElement(href: url)
-    ..setAttribute('download', fileName)
-    ..click());
-  html.Url.revokeObjectUrl(url);
-}
+@JS('kaloratSaveFile')
+external JSPromise<JSString> _saveFile(
+  String content,
+  String fileName,
+  String mime,
+);
+
+/// Offers [content] as a file: through the share sheet where the browser has
+/// one, otherwise as a download. Returns 'shared', 'cancelled' or 'downloaded'.
+Future<String> saveWebFile(
+  String content,
+  String fileName,
+  String mime,
+) async => (await _saveFile(content, fileName, mime).toDart).toDart;
 
 Future<String> readNativeFile(String path) async {
   // Not used on web

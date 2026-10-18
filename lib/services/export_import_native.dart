@@ -2,9 +2,9 @@
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 
-void triggerWebDownload(String content, String fileName) {
+Future<String> saveWebFile(String content, String fileName, String mime) {
   // Not used on native
-  throw UnsupportedError('Web download not available on native');
+  throw UnsupportedError('Web file saving not available on native');
 }
 
 Future<String> readNativeFile(String path) async {
