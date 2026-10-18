@@ -1,0 +1,189 @@
+import 'package:flutter/material.dart';
+import '../../extensions/l10n_extension.dart';
+import '../../theme/app_colors.dart';
+import '../../theme/app_theme.dart';
+import '../../theme/app_typography.dart';
+
+/// What the user chose in the "Anything to add?" sheet.
+class MealContextResult {
+  /// The optional note about the meal; null when empty or skipped.
+  final String? context;
+
+  /// Analyse later instead of waiting for the result.
+  final bool background;
+
+  const MealContextResult({this.context, this.background = false});
+}
+
+/// Asks for an optional note before a meal is analysed. Returns null when the
+/// sheet is dismissed, which means no analysis.
+Future<MealContextResult?> showMealContextSheet(
+  BuildContext context, {
+  String? initialText,
+}) => showModalBottomSheet<MealContextResult>(
+  context: context,
+  isScrollControlled: true,
+  backgroundColor: Colors.transparent,
+  isDismissible: true,
+  builder: (_) => _MealContextSheet(initialText: initialText),
+);
+
+class _MealContextSheet extends StatefulWidget {
+  final String? initialText;
+
+  const _MealContextSheet({this.initialText});
+
+  @override
+  State<_MealContextSheet> createState() => _MealContextSheetState();
+}
+
+class _MealContextSheetState extends State<_MealContextSheet> {
+  late final TextEditingController _controller = TextEditingController(
+    text: widget.initialText,
+  );
+  // No autofocus: the textarea jumps off screen on mobile when it grabs focus
+  // while the sheet is still animating in.
+  final FocusNode _focusNode = FocusNode();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    _focusNode.dispose();
+    super.dispose();
+  }
+
+  void _submit({bool background = false}) {
+    final text = _controller.text.trim();
+    Navigator.pop(
+      context,
+      MealContextResult(
+        context: text.isNotEmpty ? text : null,
+        background: background,
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    return Padding(
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+      ),
+      child: Container(
+        decoration: const BoxDecoration(
+          color: AppColors.glacialWhite,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Drag handle
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: AppColors.borderGrey,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              l10n.mealContextTitle,
+              style: AppTypography.displayMedium.copyWith(fontSize: 22),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _controller,
+              // NO autofocus here — we use a FocusNode + postFrameCallback
+              // to avoid the "textarea flies off screen" bug on mobile.
+              focusNode: _focusNode,
+              maxLines: 3,
+              style: AppTypography.bodyMedium,
+              decoration: InputDecoration(
+                hintText: l10n.mealContextHint,
+                hintStyle: AppTypography.bodyMedium.copyWith(
+                  color: AppColors.slate.withValues(alpha: 0.5),
+                ),
+                filled: true,
+                fillColor: AppColors.pebble,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AppTheme.borderRadius),
+                  borderSide: BorderSide.none,
+                ),
+                contentPadding: const EdgeInsets.all(16),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () =>
+                        Navigator.pop(context, const MealContextResult()),
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: AppColors.pebble),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(
+                          AppTheme.borderRadius,
+                        ),
+                      ),
+                    ),
+                    child: Text(
+                      l10n.mealContextSkip,
+                      style: const TextStyle(color: AppColors.slate),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => _submit(background: true),
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: AppColors.pebble),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(
+                          AppTheme.borderRadius,
+                        ),
+                      ),
+                    ),
+                    child: Text(
+                      l10n.mealContextBackground,
+                      style: const TextStyle(color: AppColors.slate),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: _submit,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.styrianForest,
+                  foregroundColor: AppColors.glacialWhite,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppTheme.borderRadius),
+                  ),
+                  elevation: 0,
+                ),
+                child: Text(
+                  l10n.mealContextAnalyze,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

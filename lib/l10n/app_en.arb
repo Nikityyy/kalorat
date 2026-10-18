@@ -427,5 +427,19 @@
   "gramModeSubtitle": "Show grams instead of servings",
   "accurateModeTitle": "Accurate mode",
   "accurateModeSubtitle": "Deeper analysis, more accurate. Off is faster.",
-  "gallery": "Gallery"
+  "gallery": "Gallery",
+  "quickLogTitle": "Quick log",
+  "quickLogHint": "Describe what you ate, e.g. two slices of toast with butter",
+  "quickLogRecent": "Eat it again",
+  "quickLogAgainAction": "Log again",
+  "quickLogLogged": "{name} logged",
+  "@quickLogLogged": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "quickLogUndo": "Undo",
+  "quickLogFailed": "Could not log the meal."
 }

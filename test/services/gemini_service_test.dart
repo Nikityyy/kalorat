@@ -425,6 +425,83 @@ void main() {
         expect(visibleThoughtText, contains('Ich erkenne Brot'));
         expect(streamRequestCount, 1);
       });
+
+      test('describes a meal in words without any photo', () async {
+        final resultJson = jsonEncode({
+          'analysis_note': 'test',
+          'meal_name': 'Toast mit Butter',
+          'calories': 180,
+          'protein': 5,
+          'carbs': 25,
+          'fats': 7,
+          'detected_quantity': 2,
+          'detected_unit': 'serving',
+        });
+        Map<String, dynamic>? streamBody;
+        final client = MockClient((request) async {
+          if (request.method == 'GET') {
+            return http.StreamedResponse(
+              Stream.value(
+                utf8.encode(
+                  jsonEncode({
+                    'models': [
+                      {'name': 'models/gemini-flash-lite-latest'},
+                    ],
+                  }),
+                ),
+              ),
+              200,
+            );
+          }
+          streamBody =
+              jsonDecode((request as http.Request).body)
+                  as Map<String, dynamic>;
+          return http.StreamedResponse(
+            Stream.value(utf8.encode(_sseTextEvent(resultJson))),
+            200,
+          );
+        });
+        final service = GeminiService(apiKey: 'test_key', client: client);
+
+        Map<String, dynamic>? result;
+        await for (final event in service.analyzeMealStream(
+          const [],
+          mealContext: 'two slices of toast with butter',
+        )) {
+          if (event is AnalysisResult) result = event.data;
+        }
+
+        expect(result?['meal_name'], 'Toast mit Butter');
+        final parts =
+            ((streamBody!['contents'] as List).single
+                    as Map<String, dynamic>)['parts']
+                as List;
+        expect(
+          parts.any((part) => (part as Map).containsKey('inline_data')),
+          isFalse,
+        );
+        final texts = parts.map((part) => (part as Map)['text'] as String);
+        expect(texts, contains('User note: two slices of toast with butter'));
+        expect(texts.first, contains('No photo'));
+      });
+
+      test('a text-only request needs a description', () async {
+        final service = GeminiService(
+          apiKey: 'test_key',
+          client: MockClient((request) async => fail('no request expected')),
+        );
+
+        await expectLater(
+          service.analyzeMealStream(const [], mealContext: '  ').toList(),
+          throwsA(
+            isA<GeminiError>().having(
+              (e) => e.type,
+              'type',
+              GeminiErrorType.noFood,
+            ),
+          ),
+        );
+      });
     });
   });
 }

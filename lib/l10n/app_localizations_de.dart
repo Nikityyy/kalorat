@@ -1046,4 +1046,28 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get gallery => 'Galerie';
+
+  @override
+  String get quickLogTitle => 'Schnell erfassen';
+
+  @override
+  String get quickLogHint =>
+      'Beschreibe, was du gegessen hast, z. B. zwei Scheiben Toast mit Butter';
+
+  @override
+  String get quickLogRecent => 'Nochmal essen';
+
+  @override
+  String get quickLogAgainAction => 'Nochmal erfassen';
+
+  @override
+  String quickLogLogged(String name) {
+    return '$name erfasst';
+  }
+
+  @override
+  String get quickLogUndo => 'Rückgängig';
+
+  @override
+  String get quickLogFailed => 'Die Mahlzeit konnte nicht erfasst werden.';
 }

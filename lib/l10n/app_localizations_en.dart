@@ -1032,4 +1032,28 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get gallery => 'Gallery';
+
+  @override
+  String get quickLogTitle => 'Quick log';
+
+  @override
+  String get quickLogHint =>
+      'Describe what you ate, e.g. two slices of toast with butter';
+
+  @override
+  String get quickLogRecent => 'Eat it again';
+
+  @override
+  String get quickLogAgainAction => 'Log again';
+
+  @override
+  String quickLogLogged(String name) {
+    return '$name logged';
+  }
+
+  @override
+  String get quickLogUndo => 'Undo';
+
+  @override
+  String get quickLogFailed => 'Could not log the meal.';
 }

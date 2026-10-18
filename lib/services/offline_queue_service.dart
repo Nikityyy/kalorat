@@ -6,7 +6,7 @@ import 'package:http/http.dart' as http;
 
 import '../models/models.dart';
 import '../utils/app_logger.dart';
-import '../utils/nutrition_units.dart';
+import '../utils/analysis_parser.dart';
 import 'database_service.dart';
 import 'gemini_service.dart';
 
@@ -191,69 +191,32 @@ class OfflineQueueService {
         throw GeminiError(GeminiErrorType.noFood, 'No food detected');
       }
 
-      final detectedPortion = normalizeDetectedPortion(result);
-      final detectedUnit = detectedPortion.unit;
-      final detectedQty = detectedPortion.quantity;
-      final baseQuantityPerUnit = quantityPerUnitFor(detectedUnit);
-      var detectedMultiplier = detectedUnit == 'serving'
-          ? detectedQty
-          : detectedQty / baseQuantityPerUnit;
-      if (detectedMultiplier <= 0) detectedMultiplier = 1.0;
+      final parsed = parseAnalysisResult(result);
+      // A description with no food in it comes back as zero calories.
+      if (meal.photoPaths.isEmpty && parsed.calories <= 0) {
+        throw GeminiError(GeminiErrorType.noFood, 'No food detected');
+      }
+      final multiplier = parsed.multiplier;
 
       final updatedMeal = meal.copyWith(
-        mealName: result['meal_name']?.toString() ?? '',
-        calories:
-            nutritionBaseValue(
-              result,
-              unit: detectedUnit,
-              valueKey: 'calories',
-              referenceKey: 'calories_per_100g',
-            ) *
-            detectedMultiplier,
-        protein:
-            nutritionBaseValue(
-              result,
-              unit: detectedUnit,
-              valueKey: 'protein',
-              referenceKey: 'protein_per_100g',
-            ) *
-            detectedMultiplier,
-        carbs:
-            nutritionBaseValue(
-              result,
-              unit: detectedUnit,
-              valueKey: 'carbs',
-              referenceKey: 'carbs_per_100g',
-            ) *
-            detectedMultiplier,
-        fats:
-            nutritionBaseValue(
-              result,
-              unit: detectedUnit,
-              valueKey: 'fats',
-              referenceKey: 'fats_per_100g',
-            ) *
-            detectedMultiplier,
-        caloriesPer100g: (result['calories_per_100g'] as num?)?.toDouble(),
-        proteinPer100g: (result['protein_per_100g'] as num?)?.toDouble(),
-        carbsPer100g: (result['carbs_per_100g'] as num?)?.toDouble(),
-        fatsPer100g: (result['fats_per_100g'] as num?)?.toDouble(),
-        portionMultiplier: detectedMultiplier,
-        portionUnit: detectedUnit,
-        quantityPerUnit: baseQuantityPerUnit,
-        vitamins: _toDoubleMap(result['vitamins']),
-        minerals: _toDoubleMap(result['minerals']),
-        analysisConfidence:
-            ((result['confidence_score'] as num?)?.toDouble() ?? 0.5).clamp(
-              0.0,
-              1.0,
-            ),
-        analysisNote:
-            result['uncertainty_note']?.toString().trim().isNotEmpty == true
-            ? result['uncertainty_note'].toString().trim()
-            : null,
-        caloriesMin: (result['calories_min'] as num?)?.toDouble(),
-        caloriesMax: (result['calories_max'] as num?)?.toDouble(),
+        mealName: parsed.mealName,
+        calories: parsed.calories * multiplier,
+        protein: parsed.protein * multiplier,
+        carbs: parsed.carbs * multiplier,
+        fats: parsed.fats * multiplier,
+        caloriesPer100g: parsed.caloriesPer100g,
+        proteinPer100g: parsed.proteinPer100g,
+        carbsPer100g: parsed.carbsPer100g,
+        fatsPer100g: parsed.fatsPer100g,
+        portionMultiplier: multiplier,
+        portionUnit: parsed.unit,
+        quantityPerUnit: parsed.quantityPerUnit,
+        vitamins: parsed.vitamins,
+        minerals: parsed.minerals,
+        analysisConfidence: (parsed.confidence ?? 0.5).clamp(0.0, 1.0),
+        analysisNote: parsed.note,
+        caloriesMin: parsed.caloriesMin,
+        caloriesMax: parsed.caloriesMax,
         isPending: false,
         analysisStatus: 'completed',
         analysisError: null,
@@ -310,15 +273,6 @@ class OfflineQueueService {
     if (error is GeminiError) return error.message;
     final message = error.toString();
     return message.length > 220 ? message.substring(0, 220) : message;
-  }
-
-  Map<String, double>? _toDoubleMap(dynamic value) {
-    if (value is! Map) return null;
-    return Map<String, double>.from(
-      value.map(
-        (key, item) => MapEntry(key.toString(), (item as num).toDouble()),
-      ),
-    );
   }
 
   int getPendingCount() => _databaseService

@@ -424,5 +424,19 @@
   "gramModeSubtitle": "Gramm statt Portionen anzeigen",
   "accurateModeTitle": "Genauigkeitsmodus",
   "accurateModeSubtitle": "Tiefere Analyse, genauer. Aus ist schneller.",
-  "gallery": "Galerie"
+  "gallery": "Galerie",
+  "quickLogTitle": "Schnell erfassen",
+  "quickLogHint": "Beschreibe, was du gegessen hast, z. B. zwei Scheiben Toast mit Butter",
+  "quickLogRecent": "Nochmal essen",
+  "quickLogAgainAction": "Nochmal erfassen",
+  "quickLogLogged": "{name} erfasst",
+  "@quickLogLogged": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "quickLogUndo": "Rückgängig",
+  "quickLogFailed": "Die Mahlzeit konnte nicht erfasst werden."
 }

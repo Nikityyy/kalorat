@@ -51,7 +51,7 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
   void initState() {
     super.initState();
     _portionMultiplier = widget.meal.portionMultiplier;
-    _mealContext = widget.initialMealContext;
+    _mealContext = widget.initialMealContext ?? widget.meal.mealContext;
 
     // If the meal was saved with a multiplier (e.g. 2x), the stored calories
     // are already 2x. We need to divide by the multiplier to get the "base"
@@ -177,6 +177,31 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
           kind: AppToastKind.info,
         );
       }
+    }
+  }
+
+  /// Logs this meal again as it was saved, as a new meal eaten now.
+  Future<void> _logAgain() async {
+    final provider = context.read<AppProvider>();
+    final l10n = context.l10n;
+    try {
+      final copy = await provider.repeatMeal(widget.meal);
+      if (!mounted) return;
+      AppToast.show(
+        context,
+        l10n.quickLogLogged(copy.mealName),
+        kind: AppToastKind.success,
+        top: MediaQuery.paddingOf(context).top + 64,
+        actionLabel: l10n.quickLogUndo,
+        onAction: () => provider.deleteMeal(copy.id),
+      );
+    } catch (e) {
+      AppToast.show(
+        context,
+        e.toString().replaceFirst('Exception: ', ''),
+        kind: AppToastKind.error,
+        top: MediaQuery.paddingOf(context).top + 64,
+      );
     }
   }
 
@@ -369,6 +394,7 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
 
         setState(() {
           _meal = _meal.copyWith(
+            mealContext: submittedContext,
             mealName: analysis['meal_name'] ?? '',
             calories: nutritionBaseValue(
               analysis,
@@ -821,8 +847,17 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
       backgroundColor: AppColors.glacialWhite,
       body: Stack(
         children: [
-          // 1. Background Image (Featured photo)
-          if (_meal.photoPaths.isNotEmpty)
+          // 1. Background Image (Featured photo); a meal logged without one
+          // gets a plain brand band.
+          if (_meal.photoPaths.isEmpty)
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              height: screenHeight * 0.35,
+              child: const ColoredBox(color: AppColors.styrianForest),
+            )
+          else
             Positioned(
               top: 0,
               left: 0,
@@ -861,6 +896,17 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
                           tooltip: context.l10n.saveToGallery,
                         ),
                       ),
+                    if (!widget.isNewEntry && !_meal.isPending) ...[
+                      const SizedBox(width: 8),
+                      CircleAvatar(
+                        backgroundColor: Colors.black26,
+                        child: IconButton(
+                          icon: const Icon(Icons.replay, color: Colors.white),
+                          onPressed: _logAgain,
+                          tooltip: context.l10n.quickLogAgainAction,
+                        ),
+                      ),
+                    ],
                     const SizedBox(width: 8),
                     CircleAvatar(
                       backgroundColor: Colors.black26,

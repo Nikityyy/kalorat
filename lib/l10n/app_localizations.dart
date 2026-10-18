@@ -2065,6 +2065,48 @@ abstract class AppLocalizations {
   /// In de, this message translates to:
   /// **'Galerie'**
   String get gallery;
+
+  /// No description provided for @quickLogTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Schnell erfassen'**
+  String get quickLogTitle;
+
+  /// No description provided for @quickLogHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Beschreibe, was du gegessen hast, z. B. zwei Scheiben Toast mit Butter'**
+  String get quickLogHint;
+
+  /// No description provided for @quickLogRecent.
+  ///
+  /// In de, this message translates to:
+  /// **'Nochmal essen'**
+  String get quickLogRecent;
+
+  /// No description provided for @quickLogAgainAction.
+  ///
+  /// In de, this message translates to:
+  /// **'Nochmal erfassen'**
+  String get quickLogAgainAction;
+
+  /// No description provided for @quickLogLogged.
+  ///
+  /// In de, this message translates to:
+  /// **'{name} erfasst'**
+  String quickLogLogged(String name);
+
+  /// No description provided for @quickLogUndo.
+  ///
+  /// In de, this message translates to:
+  /// **'Rückgängig'**
+  String get quickLogUndo;
+
+  /// No description provided for @quickLogFailed.
+  ///
+  /// In de, this message translates to:
+  /// **'Die Mahlzeit konnte nicht erfasst werden.'**
+  String get quickLogFailed;
 }
 
 class _AppLocalizationsDelegate

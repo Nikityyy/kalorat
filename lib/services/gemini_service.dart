@@ -264,7 +264,13 @@ class GeminiService {
     }
 
     final stopwatch = Stopwatch()..start();
-    final imageParts = await _prepareImageParts(imagePaths, mealContext);
+    final textOnly = imagePaths.isEmpty;
+    if (textOnly && (mealContext == null || mealContext.trim().isEmpty)) {
+      throw GeminiError(GeminiErrorType.noFood, 'Nothing to analyze');
+    }
+    final imageParts = textOnly
+        ? <Map<String, dynamic>>[]
+        : await _prepareImageParts(imagePaths, mealContext);
     final candidates = _orderedModelsForMode(
       await _getAvailableModels(),
       useAccurateMode: useAccurateMode,
@@ -560,6 +566,9 @@ class GeminiService {
   }
 
   String _analysisContextNote(int imageCount) {
+    if (imageCount == 0) {
+      return 'No photo. The meal is described only in the user note. Estimate it from that description; use the quantity stated there, otherwise a typical single serving. If the note describes neither food nor drink, return calories 0 and an empty items list.';
+    }
     return 'Photo count: $imageCount. Decide whether photos are the same meal from different angles or separate meals to sum; never double-count duplicate angles.';
   }
 

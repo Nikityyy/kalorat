@@ -19,16 +19,21 @@ import '../services/photo_store.dart';
 import '../utils/photo_downscale.dart';
 import '../services/gemini_service.dart';
 import '../theme/app_colors.dart';
-import '../theme/app_theme.dart';
 import '../theme/app_typography.dart';
-import '../utils/nutrition_units.dart';
+import '../utils/analysis_parser.dart';
 import '../utils/platform_utils.dart';
-import '../widgets/inputs/action_button.dart';
 import '../widgets/widgets.dart';
+import 'home/analyzing_view.dart';
+import 'home/camera_controls.dart';
+import 'home/camera_permission_request.dart';
+import 'home/meal_context_sheet.dart';
+import 'home/camera_diagnostics_dialog.dart';
+import 'home/photo_review_view.dart';
+import 'home/photo_viewer.dart';
+import 'home/quick_log_sheet.dart';
 import 'meal_detail_screen.dart';
 import '../utils/camera_diagnostics.dart';
 import '../utils/camera_preview.dart';
-import '../utils/haptics.dart';
 import '../widgets/app_toast.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -82,9 +87,6 @@ class _HomeScreenState extends State<HomeScreen>
   // Live thought summary text accumulated during streaming analysis
   String _liveThoughtText = '';
   ImageProvider? _analysisHeroImageProvider;
-
-  // FocusNode for context textarea — avoids the autofocus keyboard-jump bug
-  final FocusNode _contextFocusNode = FocusNode();
 
   static const String _pendingPhotosBox = DatabaseService.pendingPhotosBoxName;
   static const String _pendingPhotosKey = DatabaseService.pendingPhotosKey;
@@ -172,7 +174,6 @@ class _HomeScreenState extends State<HomeScreen>
     _focusIndicatorTimer?.cancel();
     _logoTapTimer?.cancel();
     _cameraController?.dispose();
-    _contextFocusNode.dispose();
     super.dispose();
   }
 
@@ -494,41 +495,7 @@ class _HomeScreenState extends State<HomeScreen>
       'key $_cameraPreviewKey tabActive $_cameraTabIsActive',
       browserCameraDiagnostics(),
     ];
-    showDialog<void>(
-      context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setDialogState) => AlertDialog(
-          title: const Text('Camera diagnostics'),
-          content: SingleChildScrollView(
-            child: SelectableText(
-              lines.join('\n'),
-              style: const TextStyle(
-                fontFamily: 'JetBrains Mono',
-                fontSize: 10,
-              ),
-            ),
-          ),
-          actions: [
-            if (PlatformUtils.isWeb)
-              TextButton(
-                onPressed: () {
-                  setCameraCanvasPreview(!cameraCanvasPreviewEnabled());
-                  setDialogState(() {});
-                },
-                child: Text(
-                  cameraCanvasPreviewEnabled()
-                      ? 'Canvas preview: on'
-                      : 'Canvas preview: off',
-                ),
-              ),
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: Text(context.l10n.close),
-            ),
-          ],
-        ),
-      ),
-    );
+    showCameraDiagnosticsDialog(context, lines);
   }
 
   Future<void> _setTorchMode(bool enabled) async {
@@ -872,69 +839,12 @@ class _HomeScreenState extends State<HomeScreen>
 
   Future<void> _openCapturedPhoto(int index) async {
     if (index < 0 || index >= _capturedPhotos.length) return;
-    final l10n = context.l10n;
-
-    await showDialog<void>(
-      context: context,
-      barrierColor: Colors.black.withValues(alpha: 0.92),
-      builder: (dialogContext) {
-        final photo = _capturedPhotos[index];
-
-        return Dialog.fullscreen(
-          backgroundColor: Colors.black,
-          child: SafeArea(
-            child: Stack(
-              children: [
-                Positioned.fill(
-                  child: InteractiveViewer(
-                    minScale: 0.8,
-                    maxScale: 4,
-                    child: Center(
-                      child: Image(
-                        image: _photoImageProvider(photo),
-                        fit: BoxFit.contain,
-                      ),
-                    ),
-                  ),
-                ),
-                Positioned(
-                  top: 12,
-                  left: 12,
-                  right: 12,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      _PhotoPreviewButton(
-                        icon: Icons.close,
-                        tooltip: l10n.close,
-                        onPressed: () => Navigator.pop(dialogContext),
-                      ),
-                      Row(
-                        children: [
-                          _PhotoPreviewButton(
-                            icon: Icons.download,
-                            tooltip: context.l10n.saveToGallery,
-                            onPressed: () => _saveCapturedPhoto(photo),
-                          ),
-                          const SizedBox(width: 10),
-                          _PhotoPreviewButton(
-                            icon: Icons.delete_outline,
-                            tooltip: context.l10n.discard,
-                            onPressed: () async {
-                              Navigator.pop(dialogContext);
-                              await _removeCapturedPhoto(index);
-                            },
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
+    final photo = _capturedPhotos[index];
+    await showPhotoViewer(
+      context,
+      image: _photoImageProvider(photo),
+      onSave: () => _saveCapturedPhoto(photo),
+      onDelete: () => _removeCapturedPhoto(index),
     );
   }
 
@@ -942,7 +852,10 @@ class _HomeScreenState extends State<HomeScreen>
     String? mealContext,
     bool background = false,
   }) async {
-    if (_capturedPhotos.isEmpty) return;
+    // Without a photo the description is the whole input.
+    if (_capturedPhotos.isEmpty && (mealContext?.trim().isEmpty ?? true)) {
+      return;
+    }
 
     final l10n = context.l10n;
     if (_capturedPhotos.length > 5) {
@@ -1084,8 +997,11 @@ class _HomeScreenState extends State<HomeScreen>
 
     if (result != null) {
       debugPrint('Analysis result received. Checking content...');
-      if (result.containsKey('error') &&
-          result['error'] == 'no_food_detected') {
+      final noFood =
+          result['error'] == 'no_food_detected' ||
+          // A description with no food in it comes back as zero calories.
+          (_capturedPhotos.isEmpty && _hasNoCalories(result));
+      if (noFood) {
         if (mounted) {
           setState(() {
             _isAnalyzing = false;
@@ -1100,83 +1016,31 @@ class _HomeScreenState extends State<HomeScreen>
 
       try {
         debugPrint('Parsing meal data...');
-        final detectedPortion = normalizeDetectedPortion(result);
-        final detectedUnit = detectedPortion.unit;
-        final detectedQty = detectedPortion.quantity;
-        final baseQuantityPerUnit = quantityPerUnitFor(detectedUnit);
-        final finalMeal = MealModel(
+        final parsed = parseAnalysisResult(result);
+        final mealWithPortion = MealModel(
           id: mealId,
           timestamp: DateTime.now(),
           photoPaths: List.from(_capturedPhotos),
-          mealName: result['meal_name'] ?? '',
-          calories: nutritionBaseValue(
-            result,
-            unit: detectedUnit,
-            valueKey: 'calories',
-            referenceKey: 'calories_per_100g',
-          ),
-          protein: nutritionBaseValue(
-            result,
-            unit: detectedUnit,
-            valueKey: 'protein',
-            referenceKey: 'protein_per_100g',
-          ),
-          carbs: nutritionBaseValue(
-            result,
-            unit: detectedUnit,
-            valueKey: 'carbs',
-            referenceKey: 'carbs_per_100g',
-          ),
-          fats: nutritionBaseValue(
-            result,
-            unit: detectedUnit,
-            valueKey: 'fats',
-            referenceKey: 'fats_per_100g',
-          ),
-          caloriesPer100g: (result['calories_per_100g'] as num?)?.toDouble(),
-          proteinPer100g: (result['protein_per_100g'] as num?)?.toDouble(),
-          carbsPer100g: (result['carbs_per_100g'] as num?)?.toDouble(),
-          fatsPer100g: (result['fats_per_100g'] as num?)?.toDouble(),
-          analysisConfidence: (result['confidence_score'] as num?)?.toDouble(),
-          analysisNote:
-              result['uncertainty_note']?.toString().trim().isNotEmpty == true
-              ? result['uncertainty_note'].toString().trim()
-              : null,
-          caloriesMin: (result['calories_min'] as num?)?.toDouble(),
-          caloriesMax: (result['calories_max'] as num?)?.toDouble(),
-          vitamins: result['vitamins'] != null
-              ? Map<String, double>.from(
-                  (result['vitamins'] as Map).map(
-                    (k, v) => MapEntry(k.toString(), (v ?? 0).toDouble()),
-                  ),
-                )
-              : null,
-          minerals: result['minerals'] != null
-              ? Map<String, double>.from(
-                  (result['minerals'] as Map).map(
-                    (k, v) => MapEntry(k.toString(), (v ?? 0).toDouble()),
-                  ),
-                )
-              : null,
+          mealContext: mealContext,
+          mealName: parsed.mealName,
+          calories: parsed.calories,
+          protein: parsed.protein,
+          carbs: parsed.carbs,
+          fats: parsed.fats,
+          caloriesPer100g: parsed.caloriesPer100g,
+          proteinPer100g: parsed.proteinPer100g,
+          carbsPer100g: parsed.carbsPer100g,
+          fatsPer100g: parsed.fatsPer100g,
+          analysisConfidence: parsed.confidence,
+          analysisNote: parsed.note,
+          caloriesMin: parsed.caloriesMin,
+          caloriesMax: parsed.caloriesMax,
+          vitamins: parsed.vitamins,
+          minerals: parsed.minerals,
+          portionMultiplier: parsed.multiplier,
+          portionUnit: parsed.unit,
+          quantityPerUnit: parsed.quantityPerUnit,
           isPending: false,
-        );
-
-        // Calculate portion data
-        double detectedMultiplier = (detectedUnit == 'serving')
-            ? detectedQty
-            : (detectedQty / baseQuantityPerUnit);
-
-        // Ensure we don't divide by zero
-        if (detectedMultiplier <= 0) detectedMultiplier = 1.0;
-
-        final mealWithPortion = finalMeal.copyWith(
-          calories: finalMeal.calories,
-          protein: finalMeal.protein,
-          carbs: finalMeal.carbs,
-          fats: finalMeal.fats,
-          portionMultiplier: detectedMultiplier,
-          portionUnit: detectedUnit,
-          quantityPerUnit: baseQuantityPerUnit,
         );
 
         debugPrint('Meal parsed successfully: ${mealWithPortion.mealName}');
@@ -1256,6 +1120,14 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
+  bool _hasNoCalories(Map<String, dynamic> result) {
+    try {
+      return parseAnalysisResult(result).calories <= 0;
+    } catch (_) {
+      return false; // the parsing below reports the real error
+    }
+  }
+
   Future<void> _resetCaptureState() async {
     setState(() {
       _capturedPhotos = [];
@@ -1332,142 +1204,33 @@ class _HomeScreenState extends State<HomeScreen>
 
   Widget _buildContent() {
     if (!_hasPermission) {
-      return _buildPermissionRequest();
+      return CameraPermissionRequest(onGrant: _initCamera);
     }
 
     return Stack(
       children: [
         Positioned.fill(child: _buildCamera()),
         if (_isAnalyzing)
-          Positioned.fill(child: _buildAnalyzingSkeleton())
+          Positioned.fill(
+            child: AnalyzingView(
+              heroImage: _analysisHeroImageProvider,
+              thoughtText: _liveThoughtText,
+            ),
+          )
         else if (_capturedPhotos.isNotEmpty && !_isTakingMore)
-          Positioned.fill(child: _buildPhotoReview()),
+          Positioned.fill(
+            child: PhotoReviewView(
+              photos: _capturedPhotos,
+              isAnalyzing: _isAnalyzing,
+              imageFor: _photoImageProvider,
+              onOpen: _openCapturedPhoto,
+              onRemove: _removeCapturedPhoto,
+              onDiscard: _clearPhotos,
+              onAddPhoto: _switchToCameraMode,
+              onAnalyze: _showContextAndAnalyze,
+            ),
+          ),
       ],
-    );
-  }
-
-  Widget _buildAnalyzingSkeleton() {
-    final l10n = context.l10n;
-    final screenHeight = MediaQuery.of(context).size.height;
-
-    return Stack(
-      children: [
-        // 1. Background Image (Actual captured photo)
-        if (_analysisHeroImageProvider != null)
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            height: screenHeight * 0.35,
-            child: Image(
-              image: _analysisHeroImageProvider!,
-              fit: BoxFit.cover,
-              gaplessPlayback: true,
-            ),
-          ),
-
-        // 2. Content Sheet
-        Positioned(
-          top: screenHeight * 0.3,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          child: Container(
-            decoration: const BoxDecoration(
-              color: AppColors.glacialWhite,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
-            ),
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(24, 32, 24, 48),
-              child: Column(
-                children: [
-                  // Header Text (Analyzing...)
-                  Text(
-                    l10n.analyzing,
-                    style: AppTypography.displayMedium.copyWith(fontSize: 32),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 32),
-
-                  // Live Thought Summary Panel - Focused solely on reasoning stream
-                  LiveThoughtPanel(
-                    thoughtText: _liveThoughtText,
-                    titleLabel: l10n.aiThinkingTitle,
-                    thinkingLabel: l10n.aiThinkingLabel,
-                  ),
-
-                  const SizedBox(height: 24),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildPermissionRequest() {
-    final l10n = context.l10n;
-    return ColoredBox(
-      color: AppColors.offWhite,
-      child: SafeArea(
-        child: Align(
-          alignment: const Alignment(0, -0.12),
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 520),
-              child: Container(
-                padding: const EdgeInsets.all(32),
-                decoration: BoxDecoration(
-                  color: AppColors.pureWhite,
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(color: AppColors.borderGrey),
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      width: 88,
-                      height: 88,
-                      decoration: BoxDecoration(
-                        color: AppColors.styrianForest.withValues(alpha: 0.1),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.camera_alt_outlined,
-                        size: 42,
-                        color: AppColors.styrianForest,
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    Text(
-                      l10n.cameraNeeded,
-                      style: AppTypography.displayMedium.copyWith(
-                        color: AppColors.slate,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 10),
-                    Text(
-                      l10n.cameraPermissionText,
-                      style: AppTypography.bodyMedium.copyWith(
-                        color: AppColors.slate.withValues(alpha: 0.65),
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 28),
-                    ActionButton(
-                      text: l10n.grantPermission,
-                      onPressed: _initCamera,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
     );
   }
 
@@ -1578,6 +1341,14 @@ class _HomeScreenState extends State<HomeScreen>
     }
   }
 
+  /// Turns the torch off and goes back to the photo review.
+  Future<void> _leaveCamera() async {
+    if (_isTorchOn) {
+      await _setTorchMode(false);
+    }
+    if (mounted) setState(() => _isTakingMore = false);
+  }
+
   Widget _buildCamera() {
     final l10n = context.l10n;
 
@@ -1622,107 +1393,19 @@ class _HomeScreenState extends State<HomeScreen>
             ),
           ),
 
-        // Top Center Logo
-        if (canShowCamera)
-          Positioned(
-            top: MediaQuery.of(context).padding.top + 16,
-            left: 80,
-            right: 80,
-            // Five quick taps show camera layout measurements (see
-            // _showCameraDiagnostics). A long press would drift into the tab
-            // swipe, so it is taps.
-            child: GestureDetector(
-              behavior: HitTestBehavior.translucent,
-              onTap: _onLogoTap,
-              child: SizedBox(
-                height: 52,
-                child: Center(
-                  child: Image.asset(
-                    'assets/kalorat-textlogo.webp',
-                    color: Colors.white,
-                    colorBlendMode: BlendMode.srcIn,
-                    height: 26,
-                    fit: BoxFit.contain,
-                    errorBuilder: (context, error, stackTrace) => const Text(
-                      'kalorat',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: -0.5,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
+        if (canShowCamera) CameraLogo(onTap: _onLogoTap),
 
-        // Camera tools
         if (canShowCamera)
-          Positioned(
-            top: MediaQuery.of(context).padding.top + 16,
-            left: 20,
-            child: Tooltip(
-              message: l10n.switchCamera,
-              child: GestureDetector(
-                onTap: (_cameras?.length ?? 0) > 1 ? _switchCamera : null,
-                child: AnimatedOpacity(
-                  duration: const Duration(milliseconds: 160),
-                  opacity: (_cameras?.length ?? 0) > 1 ? 1 : 0.45,
-                  child: Container(
-                    width: 52,
-                    height: 52,
-                    decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.45),
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: AppColors.pebble.withValues(alpha: 0.75),
-                      ),
-                    ),
-                    child: const Icon(
-                      Icons.cameraswitch_outlined,
-                      color: AppColors.pebble,
-                    ),
-                  ),
-                ),
-              ),
-            ),
+          CameraSwitchButton(
+            enabled: (_cameras?.length ?? 0) > 1,
+            onTap: _switchCamera,
           ),
 
         if (canShowCamera)
-          Positioned(
-            top: MediaQuery.of(context).padding.top + 16,
-            right: 20,
-            child: Tooltip(
-              message: _canUseTorch ? l10n.flash : l10n.flashUnavailable,
-              child: GestureDetector(
-                onTap: _canUseTorch ? () => _toggleTorch() : null,
-                child: AnimatedOpacity(
-                  duration: const Duration(milliseconds: 160),
-                  opacity: _canUseTorch ? 1 : 0.45,
-                  child: Container(
-                    width: 52,
-                    height: 52,
-                    decoration: BoxDecoration(
-                      color: _isTorchOn
-                          ? AppColors.styrianForest
-                          : Colors.black.withValues(alpha: 0.45),
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: AppColors.pebble.withValues(alpha: 0.75),
-                        width: 1,
-                      ),
-                    ),
-                    child: Icon(
-                      _isTorchOn ? Icons.flash_on : Icons.flash_off,
-                      color: AppColors.pebble,
-                      size: 24,
-                    ),
-                  ),
-                ),
-              ),
-            ),
+          CameraTorchButton(
+            available: _canUseTorch,
+            isOn: _isTorchOn,
+            onTap: _toggleTorch,
           ),
 
         // Meal Framing Guide & Info Text Overlay
@@ -1731,534 +1414,79 @@ class _HomeScreenState extends State<HomeScreen>
             (_capturedPhotos.isEmpty || _isTakingMore))
           MealGuideOverlay(guideText: l10n.cameraGuideText),
 
-        // Simple Top Bar
         if (_capturedPhotos.isNotEmpty)
-          Positioned(
-            top: MediaQuery.of(context).padding.top + 80,
-            left: 20,
-            child: GestureDetector(
-              onTap: () async {
-                if (_isTorchOn) {
-                  await _setTorchMode(false);
-                }
-                setState(() {
-                  _isTakingMore = false;
-                });
-              },
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 8,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.5),
-                  borderRadius: BorderRadius.circular(AppTheme.borderRadius),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(
-                      Icons.arrow_back,
-                      color: AppColors.pebble,
-                      size: 16,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      l10n.backToSelection,
-                      style: const TextStyle(
-                        color: AppColors.pebble,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
+          BackToSelectionButton(onTap: _leaveCamera),
 
-        // Bottom Controls Overlay
-        Positioned(
-          bottom: 0,
-          left: 0,
-          right: 0,
-          child: Container(
-            padding: EdgeInsets.only(
-              bottom: MediaQuery.of(context).padding.bottom + 24,
-              top: 40,
-            ),
-            decoration: const BoxDecoration(color: Colors.black45),
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                // Left: Gallery
-                Positioned(
-                  left: 40,
-                  child: Semantics(
-                    button: true,
-                    label: l10n.gallery,
-                    child: GestureDetector(
-                      onTap: () {
-                        Haptics.tick();
-                        _pickFromGallery();
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: AppColors.pebble.withValues(alpha: 0.2),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.photo_library_outlined,
-                          color: AppColors.pebble,
-                          size: 28,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-
-                // Center: Capture
-                Semantics(
-                  button: true,
-                  label: l10n.takePhoto,
-                  child: GestureDetector(
-                    onTap: () {
-                      Haptics.confirm();
-                      _capturePhoto();
-                    },
-                    child: Container(
-                      width: 84,
-                      height: 84,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(color: AppColors.pebble, width: 4),
-                      ),
-                      child: Center(
-                        child: Container(
-                          width: 70,
-                          height: 70,
-                          decoration: const BoxDecoration(
-                            color: AppColors.pebble,
-                            shape: BoxShape.circle,
-                          ),
-                          child: _isCapturing
-                              ? const Center(
-                                  child: CircularProgressIndicator(
-                                    color: AppColors.styrianForest,
-                                  ),
-                                )
-                              : null,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-
-                // Right: Done/Review if photos exist
-                if (_capturedPhotos.isNotEmpty)
-                  Positioned(
-                    right: 40,
-                    child: GestureDetector(
-                      onTap: () async {
-                        if (_isTorchOn) {
-                          await _setTorchMode(false);
-                        }
-                        setState(() => _isTakingMore = false);
-                      },
-                      child: Stack(
-                        alignment: Alignment.topRight,
-                        children: [
-                          Container(
-                            width: 60,
-                            height: 60,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: AppColors.pebble,
-                                width: 2,
-                              ),
-                              image: DecorationImage(
-                                image: _photoImageProvider(
-                                  _capturedPhotos.last,
-                                  cacheWidth: 180,
-                                ),
-                                fit: BoxFit.cover,
-                              ),
-                            ),
-                          ),
-                          Container(
-                            padding: const EdgeInsets.all(4),
-                            decoration: const BoxDecoration(
-                              color: AppColors.styrianForest,
-                              shape: BoxShape.circle,
-                            ),
-                            child: Text(
-                              '${_capturedPhotos.length}',
-                              style: const TextStyle(
-                                color: AppColors.pebble,
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-          ),
+        CameraBottomBar(
+          photoCount: _capturedPhotos.length,
+          lastPhoto: _capturedPhotos.isEmpty
+              ? null
+              : _photoImageProvider(_capturedPhotos.last, cacheWidth: 180),
+          isCapturing: _isCapturing,
+          onGallery: _pickFromGallery,
+          onCapture: _capturePhoto,
+          onReview: _leaveCamera,
+          onQuickLog: _showQuickLog,
         ),
       ],
     );
   }
 
-  Widget _buildPhotoReview() {
-    final l10n = context.l10n;
-
-    return Container(
-      color: AppColors.glacialWhite,
-      padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top),
-      child: Column(
-        children: [
-          const SizedBox(height: 16),
-          Text(
-            l10n.reviewPhotos,
-            style: AppTypography.displayMedium.copyWith(fontSize: 24),
-          ),
-          const SizedBox(height: 16),
-
-          Expanded(
-            child: GridView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                crossAxisSpacing: 16,
-                mainAxisSpacing: 16,
-                childAspectRatio: 0.8,
-              ),
-              itemCount: _capturedPhotos.length,
-              itemBuilder: (context, index) {
-                return Stack(
-                  children: [
-                    Positioned.fill(
-                      child: GestureDetector(
-                        onTap: () => _openCapturedPhoto(index),
-                        child: Container(
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(
-                              AppTheme.borderRadius,
-                            ),
-                            border: Border.all(
-                              color: AppColors.borderGrey,
-                              width: 1,
-                            ),
-                          ),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(
-                              AppTheme.borderRadius,
-                            ),
-                            child: Image(
-                              image: _photoImageProvider(
-                                _capturedPhotos[index],
-                              ),
-                              fit: BoxFit.cover,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                    Positioned(
-                      top: 8,
-                      right: 8,
-                      child: Semantics(
-                        button: true,
-                        label: context.l10n.delete,
-                        child: GestureDetector(
-                          behavior: HitTestBehavior.opaque,
-                          onTap: () async {
-                            await _removeCapturedPhoto(index);
-                          },
-                          child: Container(
-                            // 16px icon in a 44px touch target
-                            padding: const EdgeInsets.all(14),
-                            decoration: const BoxDecoration(
-                              color: Colors.black54,
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(
-                              Icons.close,
-                              color: AppColors.pebble,
-                              size: 16,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                );
-              },
-            ),
-          ),
-
-          Container(
-            padding: const EdgeInsets.all(24),
-            decoration: const BoxDecoration(
-              color: AppColors.glacialWhite,
-              borderRadius: BorderRadius.vertical(
-                top: Radius.circular(AppTheme.borderRadius),
-              ),
-              border: Border(
-                top: BorderSide(color: AppColors.borderGrey, width: 1),
-              ),
-            ),
-            child: SafeArea(
-              top: false,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: _clearPhotos,
-                          style: OutlinedButton.styleFrom(
-                            side: const BorderSide(color: AppColors.pebble),
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(
-                                AppTheme.borderRadius,
-                              ),
-                            ),
-                          ),
-                          child: Text(
-                            l10n.discard,
-                            style: const TextStyle(color: AppColors.slate),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: _switchToCameraMode,
-                          style: OutlinedButton.styleFrom(
-                            side: const BorderSide(
-                              color: AppColors.styrianForest,
-                            ),
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(
-                                AppTheme.borderRadius,
-                              ),
-                            ),
-                          ),
-                          child: Text(
-                            l10n.addPhoto,
-                            style: const TextStyle(
-                              color: AppColors.styrianForest,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  ActionButton(
-                    text: l10n.startAnalysis,
-                    isLoading: _isAnalyzing,
-                    onPressed: _showContextAndAnalyze,
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
+  /// Logs a meal without a photo: from a description, or again from the list
+  /// of meals eaten before.
+  Future<void> _showQuickLog() async {
+    final provider = context.read<AppProvider>();
+    final result = await showQuickLogSheet(
+      context,
+      recent: provider.recentDistinctMeals(),
     );
+    if (result == null || !mounted) return;
+    switch (result) {
+      case QuickLogRepeat(:final meal):
+        await _logAgain(meal);
+      case QuickLogDescribe(:final text):
+        await _analyzeMeal(mealContext: text);
+    }
+  }
+
+  Future<void> _logAgain(MealModel source) async {
+    final provider = context.read<AppProvider>();
+    final l10n = context.l10n;
+    try {
+      final copy = await provider.repeatMeal(source);
+      if (!mounted) return;
+      AppToast.show(
+        context,
+        l10n.quickLogLogged(copy.mealName),
+        kind: AppToastKind.success,
+        top: MediaQuery.paddingOf(context).top + 76,
+        actionLabel: l10n.quickLogUndo,
+        onAction: () => provider.deleteMeal(copy.id),
+      );
+    } catch (e) {
+      _showMessage(
+        e.toString().replaceFirst('Exception: ', ''),
+        kind: AppToastKind.error,
+      );
+    }
   }
 
   Future<void> _showContextAndAnalyze() async {
-    final l10n = context.l10n;
-    final contextController = TextEditingController(text: _mealContext);
-    bool analyzeShouldRun = false;
-    bool background = false;
-    String? submittedContext;
-
-    await showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      isDismissible: true,
-      builder: (sheetContext) => Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(sheetContext).viewInsets.bottom,
-        ),
-        child: Container(
-          decoration: const BoxDecoration(
-            color: AppColors.glacialWhite,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-          ),
-          padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Drag handle
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: AppColors.borderGrey,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 20),
-              Text(
-                l10n.mealContextTitle,
-                style: AppTypography.displayMedium.copyWith(fontSize: 22),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: contextController,
-                // NO autofocus here — we use a FocusNode + postFrameCallback
-                // to avoid the "textarea flies off screen" bug on mobile.
-                focusNode: _contextFocusNode,
-                maxLines: 3,
-                style: AppTypography.bodyMedium,
-                decoration: InputDecoration(
-                  hintText: l10n.mealContextHint,
-                  hintStyle: AppTypography.bodyMedium.copyWith(
-                    color: AppColors.slate.withValues(alpha: 0.5),
-                  ),
-                  filled: true,
-                  fillColor: AppColors.pebble,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(AppTheme.borderRadius),
-                    borderSide: BorderSide.none,
-                  ),
-                  contentPadding: const EdgeInsets.all(16),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () {
-                        submittedContext = null;
-                        analyzeShouldRun = true;
-                        Navigator.pop(sheetContext);
-                      },
-                      style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: AppColors.pebble),
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(
-                            AppTheme.borderRadius,
-                          ),
-                        ),
-                      ),
-                      child: Text(
-                        l10n.mealContextSkip,
-                        style: const TextStyle(color: AppColors.slate),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () {
-                        final text = contextController.text.trim();
-                        submittedContext = text.isNotEmpty ? text : null;
-                        analyzeShouldRun = true;
-                        background = true;
-                        Navigator.pop(sheetContext);
-                      },
-                      style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: AppColors.pebble),
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(
-                            AppTheme.borderRadius,
-                          ),
-                        ),
-                      ),
-                      child: Text(
-                        l10n.mealContextBackground,
-                        style: const TextStyle(color: AppColors.slate),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    final text = contextController.text.trim();
-                    submittedContext = text.isNotEmpty ? text : null;
-                    analyzeShouldRun = true;
-                    Navigator.pop(sheetContext);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.styrianForest,
-                    foregroundColor: AppColors.glacialWhite,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(
-                        AppTheme.borderRadius,
-                      ),
-                    ),
-                    elevation: 0,
-                  ),
-                  child: Text(
-                    l10n.mealContextAnalyze,
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
+    final result = await showMealContextSheet(
+      context,
+      initialText: _mealContext,
     );
 
-    // Only analyze if user explicitly tapped the Analyze button
-    if (analyzeShouldRun && mounted) {
-      setState(() => _mealContext = submittedContext);
-      await _analyzeMeal(mealContext: submittedContext, background: background);
+    // Only analyze if user explicitly tapped one of the analyze buttons
+    if (result != null && mounted) {
+      setState(() => _mealContext = result.context);
+      await _analyzeMeal(
+        mealContext: result.context,
+        background: result.background,
+      );
     }
   }
 
   @override
   bool get wantKeepAlive => true;
-}
-
-class _PhotoPreviewButton extends StatelessWidget {
-  final IconData icon;
-  final String tooltip;
-  final VoidCallback onPressed;
-
-  const _PhotoPreviewButton({
-    required this.icon,
-    required this.tooltip,
-    required this.onPressed,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Tooltip(
-      message: tooltip,
-      child: Material(
-        color: Colors.black.withValues(alpha: 0.46),
-        shape: const CircleBorder(),
-        child: IconButton(
-          onPressed: onPressed,
-          icon: Icon(icon, color: AppColors.glacialWhite),
-        ),
-      ),
-    );
-  }
 }

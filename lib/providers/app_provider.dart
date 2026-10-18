@@ -581,6 +581,53 @@ class AppProvider extends ChangeNotifier with WidgetsBindingObserver {
     notifyListeners();
   }
 
+  /// Logged meals the user can log again: newest first, one per name.
+  List<MealModel> recentDistinctMeals({int limit = 6}) {
+    final seen = <String>{};
+    final result = <MealModel>[];
+    for (final meal in _databaseService.getAllMeals()) {
+      final name = meal.mealName.trim();
+      if (meal.isPending || name.isEmpty || meal.calories <= 0) continue;
+      if (!seen.add(name.toLowerCase())) continue;
+      result.add(meal);
+      if (result.length == limit) break;
+    }
+    return result;
+  }
+
+  /// Logs [source] again as a new meal eaten now. Photos stay with the
+  /// original: a photo shared by two meals would vanish with either one.
+  Future<MealModel> repeatMeal(MealModel source) async {
+    final copy = MealModel(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      timestamp: DateTime.now(),
+      photoPaths: const [],
+      mealName: source.mealName,
+      calories: source.calories,
+      protein: source.protein,
+      carbs: source.carbs,
+      fats: source.fats,
+      vitamins: source.vitamins,
+      minerals: source.minerals,
+      isManualEntry: source.isManualEntry,
+      isCalorieOverride: source.isCalorieOverride,
+      portionMultiplier: source.portionMultiplier,
+      portionUnit: source.portionUnit,
+      quantityPerUnit: source.quantityPerUnit,
+      caloriesPer100g: source.caloriesPer100g,
+      proteinPer100g: source.proteinPer100g,
+      carbsPer100g: source.carbsPer100g,
+      fatsPer100g: source.fatsPer100g,
+      mealContext: source.mealContext,
+      analysisConfidence: source.analysisConfidence,
+      analysisNote: source.analysisNote,
+      caloriesMin: source.caloriesMin,
+      caloriesMax: source.caloriesMax,
+    );
+    await saveMeal(copy);
+    return copy;
+  }
+
   /// Deletes [mealId] if it is still waiting for analysis; logged meals stay.
   Future<void> discardPendingMeal(String mealId) async {
     if (_databaseService.getMealById(mealId)?.isPending != true) return;
