@@ -991,7 +991,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               }
             } else {
               await SharePlus.instance.share(
-                ShareParams(files: [XFile(path)], text: 'Kalorat Backup'),
+                ShareParams(files: [XFile(path)], text: l10n.backupShareText),
               );
             }
           }
@@ -1019,10 +1019,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               }
             } else {
               await SharePlus.instance.share(
-                ShareParams(
-                  files: [XFile(path)],
-                  text: 'Kalorat Markdown Report',
-                ),
+                ShareParams(files: [XFile(path)], text: l10n.reportShareText),
               );
             }
           }
@@ -1064,7 +1061,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
               }
             } catch (e) {
               if (mounted) {
-                AppToast.show(context, e.toString(), kind: AppToastKind.error);
+                AppToast.show(
+                  context,
+                  l10n.restoreBackupMissing,
+                  kind: AppToastKind.error,
+                );
               }
             }
           },
@@ -1146,9 +1147,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
         trailing: const Icon(Icons.chevron_right, size: 20),
         onTap: () => Navigator.of(context).push(
-          MaterialPageRoute<void>(
-            builder: (_) => const PrivacyPolicyScreen(),
-          ),
+          MaterialPageRoute<void>(builder: (_) => const PrivacyPolicyScreen()),
         ),
       ),
       const Divider(height: 1, indent: 16, endIndent: 16),

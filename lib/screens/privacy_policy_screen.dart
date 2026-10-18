@@ -41,6 +41,16 @@ const _sectionsEn = [
         'not want that, do not analyse meals with photos or add them manually.',
   ),
   PolicySection(
+    'Barcode lookup with Open Food Facts',
+    'When the camera reads the barcode of a packaged product, the app sends '
+        'only the barcode number to Open Food Facts (world.openfoodfacts.org), '
+        'an open food database, to get the product\'s name and nutrition '
+        'values. As with any web request, Open Food Facts sees your IP '
+        'address. Results are kept on your device, so a product is not looked '
+        'up again. Product data from Open Food Facts is available under the '
+        'Open Database License.',
+  ),
+  PolicySection(
     'Your API key',
     'Your Gemini API key is stored on your device in secure storage (Keychain '
         'or Keystore in the native apps, the app\'s storage in the browser). It '
@@ -72,7 +82,8 @@ const _sectionsEn = [
     'What the app does not do',
     'Kalorat contains no advertising and no analytics or tracking tools. Your '
         'data is not sold or shared with third parties other than Google '
-        '(meal analysis) and Supabase (account sync, only if you sign in).',
+        '(meal analysis), Open Food Facts (barcode numbers only) and Supabase '
+        '(account sync, only if you sign in).',
   ),
   PolicySection(
     'Your choices',
@@ -117,6 +128,17 @@ const _sectionsDe = [
         'keine Mahlzeiten mit Fotos oder trage sie manuell ein.',
   ),
   PolicySection(
+    'Barcode-Suche mit Open Food Facts',
+    'Wenn die Kamera den Barcode eines verpackten Produkts liest, sendet die '
+        'App nur die Barcode-Nummer an Open Food Facts '
+        '(world.openfoodfacts.org), eine offene Lebensmitteldatenbank, um Name '
+        'und Nährwerte des Produkts abzurufen. Wie bei jeder Web-Anfrage sieht '
+        'Open Food Facts dabei deine IP-Adresse. Ergebnisse bleiben auf deinem '
+        'Gerät gespeichert, damit ein Produkt nicht erneut gesucht wird. '
+        'Produktdaten von Open Food Facts stehen unter der Open Database '
+        'License.',
+  ),
+  PolicySection(
     'Dein API-Schlüssel',
     'Dein Gemini-API-Schlüssel wird auf deinem Gerät im sicheren Speicher '
         'abgelegt (Keychain oder Keystore in den nativen Apps, der '
@@ -152,8 +174,8 @@ const _sectionsDe = [
     'Was die App nicht tut',
     'Kalorat enthält keine Werbung und keine Analyse- oder Tracking-Werkzeuge. '
         'Deine Daten werden nicht verkauft und nicht an Dritte weitergegeben, '
-        'außer an Google (Mahlzeitenanalyse) und Supabase (Konto-Sync, nur wenn '
-        'du dich anmeldest).',
+        'außer an Google (Mahlzeitenanalyse), Open Food Facts (nur Barcode-'
+        'Nummern) und Supabase (Konto-Sync, nur wenn du dich anmeldest).',
   ),
   PolicySection(
     'Deine Möglichkeiten',

@@ -1,0 +1,5 @@
+"NSCameraUsageDescription" = "Kalorat benötigt Kamerazugriff, um Mahlzeiten zu fotografieren und Barcodes zu lesen.";
+"NSPhotoLibraryUsageDescription" = "Kalorat benötigt Zugriff auf deine Fotos, um Mahlzeiten zu analysieren.";
+"NSPhotoLibraryAddUsageDescription" = "Kalorat speichert Fotos deiner Mahlzeiten.";
+"NSHealthShareUsageDescription" = "Kalorat liest deine Gesundheitsdaten, um dir umfassende Ernährungseinblicke zu geben.";
+"NSHealthUpdateUsageDescription" = "Kalorat schreibt Ernährungs- und Gewichtsdaten in Apple Health für einen vollständigen Gesundheitsüberblick.";

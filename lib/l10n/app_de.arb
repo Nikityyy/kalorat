@@ -416,7 +416,7 @@
   "dailyCalorieTarget": "Tägliches Kalorienziel",
   "signUpToSave": "Melde dich an, um deine Daten geräteübergreifend zu behalten.",
   "createAccount": "Weiter",
-  "cameraGuideText": "Mahlzeit im Rahmen zentrieren.",
+  "cameraGuideText": "Mahlzeit oder Barcode im Rahmen zentrieren.",
   "apiKeyUnreachable": "Google nicht erreichbar. Verbindung prüfen.",
   "appVersion": "Version",
   "offlineShort": "Offline",
@@ -438,5 +438,64 @@
     }
   },
   "quickLogUndo": "Rückgängig",
-  "quickLogFailed": "Die Mahlzeit konnte nicht erfasst werden."
+  "quickLogFailed": "Die Mahlzeit konnte nicht erfasst werden.",
+  "barcodeLookingUp": "Produkt wird gesucht…",
+  "barcodeNotFound": "Produkt nicht gefunden. Fotografiere stattdessen die Nährwerttabelle.",
+  "barcodeNoNutrition": "Keine Nährwerte für {name}. Fotografiere stattdessen die Nährwerttabelle.",
+  "@barcodeNoNutrition": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "barcodeLookupFailed": "Produkt konnte nicht gesucht werden. Fotografiere stattdessen die Nährwerttabelle.",
+  "barcodeLabelAction": "Etikett fotografieren",
+  "barcodeLabelGuide": "Fotografiere die Nährwerttabelle.",
+  "barcodeLabelContext": "Nährwerttabelle von {product}",
+  "@barcodeLabelContext": {
+    "placeholders": {
+      "product": {
+        "type": "String"
+      }
+    }
+  },
+  "barcodeSourceNote": "Nährwerte von Open Food Facts (Barcode {code}).",
+  "@barcodeSourceNote": {
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
+  },
+  "barcodeSwitchOn": "Nährwerte von Open Food Facts verwenden",
+  "barcodeSwitchOff": "Barcode ignoriert, das Foto wird als Mahlzeit analysiert",
+  "barcodeRetryHint": "Ausschalten, um das Foto als Mahlzeit zu analysieren",
+  "retrySheetTitle": "Analyse wiederholen",
+  "retrySheetSubtitle": "Hinweis bearbeiten oder direkt neu analysieren",
+  "retrySheetHint": "z.B. 2 Portionen, extra Sauce ...",
+  "retrySheetAction": "Neu analysieren",
+  "estimatedRange": "Geschätzter Bereich: {range}",
+  "@estimatedRange": {
+    "placeholders": {
+      "range": {
+        "type": "String"
+      }
+    }
+  },
+  "analysisNoResult": "Kein Ergebnis erhalten.",
+  "analysisParseError": "Die Analyse konnte nicht gelesen werden: {error}",
+  "@analysisParseError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "cameraDiagnosticsTitle": "Kamera-Diagnose",
+  "cameraCanvasPreviewOn": "Canvas-Vorschau: an",
+  "cameraCanvasPreviewOff": "Canvas-Vorschau: aus",
+  "backupShareText": "Kalorat-Backup",
+  "reportShareText": "Kalorat-Markdown-Bericht",
+  "restoreBackupMissing": "Kein Import-Backup vorhanden."
 }

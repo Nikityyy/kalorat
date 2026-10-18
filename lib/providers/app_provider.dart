@@ -518,6 +518,8 @@ class AppProvider extends ChangeNotifier with WidgetsBindingObserver {
   // Meal operations
   List<MealModel> getAllMeals() => _databaseService.getAllMeals();
 
+  MealModel? getMealById(String id) => _databaseService.getMealById(id);
+
   List<MealModel> getMealsByDate(DateTime date) =>
       _databaseService.getMealsByDate(date);
 

@@ -2015,7 +2015,7 @@ abstract class AppLocalizations {
   /// No description provided for @cameraGuideText.
   ///
   /// In de, this message translates to:
-  /// **'Mahlzeit im Rahmen zentrieren.'**
+  /// **'Mahlzeit oder Barcode im Rahmen zentrieren.'**
   String get cameraGuideText;
 
   /// No description provided for @apiKeyUnreachable.
@@ -2107,6 +2107,150 @@ abstract class AppLocalizations {
   /// In de, this message translates to:
   /// **'Die Mahlzeit konnte nicht erfasst werden.'**
   String get quickLogFailed;
+
+  /// No description provided for @barcodeLookingUp.
+  ///
+  /// In de, this message translates to:
+  /// **'Produkt wird gesucht…'**
+  String get barcodeLookingUp;
+
+  /// No description provided for @barcodeNotFound.
+  ///
+  /// In de, this message translates to:
+  /// **'Produkt nicht gefunden. Fotografiere stattdessen die Nährwerttabelle.'**
+  String get barcodeNotFound;
+
+  /// No description provided for @barcodeNoNutrition.
+  ///
+  /// In de, this message translates to:
+  /// **'Keine Nährwerte für {name}. Fotografiere stattdessen die Nährwerttabelle.'**
+  String barcodeNoNutrition(String name);
+
+  /// No description provided for @barcodeLookupFailed.
+  ///
+  /// In de, this message translates to:
+  /// **'Produkt konnte nicht gesucht werden. Fotografiere stattdessen die Nährwerttabelle.'**
+  String get barcodeLookupFailed;
+
+  /// No description provided for @barcodeLabelAction.
+  ///
+  /// In de, this message translates to:
+  /// **'Etikett fotografieren'**
+  String get barcodeLabelAction;
+
+  /// No description provided for @barcodeLabelGuide.
+  ///
+  /// In de, this message translates to:
+  /// **'Fotografiere die Nährwerttabelle.'**
+  String get barcodeLabelGuide;
+
+  /// No description provided for @barcodeLabelContext.
+  ///
+  /// In de, this message translates to:
+  /// **'Nährwerttabelle von {product}'**
+  String barcodeLabelContext(String product);
+
+  /// No description provided for @barcodeSourceNote.
+  ///
+  /// In de, this message translates to:
+  /// **'Nährwerte von Open Food Facts (Barcode {code}).'**
+  String barcodeSourceNote(String code);
+
+  /// No description provided for @barcodeSwitchOn.
+  ///
+  /// In de, this message translates to:
+  /// **'Nährwerte von Open Food Facts verwenden'**
+  String get barcodeSwitchOn;
+
+  /// No description provided for @barcodeSwitchOff.
+  ///
+  /// In de, this message translates to:
+  /// **'Barcode ignoriert, das Foto wird als Mahlzeit analysiert'**
+  String get barcodeSwitchOff;
+
+  /// No description provided for @barcodeRetryHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Ausschalten, um das Foto als Mahlzeit zu analysieren'**
+  String get barcodeRetryHint;
+
+  /// No description provided for @retrySheetTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Analyse wiederholen'**
+  String get retrySheetTitle;
+
+  /// No description provided for @retrySheetSubtitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Hinweis bearbeiten oder direkt neu analysieren'**
+  String get retrySheetSubtitle;
+
+  /// No description provided for @retrySheetHint.
+  ///
+  /// In de, this message translates to:
+  /// **'z.B. 2 Portionen, extra Sauce ...'**
+  String get retrySheetHint;
+
+  /// No description provided for @retrySheetAction.
+  ///
+  /// In de, this message translates to:
+  /// **'Neu analysieren'**
+  String get retrySheetAction;
+
+  /// No description provided for @estimatedRange.
+  ///
+  /// In de, this message translates to:
+  /// **'Geschätzter Bereich: {range}'**
+  String estimatedRange(String range);
+
+  /// No description provided for @analysisNoResult.
+  ///
+  /// In de, this message translates to:
+  /// **'Kein Ergebnis erhalten.'**
+  String get analysisNoResult;
+
+  /// No description provided for @analysisParseError.
+  ///
+  /// In de, this message translates to:
+  /// **'Die Analyse konnte nicht gelesen werden: {error}'**
+  String analysisParseError(String error);
+
+  /// No description provided for @cameraDiagnosticsTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Kamera-Diagnose'**
+  String get cameraDiagnosticsTitle;
+
+  /// No description provided for @cameraCanvasPreviewOn.
+  ///
+  /// In de, this message translates to:
+  /// **'Canvas-Vorschau: an'**
+  String get cameraCanvasPreviewOn;
+
+  /// No description provided for @cameraCanvasPreviewOff.
+  ///
+  /// In de, this message translates to:
+  /// **'Canvas-Vorschau: aus'**
+  String get cameraCanvasPreviewOff;
+
+  /// No description provided for @backupShareText.
+  ///
+  /// In de, this message translates to:
+  /// **'Kalorat-Backup'**
+  String get backupShareText;
+
+  /// No description provided for @reportShareText.
+  ///
+  /// In de, this message translates to:
+  /// **'Kalorat-Markdown-Bericht'**
+  String get reportShareText;
+
+  /// No description provided for @restoreBackupMissing.
+  ///
+  /// In de, this message translates to:
+  /// **'Kein Import-Backup vorhanden.'**
+  String get restoreBackupMissing;
 }
 
 class _AppLocalizationsDelegate

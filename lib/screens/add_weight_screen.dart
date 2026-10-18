@@ -1,6 +1,7 @@
 import '../utils/platform_utils.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart' show DateFormat;
 import 'package:kalorat/theme/app_colors.dart';
 import 'package:kalorat/extensions/l10n_extension.dart';
 import 'package:provider/provider.dart';
@@ -73,7 +74,9 @@ class _AddWeightScreenState extends State<AddWeightScreen> {
                   borderRadius: BorderRadius.circular(AppTheme.borderRadius),
                 ),
                 child: Text(
-                  '${_selectedDate.day}.${_selectedDate.month}.${_selectedDate.year}',
+                  DateFormat.yMd(
+                    Localizations.localeOf(context).toString(),
+                  ).format(_selectedDate),
                   style: const TextStyle(fontSize: 18),
                 ),
               ),

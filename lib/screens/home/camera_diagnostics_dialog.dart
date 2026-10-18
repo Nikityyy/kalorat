@@ -10,7 +10,7 @@ void showCameraDiagnosticsDialog(BuildContext context, List<String> lines) {
     context: context,
     builder: (ctx) => StatefulBuilder(
       builder: (ctx, setDialogState) => AlertDialog(
-        title: const Text('Camera diagnostics'),
+        title: Text(context.l10n.cameraDiagnosticsTitle),
         content: SingleChildScrollView(
           child: SelectableText(
             lines.join('\n'),
@@ -26,8 +26,8 @@ void showCameraDiagnosticsDialog(BuildContext context, List<String> lines) {
               },
               child: Text(
                 cameraCanvasPreviewEnabled()
-                    ? 'Canvas preview: on'
-                    : 'Canvas preview: off',
+                    ? context.l10n.cameraCanvasPreviewOn
+                    : context.l10n.cameraCanvasPreviewOff,
               ),
             ),
           TextButton(

@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:io' show File;
 import 'package:camera/camera.dart';
-import 'package:flutter/foundation.dart' show ValueListenable;
+import 'package:flutter/foundation.dart' show Uint8List, ValueListenable;
 import 'package:flutter/material.dart';
 import 'package:gal/gal.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -31,6 +31,13 @@ import 'home/camera_diagnostics_dialog.dart';
 import 'home/photo_review_view.dart';
 import 'home/photo_viewer.dart';
 import 'home/quick_log_sheet.dart';
+import '../l10n/app_localizations.dart';
+import '../services/barcode/food_product.dart';
+import '../services/barcode/gtin.dart';
+import '../services/barcode/live_barcode_scanner.dart';
+import '../services/barcode/product_lookup_service.dart';
+import '../services/barcode/scan_region.dart';
+import '../utils/haptics.dart';
 import 'meal_detail_screen.dart';
 import '../utils/camera_diagnostics.dart';
 import '../utils/camera_preview.dart';
@@ -84,6 +91,27 @@ class _HomeScreenState extends State<HomeScreen>
   Offset? _focusIndicatorOffset;
   Timer? _focusIndicatorTimer;
 
+  // Barcodes are read in the background while the camera shows no photos.
+  final LiveBarcodeScanner _barcodeScanner = LiveBarcodeScanner();
+  final ProductLookupService _productLookup = ProductLookupService();
+  CameraController? _barcodeController;
+  Future<void> _barcodeSync = Future.value();
+  bool _routeIsCurrent = true;
+  bool _barcodeBusy = false;
+  String? _lastBarcode;
+  DateTime _lastBarcodeSeen = DateTime.fromMillisecondsSinceEpoch(0);
+
+  /// After a failed lookup the user may photograph the nutrition label; the
+  /// code that failed is then ignored, so it does not interrupt again.
+  bool _labelMode = false;
+  String? _labelModeCode;
+
+  /// A product whose barcode is in one of the picked photos; the notes sheet
+  /// offers its values. [_photoBarcodeSource] is that photo.
+  final ValueNotifier<FoodProduct?> _photoBarcode = ValueNotifier(null);
+  String? _photoBarcodeSource;
+  int _photoScanGeneration = 0;
+
   // Live thought summary text accumulated during streaming analysis
   String _liveThoughtText = '';
   ImageProvider? _analysisHeroImageProvider;
@@ -113,6 +141,7 @@ class _HomeScreenState extends State<HomeScreen>
     if (_cameraTabIsActive) {
       unawaited(_resumeCameraPreview());
     } else {
+      if (_labelMode) setState(_leaveLabelMode);
       unawaited(_pauseCameraPreview());
     }
   }
@@ -136,6 +165,7 @@ class _HomeScreenState extends State<HomeScreen>
       return;
     }
     if (_isTorchOn) await _setTorchMode(false);
+    await _stopBarcodeScanner();
     try {
       await controller.pausePreview();
       _isPreviewPaused = true;
@@ -152,6 +182,7 @@ class _HomeScreenState extends State<HomeScreen>
     try {
       await controller.resumePreview();
       _isPreviewPaused = false;
+      _syncBarcodeScanner();
     } catch (_) {
       await _initCamera(forceRestart: true);
     }
@@ -173,7 +204,12 @@ class _HomeScreenState extends State<HomeScreen>
     widget.activeListenable?.removeListener(_handleCameraTabActivity);
     _focusIndicatorTimer?.cancel();
     _logoTapTimer?.cancel();
-    _cameraController?.dispose();
+    _photoScanGeneration++;
+    _photoBarcode.dispose();
+    final controller = _cameraController;
+    unawaited(
+      _barcodeScanner.dispose().whenComplete(() => controller?.dispose()),
+    );
     super.dispose();
   }
 
@@ -185,7 +221,9 @@ class _HomeScreenState extends State<HomeScreen>
       if (_cameraController != null && _cameraController!.value.isInitialized) {
         final controller = _cameraController;
         _cameraController = null;
-        unawaited(controller?.dispose());
+        unawaited(
+          _stopBarcodeScanner().whenComplete(() => controller?.dispose()),
+        );
         setState(() {
           _isCameraInitialized = false;
           _isTorchOn = false;
@@ -212,7 +250,13 @@ class _HomeScreenState extends State<HomeScreen>
         camera,
         preset,
         enableAudio: false,
-        imageFormatGroup: ImageFormatGroup.jpeg,
+        // The format of the image stream the barcode scanner reads (ML Kit
+        // takes NV21 on Android, BGRA on iOS). Photos are JPEG either way.
+        imageFormatGroup: PlatformUtils.isAndroid
+            ? ImageFormatGroup.nv21
+            : PlatformUtils.isIOS
+            ? ImageFormatGroup.bgra8888
+            : ImageFormatGroup.jpeg,
       );
 
       try {
@@ -351,6 +395,7 @@ class _HomeScreenState extends State<HomeScreen>
 
       if (_cameraController != null) {
         if (forceRestart || !_cameraController!.value.isInitialized) {
+          await _stopBarcodeScanner();
           await _cameraController!.dispose();
           _cameraController = null;
         }
@@ -370,6 +415,7 @@ class _HomeScreenState extends State<HomeScreen>
         await _cameraController!.initialize();
       }
       await _prepareCameraControls();
+      _barcodeScanner.prewarm();
       if (mounted) {
         setState(() {
           _isCameraInitialized = true;
@@ -535,6 +581,7 @@ class _HomeScreenState extends State<HomeScreen>
     if (mounted) setState(() => _isCameraInitialized = false);
     try {
       if (_isTorchOn) await _setTorchMode(false);
+      await _stopBarcodeScanner();
       await oldController?.dispose();
       _selectedCameraIndex = nextIndex;
       _cameraController = await _createBestCameraController(
@@ -722,21 +769,24 @@ class _HomeScreenState extends State<HomeScreen>
 
       // On web, store in the photo store
       // On mobile, copy to app documents directory
+      final stored = <String>[];
       if (PlatformUtils.isWeb) {
         for (final image in images) {
           final bytes = await downscaleForStorage(await image.readAsBytes());
-          _capturedPhotos.add(await PhotoStore.instance.save(bytes));
+          stored.add(await PhotoStore.instance.save(bytes));
         }
       } else {
         final appDir = await getApplicationDocumentsDirectory();
         for (final image in images) {
           final fileName =
-              'meal_${DateTime.now().millisecondsSinceEpoch}_${_capturedPhotos.length}.jpg';
+              'meal_${DateTime.now().millisecondsSinceEpoch}_${_capturedPhotos.length + stored.length}.jpg';
           final savedPath = '${appDir.path}/$fileName';
           await File(image.path).copy(savedPath);
-          _capturedPhotos.add(savedPath);
+          stored.add(savedPath);
         }
       }
+      _capturedPhotos.addAll(stored);
+      unawaited(_scanPickedPhotos(images, stored));
       setState(() {});
       await _persistPhotos();
       if (PlatformUtils.isWeb && mounted) {
@@ -772,6 +822,7 @@ class _HomeScreenState extends State<HomeScreen>
     if (index < 0 || index >= _capturedPhotos.length) return;
 
     final removedPhoto = _capturedPhotos[index];
+    if (removedPhoto == _photoBarcodeSource) _clearPhotoBarcode();
     setState(() {
       _capturedPhotos.removeAt(index);
       if (_capturedPhotos.isEmpty) {
@@ -1087,10 +1138,7 @@ class _HomeScreenState extends State<HomeScreen>
             _analysisHeroImageProvider = null;
           });
           provider.setMealAnalysisActive(false);
-          _showMessage(
-            l10n.analysisError('Parse error: $e'),
-            kind: AppToastKind.error,
-          );
+          _showMessage(l10n.analysisParseError('$e'), kind: AppToastKind.error);
         }
       }
     } else {
@@ -1100,10 +1148,7 @@ class _HomeScreenState extends State<HomeScreen>
           _analysisHeroImageProvider = null;
         });
         provider.setMealAnalysisActive(false);
-        _showMessage(
-          l10n.analysisError('No result received.'),
-          kind: AppToastKind.error,
-        );
+        _showMessage(l10n.analysisNoResult, kind: AppToastKind.error);
       }
     }
   }
@@ -1133,7 +1178,9 @@ class _HomeScreenState extends State<HomeScreen>
       _capturedPhotos = [];
       _isTakingMore = false;
       _mealContext = null;
+      _leaveLabelMode();
     });
+    _clearPhotoBarcode();
     await _clearPersistedPhotos();
     if (!_isCameraInitialized ||
         _cameraController == null ||
@@ -1182,6 +1229,10 @@ class _HomeScreenState extends State<HomeScreen>
   @override
   Widget build(BuildContext context) {
     super.build(context);
+    // A sheet or screen on top stops scanning: it rebuilds this screen when
+    // it opens and closes.
+    _routeIsCurrent = ModalRoute.of(context)?.isCurrent ?? true;
+    WidgetsBinding.instance.addPostFrameCallback((_) => _syncBarcodeScanner());
     final provider = context.watch<AppProvider>();
     final isOnline = provider.isOnline;
 
@@ -1412,7 +1463,11 @@ class _HomeScreenState extends State<HomeScreen>
         if (canShowCamera &&
             !_isAnalyzing &&
             (_capturedPhotos.isEmpty || _isTakingMore))
-          MealGuideOverlay(guideText: l10n.cameraGuideText),
+          MealGuideOverlay(
+            guideText: _labelMode
+                ? l10n.barcodeLabelGuide
+                : l10n.cameraGuideText,
+          ),
 
         if (_capturedPhotos.isNotEmpty)
           BackToSelectionButton(onTap: _leaveCamera),
@@ -1430,6 +1485,273 @@ class _HomeScreenState extends State<HomeScreen>
         ),
       ],
     );
+  }
+
+  bool get _shouldScanBarcodes {
+    final controller = _cameraController;
+    return mounted &&
+        _routeIsCurrent &&
+        _cameraTabIsActive &&
+        _isCameraInitialized &&
+        !_isPreviewPaused &&
+        controller != null &&
+        controller.value.isInitialized &&
+        _capturedPhotos.isEmpty &&
+        !_isAnalyzing;
+  }
+
+  /// Starts or stops the background barcode scanner to match the screen.
+  /// Calls are serialized; repeating one is cheap.
+  void _syncBarcodeScanner() {
+    _barcodeSync = _barcodeSync
+        .then((_) async {
+          final controller = _cameraController;
+          if (_shouldScanBarcodes && controller != null) {
+            if (identical(controller, _barcodeController)) return;
+            await _barcodeScanner.start(controller, _onBarcode);
+            _barcodeController = controller;
+          } else if (_barcodeController != null) {
+            _barcodeController = null;
+            await _barcodeScanner.stop();
+          }
+        })
+        .catchError((Object e) => debugPrint('Barcode scanner: $e'));
+  }
+
+  Future<void> _stopBarcodeScanner() {
+    _barcodeSync = _barcodeSync
+        .then((_) async {
+          if (_barcodeController == null) return;
+          _barcodeController = null;
+          await _barcodeScanner.stop();
+        })
+        .catchError((Object e) => debugPrint('Barcode scanner: $e'));
+    return _barcodeSync;
+  }
+
+  void _onBarcode(ScannedBarcode barcode) {
+    if (!_shouldScanBarcodes || !_barcodeInGuide(barcode)) return;
+    final code = barcode.code;
+    final format = barcode.format;
+    final valid = format == 'UPCE'
+        ? expandUpcE(code) != null
+        : isValidGtin(code);
+    if (!valid) return;
+    final now = DateTime.now();
+    // A code still in view is handled once; it counts again only after it
+    // has been out of view for a moment.
+    final stillInView =
+        code == _lastBarcode &&
+        now.difference(_lastBarcodeSeen) < const Duration(seconds: 3);
+    _lastBarcode = code;
+    _lastBarcodeSeen = now;
+    if (stillInView || _barcodeBusy || code == _labelModeCode) return;
+    unawaited(_lookUpBarcode(code, format));
+  }
+
+  /// Only a code shown inside the guide frame counts, so a package in the
+  /// background of a meal photo does not open its product.
+  bool _barcodeInGuide(ScannedBarcode barcode) {
+    final bounds = barcode.bounds;
+    final view = _lastPreviewConstraints?.biggest;
+    if (bounds == null || view == null || !view.isFinite) return true;
+    return codeInGuide(
+      bounds: bounds,
+      frameAspect: barcode.frameAspect,
+      view: view,
+      guide: MealGuideOverlay.guideRect(view, MediaQuery.paddingOf(context)),
+      mirrored:
+          _cameraController?.description.lensDirection ==
+          CameraLensDirection.front,
+    );
+  }
+
+  Future<void> _lookUpBarcode(String code, String format) async {
+    _barcodeBusy = true;
+    Haptics.tick();
+    // The picture the code was read in becomes the meal photo; it is made
+    // while the product is looked up.
+    final frame = _barcodeScanner.takeFrame();
+    final l10n = context.l10n;
+    final language = context.read<AppProvider>().language;
+    // Only a slow lookup says so; a fast one goes straight to the result.
+    final slowNotice = Timer(const Duration(milliseconds: 500), () {
+      if (mounted) _showMessage(l10n.barcodeLookingUp);
+    });
+    try {
+      final result = await _productLookup.lookup(
+        code,
+        format: format,
+        language: language,
+      );
+      slowNotice.cancel();
+      // A photo taken or the tab left meanwhile wins over the lookup.
+      if (!mounted || !_cameraTabIsActive || _capturedPhotos.isNotEmpty) {
+        AppToast.dismiss();
+        return;
+      }
+      final product = result.product;
+      switch (result.status) {
+        case ProductLookupStatus.found:
+          AppToast.dismiss();
+          await _openProduct(product!, code, frame, l10n);
+        case ProductLookupStatus.noNutrition:
+          _offerLabelPhoto(
+            l10n.barcodeNoNutrition(product!.displayName),
+            code,
+            product.displayName,
+          );
+        case ProductLookupStatus.notFound:
+          _offerLabelPhoto(l10n.barcodeNotFound, code, null);
+        case ProductLookupStatus.failed:
+          _offerLabelPhoto(l10n.barcodeLookupFailed, code, null);
+      }
+    } finally {
+      slowNotice.cancel();
+      // The code is probably still in front of the camera.
+      _lastBarcode = code;
+      _lastBarcodeSeen = DateTime.now();
+      _barcodeBusy = false;
+    }
+  }
+
+  Future<void> _openProduct(
+    FoodProduct product,
+    String code,
+    Future<Uint8List?> frame,
+    AppLocalizations l10n,
+  ) async {
+    final provider = context.read<AppProvider>();
+    final now = DateTime.now();
+    final photo = await _storeBarcodeFrame(frame);
+    if (!mounted) {
+      if (photo != null) await _deleteStoredPhotoIfDisposable(photo);
+      return;
+    }
+    final meal = product.toMeal(
+      id: now.millisecondsSinceEpoch.toString(),
+      timestamp: now,
+      note: l10n.barcodeSourceNote(code),
+      photoPaths: [?photo],
+    );
+    await Navigator.push(
+      context,
+      MaterialPageRoute<void>(
+        builder: (_) => MealDetailScreen(meal: meal, isNewEntry: true),
+      ),
+    );
+    // Discarded: the photo belongs to nothing.
+    if (photo != null && provider.getMealById(meal.id) == null) {
+      await _deleteStoredPhotoIfDisposable(photo);
+    }
+  }
+
+  /// Stores the picture a barcode was read in like a captured photo; null
+  /// when there is none.
+  Future<String?> _storeBarcodeFrame(Future<Uint8List?> frame) async {
+    try {
+      final bytes = await frame;
+      if (bytes == null || bytes.isEmpty) return null;
+      if (PlatformUtils.isWeb) return await PhotoStore.instance.save(bytes);
+      final appDir = await getApplicationDocumentsDirectory();
+      final path =
+          '${appDir.path}/meal_${DateTime.now().millisecondsSinceEpoch}_barcode.jpg';
+      await File(path).writeAsBytes(bytes, flush: true);
+      return path;
+    } catch (e) {
+      debugPrint('Barcode photo not stored: $e');
+      return null;
+    }
+  }
+
+  void _offerLabelPhoto(String message, String code, String? productName) {
+    final l10n = context.l10n;
+    AppToast.show(
+      context,
+      message,
+      kind: AppToastKind.info,
+      top: MediaQuery.paddingOf(context).top + 76,
+      actionLabel: l10n.barcodeLabelAction,
+      onAction: () {
+        if (!mounted) return;
+        Haptics.tick();
+        setState(() {
+          _labelMode = true;
+          _labelModeCode = code;
+          _mealContext = l10n.barcodeLabelContext(productName ?? 'EAN $code');
+        });
+      },
+    );
+  }
+
+  /// Reads the picked photos for a barcode, in order, until one names a
+  /// product with nutrition values. Runs while the photos are reviewed.
+  Future<void> _scanPickedPhotos(
+    List<XFile> images,
+    List<String> stored,
+  ) async {
+    if (_photoBarcode.value != null) return;
+    final generation = _photoScanGeneration;
+    final language = context.read<AppProvider>().language;
+    bool stale() => !mounted || generation != _photoScanGeneration;
+    for (var i = 0; i < images.length && i < stored.length; i++) {
+      final barcode = await _barcodeScanner.decodeImage(images[i]);
+      if (stale()) return;
+      if (barcode == null) continue;
+      final valid = barcode.format == 'UPCE'
+          ? expandUpcE(barcode.code) != null
+          : isValidGtin(barcode.code);
+      if (!valid) continue;
+      final result = await _productLookup.lookup(
+        barcode.code,
+        format: barcode.format,
+        language: language,
+      );
+      if (stale() || _photoBarcode.value != null) return;
+      if (result.status == ProductLookupStatus.found &&
+          _capturedPhotos.contains(stored[i])) {
+        _photoBarcodeSource = stored[i];
+        _photoBarcode.value = result.product;
+        return;
+      }
+    }
+  }
+
+  void _clearPhotoBarcode() {
+    _photoScanGeneration++;
+    _photoBarcodeSource = null;
+    _photoBarcode.value = null;
+  }
+
+  /// Logs the product found in the picked photos, with all of them attached.
+  /// Discarding it returns to the photos.
+  Future<void> _openPhotoProduct(FoodProduct product) async {
+    final provider = context.read<AppProvider>();
+    final now = DateTime.now();
+    final meal = product.toMeal(
+      id: now.millisecondsSinceEpoch.toString(),
+      timestamp: now,
+      note: context.l10n.barcodeSourceNote(product.code),
+      // The photo with the code shows the product; it comes first.
+      photoPaths: [
+        ?_photoBarcodeSource,
+        ..._capturedPhotos.where((photo) => photo != _photoBarcodeSource),
+      ],
+    );
+    await Navigator.push(
+      context,
+      MaterialPageRoute<void>(
+        builder: (_) => MealDetailScreen(meal: meal, isNewEntry: true),
+      ),
+    );
+    if (mounted && provider.getMealById(meal.id) != null) {
+      await _resetCaptureState();
+    }
+  }
+
+  void _leaveLabelMode() {
+    _labelMode = false;
+    _labelModeCode = null;
   }
 
   /// Logs a meal without a photo: from a description, or again from the list
@@ -1475,7 +1797,14 @@ class _HomeScreenState extends State<HomeScreen>
     final result = await showMealContextSheet(
       context,
       initialText: _mealContext,
+      barcode: _photoBarcode,
     );
+
+    final product = _photoBarcode.value;
+    if (result != null && result.useBarcode && product != null && mounted) {
+      await _openPhotoProduct(product);
+      return;
+    }
 
     // Only analyze if user explicitly tapped one of the analyze buttons
     if (result != null && mounted) {

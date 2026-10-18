@@ -1,8 +1,12 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../../extensions/l10n_extension.dart';
+import '../../services/barcode/barcode_preference.dart';
+import '../../services/barcode/food_product.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_theme.dart';
 import '../../theme/app_typography.dart';
+import '../../widgets/barcode_switch_tile.dart';
 
 /// What the user chose in the "Anything to add?" sheet.
 class MealContextResult {
@@ -12,26 +16,37 @@ class MealContextResult {
   /// Analyse later instead of waiting for the result.
   final bool background;
 
-  const MealContextResult({this.context, this.background = false});
+  /// Log the product found in the photos instead of analysing them.
+  final bool useBarcode;
+
+  const MealContextResult({
+    this.context,
+    this.background = false,
+    this.useBarcode = false,
+  });
 }
 
 /// Asks for an optional note before a meal is analysed. Returns null when the
-/// sheet is dismissed, which means no analysis.
+/// sheet is dismissed, which means no analysis. When [barcode] holds a
+/// product read from the photos (it may arrive while the sheet is open), a
+/// switch offers its values instead.
 Future<MealContextResult?> showMealContextSheet(
   BuildContext context, {
   String? initialText,
+  ValueListenable<FoodProduct?>? barcode,
 }) => showModalBottomSheet<MealContextResult>(
   context: context,
   isScrollControlled: true,
   backgroundColor: Colors.transparent,
   isDismissible: true,
-  builder: (_) => _MealContextSheet(initialText: initialText),
+  builder: (_) => _MealContextSheet(initialText: initialText, barcode: barcode),
 );
 
 class _MealContextSheet extends StatefulWidget {
   final String? initialText;
+  final ValueListenable<FoodProduct?>? barcode;
 
-  const _MealContextSheet({this.initialText});
+  const _MealContextSheet({this.initialText, this.barcode});
 
   @override
   State<_MealContextSheet> createState() => _MealContextSheetState();
@@ -44,9 +59,25 @@ class _MealContextSheetState extends State<_MealContextSheet> {
   // No autofocus: the textarea jumps off screen on mobile when it grabs focus
   // while the sheet is still animating in.
   final FocusNode _focusNode = FocusNode();
+  bool _useBarcode = BarcodePreference.useBarcode;
+
+  FoodProduct? get _product => widget.barcode?.value;
+
+  bool get _barcodeOn => _useBarcode && _product != null;
+
+  @override
+  void initState() {
+    super.initState();
+    widget.barcode?.addListener(_onBarcode);
+  }
+
+  void _onBarcode() {
+    if (mounted) setState(() {});
+  }
 
   @override
   void dispose() {
+    widget.barcode?.removeListener(_onBarcode);
     _controller.dispose();
     _focusNode.dispose();
     super.dispose();
@@ -59,6 +90,7 @@ class _MealContextSheetState extends State<_MealContextSheet> {
       MealContextResult(
         context: text.isNotEmpty ? text : null,
         background: background,
+        useBarcode: _barcodeOn,
       ),
     );
   }
@@ -97,8 +129,21 @@ class _MealContextSheetState extends State<_MealContextSheet> {
               style: AppTypography.displayMedium.copyWith(fontSize: 22),
             ),
             const SizedBox(height: 12),
+            if (_product case final product?) ...[
+              BarcodeSwitchTile(
+                productName: product.displayName,
+                value: _useBarcode,
+                onChanged: (value) {
+                  setState(() => _useBarcode = value);
+                  BarcodePreference.setUseBarcode(value);
+                },
+              ),
+              const SizedBox(height: 12),
+            ],
             TextField(
               controller: _controller,
+              // The note is for the analysis; a product brings its values.
+              enabled: !_barcodeOn,
               // NO autofocus here — we use a FocusNode + postFrameCallback
               // to avoid the "textarea flies off screen" bug on mobile.
               focusNode: _focusNode,
@@ -119,49 +164,51 @@ class _MealContextSheetState extends State<_MealContextSheet> {
               ),
             ),
             const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () =>
-                        Navigator.pop(context, const MealContextResult()),
-                    style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: AppColors.pebble),
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(
-                          AppTheme.borderRadius,
+            if (!_barcodeOn) ...[
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () =>
+                          Navigator.pop(context, const MealContextResult()),
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: AppColors.pebble),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(
+                            AppTheme.borderRadius,
+                          ),
                         ),
                       ),
-                    ),
-                    child: Text(
-                      l10n.mealContextSkip,
-                      style: const TextStyle(color: AppColors.slate),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () => _submit(background: true),
-                    style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: AppColors.pebble),
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(
-                          AppTheme.borderRadius,
-                        ),
+                      child: Text(
+                        l10n.mealContextSkip,
+                        style: const TextStyle(color: AppColors.slate),
                       ),
                     ),
-                    child: Text(
-                      l10n.mealContextBackground,
-                      style: const TextStyle(color: AppColors.slate),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => _submit(background: true),
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: AppColors.pebble),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(
+                            AppTheme.borderRadius,
+                          ),
+                        ),
+                      ),
+                      child: Text(
+                        l10n.mealContextBackground,
+                        style: const TextStyle(color: AppColors.slate),
+                      ),
                     ),
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
+                ],
+              ),
+              const SizedBox(height: 8),
+            ],
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
@@ -176,7 +223,7 @@ class _MealContextSheetState extends State<_MealContextSheet> {
                   elevation: 0,
                 ),
                 child: Text(
-                  l10n.mealContextAnalyze,
+                  _barcodeOn ? l10n.continueButton : l10n.mealContextAnalyze,
                   style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
               ),

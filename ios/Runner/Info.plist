@@ -4,6 +4,11 @@
 <dict>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
+	<key>CFBundleLocalizations</key>
+	<array>
+		<string>en</string>
+		<string>de</string>
+	</array>
 	<key>CFBundleDisplayName</key>
 	<string>Kalorat</string>
 	<key>CFBundleExecutable</key>
@@ -46,11 +51,11 @@
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>NSCameraUsageDescription</key>
-	<string>Kalorat benötigt Kamerazugriff um Mahlzeiten zu fotografieren.</string>
+	<string>Kalorat needs camera access to photograph meals and read barcodes.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Kalorat benötigt Zugriff auf Fotos für Mahlzeiten-Analyse.</string>
+	<string>Kalorat needs access to your photos to analyze meals.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
-	<string>Kalorat speichert Fotos deiner Mahlzeiten.</string>
+	<string>Kalorat saves photos of your meals.</string>
 	<key>NSHealthShareUsageDescription</key>
 	<string>Kalorat reads your health data to provide comprehensive nutrition insights.</string>
 	<key>NSHealthUpdateUsageDescription</key>

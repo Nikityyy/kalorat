@@ -416,7 +416,7 @@
   "dailyCalorieTarget": "Daily Calorie Target",
   "signUpToSave": "Sign in to keep your data across devices.",
   "createAccount": "Continue",
-  "cameraGuideText": "Center the meal in the frame.",
+  "cameraGuideText": "Center the meal or a barcode in the frame.",
   "apiKeyUnreachable": "Google unreachable. Check your connection.",
   "@apiKeyUnreachable": {
     "description": "Shown when the API key could not be checked because of a network or server problem"
@@ -441,5 +441,29 @@
     }
   },
   "quickLogUndo": "Undo",
-  "quickLogFailed": "Could not log the meal."
+  "quickLogFailed": "Could not log the meal.",
+  "barcodeLookingUp": "Looking up the product…",
+  "barcodeNotFound": "Product not found. Photograph the nutrition label instead.",
+  "barcodeNoNutrition": "No nutrition data for {name}. Photograph the nutrition label instead.",
+  "barcodeLookupFailed": "Could not look up the product. Photograph the nutrition label instead.",
+  "barcodeLabelAction": "Photograph label",
+  "barcodeLabelGuide": "Photograph the nutrition label.",
+  "barcodeLabelContext": "Nutrition label of {product}",
+  "barcodeSourceNote": "Nutrition values from Open Food Facts (barcode {code}).",
+  "barcodeSwitchOn": "Use nutrition values from Open Food Facts",
+  "barcodeSwitchOff": "Barcode ignored, the photo is analyzed as a meal",
+  "barcodeRetryHint": "Turn off to analyze the photo as a meal",
+  "retrySheetTitle": "Analyze again",
+  "retrySheetSubtitle": "Edit the note or analyze again right away",
+  "retrySheetHint": "e.g. 2 portions, extra sauce ...",
+  "retrySheetAction": "Analyze again",
+  "estimatedRange": "Estimated range: {range}",
+  "analysisNoResult": "No result received.",
+  "analysisParseError": "The analysis could not be read: {error}",
+  "cameraDiagnosticsTitle": "Camera diagnostics",
+  "cameraCanvasPreviewOn": "Canvas preview: on",
+  "cameraCanvasPreviewOff": "Canvas preview: off",
+  "backupShareText": "Kalorat backup",
+  "reportShareText": "Kalorat Markdown report",
+  "restoreBackupMissing": "No import backup available."
 }

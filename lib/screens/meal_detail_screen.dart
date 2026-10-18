@@ -2,9 +2,12 @@ import 'dart:math' as math;
 import 'package:flutter/foundation.dart' show kIsWeb;
 
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart' show DateFormat;
 import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
 import 'package:provider/provider.dart';
 
+import '../services/barcode/barcode_preference.dart';
+import '../services/barcode/food_product.dart';
 import '../services/photo_store.dart';
 import '../services/gemini_service.dart';
 import '../extensions/l10n_extension.dart';
@@ -19,6 +22,7 @@ import '../widgets/live_thought_panel.dart';
 import 'package:gal/gal.dart';
 import 'package:share_plus/share_plus.dart';
 import '../widgets/app_toast.dart';
+import '../widgets/barcode_switch_tile.dart';
 
 class MealDetailScreen extends StatefulWidget {
   final MealModel meal;
@@ -212,8 +216,16 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
     final apiKey = provider.apiKey;
     if (apiKey.isEmpty) return;
 
-    final contextController = TextEditingController(text: _mealContext);
+    final l10n = context.l10n;
+    // A meal logged from a barcode can be analysed as a meal instead, e.g.
+    // when the code was on a package in the background. The product's name
+    // and values must not steer that analysis.
+    final barcodeProduct = FoodProduct.productNameOfMeal(_meal.mealContext);
+    final contextController = TextEditingController(
+      text: barcodeProduct == null ? _mealContext : null,
+    );
     bool shouldRetry = false;
+    bool useBarcode = barcodeProduct != null && BarcodePreference.useBarcode;
     String? submittedContext;
 
     await showModalBottomSheet<void>(
@@ -221,108 +233,143 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       isDismissible: true,
-      builder: (sheetContext) => Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(sheetContext).viewInsets.bottom,
-        ),
-        child: Container(
-          decoration: const BoxDecoration(
-            color: AppColors.glacialWhite,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      builder: (sheetContext) => StatefulBuilder(
+        builder: (sheetContext, setSheetState) => Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(sheetContext).viewInsets.bottom,
           ),
-          padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: AppColors.borderGrey,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 20),
-              Text(
-                'Analyse wiederholen',
-                style: AppTypography.displayMedium.copyWith(fontSize: 22),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Kontext bearbeiten oder direkt neu analysieren',
-                style: AppTypography.bodySmall.copyWith(color: AppColors.slate),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: contextController,
-                focusNode: _contextFocusNode,
-                maxLines: 3,
-                style: AppTypography.bodyMedium,
-                decoration: InputDecoration(
-                  hintText: 'z.B. 2 Portionen, extra Sauce ...',
-                  filled: true,
-                  fillColor: AppColors.pebble,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(AppTheme.borderRadius),
-                    borderSide: BorderSide.none,
-                  ),
-                  contentPadding: const EdgeInsets.all(16),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () => Navigator.pop(sheetContext),
-                      style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: AppColors.pebble),
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(
-                            AppTheme.borderRadius,
-                          ),
-                        ),
-                      ),
-                      child: const Text(
-                        'Abbrechen',
-                        style: TextStyle(color: AppColors.slate),
-                      ),
+          child: Container(
+            decoration: const BoxDecoration(
+              color: AppColors.glacialWhite,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+            ),
+            padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: AppColors.borderGrey,
+                      borderRadius: BorderRadius.circular(2),
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    flex: 2,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        final text = contextController.text.trim();
-                        submittedContext = text.isNotEmpty ? text : null;
-                        shouldRetry = true;
-                        Navigator.pop(sheetContext);
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.styrianForest,
-                        foregroundColor: AppColors.glacialWhite,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(
-                            AppTheme.borderRadius,
-                          ),
-                        ),
-                        elevation: 0,
-                      ),
-                      child: const Text(
-                        'Neu analysieren',
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                    ),
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  l10n.retrySheetTitle,
+                  style: AppTypography.displayMedium.copyWith(fontSize: 22),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  l10n.retrySheetSubtitle,
+                  style: AppTypography.bodySmall.copyWith(
+                    color: AppColors.slate,
                   ),
+                ),
+                const SizedBox(height: 12),
+                if (barcodeProduct != null) ...[
+                  BarcodeSwitchTile(
+                    productName: barcodeProduct,
+                    value: useBarcode,
+                    onHint: l10n.barcodeRetryHint,
+                    onChanged: (value) {
+                      setSheetState(() => useBarcode = value);
+                      BarcodePreference.setUseBarcode(value);
+                    },
+                  ),
+                  const SizedBox(height: 12),
                 ],
-              ),
-            ],
+                TextField(
+                  controller: contextController,
+                  focusNode: _contextFocusNode,
+                  enabled: !useBarcode,
+                  maxLines: 3,
+                  style: AppTypography.bodyMedium,
+                  decoration: InputDecoration(
+                    hintText: l10n.retrySheetHint,
+                    filled: true,
+                    fillColor: AppColors.pebble,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(
+                        AppTheme.borderRadius,
+                      ),
+                      borderSide: BorderSide.none,
+                    ),
+                    contentPadding: const EdgeInsets.all(16),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.pop(sheetContext),
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: AppColors.pebble),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(
+                              AppTheme.borderRadius,
+                            ),
+                          ),
+                        ),
+                        child: Text(
+                          l10n.cancel,
+                          style: const TextStyle(color: AppColors.slate),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      flex: 2,
+                      child: ValueListenableBuilder<TextEditingValue>(
+                        valueListenable: contextController,
+                        builder: (_, value, _) {
+                          // Without a photo the note is the whole input.
+                          final canRetry =
+                              !useBarcode &&
+                              (_meal.photoPaths.isNotEmpty ||
+                                  value.text.trim().isNotEmpty);
+                          return ElevatedButton(
+                            onPressed: canRetry
+                                ? () {
+                                    final text = contextController.text.trim();
+                                    submittedContext = text.isNotEmpty
+                                        ? text
+                                        : null;
+                                    shouldRetry = true;
+                                    Navigator.pop(sheetContext);
+                                  }
+                                : null,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.styrianForest,
+                              foregroundColor: AppColors.glacialWhite,
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(
+                                  AppTheme.borderRadius,
+                                ),
+                              ),
+                              elevation: 0,
+                            ),
+                            child: Text(
+                              l10n.retrySheetAction,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -355,7 +402,9 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
         mealContext: submittedContext,
         useAccurateMode: provider.user?.useAccurateMode ?? true,
         allowEstimateVariation: true,
-        previousAnalysis: _currentAnalysisSnapshot(),
+        previousAnalysis: barcodeProduct == null
+            ? _currentAnalysisSnapshot()
+            : null,
       );
 
       await for (final event in stream) {
@@ -462,7 +511,7 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
       } else if (mounted) {
         AppToast.show(
           context,
-          context.l10n.analysisError('No result received.'),
+          context.l10n.analysisNoResult,
           kind: AppToastKind.info,
         );
       }
@@ -981,11 +1030,9 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
                                 ),
                                 const SizedBox(width: 8),
                                 Text(
-                                  '${_meal.timestamp.day.toString().padLeft(2, '0')}.'
-                                  '${_meal.timestamp.month.toString().padLeft(2, '0')}.'
-                                  '${_meal.timestamp.year}  '
-                                  '${_meal.timestamp.hour.toString().padLeft(2, '0')}:'
-                                  '${_meal.timestamp.minute.toString().padLeft(2, '0')}',
+                                  DateFormat.yMd(
+                                    Localizations.localeOf(context).toString(),
+                                  ).add_Hm().format(_meal.timestamp),
                                   style: AppTypography.bodyMedium.copyWith(
                                     color: AppColors.styrianForest,
                                   ),
@@ -1203,7 +1250,7 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
                 if (range != null) ...[
                   if (confidence != null) const SizedBox(height: 4),
                   Text(
-                    'Estimated range: $range',
+                    context.l10n.estimatedRange(range),
                     style: AppTypography.bodyMedium.copyWith(
                       fontWeight: FontWeight.bold,
                     ),

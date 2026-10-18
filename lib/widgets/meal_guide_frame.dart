@@ -88,31 +88,41 @@ class MealGuideOverlay extends StatelessWidget {
     required this.guideText,
   });
 
+  /// The square guide box in an overlay of [size] with safe-area [padding].
+  /// The barcode scanner uses it too.
+  static Rect guideRect(Size size, EdgeInsets padding) {
+    // Camera viewport bounds (between top header tools and bottom shutter bar)
+    final double topBound = padding.top + 68.0;
+    final double bottomBound = size.height - (padding.bottom + 130.0);
+    final double availableHeight = math.max(100.0, bottomBound - topBound);
+
+    // Square box size responsive to width and available height
+    final double boxSize = math.min(
+      size.width * 0.74,
+      math.max(180.0, availableHeight * 0.62),
+    );
+
+    // Exact 1:1 vertical and horizontal centering in open camera viewport
+    return Rect.fromLTWH(
+      (size.width - boxSize) / 2.0,
+      topBound + (availableHeight - boxSize) / 2.0,
+      boxSize,
+      boxSize,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return IgnorePointer(
       child: LayoutBuilder(
         builder: (context, constraints) {
-          final double screenWidth = constraints.maxWidth;
-          final double screenHeight = constraints.maxHeight;
-
-          final double topInset = MediaQuery.of(context).padding.top;
-          final double bottomInset = MediaQuery.of(context).padding.bottom;
-
-          // Camera viewport bounds (between top header tools and bottom shutter bar)
-          final double topBound = topInset + 68.0;
-          final double bottomBound = screenHeight - (bottomInset + 130.0);
-          final double availableHeight = math.max(100.0, bottomBound - topBound);
-
-          // Square box size responsive to width and available height
-          final double boxSize = math.min(
-            screenWidth * 0.74,
-            math.max(180.0, availableHeight * 0.62),
+          final guide = guideRect(
+            constraints.biggest,
+            MediaQuery.paddingOf(context),
           );
-
-          // Exact 1:1 vertical and horizontal centering in open camera viewport
-          final double boxTop = topBound + (availableHeight - boxSize) / 2.0;
-          final double boxLeft = (screenWidth - boxSize) / 2.0;
+          final double boxTop = guide.top;
+          final double boxLeft = guide.left;
+          final double boxSize = guide.width;
 
           return Stack(
             clipBehavior: Clip.none,

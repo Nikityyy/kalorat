@@ -1020,7 +1020,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get createAccount => 'Weiter';
 
   @override
-  String get cameraGuideText => 'Mahlzeit im Rahmen zentrieren.';
+  String get cameraGuideText => 'Mahlzeit oder Barcode im Rahmen zentrieren.';
 
   @override
   String get apiKeyUnreachable => 'Google nicht erreichbar. Verbindung prüfen.';
@@ -1070,4 +1070,91 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get quickLogFailed => 'Die Mahlzeit konnte nicht erfasst werden.';
+
+  @override
+  String get barcodeLookingUp => 'Produkt wird gesucht…';
+
+  @override
+  String get barcodeNotFound =>
+      'Produkt nicht gefunden. Fotografiere stattdessen die Nährwerttabelle.';
+
+  @override
+  String barcodeNoNutrition(String name) {
+    return 'Keine Nährwerte für $name. Fotografiere stattdessen die Nährwerttabelle.';
+  }
+
+  @override
+  String get barcodeLookupFailed =>
+      'Produkt konnte nicht gesucht werden. Fotografiere stattdessen die Nährwerttabelle.';
+
+  @override
+  String get barcodeLabelAction => 'Etikett fotografieren';
+
+  @override
+  String get barcodeLabelGuide => 'Fotografiere die Nährwerttabelle.';
+
+  @override
+  String barcodeLabelContext(String product) {
+    return 'Nährwerttabelle von $product';
+  }
+
+  @override
+  String barcodeSourceNote(String code) {
+    return 'Nährwerte von Open Food Facts (Barcode $code).';
+  }
+
+  @override
+  String get barcodeSwitchOn => 'Nährwerte von Open Food Facts verwenden';
+
+  @override
+  String get barcodeSwitchOff =>
+      'Barcode ignoriert, das Foto wird als Mahlzeit analysiert';
+
+  @override
+  String get barcodeRetryHint =>
+      'Ausschalten, um das Foto als Mahlzeit zu analysieren';
+
+  @override
+  String get retrySheetTitle => 'Analyse wiederholen';
+
+  @override
+  String get retrySheetSubtitle =>
+      'Hinweis bearbeiten oder direkt neu analysieren';
+
+  @override
+  String get retrySheetHint => 'z.B. 2 Portionen, extra Sauce ...';
+
+  @override
+  String get retrySheetAction => 'Neu analysieren';
+
+  @override
+  String estimatedRange(String range) {
+    return 'Geschätzter Bereich: $range';
+  }
+
+  @override
+  String get analysisNoResult => 'Kein Ergebnis erhalten.';
+
+  @override
+  String analysisParseError(String error) {
+    return 'Die Analyse konnte nicht gelesen werden: $error';
+  }
+
+  @override
+  String get cameraDiagnosticsTitle => 'Kamera-Diagnose';
+
+  @override
+  String get cameraCanvasPreviewOn => 'Canvas-Vorschau: an';
+
+  @override
+  String get cameraCanvasPreviewOff => 'Canvas-Vorschau: aus';
+
+  @override
+  String get backupShareText => 'Kalorat-Backup';
+
+  @override
+  String get reportShareText => 'Kalorat-Markdown-Bericht';
+
+  @override
+  String get restoreBackupMissing => 'Kein Import-Backup vorhanden.';
 }

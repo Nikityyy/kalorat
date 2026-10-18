@@ -1006,7 +1006,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get createAccount => 'Continue';
 
   @override
-  String get cameraGuideText => 'Center the meal in the frame.';
+  String get cameraGuideText => 'Center the meal or a barcode in the frame.';
 
   @override
   String get apiKeyUnreachable => 'Google unreachable. Check your connection.';
@@ -1056,4 +1056,89 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get quickLogFailed => 'Could not log the meal.';
+
+  @override
+  String get barcodeLookingUp => 'Looking up the product…';
+
+  @override
+  String get barcodeNotFound =>
+      'Product not found. Photograph the nutrition label instead.';
+
+  @override
+  String barcodeNoNutrition(String name) {
+    return 'No nutrition data for $name. Photograph the nutrition label instead.';
+  }
+
+  @override
+  String get barcodeLookupFailed =>
+      'Could not look up the product. Photograph the nutrition label instead.';
+
+  @override
+  String get barcodeLabelAction => 'Photograph label';
+
+  @override
+  String get barcodeLabelGuide => 'Photograph the nutrition label.';
+
+  @override
+  String barcodeLabelContext(String product) {
+    return 'Nutrition label of $product';
+  }
+
+  @override
+  String barcodeSourceNote(String code) {
+    return 'Nutrition values from Open Food Facts (barcode $code).';
+  }
+
+  @override
+  String get barcodeSwitchOn => 'Use nutrition values from Open Food Facts';
+
+  @override
+  String get barcodeSwitchOff =>
+      'Barcode ignored, the photo is analyzed as a meal';
+
+  @override
+  String get barcodeRetryHint => 'Turn off to analyze the photo as a meal';
+
+  @override
+  String get retrySheetTitle => 'Analyze again';
+
+  @override
+  String get retrySheetSubtitle => 'Edit the note or analyze again right away';
+
+  @override
+  String get retrySheetHint => 'e.g. 2 portions, extra sauce ...';
+
+  @override
+  String get retrySheetAction => 'Analyze again';
+
+  @override
+  String estimatedRange(String range) {
+    return 'Estimated range: $range';
+  }
+
+  @override
+  String get analysisNoResult => 'No result received.';
+
+  @override
+  String analysisParseError(String error) {
+    return 'The analysis could not be read: $error';
+  }
+
+  @override
+  String get cameraDiagnosticsTitle => 'Camera diagnostics';
+
+  @override
+  String get cameraCanvasPreviewOn => 'Canvas preview: on';
+
+  @override
+  String get cameraCanvasPreviewOff => 'Canvas preview: off';
+
+  @override
+  String get backupShareText => 'Kalorat backup';
+
+  @override
+  String get reportShareText => 'Kalorat Markdown report';
+
+  @override
+  String get restoreBackupMissing => 'No import backup available.';
 }
