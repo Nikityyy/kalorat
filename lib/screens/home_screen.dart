@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:io' show File;
 import 'package:camera/camera.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart' show ValueListenable;
 import 'package:flutter/material.dart';
 import 'package:gal/gal.dart';
@@ -30,12 +29,22 @@ import 'meal_detail_screen.dart';
 import '../utils/camera_diagnostics.dart';
 import '../utils/camera_preview.dart';
 import '../utils/haptics.dart';
+import '../widgets/app_toast.dart';
 
 class HomeScreen extends StatefulWidget {
   final bool isActive;
   final ValueListenable<bool>? activeListenable;
 
-  const HomeScreen({super.key, this.isActive = true, this.activeListenable});
+  /// Set to true while two fingers pinch the preview, so the tab pager does
+  /// not take the gesture.
+  final ValueNotifier<bool>? pagingLock;
+
+  const HomeScreen({
+    super.key,
+    this.isActive = true,
+    this.activeListenable,
+    this.pagingLock,
+  });
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -161,6 +170,7 @@ class _HomeScreenState extends State<HomeScreen>
     WidgetsBinding.instance.removeObserver(this);
     widget.activeListenable?.removeListener(_handleCameraTabActivity);
     _focusIndicatorTimer?.cancel();
+    _logoTapTimer?.cancel();
     _cameraController?.dispose();
     _contextFocusNode.dispose();
     super.dispose();
@@ -451,6 +461,22 @@ class _HomeScreenState extends State<HomeScreen>
     }
   }
 
+  int _logoTaps = 0;
+  Timer? _logoTapTimer;
+
+  void _onLogoTap() {
+    _logoTaps++;
+    _logoTapTimer?.cancel();
+    _logoTapTimer = Timer(const Duration(milliseconds: 1500), () {
+      _logoTaps = 0;
+    });
+    if (_logoTaps >= 5) {
+      _logoTaps = 0;
+      _logoTapTimer?.cancel();
+      _showCameraDiagnostics();
+    }
+  }
+
   /// Shows the numbers needed to diagnose a camera layout problem that cannot
   /// be reproduced elsewhere (long press on the logo).
   void _showCameraDiagnostics() {
@@ -564,12 +590,46 @@ class _HomeScreenState extends State<HomeScreen>
     }
   }
 
+  // Pinch zoom is read from raw pointers instead of a ScaleGestureRecognizer:
+  // that recognizer also takes one-finger drags, which would stop the tab
+  // pager from ever seeing a swipe over the camera.
+  final Map<int, Offset> _pinchPointers = {};
+  double? _pinchStartDistance;
+
+  double _pinchDistance() {
+    final points = _pinchPointers.values.take(2).toList();
+    return (points[0] - points[1]).distance;
+  }
+
   void _handlePreviewPointerDown(PointerDownEvent event) {
     _activePointers++;
+    _pinchPointers[event.pointer] = event.position;
+    if (_pinchPointers.length >= 2 && _pinchStartDistance == null) {
+      widget.pagingLock?.value = true;
+      _pinchStartDistance = _pinchDistance();
+      _handleScaleStart(ScaleStartDetails(pointerCount: 2));
+    }
+  }
+
+  void _handlePreviewPointerMove(PointerMoveEvent event) {
+    if (!_pinchPointers.containsKey(event.pointer)) return;
+    _pinchPointers[event.pointer] = event.position;
+    final start = _pinchStartDistance;
+    if (start != null && start > 0 && _pinchPointers.length >= 2) {
+      _handleScaleUpdate(
+        ScaleUpdateDetails(scale: _pinchDistance() / start, pointerCount: 2),
+      );
+    }
   }
 
   void _handlePreviewPointerUp(PointerEvent event) {
     _activePointers = (_activePointers - 1).clamp(0, 10).toInt();
+    _pinchPointers.remove(event.pointer);
+    if (_pinchPointers.length < 2 && _pinchStartDistance != null) {
+      _pinchStartDistance = null;
+      _handleScaleEnd(ScaleEndDetails());
+    }
+    if (_pinchPointers.length < 2) widget.pagingLock?.value = false;
   }
 
   void _handleScaleStart(ScaleStartDetails details) {
@@ -793,20 +853,18 @@ class _HomeScreenState extends State<HomeScreen>
       }
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(l10n.saveToGallerySuccess),
-            behavior: SnackBarBehavior.floating,
-          ),
+        AppToast.show(
+          context,
+          l10n.saveToGallerySuccess,
+          kind: AppToastKind.info,
         );
       }
     } catch (_) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(l10n.saveToGalleryError),
-            behavior: SnackBarBehavior.floating,
-          ),
+        AppToast.show(
+          context,
+          l10n.saveToGalleryError,
+          kind: AppToastKind.info,
         );
       }
     }
@@ -935,7 +993,7 @@ class _HomeScreenState extends State<HomeScreen>
 
       if (mounted) {
         if (background) {
-          _showMessage(l10n.mealSavedBackground);
+          _showMessage(l10n.mealSavedBackground, kind: AppToastKind.success);
           if (isOnline && apiKey.isNotEmpty) {
             provider.processOfflineQueue();
           }
@@ -1018,7 +1076,7 @@ class _HomeScreenState extends State<HomeScreen>
           _analysisHeroImageProvider = null;
         });
         provider.setMealAnalysisActive(false);
-        _showMessage(errorMsg);
+        _showMessage(errorMsg, kind: AppToastKind.error);
         setState(() => _liveThoughtText = '');
         return;
       }
@@ -1165,7 +1223,10 @@ class _HomeScreenState extends State<HomeScreen>
             _analysisHeroImageProvider = null;
           });
           provider.setMealAnalysisActive(false);
-          _showMessage(l10n.analysisError('Parse error: $e'));
+          _showMessage(
+            l10n.analysisError('Parse error: $e'),
+            kind: AppToastKind.error,
+          );
         }
       }
     } else {
@@ -1175,30 +1236,24 @@ class _HomeScreenState extends State<HomeScreen>
           _analysisHeroImageProvider = null;
         });
         provider.setMealAnalysisActive(false);
-        _showMessage(l10n.analysisError('No result received.'));
+        _showMessage(
+          l10n.analysisError('No result received.'),
+          kind: AppToastKind.error,
+        );
       }
     }
   }
 
-  void _showMessage(String message) {
-    if (PlatformUtils.isIOS) {
-      showCupertinoDialog(
-        context: context,
-        builder: (ctx) => CupertinoAlertDialog(
-          content: Text(message),
-          actions: [
-            CupertinoDialogAction(
-              child: Text(context.l10n.ok),
-              onPressed: () => Navigator.pop(ctx),
-            ),
-          ],
-        ),
-      );
-    } else {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(message)));
-    }
+  /// Non-blocking message; kept clear of the camera's top buttons and of the
+  /// gallery, shutter and tab controls.
+  void _showMessage(String message, {AppToastKind kind = AppToastKind.info}) {
+    if (!mounted) return;
+    AppToast.show(
+      context,
+      message,
+      kind: kind,
+      top: MediaQuery.paddingOf(context).top + 76,
+    );
   }
 
   Future<void> _resetCaptureState() async {
@@ -1265,10 +1320,10 @@ class _HomeScreenState extends State<HomeScreen>
           Positioned.fill(child: _buildContent()),
           if (!isOnline)
             Positioned(
-              top: MediaQuery.of(context).padding.top,
+              top: MediaQuery.of(context).padding.top + 76,
               left: 0,
               right: 0,
-              child: const OfflineBanner(),
+              child: const IgnorePointer(child: Center(child: OfflineBanner())),
             ),
         ],
       ),
@@ -1428,13 +1483,11 @@ class _HomeScreenState extends State<HomeScreen>
           _lastPreviewConstraints = constraints;
           return Listener(
             onPointerDown: _handlePreviewPointerDown,
+            onPointerMove: _handlePreviewPointerMove,
             onPointerUp: _handlePreviewPointerUp,
             onPointerCancel: _handlePreviewPointerUp,
             child: GestureDetector(
               behavior: HitTestBehavior.opaque,
-              onScaleStart: _handleScaleStart,
-              onScaleUpdate: _handleScaleUpdate,
-              onScaleEnd: _handleScaleEnd,
               onTapDown: (details) =>
                   _focusAtPoint(details, constraints, controller),
               child: ClipRect(
@@ -1575,11 +1628,12 @@ class _HomeScreenState extends State<HomeScreen>
             top: MediaQuery.of(context).padding.top + 16,
             left: 80,
             right: 80,
-            // Long press shows camera layout measurements (see
-            // _showCameraDiagnostics); a tap passes through to the preview.
+            // Five quick taps show camera layout measurements (see
+            // _showCameraDiagnostics). A long press would drift into the tab
+            // swipe, so it is taps.
             child: GestureDetector(
               behavior: HitTestBehavior.translucent,
-              onLongPress: _showCameraDiagnostics,
+              onTap: _onLogoTap,
               child: SizedBox(
                 height: 52,
                 child: Center(
@@ -1738,54 +1792,62 @@ class _HomeScreenState extends State<HomeScreen>
                 // Left: Gallery
                 Positioned(
                   left: 40,
-                  child: GestureDetector(
-                    onTap: () {
-                      Haptics.tick();
-                      _pickFromGallery();
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: AppColors.pebble.withValues(alpha: 0.2),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.photo_library_outlined,
-                        color: AppColors.pebble,
-                        size: 28,
+                  child: Semantics(
+                    button: true,
+                    label: l10n.gallery,
+                    child: GestureDetector(
+                      onTap: () {
+                        Haptics.tick();
+                        _pickFromGallery();
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: AppColors.pebble.withValues(alpha: 0.2),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.photo_library_outlined,
+                          color: AppColors.pebble,
+                          size: 28,
+                        ),
                       ),
                     ),
                   ),
                 ),
 
                 // Center: Capture
-                GestureDetector(
-                  onTap: () {
-                    Haptics.confirm();
-                    _capturePhoto();
-                  },
-                  child: Container(
-                    width: 84,
-                    height: 84,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(color: AppColors.pebble, width: 4),
-                    ),
-                    child: Center(
-                      child: Container(
-                        width: 70,
-                        height: 70,
-                        decoration: const BoxDecoration(
-                          color: AppColors.pebble,
-                          shape: BoxShape.circle,
+                Semantics(
+                  button: true,
+                  label: l10n.takePhoto,
+                  child: GestureDetector(
+                    onTap: () {
+                      Haptics.confirm();
+                      _capturePhoto();
+                    },
+                    child: Container(
+                      width: 84,
+                      height: 84,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(color: AppColors.pebble, width: 4),
+                      ),
+                      child: Center(
+                        child: Container(
+                          width: 70,
+                          height: 70,
+                          decoration: const BoxDecoration(
+                            color: AppColors.pebble,
+                            shape: BoxShape.circle,
+                          ),
+                          child: _isCapturing
+                              ? const Center(
+                                  child: CircularProgressIndicator(
+                                    color: AppColors.styrianForest,
+                                  ),
+                                )
+                              : null,
                         ),
-                        child: _isCapturing
-                            ? const Center(
-                                child: CircularProgressIndicator(
-                                  color: AppColors.styrianForest,
-                                ),
-                              )
-                            : null,
                       ),
                     ),
                   ),
@@ -1908,20 +1970,26 @@ class _HomeScreenState extends State<HomeScreen>
                     Positioned(
                       top: 8,
                       right: 8,
-                      child: GestureDetector(
-                        onTap: () async {
-                          await _removeCapturedPhoto(index);
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.all(6),
-                          decoration: const BoxDecoration(
-                            color: Colors.black54,
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.close,
-                            color: AppColors.pebble,
-                            size: 16,
+                      child: Semantics(
+                        button: true,
+                        label: context.l10n.delete,
+                        child: GestureDetector(
+                          behavior: HitTestBehavior.opaque,
+                          onTap: () async {
+                            await _removeCapturedPhoto(index);
+                          },
+                          child: Container(
+                            // 16px icon in a 44px touch target
+                            padding: const EdgeInsets.all(14),
+                            decoration: const BoxDecoration(
+                              color: Colors.black54,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.close,
+                              color: AppColors.pebble,
+                              size: 16,
+                            ),
                           ),
                         ),
                       ),

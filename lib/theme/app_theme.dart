@@ -71,6 +71,11 @@ class AppTheme {
           padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
         ),
       ),
+      dividerTheme: const DividerThemeData(
+        color: AppColors.subtleAsh,
+        thickness: 1,
+        space: 1,
+      ),
       dialogTheme: DialogThemeData(
         backgroundColor: AppColors.pureWhite,
         elevation: 0,

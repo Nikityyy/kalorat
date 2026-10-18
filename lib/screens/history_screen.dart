@@ -107,6 +107,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                     child: Text(
                       l10n.myHistory,
                       style: AppTypography.displayMedium.copyWith(fontSize: 24),
+                      maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
@@ -183,36 +184,40 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 children: List.generate(periods.length, (index) {
                   final isSelected = _selectedPeriod == index;
                   return Expanded(
-                    child: GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          _selectedPeriod = index;
-                          // Reset selected date to today when switching periods,
-                          // EXCEPT when switching TO Day view, keep the selected date?
-                          // Or always reset? Let's keep selected date as is.
-                        });
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        decoration: BoxDecoration(
-                          color: isSelected
-                              ? AppColors.primary
-                              : AppColors.transparent,
-                          borderRadius: BorderRadius.circular(
-                            AppTheme.borderRadius,
-                          ),
-                        ),
-                        child: Text(
-                          periods[index],
-                          textAlign: TextAlign.center,
-                          style: AppTypography.bodyMedium.copyWith(
+                    child: Semantics(
+                      button: true,
+                      selected: isSelected,
+                      child: GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            _selectedPeriod = index;
+                            // Reset selected date to today when switching periods,
+                            // EXCEPT when switching TO Day view, keep the selected date?
+                            // Or always reset? Let's keep selected date as is.
+                          });
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          decoration: BoxDecoration(
                             color: isSelected
-                                ? AppColors.pebble
-                                : AppColors.slate,
-                            fontWeight: isSelected
-                                ? FontWeight.bold
-                                : FontWeight.w500,
-                            fontSize: 13,
+                                ? AppColors.primary
+                                : AppColors.transparent,
+                            borderRadius: BorderRadius.circular(
+                              AppTheme.borderRadius,
+                            ),
+                          ),
+                          child: Text(
+                            periods[index],
+                            textAlign: TextAlign.center,
+                            style: AppTypography.bodyMedium.copyWith(
+                              color: isSelected
+                                  ? AppColors.pebble
+                                  : AppColors.slate,
+                              fontWeight: isSelected
+                                  ? FontWeight.bold
+                                  : FontWeight.w500,
+                              fontSize: 13,
+                            ),
                           ),
                         ),
                       ),
@@ -377,82 +382,84 @@ class _HistoryScreenState extends State<HistoryScreen> {
     // Helper to divide and format
     String fmt(double? val) => ((val ?? 0) / divisor).round().toString();
 
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceAround,
-      children: [
-        Column(
-          children: [
-            Text(
-              fmt(stats['calories']),
-              style: AppTypography.heroNumber.copyWith(
-                fontSize: 24,
-                color: AppColors.slate,
+    // Each stat shrinks to its share of the row instead of overlapping its
+    // neighbours when the text size is large.
+    Widget stat(
+      String value,
+      String label, {
+      required double valueSize,
+      required Color valueColor,
+      double? labelSize,
+      int flex = 2,
+    }) {
+      return Expanded(
+        flex: flex,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 2),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  value,
+                  style: AppTypography.heroNumber.copyWith(
+                    fontSize: valueSize,
+                    color: valueColor,
+                  ),
+                ),
               ),
-            ),
-            Text(
-              l10n.kcal,
-              style: TextStyle(color: AppColors.slate.withValues(alpha: 0.6)),
-            ),
-          ],
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: labelSize,
+                    color: AppColors.slate.withValues(alpha: 0.6),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return Row(
+      children: [
+        stat(
+          fmt(stats['calories']),
+          l10n.kcal,
+          valueSize: 24,
+          valueColor: AppColors.slate,
+          flex: 3,
         ),
         Container(
           width: 1,
           height: 40,
           color: AppColors.slate.withValues(alpha: 0.2),
         ),
-        Column(
-          children: [
-            Text(
-              '${fmt(stats['fats'])}${l10n.grams}',
-              style: AppTypography.heroNumber.copyWith(
-                fontSize: 18,
-                color: AppColors.styrianForest,
-              ),
-            ),
-            Text(
-              l10n.fats,
-              style: TextStyle(
-                fontSize: 12,
-                color: AppColors.slate.withValues(alpha: 0.6),
-              ),
-            ),
-          ],
+        stat(
+          '${fmt(stats['fats'])}${l10n.grams}',
+          l10n.fats,
+          valueSize: 18,
+          valueColor: AppColors.styrianForest,
+          labelSize: 12,
         ),
-        Column(
-          children: [
-            Text(
-              '${fmt(stats['carbs'])}${l10n.grams}',
-              style: AppTypography.heroNumber.copyWith(
-                fontSize: 18,
-                color: AppColors.styrianForest,
-              ),
-            ),
-            Text(
-              l10n.carbs,
-              style: TextStyle(
-                fontSize: 12,
-                color: AppColors.slate.withValues(alpha: 0.6),
-              ),
-            ),
-          ],
+        stat(
+          '${fmt(stats['carbs'])}${l10n.grams}',
+          l10n.carbs,
+          valueSize: 18,
+          valueColor: AppColors.styrianForest,
+          labelSize: 12,
+          flex: 3,
         ),
-        Column(
-          children: [
-            Text(
-              '${fmt(stats['protein'])}${l10n.grams}',
-              style: AppTypography.heroNumber.copyWith(
-                fontSize: 18,
-                color: AppColors.styrianForest,
-              ),
-            ),
-            Text(
-              l10n.protein,
-              style: TextStyle(
-                fontSize: 12,
-                color: AppColors.slate.withValues(alpha: 0.6),
-              ),
-            ),
-          ],
+        stat(
+          '${fmt(stats['protein'])}${l10n.grams}',
+          l10n.protein,
+          valueSize: 18,
+          valueColor: AppColors.styrianForest,
+          labelSize: 12,
         ),
       ],
     );

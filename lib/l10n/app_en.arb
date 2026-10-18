@@ -421,5 +421,11 @@
   "@apiKeyUnreachable": {
     "description": "Shown when the API key could not be checked because of a network or server problem"
   },
-  "appVersion": "Version"
+  "appVersion": "Version",
+  "offlineShort": "Offline",
+  "gramModeTitle": "Gram mode",
+  "gramModeSubtitle": "Show grams instead of servings",
+  "accurateModeTitle": "Accurate mode",
+  "accurateModeSubtitle": "Deeper analysis, more accurate. Off is faster.",
+  "gallery": "Gallery"
 }

@@ -18,6 +18,7 @@ import '../widgets/inputs/action_button.dart';
 import '../widgets/live_thought_panel.dart';
 import 'package:gal/gal.dart';
 import 'package:share_plus/share_plus.dart';
+import '../widgets/app_toast.dart';
 
 class MealDetailScreen extends StatefulWidget {
   final MealModel meal;
@@ -162,20 +163,18 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
         await Gal.putImage(path, album: 'Kalorat');
       }
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(l10n.saveToGallerySuccess),
-            behavior: SnackBarBehavior.floating,
-          ),
+        AppToast.show(
+          context,
+          l10n.saveToGallerySuccess,
+          kind: AppToastKind.info,
         );
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(l10n.saveToGalleryError),
-            behavior: SnackBarBehavior.floating,
-          ),
+        AppToast.show(
+          context,
+          l10n.saveToGalleryError,
+          kind: AppToastKind.info,
         );
       }
     }
@@ -350,8 +349,10 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
         if (analysis.containsKey('error') &&
             analysis['error'] == 'no_food_detected') {
           if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(context.l10n.noFoodDetected)),
+            AppToast.show(
+              context,
+              context.l10n.noFoodDetected,
+              kind: AppToastKind.info,
             );
           }
           return;
@@ -426,21 +427,25 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
         });
 
         if (mounted) {
-          ScaffoldMessenger.of(
+          AppToast.show(
             context,
-          ).showSnackBar(SnackBar(content: Text(context.l10n.analysisUpdated)));
+            context.l10n.analysisUpdated,
+            kind: AppToastKind.info,
+          );
         }
       } else if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(context.l10n.analysisError('No result received.')),
-          ),
+        AppToast.show(
+          context,
+          context.l10n.analysisError('No result received.'),
+          kind: AppToastKind.info,
         );
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(context.l10n.retryFailed(e.toString()))),
+        AppToast.show(
+          context,
+          context.l10n.retryFailed(e.toString()),
+          kind: AppToastKind.info,
         );
       }
     } finally {
@@ -550,9 +555,7 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
       await provider.saveMeal(finalMeal);
     } on FormatException catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(e.message)));
+        AppToast.show(context, e.message, kind: AppToastKind.info);
       }
       return;
     }
@@ -843,6 +846,7 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
                   backgroundColor: Colors.black26,
                   child: IconButton(
                     icon: const Icon(Icons.arrow_back, color: Colors.white),
+                    tooltip: context.l10n.back,
                     onPressed: () => Navigator.pop(context),
                   ),
                 ),
@@ -1195,6 +1199,44 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
       return ((value / macroCalories) * 100).round();
     }
 
+    // At large text sizes the macro rows need the full card width.
+    final stacked = MediaQuery.textScalerOf(context).scale(1) > 1.25;
+    final ring = GestureDetector(
+      onTap: _showEditCaloriesDialog,
+      child: _CalorieRing(
+        calories: caloriesValue.round(),
+        isOverride: _meal.isCalorieOverride,
+        proteinCalories: proteinCalories,
+        carbsCalories: carbsCalories,
+        fatCalories: fatCalories,
+      ),
+    );
+    final rows = Column(
+      children: [
+        _MacroSummaryRow(
+          label: l10n.fats,
+          value: '${fats.toStringAsFixed(1)}g',
+          percent: percent(fatCalories),
+          color: const Color(0xFFFF5A5F),
+          onTap: _editFats,
+        ),
+        _MacroSummaryRow(
+          label: l10n.carbs,
+          value: '${carbs.toStringAsFixed(1)}g',
+          percent: percent(carbsCalories),
+          color: const Color(0xFFFF8A00),
+          onTap: _editCarbs,
+        ),
+        _MacroSummaryRow(
+          label: l10n.protein,
+          value: '${protein.toStringAsFixed(1)}g',
+          percent: percent(proteinCalories),
+          color: const Color(0xFF2F73D9),
+          onTap: _editProtein,
+        ),
+      ],
+    );
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
@@ -1203,50 +1245,21 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
         borderRadius: BorderRadius.circular(AppTheme.borderRadius),
         border: Border.all(color: AppColors.subtleAsh, width: 1),
       ),
-      child: Row(
-        children: [
-          GestureDetector(
-            onTap: _showEditCaloriesDialog,
-            child: _CalorieRing(
-              calories: caloriesValue.round(),
-              isOverride: _meal.isCalorieOverride,
-              proteinCalories: proteinCalories,
-              carbsCalories: carbsCalories,
-              fatCalories: fatCalories,
-            ),
-          ),
-          const SizedBox(width: 18),
-          Expanded(
-            child: Column(
+      child: stacked
+          ? Column(
               children: [
-                _MacroSummaryRow(
-                  label: l10n.fats,
-                  value: '${fats.toStringAsFixed(1)}g',
-                  percent: percent(fatCalories),
-                  color: const Color(0xFFFF5A5F),
-                  onTap: _editFats,
-                ),
+                ring,
                 const SizedBox(height: 12),
-                _MacroSummaryRow(
-                  label: l10n.carbs,
-                  value: '${carbs.toStringAsFixed(1)}g',
-                  percent: percent(carbsCalories),
-                  color: const Color(0xFFFF8A00),
-                  onTap: _editCarbs,
-                ),
-                const SizedBox(height: 12),
-                _MacroSummaryRow(
-                  label: l10n.protein,
-                  value: '${protein.toStringAsFixed(1)}g',
-                  percent: percent(proteinCalories),
-                  color: const Color(0xFF2F73D9),
-                  onTap: _editProtein,
-                ),
+                SizedBox(width: double.infinity, child: rows),
+              ],
+            )
+          : Row(
+              children: [
+                ring,
+                const SizedBox(width: 18),
+                Expanded(child: rows),
               ],
             ),
-          ),
-        ],
-      ),
     );
   }
 
@@ -1586,35 +1599,42 @@ class _CalorieRing extends StatelessWidget {
               ),
             ),
           ),
-          Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Row(
+          // Keeps the number inside the ring when the text size is large.
+          SizedBox(
+            width: 70,
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Column(
                 mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '$calories',
+                        style: AppTypography.titleLarge.copyWith(
+                          fontSize: 26,
+                          color: AppColors.deepSpaceBlack,
+                        ),
+                      ),
+                      if (isOverride) ...[
+                        const SizedBox(width: 3),
+                        const Icon(Icons.lock_open, size: 12),
+                      ],
+                    ],
+                  ),
                   Text(
-                    '$calories',
-                    style: AppTypography.titleLarge.copyWith(
-                      fontSize: 26,
+                    'kcal',
+                    style: AppTypography.labelLarge.copyWith(
+                      fontSize: 11,
                       color: AppColors.deepSpaceBlack,
+                      letterSpacing: 0,
                     ),
                   ),
-                  if (isOverride) ...[
-                    const SizedBox(width: 3),
-                    const Icon(Icons.lock_open, size: 12),
-                  ],
                 ],
               ),
-              Text(
-                'kcal',
-                style: AppTypography.labelLarge.copyWith(
-                  fontSize: 11,
-                  color: AppColors.deepSpaceBlack,
-                  letterSpacing: 0,
-                ),
-              ),
-            ],
+            ),
           ),
         ],
       ),
@@ -1713,8 +1733,8 @@ class _MacroSummaryRow extends StatelessWidget {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(8),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 2),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(minHeight: 44),
         child: Row(
           children: [
             Container(
@@ -1724,15 +1744,18 @@ class _MacroSummaryRow extends StatelessWidget {
             ),
             const SizedBox(width: 10),
             Expanded(
-              child: Text(
-                label,
-                style: AppTypography.labelLarge.copyWith(
-                  fontSize: 12,
-                  color: AppColors.deepSpaceBlack,
-                  letterSpacing: 0,
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  label,
+                  style: AppTypography.labelLarge.copyWith(
+                    fontSize: 12,
+                    color: AppColors.deepSpaceBlack,
+                    letterSpacing: 0,
+                  ),
+                  maxLines: 1,
                 ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
               ),
             ),
             Text(
@@ -1744,8 +1767,8 @@ class _MacroSummaryRow extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 12),
-            SizedBox(
-              width: 34,
+            ConstrainedBox(
+              constraints: const BoxConstraints(minWidth: 34),
               child: Text(
                 '$percent%',
                 textAlign: TextAlign.right,

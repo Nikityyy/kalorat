@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 import '../models/models.dart';
 import '../providers/app_provider.dart';
 import '../theme/app_theme.dart';
+import '../widgets/app_toast.dart';
 
 class AddWeightScreen extends StatefulWidget {
   final WeightModel? initialWeight;
@@ -145,9 +146,11 @@ class _AddWeightScreenState extends State<AddWeightScreen> {
   void _save() async {
     final weight = double.tryParse(_weightController.text.replaceAll(',', '.'));
     if (weight == null || weight < 20 || weight > 400) {
-      ScaffoldMessenger.of(
+      AppToast.show(
         context,
-      ).showSnackBar(SnackBar(content: Text(context.l10n.weightRangeError)));
+        context.l10n.weightRangeError,
+        kind: AppToastKind.info,
+      );
       return;
     }
 
@@ -196,18 +199,14 @@ class _AddWeightScreenState extends State<AddWeightScreen> {
       }
     } on FormatException catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(e.message)));
+        AppToast.show(context, e.message, kind: AppToastKind.info);
       }
       return;
     }
 
     if (mounted) {
       Navigator.pop(context);
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(context.l10n.weightSaved)));
+      AppToast.show(context, context.l10n.weightSaved, kind: AppToastKind.info);
     }
   }
 }

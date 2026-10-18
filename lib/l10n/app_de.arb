@@ -418,5 +418,11 @@
   "createAccount": "Weiter",
   "cameraGuideText": "Mahlzeit im Rahmen zentrieren.",
   "apiKeyUnreachable": "Google nicht erreichbar. Verbindung prüfen.",
-  "appVersion": "Version"
+  "appVersion": "Version",
+  "offlineShort": "Offline",
+  "gramModeTitle": "Gramm-Modus",
+  "gramModeSubtitle": "Gramm statt Portionen anzeigen",
+  "accurateModeTitle": "Genauigkeitsmodus",
+  "accurateModeSubtitle": "Tiefere Analyse, genauer. Aus ist schneller.",
+  "gallery": "Galerie"
 }

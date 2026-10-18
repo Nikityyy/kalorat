@@ -2029,6 +2029,42 @@ abstract class AppLocalizations {
   /// In de, this message translates to:
   /// **'Version'**
   String get appVersion;
+
+  /// No description provided for @offlineShort.
+  ///
+  /// In de, this message translates to:
+  /// **'Offline'**
+  String get offlineShort;
+
+  /// No description provided for @gramModeTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Gramm-Modus'**
+  String get gramModeTitle;
+
+  /// No description provided for @gramModeSubtitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Gramm statt Portionen anzeigen'**
+  String get gramModeSubtitle;
+
+  /// No description provided for @accurateModeTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Genauigkeitsmodus'**
+  String get accurateModeTitle;
+
+  /// No description provided for @accurateModeSubtitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Tiefere Analyse, genauer. Aus ist schneller.'**
+  String get accurateModeSubtitle;
+
+  /// No description provided for @gallery.
+  ///
+  /// In de, this message translates to:
+  /// **'Galerie'**
+  String get gallery;
 }
 
 class _AppLocalizationsDelegate

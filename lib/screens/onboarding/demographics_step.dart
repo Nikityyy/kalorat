@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../theme/app_typography.dart';
 import '../../theme/app_colors.dart';
 import '../../extensions/l10n_extension.dart';
+import '../../l10n/app_localizations.dart';
 import '../../widgets/inputs/action_button.dart';
 import '../../widgets/inputs/bespoke_selection_card.dart';
 import '../../widgets/inputs/bespoke_wheel.dart';
@@ -35,6 +36,32 @@ class _DemographicsStepState extends State<DemographicsStep> {
     _genderIndex = widget.initialGenderIndex;
   }
 
+  // Side by side normally; stacked when large text would break the labels.
+  Widget _buildSexCards(AppLocalizations l10n) {
+    final cards = [
+      BespokeSelectionCard(
+        title: l10n.male,
+        isSelected: _genderIndex == 0,
+        onTap: () => setState(() => _genderIndex = 0),
+      ),
+      BespokeSelectionCard(
+        title: l10n.female,
+        isSelected: _genderIndex == 1,
+        onTap: () => setState(() => _genderIndex = 1),
+      ),
+    ];
+    if (MediaQuery.textScalerOf(context).scale(1) > 1.25) {
+      return Column(children: [cards[0], const SizedBox(height: 12), cards[1]]);
+    }
+    return Row(
+      children: [
+        Expanded(child: cards[0]),
+        const SizedBox(width: 16),
+        Expanded(child: cards[1]),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
@@ -52,25 +79,7 @@ class _DemographicsStepState extends State<DemographicsStep> {
           
           Text(l10n.biologicalSex, style: AppTypography.labelLarge.copyWith(color: AppColors.slate)),
           const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: BespokeSelectionCard(
-                  title: l10n.male,
-                  isSelected: _genderIndex == 0,
-                  onTap: () => setState(() => _genderIndex = 0),
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: BespokeSelectionCard(
-                  title: l10n.female,
-                  isSelected: _genderIndex == 1,
-                  onTap: () => setState(() => _genderIndex = 1),
-                ),
-              ),
-            ],
-          ),
+          _buildSexCards(l10n),
           
           const SizedBox(height: 32),
           Text(l10n.age, style: AppTypography.labelLarge.copyWith(color: AppColors.slate)),

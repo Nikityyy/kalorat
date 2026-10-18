@@ -16,6 +16,7 @@ import '../theme/app_theme.dart';
 import '../theme/app_typography.dart';
 import '../widgets/common/app_card.dart';
 import '../widgets/common/primary_button.dart';
+import '../widgets/app_toast.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -81,11 +82,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
 
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(context.l10n.settingsSaved),
-          backgroundColor: AppColors.success,
-        ),
+      AppToast.show(
+        context,
+        context.l10n.settingsSaved,
+        kind: AppToastKind.success,
       );
       Navigator.pop(context);
     }
@@ -158,7 +158,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
             const SizedBox(height: 24),
             _buildLegalSection(provider, l10n),
             const SizedBox(height: 32),
-            PrimaryButton(text: l10n.saveChanges, onPressed: _saveChanges),
+            SizedBox(
+              width: double.infinity,
+              child: PrimaryButton(
+                text: l10n.saveChanges,
+                onPressed: _saveChanges,
+              ),
+            ),
             const SizedBox(height: 24),
             _buildVersionLabel(l10n),
             const SizedBox(height: 32),
@@ -170,6 +176,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Widget _buildVersionLabel(dynamic l10n) {
     final commit = AppVersion.shortCommit;
+    final provider = context.watch<AppProvider>();
+    return Column(
+      children: [
+        if (provider.updateAvailable)
+          TextButton(
+            onPressed: provider.performUpdate,
+            child: Text('${l10n.updateReady} ${l10n.reloadButton}'),
+          ),
+        _versionText(l10n, commit),
+      ],
+    );
+  }
+
+  Widget _versionText(dynamic l10n, String commit) {
     return Center(
       child: SelectableText(
         '${l10n.appVersion} ${AppVersion.label}${commit.isEmpty ? '' : ' · $commit'}',
@@ -188,17 +208,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
     UserModel user,
     dynamic l10n,
   ) {
-    final isGerman = provider.language == 'de';
-
     return _buildSection(l10n.preferences, [
       SwitchListTile(
-        title: const Text(
-          'Präzisions-Modus (Gramm)',
-          style: TextStyle(color: AppColors.slate),
+        title: Text(
+          l10n.gramModeTitle,
+          style: const TextStyle(color: AppColors.slate),
         ),
-        subtitle: const Text(
-          'Analyse zeigt Gramm statt Portionen',
-          style: TextStyle(fontSize: 12),
+        subtitle: Text(
+          l10n.gramModeSubtitle,
+          style: const TextStyle(fontSize: 12),
         ),
         value: user.useGramsByDefault,
         activeThumbColor: AppColors.primary,
@@ -207,15 +225,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
       const Divider(height: 1, indent: 16, endIndent: 16),
       SwitchListTile(
         title: Text(
-          isGerman
-              ? 'KI-Genauigkeitsmodus (Deep Think)'
-              : 'AI Accurate Mode (Deep Think)',
+          l10n.accurateModeTitle,
           style: const TextStyle(color: AppColors.slate),
         ),
         subtitle: Text(
-          isGerman
-              ? 'Mehr Genauigkeit durch tiefere KI-Analyse. Deaktiviert (Fast Mode) ist extrem schnell.'
-              : 'Higher accuracy via deep AI reasoning. Off (Fast Mode) is extremely fast.',
+          l10n.accurateModeSubtitle,
           style: const TextStyle(fontSize: 12),
         ),
         value: user.useAccurateMode,
@@ -271,11 +285,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 provider.updateUser(mealRemindersEnabled: true);
               } else {
                 if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(l10n.grantPermission),
-                      backgroundColor: AppColors.error,
-                    ),
+                  AppToast.show(
+                    context,
+                    l10n.grantPermission,
+                    kind: AppToastKind.error,
                   );
                 }
               }
@@ -298,11 +311,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 provider.updateUser(weightRemindersEnabled: true);
               } else {
                 if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(l10n.grantPermission),
-                      backgroundColor: AppColors.error,
-                    ),
+                  AppToast.show(
+                    context,
+                    l10n.grantPermission,
+                    kind: AppToastKind.error,
                   );
                 }
               }
@@ -384,20 +396,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
               if (success) {
                 provider.updateUser(healthSyncEnabled: true);
                 if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(l10n.healthConnected),
-                      backgroundColor: AppColors.success,
-                    ),
+                  AppToast.show(
+                    context,
+                    l10n.healthConnected,
+                    kind: AppToastKind.success,
                   );
                 }
               } else {
                 if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(l10n.healthConnectionFailed),
-                      backgroundColor: AppColors.error,
-                    ),
+                  AppToast.show(
+                    context,
+                    l10n.healthConnectionFailed,
+                    kind: AppToastKind.error,
                   );
                 }
               }
@@ -770,22 +780,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 );
                 await provider.syncService.mergeLocalToCloud();
                 if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(l10n.syncComplete),
-                      backgroundColor: AppColors.success,
-                    ),
+                  AppToast.show(
+                    context,
+                    l10n.syncComplete,
+                    kind: AppToastKind.success,
                   );
                 }
               }
             } catch (e) {
               if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(e.toString()),
-                    backgroundColor: AppColors.error,
-                  ),
-                );
+                AppToast.show(context, e.toString(), kind: AppToastKind.error);
               }
             }
           },
@@ -842,20 +846,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     }
                     await provider.syncService.syncNow();
                     if (mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(l10n.syncComplete),
-                          backgroundColor: AppColors.success,
-                        ),
+                      AppToast.show(
+                        context,
+                        l10n.syncComplete,
+                        kind: AppToastKind.success,
                       );
                     }
                   } catch (e) {
                     if (mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(e.toString()),
-                          backgroundColor: AppColors.error,
-                        ),
+                      AppToast.show(
+                        context,
+                        e.toString(),
+                        kind: AppToastKind.error,
                       );
                     }
                   } finally {
@@ -904,11 +906,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
               );
 
               if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(l10n.loggedOut),
-                    backgroundColor: AppColors.success,
-                  ),
+                AppToast.show(
+                  context,
+                  l10n.loggedOut,
+                  kind: AppToastKind.success,
                 );
               }
             }
@@ -954,11 +955,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 photoUrl: null,
               );
               if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(l10n.accountDeleted),
-                    backgroundColor: AppColors.success,
-                  ),
+                AppToast.show(
+                  context,
+                  l10n.accountDeleted,
+                  kind: AppToastKind.success,
                 );
                 Navigator.of(context).popUntil((route) => route.isFirst);
               }
@@ -980,9 +980,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
           if (path != null && mounted) {
             if (path == 'web_download') {
               // Web: file was downloaded via browser, just confirm
-              ScaffoldMessenger.of(
+              AppToast.show(
                 context,
-              ).showSnackBar(SnackBar(content: Text(l10n.downloadStarted)));
+                l10n.downloadStarted,
+                kind: AppToastKind.info,
+              );
             } else {
               await SharePlus.instance.share(
                 ShareParams(files: [XFile(path)], text: 'Kalorat Backup'),
@@ -992,7 +994,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
         },
       ),
       ListTile(
-        leading: const Icon(Icons.description_outlined, color: AppColors.primary),
+        leading: const Icon(
+          Icons.description_outlined,
+          color: AppColors.primary,
+        ),
         title: Text(
           l10n.exportMarkdown,
           style: const TextStyle(color: AppColors.slate),
@@ -1001,12 +1006,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
           final path = await provider.exportMarkdownReport(l10n);
           if (path != null && mounted) {
             if (path == 'web_download') {
-              ScaffoldMessenger.of(
+              AppToast.show(
                 context,
-              ).showSnackBar(SnackBar(content: Text(l10n.downloadStarted)));
+                l10n.downloadStarted,
+                kind: AppToastKind.info,
+              );
             } else {
               await SharePlus.instance.share(
-                ShareParams(files: [XFile(path)], text: 'Kalorat Markdown Report'),
+                ShareParams(
+                  files: [XFile(path)],
+                  text: 'Kalorat Markdown Report',
+                ),
               );
             }
           }
@@ -1021,13 +1031,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
         onTap: () async {
           final success = await provider.importData();
           if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(
-                  success ? l10n.importSuccessful : l10n.importFailed,
-                ),
-                backgroundColor: success ? AppColors.success : AppColors.error,
-              ),
+            AppToast.show(
+              context,
+              success ? l10n.importSuccessful : l10n.importFailed,
+              kind: success ? AppToastKind.success : AppToastKind.error,
             );
           }
         },
@@ -1043,21 +1050,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
             try {
               await provider.restoreLastImportBackup();
               if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(l10n.backupRestored),
-                    backgroundColor: AppColors.success,
-                  ),
+                AppToast.show(
+                  context,
+                  l10n.backupRestored,
+                  kind: AppToastKind.success,
                 );
               }
             } catch (e) {
               if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(e.toString()),
-                    backgroundColor: AppColors.error,
-                  ),
-                );
+                AppToast.show(context, e.toString(), kind: AppToastKind.error);
               }
             }
           },

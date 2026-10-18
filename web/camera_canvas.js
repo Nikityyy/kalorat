@@ -1,27 +1,36 @@
-// Optional camera preview that draws the <video> into a <canvas> with our own
-// "cover" geometry instead of relying on the video element's own layout.
+// Camera preview that draws the <video> into a <canvas> with our own "cover"
+// geometry instead of relying on the video element's own layout.
 // Some iPhones paint the video small inside its box (about 56% of it, centred);
-// a canvas does not depend on how Safari lays out the video element.
+// a canvas does not depend on how Safari lays out the video element, and it
+// fixed that on a real iPhone.
 //
-// Off by default. Toggle it from the camera diagnostics panel; the choice is
-// kept in localStorage and takes effect immediately.
+// On by default on iPhone and iPad, off elsewhere. The camera diagnostics panel
+// can switch it either way; the choice is kept in localStorage ('1' / '0') and
+// takes effect immediately.
 (function () {
   'use strict';
   var KEY = 'kalorat.cameraCanvas';
 
+  function isAppleTouch() {
+    var ua = navigator.userAgent || '';
+    if (/iPhone|iPad|iPod/.test(ua)) return true;
+    // iPadOS reports itself as a Mac.
+    return navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1;
+  }
+
   function enabled() {
     try {
-      return localStorage.getItem(KEY) === '1';
-    } catch (_) {
-      return false;
-    }
+      var stored = localStorage.getItem(KEY);
+      if (stored === '1') return true;
+      if (stored === '0') return false;
+    } catch (_) {}
+    return isAppleTouch();
   }
 
   window.kaloratCameraCanvasEnabled = enabled;
   window.kaloratSetCameraCanvas = function (on) {
     try {
-      if (on) localStorage.setItem(KEY, '1');
-      else localStorage.removeItem(KEY);
+      localStorage.setItem(KEY, on ? '1' : '0');
     } catch (_) {}
   };
 

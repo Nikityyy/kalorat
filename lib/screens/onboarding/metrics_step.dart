@@ -169,7 +169,10 @@ class WeightScalePicker extends StatelessWidget {
                     ),
                     Positioned(
                       bottom: 24,
-                      child: Row(
+                      // The dial has a fixed size; its readout is already large.
+                      child: MediaQuery.withClampedTextScaling(
+                        maxScaleFactor: 1.0,
+                        child: Row(
                         crossAxisAlignment: CrossAxisAlignment.baseline,
                         textBaseline: TextBaseline.alphabetic,
                         children: [
@@ -188,6 +191,7 @@ class WeightScalePicker extends StatelessWidget {
                             ),
                           ),
                         ],
+                      ),
                       ),
                     ),
                   ],

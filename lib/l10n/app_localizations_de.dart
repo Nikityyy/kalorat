@@ -1027,4 +1027,23 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get appVersion => 'Version';
+
+  @override
+  String get offlineShort => 'Offline';
+
+  @override
+  String get gramModeTitle => 'Gramm-Modus';
+
+  @override
+  String get gramModeSubtitle => 'Gramm statt Portionen anzeigen';
+
+  @override
+  String get accurateModeTitle => 'Genauigkeitsmodus';
+
+  @override
+  String get accurateModeSubtitle =>
+      'Tiefere Analyse, genauer. Aus ist schneller.';
+
+  @override
+  String get gallery => 'Galerie';
 }

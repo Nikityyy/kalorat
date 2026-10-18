@@ -58,6 +58,7 @@ class _MeScreenState extends State<MeScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.settings_outlined, color: AppColors.slate),
+            tooltip: context.l10n.settings,
             onPressed: () async {
               await Navigator.push(
                 context,
@@ -157,32 +158,66 @@ class _MeScreenState extends State<MeScreen> {
               ),
               const SizedBox(height: 4),
               Row(
-                  children: [
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.amber.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: AppColors.amber.withValues(alpha: 0.3),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.local_fire_department,
+                          size: 14,
+                          color: AppColors.amber,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          l10n.streakDays(streakData.streak),
+                          style: AppTypography.labelLarge.copyWith(
+                            color: AppColors.amber,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (streakData.availableFreezes > 0) ...[
+                    const SizedBox(width: 8),
                     Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 8,
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: AppColors.amber.withValues(alpha: 0.1),
+                        color: Colors.blue.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: AppColors.amber.withValues(alpha: 0.3),
+                          color: Colors.blue.withValues(alpha: 0.3),
                         ),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           const Icon(
-                            Icons.local_fire_department,
+                            Icons.ac_unit,
                             size: 14,
-                            color: AppColors.amber,
+                            color: Colors.blue,
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            l10n.streakDays(streakData.streak),
+                            '${streakData.availableFreezes}',
                             style: AppTypography.labelLarge.copyWith(
-                              color: AppColors.amber,
+                              color: Colors.blue,
                               fontWeight: FontWeight.bold,
                               fontSize: 12,
                             ),
@@ -190,62 +225,35 @@ class _MeScreenState extends State<MeScreen> {
                         ],
                       ),
                     ),
-                    if (streakData.availableFreezes > 0) ...[
-                      const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.blue.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: Colors.blue.withValues(alpha: 0.3),
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(
-                              Icons.ac_unit,
-                              size: 14,
-                              color: Colors.blue,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              '${streakData.availableFreezes}',
-                              style: AppTypography.labelLarge.copyWith(
-                                color: Colors.blue,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 12,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
                   ],
-                ),
-              ],
-            ),
+                ],
+              ),
+            ],
           ),
-        ],
-      );
-    }
+        ),
+      ],
+    );
+  }
 
   Widget _buildZeigarnikBlock(AppProvider provider) {
     final streakData = provider.streakData;
     final offset = provider.user?.dayStartHour ?? 0;
     final now = DateTime.now();
     final logicalNow = now.subtract(Duration(hours: offset));
-    final today = DateTime(logicalNow.year, logicalNow.month, logicalNow.day, 12 + offset);
-    
+    final today = DateTime(
+      logicalNow.year,
+      logicalNow.month,
+      logicalNow.day,
+      12 + offset,
+    );
+
     // Find Monday of the current week (logicalNow.weekday gives 1 for Mon, 7 for Sun)
     final startOfWeek = today.subtract(Duration(days: logicalNow.weekday - 1));
-    
+
     final isDe = provider.language == 'de';
-    final dayLabels = isDe ? ['MO', 'DI', 'MI', 'DO', 'FR', 'SA', 'SO'] : ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+    final dayLabels = isDe
+        ? ['MO', 'DI', 'MI', 'DO', 'FR', 'SA', 'SO']
+        : ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -257,16 +265,16 @@ class _MeScreenState extends State<MeScreen> {
           decoration: BoxDecoration(
             color: AppColors.glacialWhite,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: AppColors.slate.withValues(alpha: 0.15),
-            ),
+            border: Border.all(color: AppColors.slate.withValues(alpha: 0.15)),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 streakData.streak == 0
-                    ? (isDe ? 'Beginne deine Woche stark.' : 'Start your week strong.')
+                    ? (isDe
+                          ? 'Beginne deine Woche stark.'
+                          : 'Start your week strong.')
                     : (isDe ? 'Bleib dran!' : 'Keep the momentum going!'),
                 style: AppTypography.labelLarge.copyWith(
                   color: AppColors.slate,
@@ -280,7 +288,7 @@ class _MeScreenState extends State<MeScreen> {
                   final day = startOfWeek.add(Duration(days: index));
                   final isFuture = day.isAfter(today);
                   final isToday = day.isAtSameMomentAs(today);
-                  
+
                   // Check if logged
                   final meals = provider.getMealsByDate(day);
                   final hasMeals = meals.where((m) => !m.isPending).isNotEmpty;
@@ -288,7 +296,7 @@ class _MeScreenState extends State<MeScreen> {
 
                   Color boxColor;
                   Color? borderColor;
-                  
+
                   if (isFuture) {
                     boxColor = Colors.transparent;
                     borderColor = AppColors.slate.withValues(alpha: 0.15);
@@ -298,7 +306,9 @@ class _MeScreenState extends State<MeScreen> {
                     boxColor = Colors.blue;
                   } else if (isToday) {
                     boxColor = Colors.transparent;
-                    borderColor = AppColors.slate.withValues(alpha: 0.4); // Zeigarnik tension
+                    borderColor = AppColors.slate.withValues(
+                      alpha: 0.4,
+                    ); // Zeigarnik tension
                   } else {
                     boxColor = AppColors.pebble; // Missed past day
                   }
@@ -311,7 +321,9 @@ class _MeScreenState extends State<MeScreen> {
                           fontFamily: 'JetBrains Mono',
                           fontSize: 11,
                           fontWeight: FontWeight.bold,
-                          color: isToday ? AppColors.slate : AppColors.slate.withValues(alpha: 0.4),
+                          color: isToday
+                              ? AppColors.slate
+                              : AppColors.slate.withValues(alpha: 0.4),
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -325,7 +337,9 @@ class _MeScreenState extends State<MeScreen> {
                               ? Border.all(
                                   color: borderColor,
                                   width: isToday ? 2.0 : 1.0,
-                                  style: isFuture ? BorderStyle.solid : BorderStyle.solid,
+                                  style: isFuture
+                                      ? BorderStyle.solid
+                                      : BorderStyle.solid,
                                 )
                               : null,
                         ),

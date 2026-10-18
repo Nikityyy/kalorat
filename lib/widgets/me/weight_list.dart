@@ -77,7 +77,10 @@ class _WeightListState extends State<WeightList> {
                       tooltip: context.l10n.editWeight,
                       onPressed: () => widget.onEdit(weight),
                       padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
+                      constraints: const BoxConstraints(
+                        minWidth: 44,
+                        minHeight: 44,
+                      ),
                     ),
                     const SizedBox(width: 16),
                     IconButton(
@@ -86,9 +89,13 @@ class _WeightListState extends State<WeightList> {
                         color: AppColors.slate, // Muted slate, not red
                         size: 20,
                       ),
+                      tooltip: context.l10n.delete,
                       onPressed: () => widget.onDelete(weight),
                       padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
+                      constraints: const BoxConstraints(
+                        minWidth: 44,
+                        minHeight: 44,
+                      ),
                       style: IconButton.styleFrom(
                         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       ),

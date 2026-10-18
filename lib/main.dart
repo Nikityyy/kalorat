@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:flutter_web_plugins/url_strategy.dart';
 
 import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
 import 'package:provider/provider.dart';
@@ -19,6 +20,11 @@ import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 void main() async {
+  // The app is a single screen stack of its own. Without browser history, the
+  // system edge-swipe cannot step "back" into an earlier page state (the
+  // loading screen) on an iPhone home-screen app; in-app swipe-back and the
+  // back arrows still work.
+  setUrlStrategy(null);
   WidgetsFlutterBinding.ensureInitialized();
   await WidgetService.initialize();
 
@@ -47,6 +53,9 @@ void main() async {
 
   runApp(const KaloratApp());
 }
+
+/// Largest text size the layouts support.
+const double maxTextScale = 1.5;
 
 bool _splashHidden = false;
 
@@ -118,11 +127,16 @@ class KaloratApp extends StatelessWidget {
               supportedLocales: AppLocalizations.supportedLocales,
               home: homeWidget,
               builder: (context, child) {
-                // Ensure text scale factor is capped for consistency
+                // Follow the system text size, within limits the layouts are
+                // built and checked for (see test/widgets/text_scale_test.dart).
+                final media = MediaQuery.of(context);
                 return MediaQuery(
-                  data: MediaQuery.of(
-                    context,
-                  ).copyWith(textScaler: TextScaler.noScaling),
+                  data: media.copyWith(
+                    textScaler: media.textScaler.clamp(
+                      minScaleFactor: 1.0,
+                      maxScaleFactor: maxTextScale,
+                    ),
+                  ),
                   child: child!,
                 );
               },

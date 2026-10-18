@@ -212,8 +212,12 @@ class MealCard extends StatelessWidget {
                                   IconButton(
                                     visualDensity: VisualDensity.compact,
                                     padding: EdgeInsets.zero,
-                                    constraints: const BoxConstraints(),
+                                    constraints: const BoxConstraints(
+                                      minWidth: 44,
+                                      minHeight: 44,
+                                    ),
                                     icon: const Icon(Icons.refresh, size: 18),
+                                    tooltip: context.l10n.retryAnalysis,
                                     color: AppColors.primary,
                                     onPressed: onRetry,
                                   ),
@@ -223,10 +227,11 @@ class MealCard extends StatelessWidget {
 
                           if (onDelete != null)
                             SizedBox(
-                              width: 32,
-                              height: 32,
+                              width: 44,
+                              height: 44,
                               child: IconButton(
                                 padding: EdgeInsets.zero,
+                                tooltip: context.l10n.delete,
                                 // Removed alignment: Alignment.centerRight to center icon
                                 icon: Icon(
                                   PlatformUtils.isIOS

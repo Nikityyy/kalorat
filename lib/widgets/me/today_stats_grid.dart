@@ -23,7 +23,7 @@ class TodayStatsGrid extends StatelessWidget {
         Row(
           children: [
             Expanded(
-              child: _buildStatCard(
+              child: StatCard(
                 title: l10n.calories,
                 value:
                     '${stats['calories']!.round()} / ${user.dailyCalorieTarget.round()}',
@@ -35,7 +35,7 @@ class TodayStatsGrid extends StatelessWidget {
             ),
             const SizedBox(width: 12),
             Expanded(
-              child: _buildStatCard(
+              child: StatCard(
                 title: l10n.protein,
                 value:
                     '${stats['protein']!.round()} / ${user.dailyProteinTarget.round()}',
@@ -51,7 +51,7 @@ class TodayStatsGrid extends StatelessWidget {
         Row(
           children: [
             Expanded(
-              child: _buildStatCard(
+              child: StatCard(
                 title: l10n.carbs,
                 value:
                     '${stats['carbs']!.round()} / ${user.dailyCarbTarget.round()}',
@@ -63,7 +63,7 @@ class TodayStatsGrid extends StatelessWidget {
             ),
             const SizedBox(width: 12),
             Expanded(
-              child: _buildStatCard(
+              child: StatCard(
                 title: l10n.fats,
                 value:
                     '${stats['fats']!.round()} / ${user.dailyFatTarget.round()}',
@@ -78,15 +78,31 @@ class TodayStatsGrid extends StatelessWidget {
       ],
     );
   }
+}
 
-  Widget _buildStatCard({
-    required String title,
-    required String value,
-    required String unit,
-    required IconData icon,
-    required Color color,
-    double? progress,
-  }) {
+/// One tile of the daily targets grid. Text shrinks to fit instead of
+/// clipping when the system text size is large.
+class StatCard extends StatelessWidget {
+  final String title;
+  final String value;
+  final String unit;
+  final IconData icon;
+  final Color color;
+  final double? progress;
+
+  const StatCard({
+    super.key,
+    required this.title,
+    required this.value,
+    required this.unit,
+    required this.icon,
+    required this.color,
+    this.progress,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final progress = this.progress;
     final isPrimary =
         color == AppColors.primary || color == AppColors.styrianForest;
     final textColor = isPrimary ? AppColors.limestone : AppColors.slate;
@@ -108,22 +124,34 @@ class TodayStatsGrid extends StatelessWidget {
             children: [
               Icon(icon, size: 18, color: subTextColor),
               const SizedBox(width: 8),
-              Text(
-                title.toUpperCase(),
-                style: AppTypography.labelLarge.copyWith(
-                  fontSize: 10,
-                  color: subTextColor,
-                  letterSpacing: 1.0,
+              Flexible(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    title.toUpperCase(),
+                    maxLines: 1,
+                    style: AppTypography.labelLarge.copyWith(
+                      fontSize: 10,
+                      color: subTextColor,
+                      letterSpacing: 1.0,
+                    ),
+                  ),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 12),
-          Text(
-            value,
-            style: AppTypography.dataMedium.copyWith(
-              color: textColor,
-              fontSize: 14,
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              value,
+              maxLines: 1,
+              style: AppTypography.dataMedium.copyWith(
+                color: textColor,
+                fontSize: 14,
+              ),
             ),
           ),
           Text(
