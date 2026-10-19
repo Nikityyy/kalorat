@@ -14,7 +14,7 @@ class CameraPermissionRequest extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     return ColoredBox(
-      color: AppColors.offWhite,
+      color: AppColors.surface,
       child: SafeArea(
         child: Align(
           alignment: const Alignment(0, -0.12),
@@ -25,7 +25,7 @@ class CameraPermissionRequest extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.all(32),
                 decoration: BoxDecoration(
-                  color: AppColors.pureWhite,
+                  color: AppColors.canvas,
                   borderRadius: BorderRadius.circular(24),
                   border: Border.all(color: AppColors.borderGrey),
                 ),
@@ -39,7 +39,7 @@ class CameraPermissionRequest extends StatelessWidget {
                         color: AppColors.styrianForest.withValues(alpha: 0.1),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.camera_alt_outlined,
                         size: 42,
                         color: AppColors.styrianForest,

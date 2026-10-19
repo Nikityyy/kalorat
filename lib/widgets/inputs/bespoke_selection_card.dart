@@ -89,10 +89,10 @@ class BespokeSelectionCard extends StatelessWidget {
                   ),
                 ),
                 child: isSelected
-                    ? const Icon(
+                    ? Icon(
                         Icons.check,
                         size: 16,
-                        color: AppColors.glacialWhite,
+                        color: AppColors.onPrimary,
                       )
                     : null,
               ),

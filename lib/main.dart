@@ -11,6 +11,7 @@ import 'screens/onboarding/onboarding_flow.dart';
 import 'theme/app_colors.dart';
 import 'theme/app_theme.dart';
 import 'services/widget_service.dart';
+import 'utils/rebuild_all.dart';
 import 'utils/splash_stub.dart'
     if (dart.library.js_interop) 'utils/splash_web.dart'
     as splash;
@@ -66,8 +67,46 @@ void _hideSplashOnce() {
   WidgetsBinding.instance.addPostFrameCallback((_) => splash.hideSplash());
 }
 
-class KaloratApp extends StatelessWidget {
+class KaloratApp extends StatefulWidget {
   const KaloratApp({super.key});
+
+  @override
+  State<KaloratApp> createState() => _KaloratAppState();
+}
+
+class _KaloratAppState extends State<KaloratApp> with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  // The system switched between light and dark.
+  @override
+  void didChangePlatformBrightness() => setState(() {});
+
+  bool _isDark(ThemeMode mode) =>
+      mode == ThemeMode.dark ||
+      (mode == ThemeMode.system &&
+          WidgetsBinding.instance.platformDispatcher.platformBrightness ==
+              Brightness.dark);
+
+  /// Points the role colors at the theme in use. Widgets read them where they
+  /// build, so everything already on screen is rebuilt when it changes.
+  void _syncPalette(ThemeMode mode) {
+    final dark = _isDark(mode);
+    if (AppColors.isDark == dark) return;
+    AppColors.setDark(dark);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) rebuildAll(context);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -76,14 +115,15 @@ class KaloratApp extends StatelessWidget {
         create: (_) => AppProvider()..init(),
         child: Consumer<AppProvider>(
           builder: (context, provider, _) {
+            _syncPalette(provider.themeMode);
             Widget homeWidget;
             if (!provider.isInitialized) {
               // On the web the splash in index.html is the loading screen. A
               // second indicator here would show two during the hand-off.
               homeWidget = kIsWeb
-                  ? const Scaffold(backgroundColor: AppColors.pureWhite)
+                  ? Scaffold(backgroundColor: AppColors.canvas)
                   : Scaffold(
-                      backgroundColor: AppColors.pureWhite,
+                      backgroundColor: AppColors.canvas,
                       body: Center(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -95,7 +135,7 @@ class KaloratApp extends StatelessWidget {
                               fit: BoxFit.contain,
                             ),
                             const SizedBox(height: 24),
-                            const CircularProgressIndicator(
+                            CircularProgressIndicator(
                               color: AppColors.styrianForest,
                             ),
                           ],
@@ -121,7 +161,8 @@ class KaloratApp extends StatelessWidget {
                 },
               ),
               theme: AppTheme.lightTheme,
-              themeMode: ThemeMode.light, // Force light mode
+              darkTheme: AppTheme.darkTheme,
+              themeMode: provider.themeMode,
               locale: Locale(provider.language),
               localizationsDelegates: AppLocalizations.localizationsDelegates,
               supportedLocales: AppLocalizations.supportedLocales,
@@ -130,14 +171,28 @@ class KaloratApp extends StatelessWidget {
                 // Follow the system text size, within limits the layouts are
                 // built and checked for (see test/widgets/text_scale_test.dart).
                 final media = MediaQuery.of(context);
-                return MediaQuery(
-                  data: media.copyWith(
-                    textScaler: media.textScaler.clamp(
-                      minScaleFactor: 1.0,
-                      maxScaleFactor: maxTextScale,
-                    ),
+                final icons = AppColors.isDark
+                    ? Brightness.light
+                    : Brightness.dark;
+                return AnnotatedRegion<SystemUiOverlayStyle>(
+                  value: SystemUiOverlayStyle(
+                    statusBarColor: Colors.transparent,
+                    systemNavigationBarColor: Colors.transparent,
+                    statusBarIconBrightness: icons,
+                    systemNavigationBarIconBrightness: icons,
+                    statusBarBrightness: AppColors.isDark
+                        ? Brightness.dark
+                        : Brightness.light,
                   ),
-                  child: child!,
+                  child: MediaQuery(
+                    data: media.copyWith(
+                      textScaler: media.textScaler.clamp(
+                        minScaleFactor: 1.0,
+                        maxScaleFactor: maxTextScale,
+                      ),
+                    ),
+                    child: child!,
+                  ),
                 );
               },
             );

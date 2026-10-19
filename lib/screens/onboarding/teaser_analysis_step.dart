@@ -45,7 +45,7 @@ class TeaserAnalysisStep extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.check_circle_outline, color: AppColors.styrianForest, size: 80),
+          Icon(Icons.check_circle_outline, color: AppColors.styrianForest, size: 80),
           const SizedBox(height: 24),
           Text(l10n.planReady, style: AppTypography.displayMedium, textAlign: TextAlign.center),
           const SizedBox(height: 16),

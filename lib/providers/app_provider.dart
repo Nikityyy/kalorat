@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/models.dart';
 import '../services/services.dart';
+import '../services/theme_preference.dart';
 import '../utils/app_logger.dart';
 
 class StreakData {
@@ -79,6 +80,13 @@ class AppProvider extends ChangeNotifier with WidgetsBindingObserver {
     // Fallback to device language
     final systemLocale = ui.PlatformDispatcher.instance.locale.languageCode;
     return systemLocale == 'de' ? 'de' : 'en';
+  }
+
+  ThemeMode get themeMode => ThemePreference.mode;
+
+  Future<void> setThemeMode(ThemeMode mode) async {
+    await ThemePreference.setMode(mode);
+    notifyListeners();
   }
 
   String get apiKey => _secureApiKey ?? _user?.geminiApiKey ?? '';

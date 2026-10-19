@@ -69,7 +69,7 @@ class _WeightListState extends State<WeightList> {
                     ),
                     const SizedBox(width: 16),
                     IconButton(
-                      icon: const Icon(
+                      icon: Icon(
                         Icons.edit_outlined,
                         color: AppColors.slate,
                         size: 20,
@@ -84,7 +84,7 @@ class _WeightListState extends State<WeightList> {
                     ),
                     const SizedBox(width: 16),
                     IconButton(
-                      icon: const Icon(
+                      icon: Icon(
                         Icons.delete_outline,
                         color: AppColors.slate, // Muted slate, not red
                         size: 20,

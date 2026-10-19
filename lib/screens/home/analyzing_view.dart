@@ -26,7 +26,7 @@ class AnalyzingView extends StatelessWidget {
         // 1. Background Image (Actual captured photo); a meal described in
         // words has none.
         if (heroImage == null)
-          const Positioned.fill(
+          Positioned.fill(
             child: ColoredBox(color: AppColors.styrianForest),
           )
         else
@@ -49,7 +49,7 @@ class AnalyzingView extends StatelessWidget {
           right: 0,
           bottom: 0,
           child: Container(
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               color: AppColors.glacialWhite,
               borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
             ),

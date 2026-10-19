@@ -84,9 +84,9 @@ class _LiveThoughtPanelState extends State<LiveThoughtPanel>
         child: Container(
           width: double.infinity,
           decoration: BoxDecoration(
-            color: AppColors.offWhite,
+            color: AppColors.surface,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AppColors.subtleAsh, width: 1),
+            border: Border.all(color: AppColors.border, width: 1),
           ),
           padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
           child: Column(
@@ -164,9 +164,9 @@ class _FluidAnalysisRailState extends State<FluidAnalysisRail>
 
           return Container(
             decoration: BoxDecoration(
-              color: AppColors.offWhite,
+              color: AppColors.surface,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppColors.subtleAsh, width: 1),
+              border: Border.all(color: AppColors.border, width: 1),
             ),
             padding: const EdgeInsets.all(3),
             child: Align(
@@ -241,7 +241,7 @@ class _ThinkingPlaceholder extends StatelessWidget {
             fontFamily: AppTypography.outfit,
             fontSize: 14,
             fontWeight: FontWeight.w500,
-            color: AppColors.deepSpaceBlack.withValues(alpha: 0.58),
+            color: AppColors.text.withValues(alpha: 0.58),
             height: 1.5,
             letterSpacing: 0,
           ),
@@ -414,20 +414,20 @@ class _Cursor extends StatelessWidget {
   }
 }
 
-final TextStyle _bodyStyle = TextStyle(
+TextStyle get _bodyStyle => TextStyle(
   fontFamily: AppTypography.outfit,
   fontSize: 14,
   fontWeight: FontWeight.w400,
-  color: AppColors.deepSpaceBlack.withValues(alpha: 0.74),
+  color: AppColors.text.withValues(alpha: 0.74),
   height: 1.55,
   letterSpacing: 0,
 );
 
-final TextStyle _headingStyle = TextStyle(
+TextStyle get _headingStyle => TextStyle(
   fontFamily: AppTypography.outfit,
   fontSize: 15,
   fontWeight: FontWeight.w700,
-  color: AppColors.deepSpaceBlack,
+  color: AppColors.text,
   height: 1.35,
   letterSpacing: 0,
 );
@@ -454,8 +454,8 @@ List<InlineSpan> _inlineSpans(String source, TextStyle baseStyle) {
           fontWeight: isBold ? FontWeight.w700 : FontWeight.w500,
           fontStyle: isBold ? FontStyle.normal : FontStyle.italic,
           color: isBold
-              ? AppColors.deepSpaceBlack
-              : AppColors.deepSpaceBlack.withValues(alpha: 0.7),
+              ? AppColors.text
+              : AppColors.text.withValues(alpha: 0.7),
         ),
       ),
     );

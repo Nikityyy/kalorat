@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- Window behind the app while it starts: the canvas of the dark theme -->
+    <color name="window_background">#0A0A0A</color>
+
     <!-- Widget Color Palette (Dark Theme) -->
     <color name="widget_background">#0A0A0A</color>
     <color name="widget_border">#27272A</color>

@@ -7,46 +7,69 @@ class AppTheme {
   static const double borderRadius = 12.0;
   static const double _borderWidth = 1.0;
 
-  static final RoundedRectangleBorder _flatShape = RoundedRectangleBorder(
-    borderRadius: BorderRadius.circular(borderRadius),
-    side: const BorderSide(color: AppColors.subtleAsh, width: _borderWidth),
-  );
+  static ThemeData get lightTheme => _build(Brightness.light);
 
-  static ThemeData get lightTheme {
+  static ThemeData get darkTheme => _build(Brightness.dark);
+
+  /// Builds one theme from the role colors. They follow [AppColors.setDark],
+  /// so that is set for the duration and put back afterwards.
+  static ThemeData _build(Brightness brightness) {
+    final before = AppColors.isDark;
+    AppColors.setDark(brightness == Brightness.dark);
+    try {
+      return _theme(brightness);
+    } finally {
+      AppColors.setDark(before);
+    }
+  }
+
+  static ThemeData _theme(Brightness brightness) {
+    final border = BorderSide(color: AppColors.border, width: _borderWidth);
+    final flatShape = RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(borderRadius),
+      side: border,
+    );
+    final dark = brightness == Brightness.dark;
+    final colorScheme = ColorScheme(
+      brightness: brightness,
+      primary: AppColors.primary,
+      onPrimary: AppColors.onPrimary,
+      secondary: AppColors.primary,
+      onSecondary: AppColors.onPrimary,
+      error: AppColors.signalRed,
+      onError: AppColors.pureWhite,
+      surface: AppColors.surface,
+      onSurface: AppColors.text,
+      // No elevation tint: surfaces are separated by 1px borders only.
+      surfaceTint: Colors.transparent,
+      // Field outlines, unselected controls and secondary text. Light keeps
+      // the full text color (what ColorScheme.light defaults to); dark uses
+      // neutral greys that read on the dark canvas.
+      outline: dark ? const Color(0xFF71717A) : AppColors.text,
+      outlineVariant: dark ? AppColors.border : AppColors.text,
+      onSurfaceVariant: dark ? const Color(0xFFA1A1AA) : AppColors.text,
+    );
+
     return ThemeData(
       useMaterial3: true,
       fontFamily: AppTypography.outfit,
-      brightness: Brightness.light,
-      scaffoldBackgroundColor: AppColors.pureWhite,
-      primaryColor: AppColors.styrianForest,
-      colorScheme: ColorScheme.light(
-        primary: AppColors.styrianForest,
-        secondary: AppColors.styrianForest,
-        surface: AppColors.offWhite,
-        error: AppColors.signalRed,
-        onPrimary: AppColors.pureWhite,
-        onSurface: AppColors.deepSpaceBlack,
-        // No elevation tint: surfaces are separated by 1px borders only.
-        surfaceTint: Colors.transparent,
-      ),
+      brightness: brightness,
+      scaffoldBackgroundColor: AppColors.canvas,
+      canvasColor: AppColors.canvas,
+      primaryColor: AppColors.primary,
+      colorScheme: colorScheme,
       cardTheme: CardThemeData(
-        color: AppColors.offWhite,
+        color: AppColors.surface,
         elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(borderRadius),
-          side: const BorderSide(
-            color: AppColors.subtleAsh,
-            width: _borderWidth,
-          ),
-        ),
+        shape: flatShape,
       ),
       appBarTheme: AppBarTheme(
-        backgroundColor: AppColors.pureWhite,
+        backgroundColor: AppColors.canvas,
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: true,
         titleTextStyle: AppTypography.titleLarge,
-        foregroundColor: AppColors.styrianForest,
+        foregroundColor: AppColors.primary,
       ),
       textTheme: TextTheme(
         displayLarge: AppTypography.displayLarge,
@@ -58,55 +81,49 @@ class AppTheme {
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.styrianForest,
-          foregroundColor: AppColors.pureWhite,
+          backgroundColor: AppColors.primary,
+          foregroundColor: AppColors.onPrimary,
           elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(borderRadius),
-            side: const BorderSide(
-              color: AppColors.subtleAsh,
-              width: _borderWidth,
-            ),
-          ),
+          shape: flatShape,
           padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
         ),
       ),
-      dividerTheme: const DividerThemeData(
-        color: AppColors.subtleAsh,
+      dividerTheme: DividerThemeData(
+        color: AppColors.border,
         thickness: 1,
         space: 1,
       ),
       dialogTheme: DialogThemeData(
-        backgroundColor: AppColors.pureWhite,
+        backgroundColor: AppColors.canvas,
         elevation: 0,
-        shape: _flatShape,
+        shape: flatShape,
       ),
-      bottomSheetTheme: const BottomSheetThemeData(
-        backgroundColor: AppColors.pureWhite,
+      bottomSheetTheme: BottomSheetThemeData(
+        backgroundColor: AppColors.canvas,
         elevation: 0,
         modalElevation: 0,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(
+          borderRadius: const BorderRadius.vertical(
             top: Radius.circular(borderRadius),
           ),
-          side: BorderSide(color: AppColors.subtleAsh, width: _borderWidth),
+          side: border,
         ),
       ),
-      snackBarTheme: SnackBarThemeData(elevation: 0, shape: _flatShape),
+      snackBarTheme: SnackBarThemeData(elevation: 0, shape: flatShape),
       popupMenuTheme: PopupMenuThemeData(
-        color: AppColors.pureWhite,
+        color: AppColors.canvas,
         elevation: 0,
-        shape: _flatShape,
+        shape: flatShape,
       ),
       datePickerTheme: DatePickerThemeData(
-        backgroundColor: AppColors.pureWhite,
+        backgroundColor: AppColors.canvas,
         elevation: 0,
-        shape: _flatShape,
+        shape: flatShape,
       ),
       timePickerTheme: TimePickerThemeData(
-        backgroundColor: AppColors.pureWhite,
+        backgroundColor: AppColors.canvas,
         elevation: 0,
-        shape: _flatShape,
+        shape: flatShape,
       ),
       // Horizontal slide on Apple platforms; slide with a cross-fade
       // elsewhere. Both are the native motion of the platform.

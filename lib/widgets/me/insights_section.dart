@@ -137,7 +137,7 @@ class WeeklySummaryCard extends StatelessWidget {
             const SizedBox(height: 16),
             _DayBars(summary: summary, locale: locale),
           ],
-          const Padding(
+          Padding(
             padding: EdgeInsets.symmetric(vertical: 14),
             child: Divider(height: 1, color: AppColors.borderGrey),
           ),

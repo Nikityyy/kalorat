@@ -118,7 +118,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                     maintainState: true,
                     child: TextButton.icon(
                       onPressed: () => _showDatePicker(provider.language),
-                      icon: const Icon(
+                      icon: Icon(
                         Icons.calendar_today,
                         size: 18,
                         color: AppColors.primary,
@@ -127,7 +127,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                         DateFormat.yMMMd(
                           provider.language,
                         ).format(_selectedDate),
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: AppColors.primary,
                           fontWeight: FontWeight.bold,
                         ),
@@ -211,7 +211,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                             textAlign: TextAlign.center,
                             style: AppTypography.bodyMedium.copyWith(
                               color: isSelected
-                                  ? AppColors.pebble
+                                  ? AppColors.onPrimary
                                   : AppColors.slate,
                               fontWeight: isSelected
                                   ? FontWeight.bold
@@ -347,7 +347,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
         children: [
           _buildStatRow(stats, l10n),
           if (!isDailyPeriod) ...[
-            const Padding(
+            Padding(
               padding: EdgeInsets.symmetric(vertical: 12),
               child: Divider(
                 height: 1,
@@ -506,10 +506,10 @@ class _HistoryScreenState extends State<HistoryScreen> {
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.light(
+            colorScheme: Theme.of(context).colorScheme.copyWith(
               primary: AppColors.primary,
-              onPrimary: AppColors.pebble,
-              surface: AppColors.limestone,
+              onPrimary: AppColors.onPrimary,
+              surface: AppColors.canvas,
               onSurface: AppColors.slate,
             ),
           ),

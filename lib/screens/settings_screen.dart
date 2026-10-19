@@ -99,9 +99,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final l10n = context.l10n;
 
     if (user == null) {
-      return const Center(
-        child: CircularProgressIndicator(color: AppColors.primary),
-      );
+      return Center(child: CircularProgressIndicator(color: AppColors.primary));
     }
 
     return Scaffold(
@@ -210,10 +208,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
     dynamic l10n,
   ) {
     return _buildSection(l10n.preferences, [
+      _buildThemeSelector(provider, l10n),
+      const Divider(height: 1, indent: 16, endIndent: 16),
       SwitchListTile(
         title: Text(
           l10n.gramModeTitle,
-          style: const TextStyle(color: AppColors.slate),
+          style: TextStyle(color: AppColors.slate),
         ),
         subtitle: Text(
           l10n.gramModeSubtitle,
@@ -227,7 +227,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       SwitchListTile(
         title: Text(
           l10n.accurateModeTitle,
-          style: const TextStyle(color: AppColors.slate),
+          style: TextStyle(color: AppColors.slate),
         ),
         subtitle: Text(
           l10n.accurateModeSubtitle,
@@ -240,6 +240,50 @@ class _SettingsScreenState extends State<SettingsScreen> {
       const Divider(height: 1, indent: 16, endIndent: 16),
       _buildDayStartSelector(provider, user, l10n),
     ]);
+  }
+
+  Widget _buildThemeSelector(AppProvider provider, dynamic l10n) {
+    final modes = <ThemeMode, String>{
+      ThemeMode.system: l10n.themeSystem,
+      ThemeMode.light: l10n.themeLight,
+      ThemeMode.dark: l10n.themeDark,
+    };
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(l10n.themeTitle, style: TextStyle(color: AppColors.slate)),
+          const SizedBox(height: 8),
+          SizedBox(
+            width: double.infinity,
+            child: SegmentedButton<ThemeMode>(
+              showSelectedIcon: false,
+              segments: [
+                for (final entry in modes.entries)
+                  ButtonSegment(
+                    value: entry.key,
+                    label: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(entry.value),
+                    ),
+                  ),
+              ],
+              selected: {provider.themeMode},
+              onSelectionChanged: (selection) =>
+                  provider.setThemeMode(selection.first),
+              style: SegmentedButton.styleFrom(
+                foregroundColor: AppColors.slate,
+                selectedForegroundColor: AppColors.onPrimary,
+                selectedBackgroundColor: AppColors.primary,
+                side: BorderSide(color: AppColors.border),
+                minimumSize: const Size(0, 44),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildNotificationsSection(
@@ -255,7 +299,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           child: ListTile(
             title: Text(
               l10n.mealReminders,
-              style: const TextStyle(color: AppColors.slate),
+              style: TextStyle(color: AppColors.slate),
             ),
             trailing: _buildOnlyInAppBadge(l10n),
           ),
@@ -265,7 +309,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           child: ListTile(
             title: Text(
               l10n.weightReminders,
-              style: const TextStyle(color: AppColors.slate),
+              style: TextStyle(color: AppColors.slate),
             ),
             trailing: _buildOnlyInAppBadge(l10n),
           ),
@@ -275,7 +319,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         SwitchListTile(
           title: Text(
             l10n.mealReminders,
-            style: const TextStyle(color: AppColors.slate),
+            style: TextStyle(color: AppColors.slate),
           ),
           value: user.mealRemindersEnabled,
           activeThumbColor: AppColors.primary,
@@ -301,7 +345,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         SwitchListTile(
           title: Text(
             l10n.weightReminders,
-            style: const TextStyle(color: AppColors.slate),
+            style: TextStyle(color: AppColors.slate),
           ),
           value: user.weightRemindersEnabled,
           activeThumbColor: AppColors.primary,
@@ -375,7 +419,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         SwitchListTile(
           title: Text(
             l10n.syncWith(PlatformUtils.healthAppName),
-            style: const TextStyle(
+            style: TextStyle(
               fontWeight: FontWeight.w600,
               color: AppColors.slate,
             ),
@@ -422,7 +466,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           SwitchListTile(
             title: Text(
               l10n.syncMeals,
-              style: const TextStyle(fontSize: 14, color: AppColors.slate),
+              style: TextStyle(fontSize: 14, color: AppColors.slate),
             ),
             value: user.syncMealsToHealth,
             activeThumbColor: AppColors.primary,
@@ -431,7 +475,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           SwitchListTile(
             title: Text(
               l10n.syncWeight,
-              style: const TextStyle(fontSize: 14, color: AppColors.slate),
+              style: TextStyle(fontSize: 14, color: AppColors.slate),
             ),
             value: user.syncWeightToHealth,
             activeThumbColor: AppColors.primary,
@@ -498,7 +542,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               child: DropdownButton<int>(
                 value: user.activityLevelIndex,
                 isExpanded: true,
-                icon: const Icon(Icons.arrow_drop_down, color: AppColors.slate),
+                icon: Icon(Icons.arrow_drop_down, color: AppColors.slate),
                 dropdownColor: AppColors.limestone,
                 borderRadius: BorderRadius.circular(12),
                 items: List.generate(levels.length, (index) {
@@ -533,14 +577,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
         controller: controller,
         keyboardType: keyboardType,
         obscureText: obscureText,
-        style: const TextStyle(color: AppColors.slate),
+        style: TextStyle(color: AppColors.slate),
         decoration: InputDecoration(
           labelText: label,
           labelStyle: TextStyle(color: AppColors.slate.withValues(alpha: 0.6)),
-          border: const UnderlineInputBorder(
+          border: UnderlineInputBorder(
             borderSide: BorderSide(color: AppColors.pebble),
           ),
-          focusedBorder: const UnderlineInputBorder(
+          focusedBorder: UnderlineInputBorder(
             borderSide: BorderSide(color: AppColors.primary),
           ),
         ),
@@ -567,7 +611,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
         subtitle: Text(
           formattedDate,
-          style: const TextStyle(fontSize: 16, color: AppColors.slate),
+          style: TextStyle(fontSize: 16, color: AppColors.slate),
         ),
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
@@ -635,7 +679,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               return RadioListTile<int>(
                 title: Text(
                   genders[index],
-                  style: const TextStyle(color: AppColors.slate),
+                  style: TextStyle(color: AppColors.slate),
                 ),
                 value: index,
                 activeColor: AppColors.primary,
@@ -678,7 +722,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               return RadioListTile<int>(
                 title: Text(
                   goals[index],
-                  style: const TextStyle(color: AppColors.slate),
+                  style: TextStyle(color: AppColors.slate),
                 ),
                 value: index,
                 activeColor: AppColors.primary,
@@ -708,10 +752,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.light(
+            colorScheme: Theme.of(context).colorScheme.copyWith(
               primary: AppColors.primary,
-              onPrimary: AppColors.pebble,
-              surface: AppColors.limestone,
+              onPrimary: AppColors.onPrimary,
+              surface: AppColors.canvas,
               onSurface: AppColors.slate,
             ),
           ),
@@ -744,10 +788,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
         title: Text(
           isGuest ? l10n.guestMode : (user.email ?? l10n.account),
-          style: const TextStyle(
-            fontWeight: FontWeight.w600,
-            color: AppColors.slate,
-          ),
+          style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.slate),
         ),
         subtitle: isGuest
             ? Text(
@@ -763,10 +804,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
       if (isGuest) ...[
         ListTile(
-          leading: const Icon(Icons.login, color: AppColors.primary),
+          leading: Icon(Icons.login, color: AppColors.primary),
           title: Text(
             l10n.loginToSync,
-            style: const TextStyle(color: AppColors.slate),
+            style: TextStyle(color: AppColors.slate),
           ),
           trailing: const Icon(Icons.arrow_forward_ios, size: 16),
           onTap: () async {
@@ -798,7 +839,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ] else ...[
         ListTile(
           leading: _isSyncing
-              ? const SizedBox(
+              ? SizedBox(
                   width: 24,
                   height: 24,
                   child: CircularProgressIndicator(
@@ -806,11 +847,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     color: AppColors.primary,
                   ),
                 )
-              : const Icon(Icons.sync, color: AppColors.primary),
-          title: Text(
-            l10n.syncData,
-            style: const TextStyle(color: AppColors.slate),
-          ),
+              : Icon(Icons.sync, color: AppColors.primary),
+          title: Text(l10n.syncData, style: TextStyle(color: AppColors.slate)),
           subtitle: user.lastSyncTimestamp != null
               ? Text(
                   DateFormat.yMd(
@@ -920,7 +958,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           leading: const Icon(Icons.delete_forever, color: AppColors.error),
           title: Text(
             l10n.deleteAccount,
-            style: const TextStyle(color: AppColors.slate),
+            style: TextStyle(color: AppColors.slate),
           ),
           onTap: () async {
             final confirm = await showDialog<bool>(
@@ -971,11 +1009,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
       // Data Export/Import
       ListTile(
-        leading: const Icon(Icons.upload, color: AppColors.primary),
-        title: Text(
-          l10n.exportData,
-          style: const TextStyle(color: AppColors.slate),
-        ),
+        leading: Icon(Icons.upload, color: AppColors.primary),
+        title: Text(l10n.exportData, style: TextStyle(color: AppColors.slate)),
         onTap: () async {
           final path = await provider.exportData();
           if (path != null && mounted) {
@@ -998,13 +1033,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
         },
       ),
       ListTile(
-        leading: const Icon(
-          Icons.description_outlined,
-          color: AppColors.primary,
-        ),
+        leading: Icon(Icons.description_outlined, color: AppColors.primary),
         title: Text(
           l10n.exportMarkdown,
-          style: const TextStyle(color: AppColors.slate),
+          style: TextStyle(color: AppColors.slate),
         ),
         onTap: () async {
           final path = await provider.exportMarkdownReport(l10n);
@@ -1026,11 +1058,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
         },
       ),
       ListTile(
-        leading: const Icon(Icons.download, color: AppColors.primary),
-        title: Text(
-          l10n.importData,
-          style: const TextStyle(color: AppColors.slate),
-        ),
+        leading: Icon(Icons.download, color: AppColors.primary),
+        title: Text(l10n.importData, style: TextStyle(color: AppColors.slate)),
         onTap: () async {
           final success = await provider.importData();
           if (mounted) {
@@ -1044,10 +1073,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ),
       if (provider.hasImportBackup)
         ListTile(
-          leading: const Icon(Icons.restore, color: AppColors.primary),
+          leading: Icon(Icons.restore, color: AppColors.primary),
           title: Text(
             l10n.restoreImportBackup,
-            style: const TextStyle(color: AppColors.slate),
+            style: TextStyle(color: AppColors.slate),
           ),
           onTap: () async {
             try {
@@ -1088,16 +1117,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
             children: [
               Text(
                 l10n.dayStartsAt,
-                style: const TextStyle(fontSize: 16, color: AppColors.slate),
+                style: TextStyle(fontSize: 16, color: AppColors.slate),
               ),
               DropdownButtonHideUnderline(
                 child: DropdownButton<int>(
                   value: user.dayStartHour,
                   alignment: Alignment.centerRight,
-                  icon: const Icon(
-                    Icons.arrow_drop_down,
-                    color: AppColors.primary,
-                  ),
+                  icon: Icon(Icons.arrow_drop_down, color: AppColors.primary),
                   dropdownColor: AppColors.limestone,
                   borderRadius: BorderRadius.circular(12),
                   items: List.generate(7, (index) {
@@ -1137,13 +1163,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget _buildLegalSection(AppProvider provider, dynamic l10n) {
     return _buildSection(l10n.legal, [
       ListTile(
-        leading: const Icon(
-          Icons.privacy_tip_outlined,
-          color: AppColors.primary,
-        ),
+        leading: Icon(Icons.privacy_tip_outlined, color: AppColors.primary),
         title: Text(
           l10n.privacyPolicy,
-          style: const TextStyle(color: AppColors.slate),
+          style: TextStyle(color: AppColors.slate),
         ),
         trailing: const Icon(Icons.chevron_right, size: 20),
         onTap: () => Navigator.of(context).push(
@@ -1152,13 +1175,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ),
       const Divider(height: 1, indent: 16, endIndent: 16),
       ListTile(
-        leading: const Icon(
-          Icons.description_outlined,
-          color: AppColors.primary,
-        ),
+        leading: Icon(Icons.description_outlined, color: AppColors.primary),
         title: Text(
           l10n.termsOfService,
-          style: const TextStyle(color: AppColors.slate),
+          style: TextStyle(color: AppColors.slate),
         ),
         trailing: const Icon(Icons.open_in_new, size: 16),
         onTap: () {
@@ -1186,7 +1206,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       children: [
         Text(
           title,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
             color: AppColors.slate,

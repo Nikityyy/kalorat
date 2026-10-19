@@ -72,7 +72,7 @@ class _QuickLogSheetState extends State<_QuickLogSheet> {
       padding: EdgeInsets.only(bottom: media.viewInsets.bottom),
       child: Container(
         constraints: BoxConstraints(maxHeight: media.size.height * 0.85),
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           color: AppColors.glacialWhite,
           borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         ),
@@ -127,7 +127,7 @@ class _QuickLogSheetState extends State<_QuickLogSheet> {
                   onPressed: value.text.trim().isEmpty ? null : _describe,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.styrianForest,
-                    foregroundColor: AppColors.glacialWhite,
+                    foregroundColor: AppColors.onPrimary,
                     disabledBackgroundColor: AppColors.pebble,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
@@ -212,7 +212,7 @@ class _RecentMealRow extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 12),
-            const Icon(
+            Icon(
               Icons.add_circle_outline,
               size: 22,
               color: AppColors.styrianForest,

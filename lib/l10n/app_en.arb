@@ -512,5 +512,9 @@
   "historyExampleLabel": "Example",
   "sampleMealName": "Oatmeal",
   "welcomeHaveAccount": "I already have an account",
-  "loginNewHere": "New here? Set up your profile"
+  "loginNewHere": "New here? Set up your profile",
+  "themeTitle": "Appearance",
+  "themeSystem": "System",
+  "themeLight": "Light",
+  "themeDark": "Dark"
 }

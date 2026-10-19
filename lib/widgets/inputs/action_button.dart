@@ -45,11 +45,11 @@ class ActionButton extends StatelessWidget {
               borderRadius: BorderRadius.circular(AppTheme.borderRadius),
               child: Center(
                 child: isLoading
-                    ? const SizedBox(
+                    ? SizedBox(
                         width: 24,
                         height: 24,
                         child: CircularProgressIndicator(
-                          color: AppColors.glacialWhite,
+                          color: AppColors.onPrimary,
                           strokeWidth: 2,
                         ),
                       )
@@ -58,7 +58,7 @@ class ActionButton extends StatelessWidget {
                         style: AppTypography.labelLarge.copyWith(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
-                          color: AppColors.glacialWhite,
+                          color: AppColors.onPrimary,
                         ),
                       ),
               ),

@@ -2533,6 +2533,30 @@ abstract class AppLocalizations {
   /// In de, this message translates to:
   /// **'Neu hier? Profil einrichten'**
   String get loginNewHere;
+
+  /// No description provided for @themeTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Darstellung'**
+  String get themeTitle;
+
+  /// No description provided for @themeSystem.
+  ///
+  /// In de, this message translates to:
+  /// **'System'**
+  String get themeSystem;
+
+  /// No description provided for @themeLight.
+  ///
+  /// In de, this message translates to:
+  /// **'Hell'**
+  String get themeLight;
+
+  /// No description provided for @themeDark.
+  ///
+  /// In de, this message translates to:
+  /// **'Dunkel'**
+  String get themeDark;
 }
 
 class _AppLocalizationsDelegate

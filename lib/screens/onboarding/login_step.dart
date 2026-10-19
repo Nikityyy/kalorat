@@ -262,7 +262,7 @@ class _GoogleSignInButton extends StatelessWidget {
               },
         style: ElevatedButton.styleFrom(
           backgroundColor: Colors.white,
-          foregroundColor: AppColors.slate,
+          foregroundColor: AppColors.deepSpaceBlack,
           elevation: 0, // No shadow (flat, clean)
           shadowColor: Colors.transparent,
           padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -277,7 +277,7 @@ class _GoogleSignInButton extends StatelessWidget {
           enableFeedback: true,
         ),
         child: isLoading
-            ? const SizedBox(
+            ? SizedBox(
                 width: 24,
                 height: 24,
                 child: CircularProgressIndicator(
@@ -296,14 +296,14 @@ class _GoogleSignInButton extends StatelessWidget {
                     height: 24,
                   ),
                   const SizedBox(width: 12),
-                  const Flexible(
+                  Flexible(
                     child: Text(
-                      'Sign in with Google',
-                      style: TextStyle(
+                      context.l10n.signInWithGoogle,
+                      style: const TextStyle(
                         fontFamily: 'Outfit', // Brand font
                         fontSize: 16,
                         fontWeight: FontWeight.w500,
-                        color: AppColors.slate,
+                        color: AppColors.deepSpaceBlack,
                         letterSpacing: -0.5, // Slightly tighter tracking
                       ),
                       overflow: TextOverflow.ellipsis,

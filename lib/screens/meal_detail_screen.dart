@@ -246,7 +246,7 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
             bottom: MediaQuery.of(sheetContext).viewInsets.bottom,
           ),
           child: Container(
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               color: AppColors.glacialWhite,
               borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
             ),
@@ -316,7 +316,7 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
                       child: OutlinedButton(
                         onPressed: () => Navigator.pop(sheetContext),
                         style: OutlinedButton.styleFrom(
-                          side: const BorderSide(color: AppColors.pebble),
+                          side: BorderSide(color: AppColors.pebble),
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(
@@ -326,7 +326,7 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
                         ),
                         child: Text(
                           l10n.cancel,
-                          style: const TextStyle(color: AppColors.slate),
+                          style: TextStyle(color: AppColors.slate),
                         ),
                       ),
                     ),
@@ -354,7 +354,7 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
                                 : null,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppColors.styrianForest,
-                              foregroundColor: AppColors.glacialWhite,
+                              foregroundColor: AppColors.onPrimary,
                               padding: const EdgeInsets.symmetric(vertical: 14),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(
@@ -670,7 +670,7 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
           style: AppTypography.bodyMedium,
           decoration: InputDecoration(
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-            focusedBorder: const OutlineInputBorder(
+            focusedBorder: OutlineInputBorder(
               borderSide: BorderSide(color: AppColors.styrianForest),
             ),
           ),
@@ -680,7 +680,7 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
             onPressed: () => Navigator.pop(context),
             child: Text(
               context.l10n.cancel,
-              style: const TextStyle(color: AppColors.slate),
+              style: TextStyle(color: AppColors.slate),
             ),
           ),
           TextButton(
@@ -694,7 +694,7 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
             },
             child: Text(
               context.l10n.save,
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.styrianForest,
                 fontWeight: FontWeight.bold,
               ),
@@ -727,7 +727,7 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
           decoration: InputDecoration(
             suffixText: 'kcal',
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-            focusedBorder: const OutlineInputBorder(
+            focusedBorder: OutlineInputBorder(
               borderSide: BorderSide(color: AppColors.styrianForest),
             ),
           ),
@@ -737,7 +737,7 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
             onPressed: () => Navigator.pop(context),
             child: Text(
               context.l10n.cancel,
-              style: const TextStyle(color: AppColors.slate),
+              style: TextStyle(color: AppColors.slate),
             ),
           ),
           TextButton(
@@ -763,7 +763,7 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
             },
             child: Text(
               context.l10n.save,
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.styrianForest,
                 fontWeight: FontWeight.bold,
               ),
@@ -800,7 +800,7 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
           decoration: InputDecoration(
             suffixText: 'g',
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-            focusedBorder: const OutlineInputBorder(
+            focusedBorder: OutlineInputBorder(
               borderSide: BorderSide(color: AppColors.styrianForest),
             ),
           ),
@@ -810,7 +810,7 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
             onPressed: () => Navigator.pop(context),
             child: Text(
               context.l10n.cancel,
-              style: const TextStyle(color: AppColors.slate),
+              style: TextStyle(color: AppColors.slate),
             ),
           ),
           TextButton(
@@ -825,7 +825,7 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
             },
             child: Text(
               context.l10n.save,
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.styrianForest,
                 fontWeight: FontWeight.bold,
               ),
@@ -860,7 +860,7 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
           right: 0,
           bottom: 0,
           child: Container(
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               color: AppColors.glacialWhite,
               borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
             ),
@@ -916,7 +916,7 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
               left: 0,
               right: 0,
               height: screenHeight * 0.35,
-              child: const ColoredBox(color: AppColors.styrianForest),
+              child: ColoredBox(color: AppColors.styrianForestColor),
             )
           else
             Positioned(
@@ -990,7 +990,7 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
             right: 0,
             bottom: 0,
             child: Container(
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 color: AppColors.glacialWhite,
                 borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
               ),
@@ -1035,7 +1035,7 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                const Icon(
+                                Icon(
                                   Icons.schedule_outlined,
                                   size: 18,
                                   color: AppColors.styrianForest,
@@ -1050,7 +1050,7 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
                                   ),
                                 ),
                                 const SizedBox(width: 6),
-                                const Icon(
+                                Icon(
                                   Icons.edit_outlined,
                                   size: 16,
                                   color: AppColors.styrianForest,
@@ -1132,7 +1132,7 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
                                           );
                                         }
                                       },
-                                      icon: const Icon(
+                                      icon: Icon(
                                         Icons.add,
                                         color: AppColors.styrianForest,
                                       ),
@@ -1189,7 +1189,7 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
                     // Cancel Button (Small icon/text)
                     IconButton(
                       onPressed: () => Navigator.pop(context),
-                      icon: const Icon(
+                      icon: Icon(
                         Icons.close,
                         color: AppColors.slate,
                         size: 24,
@@ -1259,7 +1259,7 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.info_outline, color: AppColors.styrianForest),
+          Icon(Icons.info_outline, color: AppColors.styrianForest),
           const SizedBox(width: 10),
           Expanded(
             child: Column(
@@ -1395,9 +1395,9 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.pureWhite,
+        color: AppColors.canvas,
         borderRadius: BorderRadius.circular(AppTheme.borderRadius),
-        border: Border.all(color: AppColors.subtleAsh, width: 1),
+        border: Border.all(color: AppColors.border, width: 1),
       ),
       child: stacked
           ? Column(
@@ -1537,7 +1537,7 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
           labelText: label,
           suffixText: suffix,
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-          focusedBorder: const OutlineInputBorder(
+          focusedBorder: OutlineInputBorder(
             borderSide: BorderSide(color: AppColors.styrianForest),
           ),
         ),
@@ -1590,7 +1590,7 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
             onPressed: () => Navigator.pop(context),
             child: Text(
               context.l10n.cancel,
-              style: const TextStyle(color: AppColors.slate),
+              style: TextStyle(color: AppColors.slate),
             ),
           ),
           TextButton(
@@ -1632,7 +1632,7 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
             },
             child: Text(
               context.l10n.save,
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.styrianForest,
                 fontWeight: FontWeight.bold,
               ),
@@ -1652,9 +1652,9 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
       width: double.infinity,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.offWhite,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.subtleAsh, width: 1),
+        border: Border.all(color: AppColors.border, width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1769,7 +1769,7 @@ class _CalorieRing extends StatelessWidget {
                         '$calories',
                         style: AppTypography.titleLarge.copyWith(
                           fontSize: 26,
-                          color: AppColors.deepSpaceBlack,
+                          color: AppColors.text,
                         ),
                       ),
                       if (isOverride) ...[
@@ -1782,7 +1782,7 @@ class _CalorieRing extends StatelessWidget {
                     'kcal',
                     style: AppTypography.labelLarge.copyWith(
                       fontSize: 11,
-                      color: AppColors.deepSpaceBlack,
+                      color: AppColors.text,
                       letterSpacing: 0,
                     ),
                   ),
@@ -1821,7 +1821,7 @@ class _MacroCalorieRingPainter extends CustomPainter {
     final total = proteinCalories + carbsCalories + fatCalories;
 
     final trackPaint = Paint()
-      ..color = AppColors.subtleAsh.withValues(alpha: 0.45)
+      ..color = AppColors.border.withValues(alpha: 0.45)
       ..style = PaintingStyle.stroke
       ..strokeWidth = strokeWidth
       ..strokeCap = StrokeCap.round;
@@ -1905,7 +1905,7 @@ class _MacroSummaryRow extends StatelessWidget {
                   label,
                   style: AppTypography.labelLarge.copyWith(
                     fontSize: 12,
-                    color: AppColors.deepSpaceBlack,
+                    color: AppColors.text,
                     letterSpacing: 0,
                   ),
                   maxLines: 1,
@@ -1916,7 +1916,7 @@ class _MacroSummaryRow extends StatelessWidget {
               value,
               style: AppTypography.labelLarge.copyWith(
                 fontSize: 12,
-                color: AppColors.deepSpaceBlack,
+                color: AppColors.text,
                 letterSpacing: 0,
               ),
             ),
@@ -1956,7 +1956,7 @@ class _Per100Value extends StatelessWidget {
             value,
             style: AppTypography.dataMedium.copyWith(
               fontSize: 16,
-              color: AppColors.deepSpaceBlack,
+              color: AppColors.text,
               letterSpacing: 0,
             ),
           ),
@@ -1965,7 +1965,7 @@ class _Per100Value extends StatelessWidget {
             label,
             style: AppTypography.dataLabel.copyWith(
               fontSize: 10,
-              color: AppColors.deepSpaceBlack.withValues(alpha: 0.45),
+              color: AppColors.text.withValues(alpha: 0.45),
               letterSpacing: 0,
             ),
           ),
@@ -2017,7 +2017,7 @@ class _CorrectionChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final foreground = selected ? AppColors.glacialWhite : AppColors.slate;
+    final foreground = selected ? AppColors.onPrimary : AppColors.slate;
     return Semantics(
       button: true,
       selected: selected,

@@ -24,8 +24,9 @@
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
-  <!-- Theme Color — white canvas, matches manifest and splash -->
-  <meta name="theme-color" content="#FFFFFF">
+  <!-- Theme Color — the canvas of the light and the dark theme -->
+  <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0A0A0A" media="(prefers-color-scheme: dark)">
 
   <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
@@ -103,6 +104,17 @@
     @keyframes spin {
       to {
         transform: rotate(360deg);
+      }
+    }
+
+    /* The dark theme's canvas, until the app has loaded and knows the choice. */
+    @media (prefers-color-scheme: dark) {
+      body, #splash {
+        background-color: #0A0A0A;
+      }
+
+      .splash-spinner {
+        border-top-color: #1EB070;
       }
     }
   </style>

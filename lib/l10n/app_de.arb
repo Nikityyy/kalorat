@@ -623,5 +623,9 @@
   "historyExampleLabel": "Beispiel",
   "sampleMealName": "Porridge",
   "welcomeHaveAccount": "Ich habe schon ein Konto",
-  "loginNewHere": "Neu hier? Profil einrichten"
+  "loginNewHere": "Neu hier? Profil einrichten",
+  "themeTitle": "Darstellung",
+  "themeSystem": "System",
+  "themeLight": "Hell",
+  "themeDark": "Dunkel"
 }

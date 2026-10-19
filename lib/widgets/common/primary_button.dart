@@ -40,13 +40,13 @@ class PrimaryButton extends StatelessWidget {
                 onPressed?.call();
               },
         child: isLoading
-            ? const CupertinoActivityIndicator(color: AppColors.glacialWhite)
+            ? CupertinoActivityIndicator(color: AppColors.onPrimary)
             : Row(
                 mainAxisSize: MainAxisSize.min,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   if (icon != null) ...[
-                    Icon(icon, color: AppColors.glacialWhite, size: 20),
+                    Icon(icon, color: AppColors.onPrimary, size: 20),
                     const SizedBox(width: 8),
                   ],
                   Text(text, style: AppTypography.labelLarge),
@@ -64,22 +64,22 @@ class PrimaryButton extends StatelessWidget {
             },
       style: ElevatedButton.styleFrom(
         backgroundColor: AppColors.styrianForest,
-        foregroundColor: AppColors.glacialWhite,
+        foregroundColor: AppColors.onPrimary,
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppTheme.borderRadius),
-          side: const BorderSide(color: AppColors.borderGrey, width: 1),
+          side: BorderSide(color: AppColors.borderGrey, width: 1),
         ),
         elevation: 0,
         shadowColor: Colors.transparent,
       ),
       child: isLoading
-          ? const SizedBox(
+          ? SizedBox(
               width: 20,
               height: 20,
               child: CircularProgressIndicator(
                 strokeWidth: 2,
-                color: AppColors.glacialWhite,
+                color: AppColors.onPrimary,
               ),
             )
           : Row(

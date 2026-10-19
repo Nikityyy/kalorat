@@ -1207,7 +1207,7 @@ class _HomeScreenState extends State<HomeScreen>
             onPressed: () => Navigator.pop(context, false),
             child: Text(
               l10n.cancel,
-              style: const TextStyle(color: AppColors.slate),
+              style: TextStyle(color: AppColors.slate),
             ),
           ),
           TextButton(
@@ -1352,7 +1352,7 @@ class _HomeScreenState extends State<HomeScreen>
                             height: 68,
                             decoration: BoxDecoration(
                               border: Border.all(
-                                color: AppColors.pebble,
+                                color: Colors.white,
                                 width: 2,
                               ),
                               borderRadius: BorderRadius.circular(34),
@@ -1378,8 +1378,8 @@ class _HomeScreenState extends State<HomeScreen>
                               ),
                               child: Text(
                                 '${_currentZoomLevel.toStringAsFixed(1)}x',
-                                style: const TextStyle(
-                                  color: AppColors.pebble,
+                                style: TextStyle(
+                                  color: Colors.white,
                                   fontWeight: FontWeight.w700,
                                 ),
                               ),
@@ -1445,7 +1445,7 @@ class _HomeScreenState extends State<HomeScreen>
                         '${l10n.cameraNotAvailableWeb}\n${l10n.useGalleryInstead}',
                         textAlign: TextAlign.center,
                         style: AppTypography.bodyMedium.copyWith(
-                          color: AppColors.pebble,
+                          color: Colors.white,
                         ),
                       ),
                     )
@@ -1456,7 +1456,7 @@ class _HomeScreenState extends State<HomeScreen>
                       height: 72,
                     ),
                     const SizedBox(height: 20),
-                    const CircularProgressIndicator(color: AppColors.pebble),
+                    CircularProgressIndicator(color: Colors.white),
                   ],
                 ],
               ),

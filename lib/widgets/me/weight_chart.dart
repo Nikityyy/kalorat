@@ -113,7 +113,7 @@ class _WeightChartState extends State<WeightChart> {
       height: 48,
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: AppColors.pureWhite,
+        color: AppColors.canvas,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: AppColors.borderGrey),
       ),
@@ -136,7 +136,7 @@ class _WeightChartState extends State<WeightChart> {
                 child: Text(
                   labels[range],
                   style: AppTypography.labelLarge.copyWith(
-                    color: selected ? AppColors.pureWhite : AppColors.slate,
+                    color: selected ? AppColors.onPrimary : AppColors.slate,
                     fontSize: 14,
                   ),
                 ),
@@ -271,7 +271,7 @@ class _WeightChartState extends State<WeightChart> {
               final date = plotStart.add(Duration(days: spot.x.round()));
               return LineTooltipItem(
                 '${date.day}.${date.month}.${date.year}\n${spot.y.toStringAsFixed(1)} ${context.l10n.kg}',
-                const TextStyle(color: AppColors.pebble),
+                TextStyle(color: AppColors.onPrimary),
               );
             }).toList(),
           ),

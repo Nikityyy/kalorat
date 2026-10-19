@@ -75,7 +75,7 @@ class _MeScreenState extends State<MeScreen> {
         centerTitle: false,
         actions: [
           IconButton(
-            icon: const Icon(Icons.settings_outlined, color: AppColors.slate),
+            icon: Icon(Icons.settings_outlined, color: AppColors.slate),
             tooltip: context.l10n.settings,
             onPressed: () async {
               await Navigator.push(
@@ -214,7 +214,7 @@ class _MeScreenState extends State<MeScreen> {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.local_fire_department,
                           size: 14,
                           color: AppColors.amber,
@@ -499,7 +499,7 @@ class _MeScreenState extends State<MeScreen> {
             children: [
               Text(
                 bmi.toStringAsFixed(1),
-                style: const TextStyle(
+                style: TextStyle(
                   fontFamily: 'JetBrains Mono', // Data Font
                   fontSize: 32,
                   fontWeight: FontWeight.bold,
@@ -580,11 +580,11 @@ class _MeScreenState extends State<MeScreen> {
       builder: (context) => AlertDialog(
         title: Text(
           l10n.deleteWeight,
-          style: const TextStyle(color: AppColors.slate),
+          style: TextStyle(color: AppColors.slate),
         ),
         content: Text(
           l10n.deleteWeightConfirm,
-          style: const TextStyle(color: AppColors.slate),
+          style: TextStyle(color: AppColors.slate),
         ),
         backgroundColor: AppColors.limestone,
         surfaceTintColor: Colors.transparent,
@@ -594,7 +594,7 @@ class _MeScreenState extends State<MeScreen> {
             onPressed: () => Navigator.pop(context, false),
             child: Text(
               l10n.cancel,
-              style: const TextStyle(color: AppColors.slate),
+              style: TextStyle(color: AppColors.slate),
             ),
           ),
           TextButton(

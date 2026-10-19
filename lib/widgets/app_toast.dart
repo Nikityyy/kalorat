@@ -106,7 +106,7 @@ class _ToastViewState extends State<_ToastView>
   Color get _accent => switch (widget.kind) {
     AppToastKind.success => AppColors.styrianForest,
     AppToastKind.error => AppColors.signalRed,
-    AppToastKind.info => AppColors.subtleAsh,
+    AppToastKind.info => AppColors.border,
   };
 
   IconData? get _icon => switch (widget.kind) {
@@ -125,7 +125,7 @@ class _ToastViewState extends State<_ToastView>
     final icon = _icon;
 
     Widget toast = Material(
-      color: AppColors.pureWhite,
+      color: AppColors.canvas,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppTheme.borderRadius),
         side: BorderSide(color: _accent, width: 1),
@@ -146,7 +146,7 @@ class _ToastViewState extends State<_ToastView>
                   fontFamily: AppTypography.outfit,
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
-                  color: AppColors.deepSpaceBlack,
+                  color: AppColors.text,
                   height: 1.3,
                 ),
               ),

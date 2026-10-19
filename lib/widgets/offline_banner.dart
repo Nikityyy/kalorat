@@ -20,7 +20,7 @@ class OfflineBanner extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           decoration: BoxDecoration(
-            color: AppColors.pureWhite,
+            color: AppColors.canvas,
             borderRadius: BorderRadius.circular(AppTheme.borderRadius),
             border: Border.all(color: AppColors.borderGrey, width: 1),
           ),
@@ -37,7 +37,7 @@ class OfflineBanner extends StatelessWidget {
               const SizedBox(width: 8),
               Text(
                 l10n.offlineShort,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w500,
                   color: AppColors.slate,

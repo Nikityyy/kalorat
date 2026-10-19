@@ -107,7 +107,7 @@ class _AddWeightScreenState extends State<AddWeightScreen> {
               onPressed: _save,
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.styrianForest,
-                foregroundColor: AppColors.pebble,
+                foregroundColor: AppColors.onPrimary,
                 padding: const EdgeInsets.symmetric(vertical: 16),
               ),
               child: Text(

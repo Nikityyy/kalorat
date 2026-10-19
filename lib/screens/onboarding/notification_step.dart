@@ -65,7 +65,7 @@ class _NotificationStepState extends State<NotificationStep> {
                 color: AppColors.primary.withValues(alpha: 0.08),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.notifications_active_outlined,
                 size: 72,
                 color: AppColors.primary,

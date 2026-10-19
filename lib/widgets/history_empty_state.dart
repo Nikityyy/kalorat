@@ -34,7 +34,7 @@ class HistoryEmptyState extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Icon(
+              Icon(
                 Icons.restaurant_menu,
                 size: 40,
                 color: AppColors.primary,

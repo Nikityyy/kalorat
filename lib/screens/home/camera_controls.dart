@@ -82,11 +82,11 @@ class _CameraCircleButton extends StatelessWidget {
                   : Colors.black.withValues(alpha: 0.45),
               shape: BoxShape.circle,
               border: Border.all(
-                color: AppColors.pebble.withValues(alpha: 0.75),
+                color: Colors.white.withValues(alpha: 0.75),
                 width: 1,
               ),
             ),
-            child: Icon(icon, color: AppColors.pebble, size: iconSize),
+            child: Icon(icon, color: Colors.white, size: iconSize),
           ),
         ),
       ),
@@ -170,12 +170,12 @@ class BackToSelectionButton extends StatelessWidget {
           ),
           child: Row(
             children: [
-              const Icon(Icons.arrow_back, color: AppColors.pebble, size: 16),
+              Icon(Icons.arrow_back, color: Colors.white, size: 16),
               const SizedBox(width: 8),
               Text(
                 context.l10n.backToSelection,
-                style: const TextStyle(
-                  color: AppColors.pebble,
+                style: TextStyle(
+                  color: Colors.white,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -241,12 +241,12 @@ class CameraBottomBar extends StatelessWidget {
                   child: Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: AppColors.pebble.withValues(alpha: 0.2),
+                      color: Colors.white.withValues(alpha: 0.2),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.photo_library_outlined,
-                      color: AppColors.pebble,
+                      color: Colors.white,
                       size: 28,
                     ),
                   ),
@@ -268,18 +268,18 @@ class CameraBottomBar extends StatelessWidget {
                   height: 84,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    border: Border.all(color: AppColors.pebble, width: 4),
+                    border: Border.all(color: Colors.white, width: 4),
                   ),
                   child: Center(
                     child: Container(
                       width: 70,
                       height: 70,
-                      decoration: const BoxDecoration(
-                        color: AppColors.pebble,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
                         shape: BoxShape.circle,
                       ),
                       child: isCapturing
-                          ? const Center(
+                          ? Center(
                               child: CircularProgressIndicator(
                                 color: AppColors.styrianForest,
                               ),
@@ -306,12 +306,12 @@ class CameraBottomBar extends StatelessWidget {
                     child: Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: AppColors.pebble.withValues(alpha: 0.2),
+                        color: Colors.white.withValues(alpha: 0.2),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.edit_note_outlined,
-                        color: AppColors.pebble,
+                        color: Colors.white,
                         size: 28,
                       ),
                     ),
@@ -331,7 +331,7 @@ class CameraBottomBar extends StatelessWidget {
                         height: 60,
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: AppColors.pebble, width: 2),
+                          border: Border.all(color: Colors.white, width: 2),
                           image: DecorationImage(
                             image: lastPhoto,
                             fit: BoxFit.cover,
@@ -340,14 +340,14 @@ class CameraBottomBar extends StatelessWidget {
                       ),
                       Container(
                         padding: const EdgeInsets.all(4),
-                        decoration: const BoxDecoration(
+                        decoration: BoxDecoration(
                           color: AppColors.styrianForest,
                           shape: BoxShape.circle,
                         ),
                         child: Text(
                           '$photoCount',
-                          style: const TextStyle(
-                            color: AppColors.pebble,
+                          style: TextStyle(
+                            color: Colors.white,
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
                           ),

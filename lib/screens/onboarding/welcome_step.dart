@@ -47,7 +47,9 @@ class WelcomeStep extends StatelessWidget {
 
           Spacer(),
           Image.asset(
-            'assets/kalorat-textlogo.webp',
+            AppColors.isDark
+                ? 'assets/kalorat-textlogo-dark.webp'
+                : 'assets/kalorat-textlogo.webp',
             width: 300,
             fit: BoxFit.contain,
           ),
@@ -92,7 +94,7 @@ class WelcomeStep extends StatelessWidget {
         child: Text(
           code,
           style: AppTypography.labelLarge.copyWith(
-            color: isActive ? AppColors.pebble : AppColors.slate,
+            color: isActive ? AppColors.onPrimary : AppColors.slate,
             fontSize: 14,
           ),
         ),

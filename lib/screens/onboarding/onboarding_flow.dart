@@ -344,7 +344,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
                       label: context.l10n.back,
                       child: GestureDetector(
                         onTap: _previousPage,
-                        child: const Icon(
+                        child: Icon(
                           Icons.arrow_back,
                           color: AppColors.slate,
                         ),

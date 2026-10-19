@@ -37,21 +37,21 @@ class AppTypography {
     fontFamily: outfit,
     fontSize: 18,
     fontWeight: FontWeight.w400,
-    color: AppColors.deepSpaceBlack,
+    color: AppColors.text,
   );
 
   static TextStyle get bodyMedium => TextStyle(
     fontFamily: outfit,
     fontSize: 16,
     fontWeight: FontWeight.w400,
-    color: AppColors.deepSpaceBlack.withValues(alpha: 0.8),
+    color: AppColors.text.withValues(alpha: 0.8),
   );
 
   static TextStyle get labelLarge => TextStyle(
     fontFamily: outfit,
     fontSize: 16,
     fontWeight: FontWeight.w600,
-    color: AppColors.pureWhite,
+    color: AppColors.onPrimary,
     letterSpacing: 0.5,
   );
 
@@ -82,13 +82,13 @@ class AppTypography {
     fontFamily: outfit,
     fontSize: 14,
     fontWeight: FontWeight.w400,
-    color: AppColors.deepSpaceBlack.withValues(alpha: 0.7),
+    color: AppColors.text.withValues(alpha: 0.7),
   );
 
   static TextStyle get buttonLarge => TextStyle(
     fontFamily: outfit,
     fontSize: 16,
     fontWeight: FontWeight.w600,
-    color: AppColors.pureWhite,
+    color: AppColors.onPrimary,
   );
 }

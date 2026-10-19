@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../extensions/l10n_extension.dart';
-import '../../theme/app_colors.dart';
 
 /// Full-screen view of one photo, with zoom, save and delete.
 Future<void> showPhotoViewer(
@@ -87,7 +86,7 @@ class _PhotoViewerButton extends StatelessWidget {
         shape: const CircleBorder(),
         child: IconButton(
           onPressed: onPressed,
-          icon: Icon(icon, color: AppColors.glacialWhite),
+          icon: Icon(icon, color: Colors.white),
         ),
       ),
     );

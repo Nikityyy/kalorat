@@ -1327,4 +1327,16 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get loginNewHere => 'Neu hier? Profil einrichten';
+
+  @override
+  String get themeTitle => 'Darstellung';
+
+  @override
+  String get themeSystem => 'System';
+
+  @override
+  String get themeLight => 'Hell';
+
+  @override
+  String get themeDark => 'Dunkel';
 }

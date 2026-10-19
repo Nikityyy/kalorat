@@ -76,7 +76,7 @@ class MealCard extends StatelessWidget {
         color: AppColors.steel.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(AppTheme.borderRadius),
       ),
-      child: const Icon(Icons.restaurant, color: AppColors.frost),
+      child: Icon(Icons.restaurant, color: AppColors.frost),
     );
   }
 
@@ -180,7 +180,7 @@ class MealCard extends StatelessWidget {
                                   )
                                 else if (meal.analysisStatus == 'running' &&
                                     analysisWorkerActive)
-                                  const SizedBox(
+                                  SizedBox(
                                     width: 16,
                                     height: 16,
                                     child: CircularProgressIndicator(
@@ -189,7 +189,7 @@ class MealCard extends StatelessWidget {
                                     ),
                                   )
                                 else
-                                  const Icon(
+                                  Icon(
                                     Icons.schedule_outlined,
                                     size: 17,
                                     color: AppColors.primary,

@@ -217,16 +217,16 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
           : NavigationBarTheme(
               data: NavigationBarThemeData(
                 labelTextStyle: WidgetStateProperty.all(
-                  const TextStyle(
+                  TextStyle(
                     fontWeight: FontWeight.w500,
                     color: AppColors.slate,
                   ),
                 ),
                 iconTheme: WidgetStateProperty.resolveWith((states) {
                   if (states.contains(WidgetState.selected)) {
-                    return const IconThemeData(color: AppColors.pebble);
+                    return IconThemeData(color: AppColors.onPrimary);
                   }
-                  return const IconThemeData(color: AppColors.slate);
+                  return IconThemeData(color: AppColors.slate);
                 }),
               ),
               child: NavigationBar(
@@ -250,25 +250,25 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
                 destinations: [
                   NavigationDestination(
                     icon: const Icon(Icons.person_outline),
-                    selectedIcon: const Icon(
+                    selectedIcon: Icon(
                       Icons.person,
-                      color: AppColors.pebble,
+                      color: AppColors.onPrimary,
                     ),
                     label: l10n.me,
                   ),
                   NavigationDestination(
                     icon: const Icon(Icons.camera_alt_outlined),
-                    selectedIcon: const Icon(
+                    selectedIcon: Icon(
                       Icons.camera_alt,
-                      color: AppColors.pebble,
+                      color: AppColors.onPrimary,
                     ),
                     label: l10n.home,
                   ),
                   NavigationDestination(
                     icon: const Icon(Icons.history_outlined),
-                    selectedIcon: const Icon(
+                    selectedIcon: Icon(
                       Icons.history,
-                      color: AppColors.pebble,
+                      color: AppColors.onPrimary,
                     ),
                     label: l10n.history,
                   ),

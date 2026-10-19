@@ -87,7 +87,7 @@ class _ApiKeyStepState extends State<ApiKeyStep> {
                 TextSpan(text: l10n.goTo),
                 TextSpan(
                   text: 'Google AI Studio',
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.primary,
                     fontWeight: FontWeight.bold,
                     decoration: TextDecoration.underline,

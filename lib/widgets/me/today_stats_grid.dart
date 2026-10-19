@@ -105,9 +105,9 @@ class StatCard extends StatelessWidget {
     final progress = this.progress;
     final isPrimary =
         color == AppColors.primary || color == AppColors.styrianForest;
-    final textColor = isPrimary ? AppColors.limestone : AppColors.slate;
+    final textColor = isPrimary ? AppColors.onPrimary : AppColors.slate;
     final subTextColor = isPrimary
-        ? AppColors.limestone.withValues(alpha: 0.7)
+        ? AppColors.onPrimary.withValues(alpha: 0.7)
         : AppColors.slate.withValues(alpha: 0.5);
 
     return Container(
@@ -169,7 +169,7 @@ class StatCard extends StatelessWidget {
                 value: progress.clamp(0.0, 1.0),
                 backgroundColor: Colors.black.withValues(alpha: 0.1),
                 valueColor: AlwaysStoppedAnimation<Color>(
-                  isPrimary ? AppColors.limestone : AppColors.primary,
+                  isPrimary ? AppColors.onPrimary : AppColors.primary,
                 ),
                 minHeight: 4,
               ),

@@ -82,7 +82,7 @@ class _AnalysisStepState extends State<AnalysisStep> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const CircularProgressIndicator(color: AppColors.primary),
+          CircularProgressIndicator(color: AppColors.primary),
           const SizedBox(height: 24),
           Text(l10n.buildingPlan, style: AppTypography.titleLarge),
         ],

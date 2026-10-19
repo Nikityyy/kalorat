@@ -1308,4 +1308,16 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get loginNewHere => 'New here? Set up your profile';
+
+  @override
+  String get themeTitle => 'Appearance';
+
+  @override
+  String get themeSystem => 'System';
+
+  @override
+  String get themeLight => 'Light';
+
+  @override
+  String get themeDark => 'Dark';
 }
