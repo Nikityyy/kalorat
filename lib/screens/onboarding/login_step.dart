@@ -19,10 +19,16 @@ class LoginStep extends StatefulWidget {
   final VoidCallback? onLoginSuccess;
   final String language;
 
+  /// Set when the page is only for signing in to an existing account: the
+  /// escape then goes back to setting up a new profile instead of continuing
+  /// as a guest.
+  final VoidCallback? onSetupInstead;
+
   const LoginStep({
     super.key,
     required this.onNext,
     this.onLoginSuccess,
+    this.onSetupInstead,
     required this.language,
   });
 
@@ -210,9 +216,13 @@ class _LoginStepState extends State<LoginStep> {
           // Continue as guest (subtle text button)
           Center(
             child: TextButton(
-              onPressed: _isLoading ? null : _continueAsGuest,
+              onPressed: _isLoading
+                  ? null
+                  : (widget.onSetupInstead ?? _continueAsGuest),
               child: Text(
-                l10n.continueAsGuest,
+                widget.onSetupInstead != null
+                    ? l10n.loginNewHere
+                    : l10n.continueAsGuest,
                 style: AppTypography.bodyMedium.copyWith(
                   color: AppColors.slate.withValues(alpha: 0.5),
                   decoration: TextDecoration.underline,

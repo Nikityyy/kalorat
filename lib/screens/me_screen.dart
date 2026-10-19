@@ -6,6 +6,8 @@ import '../providers/app_provider.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_typography.dart';
 import '../extensions/l10n_extension.dart';
+import '../services/hints/first_use_hints.dart';
+import '../widgets/first_use_card.dart';
 import '../widgets/common/primary_button.dart';
 import '../widgets/me/insights_section.dart';
 import '../widgets/me/today_stats_grid.dart';
@@ -23,6 +25,20 @@ class MeScreen extends StatefulWidget {
 }
 
 class _MeScreenState extends State<MeScreen> {
+  bool _backupHintDismissed = false;
+
+  /// Once the first meal is saved, a guest is offered to back the data up.
+  bool _showBackupHint(AppProvider provider, UserModel user) =>
+      !_backupHintDismissed &&
+      user.isGuest &&
+      !FirstUseHints.seen(FirstUseHint.backup) &&
+      provider.getAllMeals().isNotEmpty;
+
+  void _dismissBackupHint() {
+    setState(() => _backupHintDismissed = true);
+    FirstUseHints.markSeen(FirstUseHint.backup);
+  }
+
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<AppProvider>();
@@ -87,6 +103,24 @@ class _MeScreenState extends State<MeScreen> {
             children: [
               _buildProfileHeader(user, provider.streakData),
               const SizedBox(height: 24),
+              if (_showBackupHint(provider, user)) ...[
+                FirstUseCard(
+                  icon: Icons.cloud_upload_outlined,
+                  title: l10n.hintBackupTitle,
+                  body: l10n.hintBackupBody,
+                  dismissLabel: l10n.hintNotNow,
+                  onDismiss: _dismissBackupHint,
+                  actionLabel: l10n.hintBackupAction,
+                  onAction: () async {
+                    _dismissBackupHint();
+                    await Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const SettingsScreen()),
+                    );
+                  },
+                ),
+                const SizedBox(height: 24),
+              ],
               _buildBMISection(user),
               const SizedBox(height: 24),
               _buildZeigarnikBlock(provider),

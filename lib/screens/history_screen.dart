@@ -231,12 +231,14 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
             Expanded(
               child: filteredMeals.isEmpty
-                  ? Center(
-                      child: Text(
-                        l10n.noMealsRecorded,
-                        style: TextStyle(color: Colors.grey[600]),
-                      ),
-                    )
+                  ? (provider.getAllMeals().isEmpty
+                        ? const HistoryEmptyState()
+                        : Center(
+                            child: Text(
+                              l10n.noMealsRecorded,
+                              style: TextStyle(color: Colors.grey[600]),
+                            ),
+                          ))
                   : RefreshIndicator(
                       color: AppColors.primary,
                       onRefresh: () async {

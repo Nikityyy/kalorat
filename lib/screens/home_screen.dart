@@ -19,6 +19,7 @@ import '../services/offline_queue_service.dart';
 import '../services/photo_store.dart';
 import '../utils/photo_downscale.dart';
 import '../services/gemini_service.dart';
+import '../services/hints/first_use_hints.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_typography.dart';
 import '../utils/analysis_parser.dart';
@@ -73,6 +74,7 @@ class _HomeScreenState extends State<HomeScreen>
   bool _isCapturing = false;
   bool _isInitializingCamera = false;
   bool _isAnalyzing = false;
+  bool _showCameraHint = !FirstUseHints.seen(FirstUseHint.camera);
   List<String> _capturedPhotos = [];
   bool _isTakingMore = false;
   int _cameraPreviewKey = 0;
@@ -1269,6 +1271,22 @@ class _HomeScreenState extends State<HomeScreen>
               thoughtText: _liveThoughtText,
             ),
           )
+        else if (_capturedPhotos.isEmpty && _showCameraHint)
+          Positioned(
+            top: MediaQuery.paddingOf(context).top + 76,
+            left: 16,
+            right: 16,
+            child: FirstUseCard(
+              onDark: true,
+              icon: Icons.photo_camera_outlined,
+              title: context.l10n.hintCameraTitle,
+              body: context.l10n.hintCameraBody,
+              onDismiss: () {
+                setState(() => _showCameraHint = false);
+                FirstUseHints.markSeen(FirstUseHint.camera);
+              },
+            ),
+          )
         else if (_capturedPhotos.isNotEmpty && !_isTakingMore)
           Positioned.fill(
             child: PhotoReviewView(
@@ -1787,10 +1805,7 @@ class _HomeScreenState extends State<HomeScreen>
         onAction: () => provider.deleteMeal(copy.id),
       );
     } catch (e) {
-      _showMessage(
-        errorMessage(context.l10n, e),
-        kind: AppToastKind.error,
-      );
+      _showMessage(errorMessage(context.l10n, e), kind: AppToastKind.error);
     }
   }
 

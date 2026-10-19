@@ -414,7 +414,7 @@
   "planReady": "Plan calculated",
   "basedOnProfile": "Based on your profile.",
   "dailyCalorieTarget": "Daily Calorie Target",
-  "signUpToSave": "Sign in to keep your data across devices.",
+  "signUpToSave": "You can change this in Settings, and sign in there to back up your data.",
   "createAccount": "Continue",
   "cameraGuideText": "Center the meal or a barcode in the frame.",
   "apiKeyUnreachable": "Google unreachable. Check your connection.",
@@ -499,5 +499,18 @@
   "validationDuplicateMeals": "Duplicate meal IDs in the import.",
   "thisWeekTitle": "This week",
   "startWeekStrong": "Start your week strong.",
-  "keepMomentum": "Keep the momentum going!"
+  "keepMomentum": "Keep the momentum going!",
+  "hintGotIt": "Got it",
+  "hintNotNow": "Not now",
+  "hintCameraTitle": "Photograph your meal",
+  "hintCameraBody": "Point the camera at your plate and tap the shutter. Before the analysis you can add more photos, a note, or a barcode for packaged food.",
+  "hintBackupTitle": "Keep your meals safe",
+  "hintBackupBody": "Your data is only stored on this device. Signing in with Google backs it up and makes it available on other devices.",
+  "hintBackupAction": "Open settings",
+  "historyEmptyTitle": "Your meals will appear here",
+  "historyEmptyBody": "Every analysed meal is listed here, sorted by day, week, month or year. Switch to the camera to log your first one.",
+  "historyExampleLabel": "Example",
+  "sampleMealName": "Oatmeal",
+  "welcomeHaveAccount": "I already have an account",
+  "loginNewHere": "New here? Set up your profile"
 }

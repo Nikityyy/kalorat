@@ -6,12 +6,14 @@ import '../../widgets/inputs/action_button.dart';
 
 class WelcomeStep extends StatelessWidget {
   final VoidCallback onNext;
+  final VoidCallback onSignIn;
   final String language;
   final Function(String) onLanguageChanged;
 
   const WelcomeStep({
     super.key,
     required this.onNext,
+    required this.onSignIn,
     required this.language,
     required this.onLanguageChanged,
   });
@@ -60,7 +62,19 @@ class WelcomeStep extends StatelessWidget {
             text: AppLocalizations.of(context)!.getStarted,
             onPressed: onNext,
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 4),
+          TextButton(
+            onPressed: onSignIn,
+            style: TextButton.styleFrom(minimumSize: const Size(44, 44)),
+            child: Text(
+              AppLocalizations.of(context)!.welcomeHaveAccount,
+              style: AppTypography.bodyMedium.copyWith(
+                color: AppColors.slate,
+                decoration: TextDecoration.underline,
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
         ],
       ),
     );

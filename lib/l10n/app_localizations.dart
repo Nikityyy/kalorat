@@ -2003,7 +2003,7 @@ abstract class AppLocalizations {
   /// No description provided for @signUpToSave.
   ///
   /// In de, this message translates to:
-  /// **'Melde dich an, um deine Daten geräteübergreifend zu behalten.'**
+  /// **'Du kannst das in den Einstellungen ändern und dich dort anmelden, um deine Daten zu sichern.'**
   String get signUpToSave;
 
   /// No description provided for @createAccount.
@@ -2455,6 +2455,84 @@ abstract class AppLocalizations {
   /// In de, this message translates to:
   /// **'Bleib dran!'**
   String get keepMomentum;
+
+  /// No description provided for @hintGotIt.
+  ///
+  /// In de, this message translates to:
+  /// **'Verstanden'**
+  String get hintGotIt;
+
+  /// No description provided for @hintNotNow.
+  ///
+  /// In de, this message translates to:
+  /// **'Nicht jetzt'**
+  String get hintNotNow;
+
+  /// No description provided for @hintCameraTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Foto deiner Mahlzeit'**
+  String get hintCameraTitle;
+
+  /// No description provided for @hintCameraBody.
+  ///
+  /// In de, this message translates to:
+  /// **'Halte die Kamera auf deinen Teller und tippe auf den Auslöser. Vor der Analyse kannst du weitere Fotos, eine Notiz oder einen Barcode für Fertigprodukte hinzufügen.'**
+  String get hintCameraBody;
+
+  /// No description provided for @hintBackupTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Sichere deine Mahlzeiten'**
+  String get hintBackupTitle;
+
+  /// No description provided for @hintBackupBody.
+  ///
+  /// In de, this message translates to:
+  /// **'Deine Daten liegen nur auf diesem Gerät. Mit Google anmelden sichert sie und macht sie auf anderen Geräten verfügbar.'**
+  String get hintBackupBody;
+
+  /// No description provided for @hintBackupAction.
+  ///
+  /// In de, this message translates to:
+  /// **'Einstellungen öffnen'**
+  String get hintBackupAction;
+
+  /// No description provided for @historyEmptyTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Hier erscheinen deine Mahlzeiten'**
+  String get historyEmptyTitle;
+
+  /// No description provided for @historyEmptyBody.
+  ///
+  /// In de, this message translates to:
+  /// **'Jede analysierte Mahlzeit steht hier, nach Tag, Woche, Monat oder Jahr sortiert. Wechsle zur Kamera, um die erste zu erfassen.'**
+  String get historyEmptyBody;
+
+  /// No description provided for @historyExampleLabel.
+  ///
+  /// In de, this message translates to:
+  /// **'Beispiel'**
+  String get historyExampleLabel;
+
+  /// No description provided for @sampleMealName.
+  ///
+  /// In de, this message translates to:
+  /// **'Porridge'**
+  String get sampleMealName;
+
+  /// No description provided for @welcomeHaveAccount.
+  ///
+  /// In de, this message translates to:
+  /// **'Ich habe schon ein Konto'**
+  String get welcomeHaveAccount;
+
+  /// No description provided for @loginNewHere.
+  ///
+  /// In de, this message translates to:
+  /// **'Neu hier? Profil einrichten'**
+  String get loginNewHere;
 }
 
 class _AppLocalizationsDelegate

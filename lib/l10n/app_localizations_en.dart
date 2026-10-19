@@ -1000,7 +1000,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get dailyCalorieTarget => 'Daily Calorie Target';
 
   @override
-  String get signUpToSave => 'Sign in to keep your data across devices.';
+  String get signUpToSave =>
+      'You can change this in Settings, and sign in there to back up your data.';
 
   @override
   String get createAccount => 'Continue';
@@ -1265,4 +1266,46 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get keepMomentum => 'Keep the momentum going!';
+
+  @override
+  String get hintGotIt => 'Got it';
+
+  @override
+  String get hintNotNow => 'Not now';
+
+  @override
+  String get hintCameraTitle => 'Photograph your meal';
+
+  @override
+  String get hintCameraBody =>
+      'Point the camera at your plate and tap the shutter. Before the analysis you can add more photos, a note, or a barcode for packaged food.';
+
+  @override
+  String get hintBackupTitle => 'Keep your meals safe';
+
+  @override
+  String get hintBackupBody =>
+      'Your data is only stored on this device. Signing in with Google backs it up and makes it available on other devices.';
+
+  @override
+  String get hintBackupAction => 'Open settings';
+
+  @override
+  String get historyEmptyTitle => 'Your meals will appear here';
+
+  @override
+  String get historyEmptyBody =>
+      'Every analysed meal is listed here, sorted by day, week, month or year. Switch to the camera to log your first one.';
+
+  @override
+  String get historyExampleLabel => 'Example';
+
+  @override
+  String get sampleMealName => 'Oatmeal';
+
+  @override
+  String get welcomeHaveAccount => 'I already have an account';
+
+  @override
+  String get loginNewHere => 'New here? Set up your profile';
 }

@@ -414,7 +414,7 @@
   "planReady": "Plan berechnet",
   "basedOnProfile": "Basierend auf deinem Profil.",
   "dailyCalorieTarget": "Tägliches Kalorienziel",
-  "signUpToSave": "Melde dich an, um deine Daten geräteübergreifend zu behalten.",
+  "signUpToSave": "Du kannst das in den Einstellungen ändern und dich dort anmelden, um deine Daten zu sichern.",
   "createAccount": "Weiter",
   "cameraGuideText": "Mahlzeit oder Barcode im Rahmen zentrieren.",
   "apiKeyUnreachable": "Google nicht erreichbar. Verbindung prüfen.",
@@ -610,5 +610,18 @@
   "validationDuplicateMeals": "Doppelte Mahlzeiten-IDs im Import.",
   "thisWeekTitle": "Wochenziel",
   "startWeekStrong": "Beginne deine Woche stark.",
-  "keepMomentum": "Bleib dran!"
+  "keepMomentum": "Bleib dran!",
+  "hintGotIt": "Verstanden",
+  "hintNotNow": "Nicht jetzt",
+  "hintCameraTitle": "Foto deiner Mahlzeit",
+  "hintCameraBody": "Halte die Kamera auf deinen Teller und tippe auf den Auslöser. Vor der Analyse kannst du weitere Fotos, eine Notiz oder einen Barcode für Fertigprodukte hinzufügen.",
+  "hintBackupTitle": "Sichere deine Mahlzeiten",
+  "hintBackupBody": "Deine Daten liegen nur auf diesem Gerät. Mit Google anmelden sichert sie und macht sie auf anderen Geräten verfügbar.",
+  "hintBackupAction": "Einstellungen öffnen",
+  "historyEmptyTitle": "Hier erscheinen deine Mahlzeiten",
+  "historyEmptyBody": "Jede analysierte Mahlzeit steht hier, nach Tag, Woche, Monat oder Jahr sortiert. Wechsle zur Kamera, um die erste zu erfassen.",
+  "historyExampleLabel": "Beispiel",
+  "sampleMealName": "Porridge",
+  "welcomeHaveAccount": "Ich habe schon ein Konto",
+  "loginNewHere": "Neu hier? Profil einrichten"
 }

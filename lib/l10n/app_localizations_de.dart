@@ -1014,7 +1014,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get signUpToSave =>
-      'Melde dich an, um deine Daten geräteübergreifend zu behalten.';
+      'Du kannst das in den Einstellungen ändern und dich dort anmelden, um deine Daten zu sichern.';
 
   @override
   String get createAccount => 'Weiter';
@@ -1285,4 +1285,46 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get keepMomentum => 'Bleib dran!';
+
+  @override
+  String get hintGotIt => 'Verstanden';
+
+  @override
+  String get hintNotNow => 'Nicht jetzt';
+
+  @override
+  String get hintCameraTitle => 'Foto deiner Mahlzeit';
+
+  @override
+  String get hintCameraBody =>
+      'Halte die Kamera auf deinen Teller und tippe auf den Auslöser. Vor der Analyse kannst du weitere Fotos, eine Notiz oder einen Barcode für Fertigprodukte hinzufügen.';
+
+  @override
+  String get hintBackupTitle => 'Sichere deine Mahlzeiten';
+
+  @override
+  String get hintBackupBody =>
+      'Deine Daten liegen nur auf diesem Gerät. Mit Google anmelden sichert sie und macht sie auf anderen Geräten verfügbar.';
+
+  @override
+  String get hintBackupAction => 'Einstellungen öffnen';
+
+  @override
+  String get historyEmptyTitle => 'Hier erscheinen deine Mahlzeiten';
+
+  @override
+  String get historyEmptyBody =>
+      'Jede analysierte Mahlzeit steht hier, nach Tag, Woche, Monat oder Jahr sortiert. Wechsle zur Kamera, um die erste zu erfassen.';
+
+  @override
+  String get historyExampleLabel => 'Beispiel';
+
+  @override
+  String get sampleMealName => 'Porridge';
+
+  @override
+  String get welcomeHaveAccount => 'Ich habe schon ein Konto';
+
+  @override
+  String get loginNewHere => 'Neu hier? Profil einrichten';
 }
