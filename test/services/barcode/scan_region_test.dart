@@ -79,4 +79,42 @@ void main() {
       isTrue,
     );
   });
+
+  group('lock box', () {
+    Rect onScreen(Rect bounds) =>
+        codeOnScreen(bounds: bounds, frameAspect: frameAspect, view: view)!;
+
+    test('a 1D scan line gets the shape of a barcode', () {
+      final box = lockBox(
+        onScreen(const Rect.fromLTRB(0.3, 0.45, 0.7, 0.4505)),
+        guide,
+      );
+      expect(box.height, greaterThan(box.width * 0.5));
+      expect(guide.inflate(12).contains(box.center), isTrue);
+    });
+
+    test('a code reaching past the guide is held near it', () {
+      final box = lockBox(
+        onScreen(const Rect.fromLTRB(0.0, 0.3, 1.0, 0.6)),
+        guide,
+      );
+      expect(box.left, greaterThanOrEqualTo(guide.left - 12));
+      expect(box.right, lessThanOrEqualTo(guide.right + 12));
+    });
+
+    test('the front camera mirrors the box', () {
+      const bounds = Rect.fromLTRB(0.2, 0.42, 0.4, 0.5);
+      final straight = onScreen(bounds);
+      final mirrored = codeOnScreen(
+        bounds: bounds,
+        frameAspect: frameAspect,
+        view: view,
+        mirrored: true,
+      )!;
+      expect(
+        mirrored.center.dx,
+        closeTo(view.width - straight.center.dx, 0.01),
+      );
+    });
+  });
 }

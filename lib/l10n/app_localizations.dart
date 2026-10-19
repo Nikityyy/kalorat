@@ -2228,18 +2228,6 @@ abstract class AppLocalizations {
   /// **'wahrscheinlich {low}–{high} kcal'**
   String probablyBetween(int low, int high);
 
-  /// No description provided for @kcalLeftToday.
-  ///
-  /// In de, this message translates to:
-  /// **'{kcal} kcal heute übrig'**
-  String kcalLeftToday(int kcal);
-
-  /// No description provided for @kcalOverToday.
-  ///
-  /// In de, this message translates to:
-  /// **'{kcal} kcal über dem Ziel'**
-  String kcalOverToday(int kcal);
-
   /// No description provided for @quickLogShort.
   ///
   /// In de, this message translates to:
@@ -2275,30 +2263,6 @@ abstract class AppLocalizations {
   /// In de, this message translates to:
   /// **'Analyse fehlgeschlagen. Bitte erneut versuchen.'**
   String get analysisFailed;
-
-  /// No description provided for @hapticsTest.
-  ///
-  /// In de, this message translates to:
-  /// **'Haptik testen'**
-  String get hapticsTest;
-
-  /// No description provided for @hapticsTestIntro.
-  ///
-  /// In de, this message translates to:
-  /// **'Tippe jede Zeile an und hake an, was du gespürt hast. Schick mir dann einen Screenshot. 0 ist der echte iOS-Schalter: Spürst du dort nichts, gibt das iPhone gar keine Schalter-Haptik aus (z. B. Systemhaptik in den Einstellungen aus).'**
-  String get hapticsTestIntro;
-
-  /// No description provided for @hapticsTestNative.
-  ///
-  /// In de, this message translates to:
-  /// **'iOS-Schalter von Hand'**
-  String get hapticsTestNative;
-
-  /// No description provided for @hapticsTestFelt.
-  ///
-  /// In de, this message translates to:
-  /// **'gespürt'**
-  String get hapticsTestFelt;
 }
 
 class _AppLocalizationsDelegate

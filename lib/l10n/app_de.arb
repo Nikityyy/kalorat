@@ -624,22 +624,6 @@
       }
     }
   },
-  "kcalLeftToday": "{kcal} kcal heute übrig",
-  "@kcalLeftToday": {
-    "placeholders": {
-      "kcal": {
-        "type": "int"
-      }
-    }
-  },
-  "kcalOverToday": "{kcal} kcal über dem Ziel",
-  "@kcalOverToday": {
-    "placeholders": {
-      "kcal": {
-        "type": "int"
-      }
-    }
-  },
   "quickLogShort": "Eintippen",
   "kcalPerDayPlan": "kcal pro Tag",
   "proteinPerDayPlan": "{grams} g Protein pro Tag",
@@ -652,9 +636,5 @@
   },
   "analysisNoConnection": "Keine Verbindung zu Gemini. Prüfe dein Internet und versuche es erneut.",
   "analysisRateLimited": "Gemini ist gerade ausgelastet. Bitte gleich nochmal versuchen.",
-  "analysisFailed": "Analyse fehlgeschlagen. Bitte erneut versuchen.",
-  "hapticsTest": "Haptik testen",
-  "hapticsTestIntro": "Tippe jede Zeile an und hake an, was du gespürt hast. Schick mir dann einen Screenshot. 0 ist der echte iOS-Schalter: Spürst du dort nichts, gibt das iPhone gar keine Schalter-Haptik aus (z. B. Systemhaptik in den Einstellungen aus).",
-  "hapticsTestNative": "iOS-Schalter von Hand",
-  "hapticsTestFelt": "gespürt"
+  "analysisFailed": "Analyse fehlgeschlagen. Bitte erneut versuchen."
 }

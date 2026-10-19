@@ -1,4 +1,5 @@
 import 'dart:typed_data';
+import 'dart:ui' show Rect, Size;
 
 import 'package:camera/camera.dart';
 
@@ -15,6 +16,9 @@ class _NoBarcodeScanner implements LiveBarcodeScanner {
     CameraController controller,
     BarcodeCallback onCode,
   ) async {}
+
+  @override
+  void setRegion(Rect? guide, Size view, {bool mirrored = false}) {}
 
   @override
   Future<Uint8List?> takeFrame() async => null;

@@ -2,14 +2,10 @@ import 'package:flutter/material.dart';
 import '../../extensions/l10n_extension.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_theme.dart';
-import 'package:provider/provider.dart';
-import '../../providers/app_provider.dart';
 import '../../theme/app_typography.dart';
 import '../../utils/haptics.dart';
-import '../../widgets/common/mono_digits.dart';
 
-/// What is left of today's calories, at the top of the camera: the number
-/// that decides what goes on the plate. Five quick taps show camera layout
+/// The text logo at the top of the camera. Five quick taps show camera layout
 /// measurements; a long press would drift into the tab swipe, so it is taps.
 class CameraLogo extends StatelessWidget {
   final VoidCallback onTap;
@@ -18,39 +14,30 @@ class CameraLogo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final provider = context.watch<AppProvider>();
-    final user = provider.user;
-    final l10n = context.l10n;
-    final String label;
-    if (user == null) {
-      label = l10n.appTitle;
-    } else {
-      final left =
-          user.dailyCalorieTarget - (provider.getTodayStats()['calories'] ?? 0);
-      label = left >= 0
-          ? l10n.kcalLeftToday(left.round())
-          : l10n.kcalOverToday((-left).round());
-    }
     return Positioned(
-      top: MediaQuery.of(context).padding.top + 20,
-      left: 84,
-      right: 84,
+      top: MediaQuery.of(context).padding.top + 16,
+      left: 80,
+      right: 80,
       child: GestureDetector(
         behavior: HitTestBehavior.translucent,
         onTap: onTap,
-        child: Center(
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.6),
-              borderRadius: BorderRadius.circular(AppTheme.borderRadius),
-            ),
-            child: MonoDigits(
-              label,
-              maxLines: 1,
-              style: AppTypography.secondary.copyWith(
-                color: Colors.white,
-                fontWeight: FontWeight.w500,
+        child: SizedBox(
+          height: 52,
+          child: Center(
+            child: Image.asset(
+              'assets/kalorat-textlogo.webp',
+              color: Colors.white,
+              colorBlendMode: BlendMode.srcIn,
+              height: 26,
+              fit: BoxFit.contain,
+              semanticLabel: context.l10n.appTitle,
+              errorBuilder: (context, error, stackTrace) => Text(
+                context.l10n.appTitle,
+                style: AppTypography.secondary.copyWith(
+                  color: Colors.white,
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
           ),

@@ -177,6 +177,9 @@ class _MlKitBarcodeScanner implements LiveBarcodeScanner {
   }
 
   @override
+  void setRegion(Rect? guide, Size view, {bool mirrored = false}) {}
+
+  @override
   Future<Uint8List?> takeFrame() async {
     final frame = _hitFrame;
     if (frame == null) return null;

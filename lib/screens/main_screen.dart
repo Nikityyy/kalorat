@@ -36,6 +36,17 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
     WidgetsBinding.instance.addObserver(this);
     _pageController = PageController(initialPage: _currentIndex);
     _cameraTabActive = ValueNotifier(_currentIndex == 1);
+    _pageController.addListener(_followSwipe);
+  }
+
+  /// While a finger drags the pages, the camera runs whenever any of it is
+  /// on screen: it keeps playing while it slides out and plays again as soon
+  /// as it slides back in, instead of switching at the halfway point.
+  void _followSwipe() {
+    if (_navigating || !_pageController.hasClients) return;
+    final page = _pageController.page;
+    if (page == null) return;
+    _cameraTabActive.value = (page - 1).abs() < 0.995;
   }
 
   @override
@@ -189,7 +200,8 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
                   onPageChanged: (index) {
                     // A tab tap already set the target page.
                     if (_navigating) return;
-                    _setActive(index);
+                    // The camera follows the page position (_followSwipe).
+                    _todayTabActive.value = index == 0;
                     Haptics.selection();
                     setState(() => _currentIndex = index);
                   },

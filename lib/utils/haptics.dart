@@ -3,7 +3,8 @@ import 'haptics_stub.dart'
     as platform;
 
 /// Short physical feedback for taps. Call it from the tap handler itself: the
-/// web build (iOS Safari) only plays haptics during a user gesture.
+/// web build (Android browsers) only vibrates during a user gesture; iOS
+/// browsers have no haptics for web pages.
 class Haptics {
   const Haptics._();
 
@@ -12,10 +13,6 @@ class Haptics {
 
   /// A picker or wheel moved to the next value.
   static void selection() => platform.selection();
-
-  /// The web build's haptics test panel (web/haptics_test.js), with its
-  /// texts as JSON.
-  static void openTest(String labelsJson) => platform.openTest(labelsJson);
 
   /// An action completed (photo captured).
   static void confirm() => platform.confirm();

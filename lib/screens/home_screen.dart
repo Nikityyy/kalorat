@@ -24,10 +24,12 @@ import '../utils/analysis_error_message.dart';
 import '../utils/analysis_parser.dart';
 import '../utils/save_photo.dart';
 import '../utils/platform_utils.dart';
+import '../utils/web_cameras.dart';
 import '../widgets/common/adaptive.dart';
 import '../widgets/widgets.dart';
 import 'home/analyzing_view.dart';
 import 'home/camera_controls.dart';
+import 'home/camera_switch_veil.dart';
 import 'home/camera_permission_request.dart';
 import 'home/meal_context_sheet.dart';
 import 'home/camera_diagnostics_dialog.dart';
@@ -101,10 +103,21 @@ class _HomeScreenState extends State<HomeScreen>
   CameraController? _barcodeController;
   Future<void> _barcodeSync = Future.value();
   bool _routeIsCurrent = true;
+  bool _usingQuickCameras = false;
+
+  /// While the camera switches between back and front.
+  bool _isSwitchingCamera = false;
+  Uint8List? _switchSnapshot;
+  bool _switchSnapshotMirrored = false;
+  bool _quickCamerasFailed = false;
   Future<void> _previewSync = Future.value();
   bool _barcodeBusy = false;
   String? _lastBarcode;
   DateTime _lastBarcodeSeen = DateTime.fromMillisecondsSinceEpoch(0);
+  DateTime _barcodeQuietUntil = DateTime.fromMillisecondsSinceEpoch(0);
+
+  /// The code the guide has closed around while its product is looked up.
+  GuideLock? _guideLock;
 
   /// After a failed lookup the user may photograph the nutrition label; the
   /// code that failed is then ignored, so it does not interrupt again.
@@ -143,11 +156,13 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   void _handleCameraTabActivity() {
-    if (_cameraTabIsActive) {
-      unawaited(_resumeCameraPreview());
+    final controller = _cameraController;
+    if (!_cameraTabIsActive && _labelMode) setState(_leaveLabelMode);
+    if (_cameraTabIsActive &&
+        (controller == null || !controller.value.isInitialized)) {
+      unawaited(_initCamera());
     } else {
-      if (_labelMode) setState(_leaveLabelMode);
-      unawaited(_pauseCameraPreview());
+      _syncCameraPreview();
     }
   }
 
@@ -193,21 +208,25 @@ class _HomeScreenState extends State<HomeScreen>
     }
   }
 
-  /// The photo review covers the camera; behind it the live preview would
-  /// only cost frames (on an iPhone it is drawn into a canvas each frame,
-  /// which made taps on the review screen lag). Back on the camera, it plays
-  /// again.
+  /// Plays the preview only while the camera tab is on screen and nothing
+  /// covers it. Behind the photo review the live preview would only cost
+  /// frames (on an iPhone it is drawn into a canvas each frame, which made
+  /// taps on the review screen lag). Calls are serialized, so quick swipes
+  /// back and forth end in the state of the last one.
   void _syncCameraPreview() {
     _previewSync = _previewSync
         .then((_) async {
           final controller = _cameraController;
           if (!mounted ||
-              !_cameraTabIsActive ||
-              _isAnalyzing ||
               controller == null ||
               !controller.value.isInitialized) {
             return;
           }
+          if (!_cameraTabIsActive) {
+            await _pauseCameraPreview();
+            return;
+          }
+          if (_isAnalyzing) return;
           final covered = _capturedPhotos.isNotEmpty && !_isTakingMore;
           if (covered && !_isPreviewPaused) {
             await _pauseCameraPreview();
@@ -270,6 +289,50 @@ class _HomeScreenState extends State<HomeScreen>
     }
   }
 
+  /// The back camera first, then the front one. On the web they come from
+  /// [quickWebCameras] when possible: the plugin's own list opens every
+  /// camera of the phone one after the other, which made the first picture
+  /// late.
+  Future<List<CameraDescription>> _findCameras() async {
+    if (PlatformUtils.isWeb && !_quickCamerasFailed) {
+      final quick = await quickWebCameras();
+      if (quick != null) {
+        _usingQuickCameras = true;
+        return quick;
+      }
+    }
+    _usingQuickCameras = false;
+    for (var attempt = 0; ; attempt++) {
+      try {
+        final all = await availableCameras();
+        final filtered = [
+          for (final direction in [
+            CameraLensDirection.back,
+            CameraLensDirection.front,
+          ])
+            ?all.where((c) => c.lensDirection == direction).firstOrNull,
+        ];
+        return filtered.isNotEmpty ? filtered : all;
+      } catch (e) {
+        debugPrint('Error accessing cameras: $e');
+        // The web camera is sometimes still held by the previous page.
+        if (!PlatformUtils.isWeb || attempt > 0) return [];
+        await Future<void>.delayed(const Duration(milliseconds: 350));
+      }
+    }
+  }
+
+  /// A kept camera id that no longer opens: forget the kept ids and find
+  /// the cameras the plugin's way. True when the caller should retry.
+  bool _dropQuickCameras() {
+    if (!_usingQuickCameras) return false;
+    forgetQuickWebCameras();
+    _usingQuickCameras = false;
+    _quickCamerasFailed = true;
+    _cameras = null;
+    return true;
+  }
+
   Future<CameraController> _createBestCameraController(
     CameraDescription camera,
   ) async {
@@ -295,7 +358,9 @@ class _HomeScreenState extends State<HomeScreen>
         return controller;
       } catch (e) {
         lastError = e;
-        await controller.dispose();
+        // The web plugin throws when it disposes a camera that never got a
+        // stream; that must not keep the next preset from being tried.
+        await controller.dispose().catchError((Object _) {});
       }
     }
 
@@ -365,6 +430,7 @@ class _HomeScreenState extends State<HomeScreen>
     }
 
     _isInitializingCamera = true;
+    var retry = false;
 
     try {
       if (PlatformUtils.isWeb) {
@@ -378,44 +444,7 @@ class _HomeScreenState extends State<HomeScreen>
         if (mounted) setState(() => _hasPermission = true);
       }
 
-      if (_cameras == null || forceRestart) {
-        try {
-          final allCameras = await availableCameras();
-          final filtered = <CameraDescription>[];
-          final backIdx = allCameras.indexWhere(
-            (c) => c.lensDirection == CameraLensDirection.back,
-          );
-          if (backIdx != -1) filtered.add(allCameras[backIdx]);
-          final frontIdx = allCameras.indexWhere(
-            (c) => c.lensDirection == CameraLensDirection.front,
-          );
-          if (frontIdx != -1) filtered.add(allCameras[frontIdx]);
-          _cameras = filtered.isNotEmpty ? filtered : allCameras;
-        } catch (e) {
-          debugPrint('Error accessing cameras: $e');
-          if (PlatformUtils.isWeb) {
-            await Future<void>.delayed(const Duration(milliseconds: 350));
-            try {
-              final allCameras = await availableCameras();
-              final filtered = <CameraDescription>[];
-              final backIdx = allCameras.indexWhere(
-                (c) => c.lensDirection == CameraLensDirection.back,
-              );
-              if (backIdx != -1) filtered.add(allCameras[backIdx]);
-              final frontIdx = allCameras.indexWhere(
-                (c) => c.lensDirection == CameraLensDirection.front,
-              );
-              if (frontIdx != -1) filtered.add(allCameras[frontIdx]);
-              _cameras = filtered.isNotEmpty ? filtered : allCameras;
-            } catch (retryError) {
-              debugPrint('Camera retry failed: $retryError');
-              _cameras = [];
-            }
-          } else {
-            _cameras = [];
-          }
-        }
-      }
+      if (_cameras == null || forceRestart) _cameras = await _findCameras();
 
       if (_cameras == null || _cameras!.isEmpty) {
         if (mounted) {
@@ -447,6 +476,7 @@ class _HomeScreenState extends State<HomeScreen>
       }
       await _prepareCameraControls();
       _barcodeScanner.prewarm();
+      unawaited(_productLookup.prewarm());
       if (mounted) {
         setState(() {
           _isCameraInitialized = true;
@@ -456,12 +486,16 @@ class _HomeScreenState extends State<HomeScreen>
       }
     } catch (e) {
       debugPrint('Camera init error: $e');
-      if (mounted) {
+      if (_dropQuickCameras()) {
+        retry = true;
+      } else if (mounted) {
         setState(() => _isCameraInitialized = false);
       }
     } finally {
       _isInitializingCamera = false;
+      if (mounted) setState(() => _isSwitchingCamera = false);
     }
+    if (retry) await _initCamera(forceRestart: true);
   }
 
   /// Restore photos that were captured but not yet analyzed (e.g. after PWA refresh).
@@ -607,9 +641,33 @@ class _HomeScreenState extends State<HomeScreen>
       return;
     }
     _isInitializingCamera = true;
+    var retry = false;
     final oldController = _cameraController;
     final nextIndex = ((_selectedCameraIndex ?? 0) + 1) % _cameras!.length;
-    if (mounted) setState(() => _isCameraInitialized = false);
+    // The last picture stays, blurred, until the other camera shows one. It
+    // is taken now; its JPEG is made while the old camera is released.
+    final snapshot = previewSnapshot();
+    final mirrored = _frontCamera;
+    if (mounted) {
+      setState(() {
+        _isSwitchingCamera = true;
+        _isCameraInitialized = false;
+      });
+    }
+    unawaited(
+      snapshot.then((bytes) {
+        // Too late once the other camera shows its own picture.
+        if (mounted &&
+            _isSwitchingCamera &&
+            !_isCameraInitialized &&
+            bytes != null) {
+          setState(() {
+            _switchSnapshot = bytes;
+            _switchSnapshotMirrored = mirrored;
+          });
+        }
+      }),
+    );
     try {
       if (_isTorchOn) await _setTorchMode(false);
       await _stopBarcodeScanner();
@@ -629,10 +687,17 @@ class _HomeScreenState extends State<HomeScreen>
     } catch (e) {
       debugPrint('Camera switch error: $e');
       _cameraController = null;
-      if (mounted) setState(() => _isCameraInitialized = false);
+      _switchSnapshot = null;
+      if (_dropQuickCameras()) {
+        retry = true;
+      } else if (mounted) {
+        setState(() => _isCameraInitialized = false);
+      }
     } finally {
       _isInitializingCamera = false;
+      if (mounted) setState(() => _isSwitchingCamera = false);
     }
+    if (retry) await _initCamera(forceRestart: true);
   }
 
   // Pinch zoom is read from raw pointers instead of a ScaleGestureRecognizer:
@@ -1414,6 +1479,10 @@ class _HomeScreenState extends State<HomeScreen>
         _cameraController != null &&
         _cameraController!.value.isInitialized;
 
+    // While the camera switches, the controls stay where they are.
+    final showControls = canShowCamera || _isSwitchingCamera;
+    final snapshot = _switchSnapshot;
+
     return Stack(
       children: [
         if (canShowCamera)
@@ -1452,15 +1521,30 @@ class _HomeScreenState extends State<HomeScreen>
             ),
           ),
 
-        if (canShowCamera) CameraLogo(onTap: _onLogoTap),
+        if (snapshot != null)
+          Positioned.fill(
+            child: CameraSwitchVeil(
+              key: ObjectKey(snapshot),
+              snapshot: snapshot,
+              mirrored: _switchSnapshotMirrored,
+              reveal: canShowCamera && !_isSwitchingCamera,
+              onDone: () {
+                if (mounted && identical(_switchSnapshot, snapshot)) {
+                  setState(() => _switchSnapshot = null);
+                }
+              },
+            ),
+          ),
 
-        if (canShowCamera)
+        if (showControls) CameraLogo(onTap: _onLogoTap),
+
+        if (showControls)
           CameraSwitchButton(
-            enabled: (_cameras?.length ?? 0) > 1,
+            enabled: (_cameras?.length ?? 0) > 1 && !_isSwitchingCamera,
             onTap: _switchCamera,
           ),
 
-        if (canShowCamera)
+        if (showControls)
           CameraTorchButton(
             available: _canUseTorch,
             isOn: _isTorchOn,
@@ -1468,13 +1552,14 @@ class _HomeScreenState extends State<HomeScreen>
           ),
 
         // Meal Framing Guide & Info Text Overlay
-        if (canShowCamera &&
+        if (showControls &&
             !_isAnalyzing &&
             (_capturedPhotos.isEmpty || _isTakingMore))
           MealGuideOverlay(
             guideText: _labelMode
                 ? l10n.barcodeLabelGuide
                 : l10n.cameraGuideText,
+            lock: _capturedPhotos.isEmpty ? _guideLock : null,
           ),
 
         if (_capturedPhotos.isNotEmpty)
@@ -1515,6 +1600,14 @@ class _HomeScreenState extends State<HomeScreen>
         .then((_) async {
           final controller = _cameraController;
           if (_shouldScanBarcodes && controller != null) {
+            final view = _lastPreviewConstraints?.biggest;
+            if (mounted && view != null && view.isFinite) {
+              _barcodeScanner.setRegion(
+                _guideRect(),
+                view,
+                mirrored: _frontCamera,
+              );
+            }
             if (identical(controller, _barcodeController)) return;
             await _barcodeScanner.start(controller, _onBarcode);
             _barcodeController = controller;
@@ -1540,12 +1633,24 @@ class _HomeScreenState extends State<HomeScreen>
   void _onBarcode(ScannedBarcode barcode) {
     if (!_shouldScanBarcodes || !_barcodeInGuide(barcode)) return;
     final code = barcode.code;
+    // The box follows the code while its product is looked up.
+    final lock = _guideLock;
+    if (lock != null && lock.code == code && !lock.found) {
+      setState(
+        () => _guideLock = GuideLock(
+          box: _lockBoxFor(barcode),
+          title: lock.title,
+          code: code,
+        ),
+      );
+    }
     final format = barcode.format;
     final valid = format == 'UPCE'
         ? expandUpcE(code) != null
         : isValidGtin(code);
     if (!valid) return;
     final now = DateTime.now();
+    if (now.isBefore(_barcodeQuietUntil)) return;
     // A code still in view is handled once; it counts again only after it
     // has been out of view for a moment.
     final stillInView =
@@ -1554,7 +1659,24 @@ class _HomeScreenState extends State<HomeScreen>
     _lastBarcode = code;
     _lastBarcodeSeen = now;
     if (stillInView || _barcodeBusy || code == _labelModeCode) return;
+    // The lookup goes out first; drawing the lock must not hold it up.
     unawaited(_lookUpBarcode(code, format));
+    setState(
+      () => _guideLock = GuideLock(
+        box: _lockBoxFor(barcode),
+        title: context.l10n.barcodeLookingUp,
+        code: code,
+      ),
+    );
+  }
+
+  bool get _frontCamera =>
+      _cameraController?.description.lensDirection == CameraLensDirection.front;
+
+  Rect? _guideRect() {
+    final view = _lastPreviewConstraints?.biggest;
+    if (view == null || !view.isFinite || view.isEmpty) return null;
+    return MealGuideOverlay.guideRect(view, MediaQuery.paddingOf(context));
   }
 
   /// Only a code shown inside the guide frame counts, so a package in the
@@ -1562,16 +1684,38 @@ class _HomeScreenState extends State<HomeScreen>
   bool _barcodeInGuide(ScannedBarcode barcode) {
     final bounds = barcode.bounds;
     final view = _lastPreviewConstraints?.biggest;
-    if (bounds == null || view == null || !view.isFinite) return true;
+    final guide = _guideRect();
+    if (bounds == null || view == null || guide == null) return true;
     return codeInGuide(
       bounds: bounds,
       frameAspect: barcode.frameAspect,
       view: view,
-      guide: MealGuideOverlay.guideRect(view, MediaQuery.paddingOf(context)),
-      mirrored:
-          _cameraController?.description.lensDirection ==
-          CameraLensDirection.front,
+      guide: guide,
+      mirrored: _frontCamera,
     );
+  }
+
+  /// Where the guide's corners close around [barcode].
+  Rect _lockBoxFor(ScannedBarcode barcode) {
+    final guide = _guideRect() ?? Rect.zero;
+    final bounds = barcode.bounds;
+    final view = _lastPreviewConstraints?.biggest;
+    final onScreen = bounds == null || view == null
+        ? null
+        : codeOnScreen(
+            bounds: bounds,
+            frameAspect: barcode.frameAspect,
+            view: view,
+            mirrored: _frontCamera,
+          );
+    if (onScreen == null) {
+      return Rect.fromCenter(
+        center: guide.center,
+        width: guide.width * 0.7,
+        height: guide.height * 0.45,
+      );
+    }
+    return lockBox(onScreen, guide);
   }
 
   Future<void> _lookUpBarcode(String code, String format) async {
@@ -1582,17 +1726,13 @@ class _HomeScreenState extends State<HomeScreen>
     final frame = _barcodeScanner.takeFrame();
     final l10n = context.l10n;
     final language = context.read<AppProvider>().language;
-    // Only a slow lookup says so; a fast one goes straight to the result.
-    final slowNotice = Timer(const Duration(milliseconds: 500), () {
-      if (mounted) _showMessage(l10n.barcodeLookingUp);
-    });
+    var opened = false;
     try {
       final result = await _productLookup.lookup(
         code,
         format: format,
         language: language,
       );
-      slowNotice.cancel();
       // A photo taken or the tab left meanwhile wins over the lookup.
       if (!mounted || !_cameraTabIsActive || _capturedPhotos.isNotEmpty) {
         AppToast.dismiss();
@@ -1602,6 +1742,18 @@ class _HomeScreenState extends State<HomeScreen>
       switch (result.status) {
         case ProductLookupStatus.found:
           AppToast.dismiss();
+          opened = true;
+          final lock = _guideLock;
+          if (lock != null) {
+            setState(
+              () => _guideLock = GuideLock(
+                box: lock.box,
+                title: product!.displayName,
+                code: code,
+                found: true,
+              ),
+            );
+          }
           await _openProduct(product!, code, frame, l10n);
         case ProductLookupStatus.noNutrition:
           _offerLabelPhoto(
@@ -1615,10 +1767,18 @@ class _HomeScreenState extends State<HomeScreen>
           _offerLabelPhoto(l10n.barcodeLookupFailed, code, null);
       }
     } finally {
-      slowNotice.cancel();
-      // The code is probably still in front of the camera.
-      _lastBarcode = code;
-      _lastBarcodeSeen = DateTime.now();
+      if (mounted) setState(() => _guideLock = null);
+      if (opened) {
+        // Back from the product without saving it: the same code, still in
+        // front of the camera, opens it again after a short pause instead of
+        // only once it has left the view.
+        _lastBarcode = null;
+        _barcodeQuietUntil = DateTime.now().add(const Duration(seconds: 1));
+      } else {
+        // The code is probably still in front of the camera.
+        _lastBarcode = code;
+        _lastBarcodeSeen = DateTime.now();
+      }
       _barcodeBusy = false;
     }
   }

@@ -1179,16 +1179,6 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String kcalLeftToday(int kcal) {
-    return '$kcal kcal left today';
-  }
-
-  @override
-  String kcalOverToday(int kcal) {
-    return '$kcal kcal over today';
-  }
-
-  @override
   String get quickLogShort => 'Type it';
 
   @override
@@ -1209,17 +1199,4 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get analysisFailed => 'Analysis failed. Please try again.';
-
-  @override
-  String get hapticsTest => 'Test haptics';
-
-  @override
-  String get hapticsTestIntro =>
-      'Tap each row and tick what you felt, then send me a screenshot. 0 is the real iOS switch: if you feel nothing there, the iPhone plays no switch haptics at all (e.g. system haptics off in Settings).';
-
-  @override
-  String get hapticsTestNative => 'iOS switch by hand';
-
-  @override
-  String get hapticsTestFelt => 'felt';
 }

@@ -188,8 +188,9 @@ class _RidgeLayout {
     for (final step in sorted) {
       final isFresh = fresh.contains(step.id);
       final added = isFresh ? step.kcal * rise : step.kcal;
-      final sx = x(step.hour);
-      line.add(Offset(math.max(0, sx - _slant), y(climbed)));
+      // Meals close together share the slant; the line never runs back.
+      final sx = math.max(x(step.hour), line.last.dx);
+      line.add(Offset(math.max(line.last.dx, sx - _slant), y(climbed)));
       climbed += added;
       line.add(Offset(sx, y(climbed)));
       feet.add((step, Offset(sx, y(climbed)), isFresh));

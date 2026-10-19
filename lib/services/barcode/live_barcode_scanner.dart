@@ -1,5 +1,5 @@
 import 'dart:typed_data';
-import 'dart:ui' show Rect;
+import 'dart:ui' show Rect, Size;
 
 import 'package:camera/camera.dart';
 
@@ -46,6 +46,11 @@ abstract class LiveBarcodeScanner {
   /// Starts reading from [controller]; calls [onCode] for each frame with a
   /// code. Calling it again with the same controller does nothing.
   Future<void> start(CameraController controller, BarcodeCallback onCode);
+
+  /// Reads only around [guide], a rectangle of the [view] the preview covers
+  /// (like `BoxFit.cover`), when the scanner can crop; null reads the whole
+  /// frame. [mirrored] for a front camera.
+  void setRegion(Rect? guide, Size view, {bool mirrored = false});
 
   /// A JPEG of the frame the last code was read from, upright, or null.
   /// Call it from the [BarcodeCallback]: stopping the scanner drops the

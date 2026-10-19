@@ -1196,16 +1196,6 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
-  String kcalLeftToday(int kcal) {
-    return '$kcal kcal heute übrig';
-  }
-
-  @override
-  String kcalOverToday(int kcal) {
-    return '$kcal kcal über dem Ziel';
-  }
-
-  @override
   String get quickLogShort => 'Eintippen';
 
   @override
@@ -1227,17 +1217,4 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get analysisFailed =>
       'Analyse fehlgeschlagen. Bitte erneut versuchen.';
-
-  @override
-  String get hapticsTest => 'Haptik testen';
-
-  @override
-  String get hapticsTestIntro =>
-      'Tippe jede Zeile an und hake an, was du gespürt hast. Schick mir dann einen Screenshot. 0 ist der echte iOS-Schalter: Spürst du dort nichts, gibt das iPhone gar keine Schalter-Haptik aus (z. B. Systemhaptik in den Einstellungen aus).';
-
-  @override
-  String get hapticsTestNative => 'iOS-Schalter von Hand';
-
-  @override
-  String get hapticsTestFelt => 'gespürt';
 }

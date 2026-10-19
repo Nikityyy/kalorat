@@ -77,6 +77,17 @@ class ProductLookupService {
        _cache = cache ?? HiveProductCache(),
        _now = now ?? DateTime.now;
 
+  /// Opens the product cache ahead of the first scan: opening it then
+  /// would hold up the lookup that matters most.
+  Future<void> prewarm() async {
+    final cache = _cache;
+    if (cache is HiveProductCache) {
+      try {
+        await cache._open();
+      } catch (_) {}
+    }
+  }
+
   Future<ProductLookupResult> lookup(
     String code, {
     String? format,

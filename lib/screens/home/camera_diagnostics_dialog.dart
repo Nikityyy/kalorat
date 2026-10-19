@@ -1,9 +1,6 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import '../../extensions/l10n_extension.dart';
 import '../../utils/camera_diagnostics.dart';
-import '../../utils/haptics.dart';
 import '../../utils/platform_utils.dart';
 
 /// Shows camera layout measurements, with the switch for the canvas preview
@@ -21,23 +18,6 @@ void showCameraDiagnosticsDialog(BuildContext context, List<String> lines) {
           ),
         ),
         actions: [
-          if (PlatformUtils.isWeb)
-            TextButton(
-              onPressed: () {
-                final l10n = context.l10n;
-                Navigator.pop(ctx);
-                Haptics.openTest(
-                  jsonEncode({
-                    'title': l10n.hapticsTest,
-                    'intro': l10n.hapticsTestIntro,
-                    'native': l10n.hapticsTestNative,
-                    'felt': l10n.hapticsTestFelt,
-                    'close': l10n.close,
-                  }),
-                );
-              },
-              child: Text(context.l10n.hapticsTest),
-            ),
           if (PlatformUtils.isWeb)
             TextButton(
               onPressed: () {

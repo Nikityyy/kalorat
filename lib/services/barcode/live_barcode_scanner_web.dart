@@ -1,6 +1,6 @@
 import 'dart:js_interop';
 import 'dart:typed_data';
-import 'dart:ui' show Rect;
+import 'dart:ui' show Rect, Size;
 
 import 'package:camera/camera.dart';
 
@@ -17,6 +17,14 @@ extension type _BarcodeApi(JSObject _) implements JSObject {
   external JSPromise<JSUint8Array?> takeFrame();
   external JSPromise<_StillResult?> decodeImage(JSUint8Array bytes);
   external void stop();
+  external void setRegion([
+    double left,
+    double top,
+    double right,
+    double bottom,
+    double viewAspect,
+    bool mirrored,
+  ]);
 }
 
 extension type _StillResult(JSObject _) implements JSObject {
@@ -73,6 +81,24 @@ class _WebBarcodeScanner implements LiveBarcodeScanner {
             );
           })
           .toJS,
+    );
+  }
+
+  @override
+  void setRegion(Rect? guide, Size view, {bool mirrored = false}) {
+    final api = _api;
+    if (api == null) return;
+    if (guide == null || view.isEmpty) {
+      api.setRegion();
+      return;
+    }
+    api.setRegion(
+      guide.left / view.width,
+      guide.top / view.height,
+      guide.right / view.width,
+      guide.bottom / view.height,
+      view.width / view.height,
+      mirrored,
     );
   }
 

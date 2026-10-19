@@ -427,16 +427,10 @@
   "portionEdit": "Enter the portion",
   "confidenceShort": "{percent}% sure",
   "probablyBetween": "probably {low}–{high} kcal",
-  "kcalLeftToday": "{kcal} kcal left today",
-  "kcalOverToday": "{kcal} kcal over today",
   "quickLogShort": "Type it",
   "kcalPerDayPlan": "kcal a day",
   "proteinPerDayPlan": "{grams} g protein a day",
   "analysisNoConnection": "No connection to Gemini. Check your internet and try again.",
   "analysisRateLimited": "Gemini is busy right now. Please try again in a moment.",
-  "analysisFailed": "Analysis failed. Please try again.",
-  "hapticsTest": "Test haptics",
-  "hapticsTestIntro": "Tap each row and tick what you felt, then send me a screenshot. 0 is the real iOS switch: if you feel nothing there, the iPhone plays no switch haptics at all (e.g. system haptics off in Settings).",
-  "hapticsTestNative": "iOS switch by hand",
-  "hapticsTestFelt": "felt"
+  "analysisFailed": "Analysis failed. Please try again."
 }
