@@ -25,12 +25,4 @@ class StorageService {
       AppLogger.error('StorageService', 'Failed to save API key', e);
     }
   }
-
-  Future<void> deleteApiKey() async {
-    try {
-      await _storage.delete(key: _apiKeyKey);
-    } catch (e) {
-      AppLogger.error('StorageService', 'Failed to delete API key', e);
-    }
-  }
 }

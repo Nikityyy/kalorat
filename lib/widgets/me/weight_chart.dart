@@ -1,5 +1,6 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import '../../l10n/app_localizations.dart';
 import 'package:intl/intl.dart';
 import '../../extensions/l10n_extension.dart';
 import '../../models/weight_model.dart';
@@ -257,7 +258,7 @@ class _WeightChartState extends State<WeightChart> {
     );
   }
 
-  Widget _buildEmptyState(dynamic l10n) => Center(
+  Widget _buildEmptyState(AppLocalizations l10n) => Center(
     child: Text(
       l10n.noDataAvailable,
       style: AppTypography.secondary,

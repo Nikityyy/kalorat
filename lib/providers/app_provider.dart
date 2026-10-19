@@ -62,10 +62,6 @@ class AppProvider extends ChangeNotifier with WidgetsBindingObserver {
   int _statsCacheVersion = 0;
   Map<String, double>? _cachedTodayStats;
   int _cachedTodayVersion = -1;
-  Map<String, double>? _cachedWeekStats;
-  int _cachedWeekVersion = -1;
-  Map<String, double>? _cachedMonthStats;
-  int _cachedMonthVersion = -1;
   StreakData? _cachedStreakData;
   int _cachedStreakVersion = -1;
 
@@ -105,20 +101,11 @@ class AppProvider extends ChangeNotifier with WidgetsBindingObserver {
 
   String get apiKey => _secureApiKey ?? _user?.geminiApiKey ?? '';
   List<WeightModel> get weights => getAllWeights();
-  int get pendingMealsCount => _offlineQueueService.getPendingCount();
   bool get updateAvailable => _pwaService.updateAvailable;
   Future<bool> hasCameraPermission() => _pwaService.hasCameraPermission();
 
   bool get mealRemindersEnabled => _user?.mealRemindersEnabled ?? true;
   bool get weightRemindersEnabled => _user?.weightRemindersEnabled ?? true;
-
-  Future<void> setMealReminders(bool enabled) async {
-    await updateUser(mealRemindersEnabled: enabled);
-  }
-
-  Future<void> setWeightReminders(bool enabled) async {
-    await updateUser(weightRemindersEnabled: enabled);
-  }
 
   Future<void> refreshReminderTimezone() async {
     final user = _user;
@@ -135,8 +122,6 @@ class AppProvider extends ChangeNotifier with WidgetsBindingObserver {
   }
 
   DatabaseService get databaseService => _databaseService;
-  OfflineQueueService get offlineQueueService => _offlineQueueService;
-  ExportImportService get exportImportService => _exportImportService;
   SyncService get syncService => _syncService;
   NotificationService get notificationService => _notificationService;
   HealthService get healthService => _healthService;
@@ -828,45 +813,6 @@ class AppProvider extends ChangeNotifier with WidgetsBindingObserver {
     return _cachedTodayStats!;
   }
 
-  Map<String, double> getWeekStats() {
-    if (_cachedWeekStats != null && _cachedWeekVersion == _statsCacheVersion) {
-      return _cachedWeekStats!;
-    }
-
-    final offset = _user?.dayStartHour ?? 0;
-    final logicalNow = DateTime.now().subtract(Duration(hours: offset));
-    final startOfLogicalWeek = logicalNow.subtract(
-      Duration(days: logicalNow.weekday - 1),
-    );
-    final start = DateTime(
-      startOfLogicalWeek.year,
-      startOfLogicalWeek.month,
-      startOfLogicalWeek.day,
-      offset,
-    );
-    final end = start.add(const Duration(days: 7));
-
-    _cachedWeekStats = getStatsForDateRange(start, end);
-    _cachedWeekVersion = _statsCacheVersion;
-    return _cachedWeekStats!;
-  }
-
-  Map<String, double> getMonthStats() {
-    if (_cachedMonthStats != null &&
-        _cachedMonthVersion == _statsCacheVersion) {
-      return _cachedMonthStats!;
-    }
-
-    final offset = _user?.dayStartHour ?? 0;
-    final logicalNow = DateTime.now().subtract(Duration(hours: offset));
-    final start = DateTime(logicalNow.year, logicalNow.month, 1, offset);
-    final end = DateTime(logicalNow.year, logicalNow.month + 1, 1, offset);
-
-    _cachedMonthStats = getStatsForDateRange(start, end);
-    _cachedMonthVersion = _statsCacheVersion;
-    return _cachedMonthStats!;
-  }
-
   /// Counts the logged days in a row that end today, or yesterday while
   /// today has nothing logged yet.
   StreakData get streakData {
@@ -904,21 +850,5 @@ class AppProvider extends ChangeNotifier with WidgetsBindingObserver {
     );
     _cachedStreakVersion = _statsCacheVersion;
     return _cachedStreakData!;
-  }
-
-  /// Returns stats with daily averages for a date range
-  Map<String, double> getStatsWithDailyAvg(DateTime start, DateTime end) {
-    final stats = getStatsForDateRange(start, end);
-    final now = DateTime.now();
-    // Days elapsed = min(today, end) - start, at least 1
-    final effectiveEnd = end.isBefore(now) ? end : now;
-    int days = effectiveEnd.difference(start).inDays;
-    if (days < 1) days = 1;
-    stats['dailyAvgCalories'] = stats['calories']! / days;
-    stats['dailyAvgProtein'] = stats['protein']! / days;
-    stats['dailyAvgCarbs'] = stats['carbs']! / days;
-    stats['dailyAvgFats'] = stats['fats']! / days;
-    stats['days'] = days.toDouble();
-    return stats;
   }
 }

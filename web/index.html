@@ -22,7 +22,7 @@
   <meta property="og:image" content="icons/Icon-192.png">
   <meta name="twitter:card" content="summary_large_image">
 
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
   <!-- Theme Color — the canvas of the light and the dark theme -->
   <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
@@ -222,6 +222,7 @@
     };
   </script>
   <script src="haptics.js"></script>
+  <script src="haptics_test.js"></script>
   <script src="camera_diagnostics.js"></script>
   <script src="camera_canvas.js"></script>
   <script src="barcode_scanner.js"></script>
@@ -240,12 +241,22 @@
       splash.classList.add('fade-out');
       setTimeout(() => splash.remove(), 400);
     };
+    // The page is not stretched under the status bar (no viewport-fit=cover:
+    // with it, touches on an iPhone home screen app landed off target), so
+    // CSS reports no insets there. As a home screen app on an iPhone with a
+    // home indicator the page still reaches the bottom edge, so that inset
+    // is known: 34 pt in portrait on every Face ID iPhone.
     window.kaloratSafeArea = function () {
       const probe = document.getElementById('safe-area-probe');
-      if (!probe) return '0,0,0,0';
-      const s = getComputedStyle(probe);
-      return [s.paddingTop, s.paddingRight, s.paddingBottom, s.paddingLeft]
-        .map((v) => parseFloat(v) || 0).join(',');
+      const s = probe ? getComputedStyle(probe) : null;
+      const px = (v) => (s ? parseFloat(v) || 0 : 0);
+      let bottom = s ? px(s.paddingBottom) : 0;
+      const homeIndicator =
+        navigator.standalone === true &&
+        /iPhone/.test(navigator.userAgent) &&
+        Math.max(screen.width, screen.height) >= 812;
+      if (homeIndicator) bottom = Math.max(bottom, 34);
+      return [s ? px(s.paddingTop) : 0, s ? px(s.paddingRight) : 0, bottom, s ? px(s.paddingLeft) : 0].join(',');
     };
     // Safety net: never leave the splash covering the app if it never signals.
     setTimeout(window.kaloratHideSplash, 15000);

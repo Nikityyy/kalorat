@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:math' as math;
 
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -286,47 +285,6 @@ class SyncService {
   Future<void> syncNow() async {
     await syncFromCloud();
     await syncToCloud();
-  }
-
-  /// Delete all user data from Supabase (GDPR compliance).
-  Future<void> deleteAllData() async {
-    final userId = _userId;
-    if (userId == null) return;
-
-    await _client.from('meals').delete().eq('user_id', userId);
-    await _client.from('weights').delete().eq('user_id', userId);
-    await _client.from('profiles').delete().eq('id', userId);
-  }
-
-  /// Export all user data as JSON string (GDPR data request).
-  Future<String> exportUserData() async {
-    final userId = _userId;
-    if (userId == null) {
-      // Export local data only for guests
-      return jsonEncode(await _db.exportAllWithPhotos());
-    }
-
-    // Fetch all cloud data
-    final profile = await _client
-        .from('profiles')
-        .select()
-        .eq('id', userId)
-        .maybeSingle();
-
-    final meals = await _client.from('meals').select().eq('user_id', userId);
-
-    final weights = await _client
-        .from('weights')
-        .select()
-        .eq('user_id', userId);
-
-    return jsonEncode({
-      'profile': profile,
-      'meals': meals,
-      'weights': weights,
-      'exportDate': DateTime.now().toIso8601String(),
-      'userId': userId,
-    });
   }
 
   // --- Private helpers ---

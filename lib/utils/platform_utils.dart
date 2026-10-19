@@ -7,9 +7,6 @@ class PlatformUtils {
   /// Returns true if running on web platform
   static bool get isWeb => kIsWeb;
 
-  /// Returns true if running on a mobile platform (iOS or Android)
-  static bool get isMobile => !kIsWeb;
-
   /// Returns true if running on iOS
   /// Safely returns false on web without dart:io dependency
   static bool get isIOS {

@@ -144,5 +144,4 @@ class HealthService {
       return false;
     }
   }
-
 }

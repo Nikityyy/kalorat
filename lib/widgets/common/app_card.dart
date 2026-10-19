@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_theme.dart';
 
+/// A surface card with the app's border and radius.
 class AppCard extends StatelessWidget {
   final Widget child;
   final EdgeInsetsGeometry? padding;
@@ -11,7 +11,6 @@ class AppCard extends StatelessWidget {
   final double? height;
   final VoidCallback? onTap;
   final EdgeInsetsGeometry? margin;
-  final bool isGlass;
 
   const AppCard({
     super.key,
@@ -22,7 +21,6 @@ class AppCard extends StatelessWidget {
     this.width,
     this.height,
     this.onTap,
-    this.isGlass = false,
   });
 
   @override

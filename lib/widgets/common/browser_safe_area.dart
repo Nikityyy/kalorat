@@ -6,13 +6,10 @@ import 'package:flutter/material.dart';
 import '../../utils/safe_area_stub.dart'
     if (dart.library.js_interop) '../../utils/safe_area_web.dart';
 
-/// Hands the browser's safe-area insets (status bar, home indicator) to the
+/// Hands the browser's safe-area insets (the iPhone's home indicator) to the
 /// app as [MediaQueryData.padding], which Flutter's web engine leaves at 0.
-/// Without them the tab bar sits on the iPhone's home indicator.
-///
-/// The page covers the whole screen (`viewport-fit=cover` in index.html), so
-/// the status bar lies over the app. Its text is white there
-/// (`black-translucent`), so the strip under it stays dark.
+/// Without them the tab bar sits on the home indicator. See
+/// kaloratSafeArea in index.html for where they come from.
 class BrowserSafeArea extends StatefulWidget {
   final Widget child;
 
@@ -48,36 +45,20 @@ class _BrowserSafeAreaState extends State<BrowserSafeArea>
   @override
   Widget build(BuildContext context) {
     final media = MediaQuery.of(context);
+    // Always the same widgets, so the app below keeps its state whatever the
+    // insets do.
     if (!kIsWeb ||
         _insets == EdgeInsets.zero ||
         media.viewPadding != EdgeInsets.zero) {
-      return widget.child;
+      return MediaQuery(data: media, child: widget.child);
     }
     // As on a phone: the keyboard covers the bottom inset.
-    final keyboard = media.viewInsets;
-    final padding = EdgeInsets.fromLTRB(
-      _insets.left,
-      _insets.top,
-      _insets.right,
-      math.max(0, _insets.bottom - keyboard.bottom),
+    final padding = _insets.copyWith(
+      bottom: math.max(0, _insets.bottom - media.viewInsets.bottom),
     );
-    return Stack(
-      textDirection: TextDirection.ltr,
-      children: [
-        Positioned.fill(
-          child: MediaQuery(
-            data: media.copyWith(viewPadding: _insets, padding: padding),
-            child: widget.child,
-          ),
-        ),
-        Positioned(
-          top: 0,
-          left: 0,
-          right: 0,
-          height: _insets.top,
-          child: const IgnorePointer(child: ColoredBox(color: Colors.black)),
-        ),
-      ],
+    return MediaQuery(
+      data: media.copyWith(viewPadding: _insets, padding: padding),
+      child: widget.child,
     );
   }
 }

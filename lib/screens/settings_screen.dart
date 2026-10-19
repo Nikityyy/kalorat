@@ -2,6 +2,7 @@ import '../utils/app_version.dart';
 import '../utils/platform_utils.dart';
 import '../utils/haptics.dart';
 import 'package:flutter/material.dart';
+import '../l10n/app_localizations.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
@@ -28,6 +29,9 @@ class SettingsScreen extends StatefulWidget {
   @override
   State<SettingsScreen> createState() => _SettingsScreenState();
 }
+
+/// Between the rows of a settings section.
+const _divider = Divider(height: 1, indent: 16, endIndent: 16);
 
 class _SettingsScreenState extends State<SettingsScreen> {
   late TextEditingController _nameController;
@@ -180,7 +184,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  Widget _buildVersionLabel(dynamic l10n) {
+  Widget _buildVersionLabel(AppLocalizations l10n) {
     final commit = AppVersion.shortCommit;
     final provider = context.watch<AppProvider>();
     return Column(
@@ -195,7 +199,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  Widget _versionText(dynamic l10n, String commit) {
+  Widget _versionText(AppLocalizations l10n, String commit) {
     return Center(
       child: SelectableText(
         '${l10n.appVersion} ${AppVersion.label}${commit.isEmpty ? '' : ' · $commit'}',
@@ -212,11 +216,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget _buildPreferencesSection(
     AppProvider provider,
     UserModel user,
-    dynamic l10n,
+    AppLocalizations l10n,
   ) {
     return _buildSection(l10n.preferences, [
       _buildThemeSelector(provider, l10n),
-      const Divider(height: 1, indent: 16, endIndent: 16),
+      _divider,
       SwitchListTile(
         title: Text(
           l10n.gramModeTitle,
@@ -230,7 +234,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         activeThumbColor: AppColors.primary,
         onChanged: (v) => provider.updateUser(useGramsByDefault: v),
       ),
-      const Divider(height: 1, indent: 16, endIndent: 16),
+      _divider,
       SwitchListTile(
         title: Text(
           l10n.accurateModeTitle,
@@ -244,12 +248,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
         activeThumbColor: AppColors.primary,
         onChanged: (v) => provider.updateUser(useAccurateMode: v),
       ),
-      const Divider(height: 1, indent: 16, endIndent: 16),
+      _divider,
       _buildDayStartSelector(provider, user, l10n),
     ]);
   }
 
-  Widget _buildThemeSelector(AppProvider provider, dynamic l10n) {
+  Widget _buildThemeSelector(AppProvider provider, AppLocalizations l10n) {
     final modes = <ThemeMode, String>{
       ThemeMode.system: l10n.themeSystem,
       ThemeMode.light: l10n.themeLight,
@@ -275,7 +279,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget _buildNotificationsSection(
     AppProvider provider,
     UserModel user,
-    dynamic l10n,
+    AppLocalizations l10n,
   ) {
     return _buildSection(l10n.notifications, [
       if (PlatformUtils.isWeb) ...[
@@ -361,7 +365,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget _buildIntegrationsSection(
     AppProvider provider,
     UserModel user,
-    dynamic l10n,
+    AppLocalizations l10n,
   ) {
     return _buildSection(l10n.integrations, [
       // 1. Gemini API Key
@@ -380,7 +384,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
         ),
       ),
-      const Divider(height: 1, indent: 16, endIndent: 16),
+      _divider,
 
       // 2. Health Integration
       if (PlatformUtils.isWeb) ...[
@@ -448,7 +452,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           },
         ),
         if (user.healthSyncEnabled) ...[
-          const Divider(height: 1, indent: 16, endIndent: 16),
+          _divider,
           SwitchListTile(
             title: Text(
               l10n.syncMeals,
@@ -472,7 +476,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     ]);
   }
 
-  Widget _buildOnlyInAppBadge(dynamic l10n) {
+  Widget _buildOnlyInAppBadge(AppLocalizations l10n) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
@@ -744,7 +748,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget _buildAccountDataSection(
     AppProvider provider,
     UserModel user,
-    dynamic l10n,
+    AppLocalizations l10n,
   ) {
     final authService = AuthService();
     final isGuest = user.isGuest;
@@ -770,7 +774,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               )
             : null,
       ),
-      const Divider(height: 1, indent: 16, endIndent: 16),
+      _divider,
 
       if (isGuest) ...[
         ListTile(
@@ -876,10 +880,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
         ListTile(
           leading: Icon(Icons.logout, color: AppColors.negative),
-          title: Text(
-            l10n.logOut,
-            style: TextStyle(color: AppColors.negative),
-          ),
+          title: Text(l10n.logOut, style: TextStyle(color: AppColors.negative)),
           onTap: () async {
             final confirm = await showConfirmDialog(
               context,
@@ -947,7 +948,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           },
         ),
       ],
-      const Divider(height: 1, indent: 16, endIndent: 16),
+      _divider,
 
       // Data Export/Import
       ListTile(
@@ -1047,7 +1048,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget _buildDayStartSelector(
     AppProvider provider,
     UserModel user,
-    dynamic l10n,
+    AppLocalizations l10n,
   ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1102,7 +1103,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  Widget _buildLegalSection(AppProvider provider, dynamic l10n) {
+  Widget _buildLegalSection(AppProvider provider, AppLocalizations l10n) {
     return _buildSection(l10n.legal, [
       ListTile(
         leading: Icon(Icons.privacy_tip_outlined, color: AppColors.primary),

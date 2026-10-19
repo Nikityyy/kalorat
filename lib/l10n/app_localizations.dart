@@ -110,12 +110,6 @@ abstract class AppLocalizations {
   /// **'Willkommen bei Kalorat'**
   String get welcome;
 
-  /// No description provided for @welcomeSubtitle.
-  ///
-  /// In de, this message translates to:
-  /// **'Präzises Ernährungstracking. Absolute Klarheit.'**
-  String get welcomeSubtitle;
-
   /// No description provided for @next.
   ///
   /// In de, this message translates to:
@@ -158,18 +152,6 @@ abstract class AppLocalizations {
   /// **'Bearbeiten'**
   String get edit;
 
-  /// No description provided for @yes.
-  ///
-  /// In de, this message translates to:
-  /// **'Ja'**
-  String get yes;
-
-  /// No description provided for @no.
-  ///
-  /// In de, this message translates to:
-  /// **'Nein'**
-  String get no;
-
   /// No description provided for @onboardingName.
   ///
   /// In de, this message translates to:
@@ -181,78 +163,6 @@ abstract class AppLocalizations {
   /// In de, this message translates to:
   /// **'Dein Name'**
   String get onboardingNameHint;
-
-  /// No description provided for @onboardingBirthdate.
-  ///
-  /// In de, this message translates to:
-  /// **'Wann bist du geboren?'**
-  String get onboardingBirthdate;
-
-  /// No description provided for @onboardingHeight.
-  ///
-  /// In de, this message translates to:
-  /// **'Wie groß bist du?'**
-  String get onboardingHeight;
-
-  /// No description provided for @onboardingHeightHint.
-  ///
-  /// In de, this message translates to:
-  /// **'Größe in cm'**
-  String get onboardingHeightHint;
-
-  /// No description provided for @onboardingWeight.
-  ///
-  /// In de, this message translates to:
-  /// **'Wie viel wiegst du?'**
-  String get onboardingWeight;
-
-  /// No description provided for @onboardingWeightHint.
-  ///
-  /// In de, this message translates to:
-  /// **'Gewicht in kg'**
-  String get onboardingWeightHint;
-
-  /// No description provided for @onboardingLanguage.
-  ///
-  /// In de, this message translates to:
-  /// **'Sprache auswählen'**
-  String get onboardingLanguage;
-
-  /// No description provided for @onboardingApiKey.
-  ///
-  /// In de, this message translates to:
-  /// **'Gemini API-Key eingeben'**
-  String get onboardingApiKey;
-
-  /// No description provided for @onboardingApiKeyHint.
-  ///
-  /// In de, this message translates to:
-  /// **'API-Key'**
-  String get onboardingApiKeyHint;
-
-  /// No description provided for @onboardingApiKeyInfo.
-  ///
-  /// In de, this message translates to:
-  /// **'API-Key von ai.dev eintragen. Gehe zu https://ai.dev → Konto → API Key erstellen → hier einfügen.'**
-  String get onboardingApiKeyInfo;
-
-  /// No description provided for @home.
-  ///
-  /// In de, this message translates to:
-  /// **'Start'**
-  String get home;
-
-  /// No description provided for @me.
-  ///
-  /// In de, this message translates to:
-  /// **'Ich'**
-  String get me;
-
-  /// No description provided for @history.
-  ///
-  /// In de, this message translates to:
-  /// **'Historie'**
-  String get history;
 
   /// No description provided for @settings.
   ///
@@ -271,12 +181,6 @@ abstract class AppLocalizations {
   /// In de, this message translates to:
   /// **'Alter'**
   String get age;
-
-  /// No description provided for @years.
-  ///
-  /// In de, this message translates to:
-  /// **'Jahre'**
-  String get years;
 
   /// No description provided for @height.
   ///
@@ -325,12 +229,6 @@ abstract class AppLocalizations {
   /// In de, this message translates to:
   /// **'Foto aufnehmen'**
   String get takePhoto;
-
-  /// No description provided for @addMorePhotos.
-  ///
-  /// In de, this message translates to:
-  /// **'Weitere Fotos hinzufügen'**
-  String get addMorePhotos;
 
   /// No description provided for @analyzeMeal.
   ///
@@ -386,12 +284,6 @@ abstract class AppLocalizations {
   /// **'Mineralstoffe'**
   String get minerals;
 
-  /// No description provided for @manualEntry.
-  ///
-  /// In de, this message translates to:
-  /// **'Manuell eingeben'**
-  String get manualEntry;
-
   /// No description provided for @offlineMessage.
   ///
   /// In de, this message translates to:
@@ -434,24 +326,6 @@ abstract class AppLocalizations {
   /// **'Heute'**
   String get today;
 
-  /// No description provided for @thisWeek.
-  ///
-  /// In de, this message translates to:
-  /// **'Diese Woche'**
-  String get thisWeek;
-
-  /// No description provided for @thisMonth.
-  ///
-  /// In de, this message translates to:
-  /// **'Dieser Monat'**
-  String get thisMonth;
-
-  /// No description provided for @thisYear.
-  ///
-  /// In de, this message translates to:
-  /// **'Dieses Jahr'**
-  String get thisYear;
-
   /// No description provided for @day.
   ///
   /// In de, this message translates to:
@@ -476,71 +350,17 @@ abstract class AppLocalizations {
   /// **'Jahr'**
   String get year;
 
-  /// No description provided for @total.
-  ///
-  /// In de, this message translates to:
-  /// **'Gesamt'**
-  String get total;
-
-  /// No description provided for @weightTracking.
-  ///
-  /// In de, this message translates to:
-  /// **'Gewichtsverlauf'**
-  String get weightTracking;
-
   /// No description provided for @addWeight.
   ///
   /// In de, this message translates to:
   /// **'Gewicht eintragen'**
   String get addWeight;
 
-  /// No description provided for @weightHistory.
-  ///
-  /// In de, this message translates to:
-  /// **'Gewichtsverlauf'**
-  String get weightHistory;
-
-  /// No description provided for @noWeightData.
-  ///
-  /// In de, this message translates to:
-  /// **'Noch keine Gewichtsdaten erfasst.'**
-  String get noWeightData;
-
-  /// No description provided for @statistics.
-  ///
-  /// In de, this message translates to:
-  /// **'Statistiken'**
-  String get statistics;
-
-  /// No description provided for @noMealData.
-  ///
-  /// In de, this message translates to:
-  /// **'Keine Mahlzeiten erfasst.'**
-  String get noMealData;
-
-  /// No description provided for @mealsLogged.
-  ///
-  /// In de, this message translates to:
-  /// **'Mahlzeiten erfasst'**
-  String get mealsLogged;
-
   /// No description provided for @language.
   ///
   /// In de, this message translates to:
   /// **'Sprache'**
   String get language;
-
-  /// No description provided for @german.
-  ///
-  /// In de, this message translates to:
-  /// **'Deutsch'**
-  String get german;
-
-  /// No description provided for @english.
-  ///
-  /// In de, this message translates to:
-  /// **'English'**
-  String get english;
 
   /// No description provided for @apiKey.
   ///
@@ -620,12 +440,6 @@ abstract class AppLocalizations {
   /// **'Tägliches Fettziel'**
   String get reportDailyFats;
 
-  /// No description provided for @reportMealsLog.
-  ///
-  /// In de, this message translates to:
-  /// **'Mahlzeitenprotokoll'**
-  String get reportMealsLog;
-
   /// No description provided for @reportWeight.
   ///
   /// In de, this message translates to:
@@ -662,24 +476,6 @@ abstract class AppLocalizations {
   /// **'Daten importieren'**
   String get importData;
 
-  /// No description provided for @exportSuccess.
-  ///
-  /// In de, this message translates to:
-  /// **'Daten erfolgreich exportiert'**
-  String get exportSuccess;
-
-  /// No description provided for @importSuccess.
-  ///
-  /// In de, this message translates to:
-  /// **'Daten erfolgreich importiert'**
-  String get importSuccess;
-
-  /// No description provided for @importError.
-  ///
-  /// In de, this message translates to:
-  /// **'Fehler beim Importieren'**
-  String get importError;
-
   /// No description provided for @notifications.
   ///
   /// In de, this message translates to:
@@ -697,24 +493,6 @@ abstract class AppLocalizations {
   /// In de, this message translates to:
   /// **'Gewichts-Erinnerungen'**
   String get weightReminders;
-
-  /// No description provided for @confirmDelete.
-  ///
-  /// In de, this message translates to:
-  /// **'Wirklich löschen?'**
-  String get confirmDelete;
-
-  /// No description provided for @confirmDeleteMeal.
-  ///
-  /// In de, this message translates to:
-  /// **'Möchtest du diese Mahlzeit wirklich löschen?'**
-  String get confirmDeleteMeal;
-
-  /// No description provided for @cameraPermission.
-  ///
-  /// In de, this message translates to:
-  /// **'Kamera-Berechtigung wird benötigt'**
-  String get cameraPermission;
 
   /// No description provided for @grantPermission.
   ///
@@ -776,23 +554,11 @@ abstract class AppLocalizations {
   /// **'Änderungen speichern'**
   String get saveChanges;
 
-  /// No description provided for @saved.
-  ///
-  /// In de, this message translates to:
-  /// **'Gespeichert'**
-  String get saved;
-
   /// No description provided for @data.
   ///
   /// In de, this message translates to:
   /// **'Daten'**
   String get data;
-
-  /// No description provided for @exported.
-  ///
-  /// In de, this message translates to:
-  /// **'Exportiert: {path}'**
-  String exported(String path);
 
   /// No description provided for @importSuccessful.
   ///
@@ -812,23 +578,11 @@ abstract class AppLocalizations {
   /// **'Profil wird gespeichert …'**
   String get buildingPlan;
 
-  /// No description provided for @apiKeyValidationError.
-  ///
-  /// In de, this message translates to:
-  /// **'Bitte einen gültigen API-Key eingeben'**
-  String get apiKeyValidationError;
-
   /// No description provided for @nameValidationError.
   ///
   /// In de, this message translates to:
   /// **'Bitte gib deinen Namen ein'**
   String get nameValidationError;
-
-  /// No description provided for @mealSaved.
-  ///
-  /// In de, this message translates to:
-  /// **'Mahlzeit gespeichert'**
-  String get mealSaved;
 
   /// No description provided for @logYourWeight.
   ///
@@ -854,18 +608,6 @@ abstract class AppLocalizations {
   /// **'Mahlzeit erfassen.'**
   String get mealReminderBody;
 
-  /// No description provided for @howOldAreYou.
-  ///
-  /// In de, this message translates to:
-  /// **'Wie alt bist du?'**
-  String get howOldAreYou;
-
-  /// No description provided for @whatsYourGoal.
-  ///
-  /// In de, this message translates to:
-  /// **'Was ist dein Ziel?'**
-  String get whatsYourGoal;
-
   /// No description provided for @loseWeight.
   ///
   /// In de, this message translates to:
@@ -884,12 +626,6 @@ abstract class AppLocalizations {
   /// **'Muskeln aufbauen'**
   String get gainMuscle;
 
-  /// No description provided for @whatsYourGender.
-  ///
-  /// In de, this message translates to:
-  /// **'Was ist dein Geschlecht?'**
-  String get whatsYourGender;
-
   /// No description provided for @male.
   ///
   /// In de, this message translates to:
@@ -902,12 +638,6 @@ abstract class AppLocalizations {
   /// **'Weiblich'**
   String get female;
 
-  /// No description provided for @other.
-  ///
-  /// In de, this message translates to:
-  /// **'Divers'**
-  String get other;
-
   /// No description provided for @healthyRange.
   ///
   /// In de, this message translates to:
@@ -919,18 +649,6 @@ abstract class AppLocalizations {
   /// In de, this message translates to:
   /// **'Status'**
   String get status;
-
-  /// No description provided for @weightProgress.
-  ///
-  /// In de, this message translates to:
-  /// **'Gewichtsverlauf'**
-  String get weightProgress;
-
-  /// No description provided for @caloriesConsumed.
-  ///
-  /// In de, this message translates to:
-  /// **'Gegessene Kalorien'**
-  String get caloriesConsumed;
 
   /// No description provided for @proteinShort.
   ///
@@ -950,47 +668,17 @@ abstract class AppLocalizations {
   /// **'Fett'**
   String get fatsShort;
 
-  /// No description provided for @reminders.
-  ///
-  /// In de, this message translates to:
-  /// **'Erinnerungen'**
-  String get reminders;
-
-  /// No description provided for @logMeals.
-  ///
-  /// In de, this message translates to:
-  /// **'Mahlzeiten loggen'**
-  String get logMeals;
-
-  /// No description provided for @logMealsSubtitle.
-  ///
-  /// In de, this message translates to:
-  /// **'Morgens, Mittags, Abends'**
-  String get logMealsSubtitle;
-
   /// No description provided for @logWeight.
   ///
   /// In de, this message translates to:
   /// **'Gewicht loggen'**
   String get logWeight;
 
-  /// No description provided for @logWeightSubtitle.
-  ///
-  /// In de, this message translates to:
-  /// **'Tägliche Erinnerung'**
-  String get logWeightSubtitle;
-
   /// No description provided for @noDataAvailable.
   ///
   /// In de, this message translates to:
   /// **'Keine Daten verfügbar'**
   String get noDataAvailable;
-
-  /// No description provided for @recentHistory.
-  ///
-  /// In de, this message translates to:
-  /// **'Verlauf der letzten Tage'**
-  String get recentHistory;
 
   /// No description provided for @noFoodDetected.
   ///
@@ -1076,12 +764,6 @@ abstract class AppLocalizations {
   /// **'Analyse starten'**
   String get startAnalysis;
 
-  /// No description provided for @analysisResult.
-  ///
-  /// In de, this message translates to:
-  /// **'Analyse Ergebnis'**
-  String get analysisResult;
-
   /// No description provided for @yourDescription.
   ///
   /// In de, this message translates to:
@@ -1136,12 +818,6 @@ abstract class AppLocalizations {
   /// **'OK'**
   String get ok;
 
-  /// No description provided for @chooseGender.
-  ///
-  /// In de, this message translates to:
-  /// **'Welches Geschlecht hast du?'**
-  String get chooseGender;
-
   /// No description provided for @calculateMetabolicRate.
   ///
   /// In de, this message translates to:
@@ -1177,12 +853,6 @@ abstract class AppLocalizations {
   /// In de, this message translates to:
   /// **'Kalorienüberschuss'**
   String get buildMassSubtitle;
-
-  /// No description provided for @createPlan.
-  ///
-  /// In de, this message translates to:
-  /// **'Plan erstellen'**
-  String get createPlan;
 
   /// No description provided for @aiConfigure.
   ///
@@ -1274,24 +944,6 @@ abstract class AppLocalizations {
   /// **'Gewicht gespeichert'**
   String get weightSaved;
 
-  /// No description provided for @goalWeightLoss.
-  ///
-  /// In de, this message translates to:
-  /// **'Gewicht verlieren'**
-  String get goalWeightLoss;
-
-  /// No description provided for @goalMaintainWeight.
-  ///
-  /// In de, this message translates to:
-  /// **'Gewicht halten'**
-  String get goalMaintainWeight;
-
-  /// No description provided for @goalMuscleGain.
-  ///
-  /// In de, this message translates to:
-  /// **'Muskeln aufbauen'**
-  String get goalMuscleGain;
-
   /// No description provided for @editMealName.
   ///
   /// In de, this message translates to:
@@ -1310,35 +962,11 @@ abstract class AppLocalizations {
   /// **'Datum'**
   String get date;
 
-  /// No description provided for @healthIntegration.
-  ///
-  /// In de, this message translates to:
-  /// **'Gesundheitsintegration'**
-  String get healthIntegration;
-
   /// No description provided for @healthSyncEnabled.
   ///
   /// In de, this message translates to:
   /// **'Mit Gesundheit synchronisieren'**
   String get healthSyncEnabled;
-
-  /// No description provided for @healthSyncDescription.
-  ///
-  /// In de, this message translates to:
-  /// **'Teile Ernährungs- und Gewichtsdaten mit Apple Health oder Google Health Connect.'**
-  String get healthSyncDescription;
-
-  /// No description provided for @connectHealth.
-  ///
-  /// In de, this message translates to:
-  /// **'Verbinden'**
-  String get connectHealth;
-
-  /// No description provided for @disconnectHealth.
-  ///
-  /// In de, this message translates to:
-  /// **'Trennen'**
-  String get disconnectHealth;
 
   /// No description provided for @syncMeals.
   ///
@@ -1358,12 +986,6 @@ abstract class AppLocalizations {
   /// **'Verbunden'**
   String get healthConnected;
 
-  /// No description provided for @healthNotConnected.
-  ///
-  /// In de, this message translates to:
-  /// **'Nicht verbunden'**
-  String get healthNotConnected;
-
   /// No description provided for @healthConnectNotInstalled.
   ///
   /// In de, this message translates to:
@@ -1375,12 +997,6 @@ abstract class AppLocalizations {
   /// In de, this message translates to:
   /// **'Gesundheitsberechtigungen verweigert'**
   String get healthPermissionDenied;
-
-  /// No description provided for @healthSyncSuccess.
-  ///
-  /// In de, this message translates to:
-  /// **'Mit Gesundheits-App synchronisiert'**
-  String get healthSyncSuccess;
 
   /// No description provided for @healthOnboardingTitle.
   ///
@@ -1484,12 +1100,6 @@ abstract class AppLocalizations {
   /// **'Konto'**
   String get account;
 
-  /// No description provided for @loggedInAs.
-  ///
-  /// In de, this message translates to:
-  /// **'Angemeldet als {email}'**
-  String loggedInAs(String email);
-
   /// No description provided for @logOut.
   ///
   /// In de, this message translates to:
@@ -1507,12 +1117,6 @@ abstract class AppLocalizations {
   /// In de, this message translates to:
   /// **'Bist du sicher? Alle deine Daten werden unwiderruflich gelöscht.'**
   String get deleteAccountConfirm;
-
-  /// No description provided for @requestData.
-  ///
-  /// In de, this message translates to:
-  /// **'Meine Daten anfordern'**
-  String get requestData;
 
   /// No description provided for @guestMode.
   ///
@@ -1537,12 +1141,6 @@ abstract class AppLocalizations {
   /// In de, this message translates to:
   /// **'Konto gelöscht'**
   String get accountDeleted;
-
-  /// No description provided for @dataExported.
-  ///
-  /// In de, this message translates to:
-  /// **'Daten exportiert'**
-  String get dataExported;
 
   /// No description provided for @accountSection.
   ///
@@ -1598,23 +1196,11 @@ abstract class AppLocalizations {
   /// **'Datenschutzerklärung'**
   String get privacyPolicy;
 
-  /// No description provided for @termsOfService.
-  ///
-  /// In de, this message translates to:
-  /// **'Nutzungsbedingungen'**
-  String get termsOfService;
-
   /// No description provided for @featureOnlyInApp.
   ///
   /// In de, this message translates to:
   /// **'Nur in der App'**
   String get featureOnlyInApp;
-
-  /// No description provided for @healthNotAvailableWeb.
-  ///
-  /// In de, this message translates to:
-  /// **'Die Gesundheitsintegration erfordert die native App'**
-  String get healthNotAvailableWeb;
 
   /// No description provided for @activityLevel.
   ///
@@ -1706,12 +1292,6 @@ abstract class AppLocalizations {
   /// **'Deine aufgenommenen Fotos gehen verloren.'**
   String get discardPhotosConfirm;
 
-  /// No description provided for @selectDate.
-  ///
-  /// In de, this message translates to:
-  /// **'Datum wählen'**
-  String get selectDate;
-
   /// No description provided for @cameraNotAvailableWeb.
   ///
   /// In de, this message translates to:
@@ -1783,12 +1363,6 @@ abstract class AppLocalizations {
   /// In de, this message translates to:
   /// **'Gespeichert. Die Analyse läuft weiter, sobald Kalorat geöffnet und online ist.'**
   String get mealSavedBackground;
-
-  /// No description provided for @ml.
-  ///
-  /// In de, this message translates to:
-  /// **'ml'**
-  String get ml;
 
   /// No description provided for @saveToGallery.
   ///
@@ -2095,12 +1669,6 @@ abstract class AppLocalizations {
   /// In de, this message translates to:
   /// **'Mahlzeit gelöscht'**
   String get mealDeleted;
-
-  /// No description provided for @quickLogFailed.
-  ///
-  /// In de, this message translates to:
-  /// **'Die Mahlzeit konnte nicht erfasst werden.'**
-  String get quickLogFailed;
 
   /// No description provided for @barcodeLookingUp.
   ///
@@ -2707,6 +2275,30 @@ abstract class AppLocalizations {
   /// In de, this message translates to:
   /// **'Analyse fehlgeschlagen. Bitte erneut versuchen.'**
   String get analysisFailed;
+
+  /// No description provided for @hapticsTest.
+  ///
+  /// In de, this message translates to:
+  /// **'Haptik testen'**
+  String get hapticsTest;
+
+  /// No description provided for @hapticsTestIntro.
+  ///
+  /// In de, this message translates to:
+  /// **'Tippe jede Zeile an und hake an, was du gespürt hast. Schick mir dann einen Screenshot. 0 ist der echte iOS-Schalter: Spürst du dort nichts, gibt das iPhone gar keine Schalter-Haptik aus (z. B. Systemhaptik in den Einstellungen aus).'**
+  String get hapticsTestIntro;
+
+  /// No description provided for @hapticsTestNative.
+  ///
+  /// In de, this message translates to:
+  /// **'iOS-Schalter von Hand'**
+  String get hapticsTestNative;
+
+  /// No description provided for @hapticsTestFelt.
+  ///
+  /// In de, this message translates to:
+  /// **'gespürt'**
+  String get hapticsTestFelt;
 }
 
 class _AppLocalizationsDelegate

@@ -77,6 +77,10 @@ class PromptField {
         NumberFormat.decimalPattern(locale).symbols.DECIMAL_SEP == ',';
     return comma ? text.replaceAll('.', ',') : text;
   }
+
+  /// A typed number, with "," or "." as the decimal point.
+  static double? parseNumber(String text) =>
+      double.tryParse(text.trim().replaceAll(',', '.'));
 }
 
 /// Asks for one or more values, like an iOS alert with text fields or a
@@ -91,6 +95,28 @@ Future<List<String>?> showPromptDialog(
   builder: (_) =>
       _PromptDialog(title: title, fields: fields, saveLabel: saveLabel),
 );
+
+/// Asks for one number. Null when cancelled or not a number.
+Future<double?> showNumberPrompt(
+  BuildContext context, {
+  required String title,
+  required double initial,
+  String? suffix,
+  int decimals = 1,
+}) async {
+  final values = await showPromptDialog(
+    context,
+    title: title,
+    fields: [
+      PromptField(
+        initial: PromptField.numberText(context, initial, decimals: decimals),
+        suffix: suffix,
+        keyboardType: PromptField.number,
+      ),
+    ],
+  );
+  return values == null ? null : PromptField.parseNumber(values.first);
+}
 
 class _PromptDialog extends StatefulWidget {
   final String title;

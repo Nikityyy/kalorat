@@ -64,13 +64,6 @@ class AppTypography {
     letterSpacing: -1.0,
   );
 
-  static TextStyle get dataLabel => TextStyle(
-    fontFamily: mono,
-    fontSize: 14,
-    fontWeight: FontWeight.w500,
-    color: AppColors.primary,
-  );
-
   static TextStyle get dataMedium => TextStyle(
     fontFamily: mono,
     fontSize: 22,
@@ -83,13 +76,6 @@ class AppTypography {
     fontSize: 14,
     fontWeight: FontWeight.w400,
     color: AppColors.text.withValues(alpha: 0.7),
-  );
-
-  static TextStyle get buttonLarge => TextStyle(
-    fontFamily: outfit,
-    fontSize: 16,
-    fontWeight: FontWeight.w600,
-    color: AppColors.onPrimary,
   );
 
   // The redesign's scale. Words are Outfit, every number is JetBrains Mono.

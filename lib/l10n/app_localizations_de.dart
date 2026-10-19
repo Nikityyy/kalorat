@@ -15,10 +15,6 @@ class AppLocalizationsDe extends AppLocalizations {
   String get welcome => 'Willkommen bei Kalorat';
 
   @override
-  String get welcomeSubtitle =>
-      'Präzises Ernährungstracking. Absolute Klarheit.';
-
-  @override
   String get next => 'Weiter';
 
   @override
@@ -40,53 +36,10 @@ class AppLocalizationsDe extends AppLocalizations {
   String get edit => 'Bearbeiten';
 
   @override
-  String get yes => 'Ja';
-
-  @override
-  String get no => 'Nein';
-
-  @override
   String get onboardingName => 'Wie heißt du?';
 
   @override
   String get onboardingNameHint => 'Dein Name';
-
-  @override
-  String get onboardingBirthdate => 'Wann bist du geboren?';
-
-  @override
-  String get onboardingHeight => 'Wie groß bist du?';
-
-  @override
-  String get onboardingHeightHint => 'Größe in cm';
-
-  @override
-  String get onboardingWeight => 'Wie viel wiegst du?';
-
-  @override
-  String get onboardingWeightHint => 'Gewicht in kg';
-
-  @override
-  String get onboardingLanguage => 'Sprache auswählen';
-
-  @override
-  String get onboardingApiKey => 'Gemini API-Key eingeben';
-
-  @override
-  String get onboardingApiKeyHint => 'API-Key';
-
-  @override
-  String get onboardingApiKeyInfo =>
-      'API-Key von ai.dev eintragen. Gehe zu https://ai.dev → Konto → API Key erstellen → hier einfügen.';
-
-  @override
-  String get home => 'Start';
-
-  @override
-  String get me => 'Ich';
-
-  @override
-  String get history => 'Historie';
 
   @override
   String get settings => 'Einstellungen';
@@ -96,9 +49,6 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get age => 'Alter';
-
-  @override
-  String get years => 'Jahre';
 
   @override
   String get height => 'Größe';
@@ -123,9 +73,6 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get takePhoto => 'Foto aufnehmen';
-
-  @override
-  String get addMorePhotos => 'Weitere Fotos hinzufügen';
 
   @override
   String get analyzeMeal => 'Mahlzeit checken';
@@ -155,9 +102,6 @@ class AppLocalizationsDe extends AppLocalizations {
   String get minerals => 'Mineralstoffe';
 
   @override
-  String get manualEntry => 'Manuell eingeben';
-
-  @override
   String get offlineMessage =>
       'Du bist offline. Die AI wird die Mahlzeit analysieren, sobald du wieder online bist und die App öffnest.';
 
@@ -184,15 +128,6 @@ class AppLocalizationsDe extends AppLocalizations {
   String get today => 'Heute';
 
   @override
-  String get thisWeek => 'Diese Woche';
-
-  @override
-  String get thisMonth => 'Dieser Monat';
-
-  @override
-  String get thisYear => 'Dieses Jahr';
-
-  @override
   String get day => 'Tag';
 
   @override
@@ -205,37 +140,10 @@ class AppLocalizationsDe extends AppLocalizations {
   String get year => 'Jahr';
 
   @override
-  String get total => 'Gesamt';
-
-  @override
-  String get weightTracking => 'Gewichtsverlauf';
-
-  @override
   String get addWeight => 'Gewicht eintragen';
 
   @override
-  String get weightHistory => 'Gewichtsverlauf';
-
-  @override
-  String get noWeightData => 'Noch keine Gewichtsdaten erfasst.';
-
-  @override
-  String get statistics => 'Statistiken';
-
-  @override
-  String get noMealData => 'Keine Mahlzeiten erfasst.';
-
-  @override
-  String get mealsLogged => 'Mahlzeiten erfasst';
-
-  @override
   String get language => 'Sprache';
-
-  @override
-  String get german => 'Deutsch';
-
-  @override
-  String get english => 'English';
 
   @override
   String get apiKey => 'API-Key';
@@ -277,9 +185,6 @@ class AppLocalizationsDe extends AppLocalizations {
   String get reportDailyFats => 'Tägliches Fettziel';
 
   @override
-  String get reportMealsLog => 'Mahlzeitenprotokoll';
-
-  @override
   String get reportWeight => 'Gewicht';
 
   @override
@@ -298,15 +203,6 @@ class AppLocalizationsDe extends AppLocalizations {
   String get importData => 'Daten importieren';
 
   @override
-  String get exportSuccess => 'Daten erfolgreich exportiert';
-
-  @override
-  String get importSuccess => 'Daten erfolgreich importiert';
-
-  @override
-  String get importError => 'Fehler beim Importieren';
-
-  @override
   String get notifications => 'Benachrichtigungen';
 
   @override
@@ -314,16 +210,6 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get weightReminders => 'Gewichts-Erinnerungen';
-
-  @override
-  String get confirmDelete => 'Wirklich löschen?';
-
-  @override
-  String get confirmDeleteMeal =>
-      'Möchtest du diese Mahlzeit wirklich löschen?';
-
-  @override
-  String get cameraPermission => 'Kamera-Berechtigung wird benötigt';
 
   @override
   String get grantPermission => 'Berechtigung erteilen';
@@ -359,15 +245,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get saveChanges => 'Änderungen speichern';
 
   @override
-  String get saved => 'Gespeichert';
-
-  @override
   String get data => 'Daten';
-
-  @override
-  String exported(String path) {
-    return 'Exportiert: $path';
-  }
 
   @override
   String get importSuccessful => 'Import erfolgreich';
@@ -379,13 +257,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get buildingPlan => 'Profil wird gespeichert …';
 
   @override
-  String get apiKeyValidationError => 'Bitte einen gültigen API-Key eingeben';
-
-  @override
   String get nameValidationError => 'Bitte gib deinen Namen ein';
-
-  @override
-  String get mealSaved => 'Mahlzeit gespeichert';
 
   @override
   String get logYourWeight => 'Gewicht eintragen';
@@ -400,12 +272,6 @@ class AppLocalizationsDe extends AppLocalizations {
   String get mealReminderBody => 'Mahlzeit erfassen.';
 
   @override
-  String get howOldAreYou => 'Wie alt bist du?';
-
-  @override
-  String get whatsYourGoal => 'Was ist dein Ziel?';
-
-  @override
   String get loseWeight => 'Abnehmen';
 
   @override
@@ -415,16 +281,10 @@ class AppLocalizationsDe extends AppLocalizations {
   String get gainMuscle => 'Muskeln aufbauen';
 
   @override
-  String get whatsYourGender => 'Was ist dein Geschlecht?';
-
-  @override
   String get male => 'Männlich';
 
   @override
   String get female => 'Weiblich';
-
-  @override
-  String get other => 'Divers';
 
   @override
   String healthyRange(String min, String max) {
@@ -433,12 +293,6 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get status => 'Status';
-
-  @override
-  String get weightProgress => 'Gewichtsverlauf';
-
-  @override
-  String get caloriesConsumed => 'Gegessene Kalorien';
 
   @override
   String get proteinShort => 'Eiw.';
@@ -450,25 +304,10 @@ class AppLocalizationsDe extends AppLocalizations {
   String get fatsShort => 'Fett';
 
   @override
-  String get reminders => 'Erinnerungen';
-
-  @override
-  String get logMeals => 'Mahlzeiten loggen';
-
-  @override
-  String get logMealsSubtitle => 'Morgens, Mittags, Abends';
-
-  @override
   String get logWeight => 'Gewicht loggen';
 
   @override
-  String get logWeightSubtitle => 'Tägliche Erinnerung';
-
-  @override
   String get noDataAvailable => 'Keine Daten verfügbar';
-
-  @override
-  String get recentHistory => 'Verlauf der letzten Tage';
 
   @override
   String get noFoodDetected => 'Kein Essen erkannt. Bitte versuche es erneut.';
@@ -516,9 +355,6 @@ class AppLocalizationsDe extends AppLocalizations {
   String get startAnalysis => 'Analyse starten';
 
   @override
-  String get analysisResult => 'Analyse Ergebnis';
-
-  @override
   String get yourDescription => 'Deine Beschreibung';
 
   @override
@@ -546,9 +382,6 @@ class AppLocalizationsDe extends AppLocalizations {
   String get ok => 'OK';
 
   @override
-  String get chooseGender => 'Welches Geschlecht hast du?';
-
-  @override
   String get calculateMetabolicRate => 'Um deinen Grundumsatz zu berechnen.';
 
   @override
@@ -565,9 +398,6 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get buildMassSubtitle => 'Kalorienüberschuss';
-
-  @override
-  String get createPlan => 'Plan erstellen';
 
   @override
   String get aiConfigure => 'AI Konfigurieren';
@@ -617,15 +447,6 @@ class AppLocalizationsDe extends AppLocalizations {
   String get weightSaved => 'Gewicht gespeichert';
 
   @override
-  String get goalWeightLoss => 'Gewicht verlieren';
-
-  @override
-  String get goalMaintainWeight => 'Gewicht halten';
-
-  @override
-  String get goalMuscleGain => 'Muskeln aufbauen';
-
-  @override
   String get editMealName => 'Mahlzeitnamen bearbeiten';
 
   @override
@@ -635,20 +456,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get date => 'Datum';
 
   @override
-  String get healthIntegration => 'Gesundheitsintegration';
-
-  @override
   String get healthSyncEnabled => 'Mit Gesundheit synchronisieren';
-
-  @override
-  String get healthSyncDescription =>
-      'Teile Ernährungs- und Gewichtsdaten mit Apple Health oder Google Health Connect.';
-
-  @override
-  String get connectHealth => 'Verbinden';
-
-  @override
-  String get disconnectHealth => 'Trennen';
 
   @override
   String get syncMeals => 'Mahlzeiten synchronisieren';
@@ -660,17 +468,11 @@ class AppLocalizationsDe extends AppLocalizations {
   String get healthConnected => 'Verbunden';
 
   @override
-  String get healthNotConnected => 'Nicht verbunden';
-
-  @override
   String get healthConnectNotInstalled =>
       'Health Connect App nicht installiert';
 
   @override
   String get healthPermissionDenied => 'Gesundheitsberechtigungen verweigert';
-
-  @override
-  String get healthSyncSuccess => 'Mit Gesundheits-App synchronisiert';
 
   @override
   String get healthOnboardingTitle => 'Gesundheit verbinden';
@@ -729,11 +531,6 @@ class AppLocalizationsDe extends AppLocalizations {
   String get account => 'Konto';
 
   @override
-  String loggedInAs(String email) {
-    return 'Angemeldet als $email';
-  }
-
-  @override
   String get logOut => 'Abmelden';
 
   @override
@@ -742,9 +539,6 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get deleteAccountConfirm =>
       'Bist du sicher? Alle deine Daten werden unwiderruflich gelöscht.';
-
-  @override
-  String get requestData => 'Meine Daten anfordern';
 
   @override
   String get guestMode => 'Gastmodus';
@@ -757,9 +551,6 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get accountDeleted => 'Konto gelöscht';
-
-  @override
-  String get dataExported => 'Daten exportiert';
 
   @override
   String get accountSection => 'Deine Daten werden nur lokal gespeichert';
@@ -791,14 +582,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get privacyPolicy => 'Datenschutzerklärung';
 
   @override
-  String get termsOfService => 'Nutzungsbedingungen';
-
-  @override
   String get featureOnlyInApp => 'Nur in der App';
-
-  @override
-  String get healthNotAvailableWeb =>
-      'Die Gesundheitsintegration erfordert die native App';
 
   @override
   String get activityLevel => 'Aktivitätslevel';
@@ -848,9 +632,6 @@ class AppLocalizationsDe extends AppLocalizations {
       'Deine aufgenommenen Fotos gehen verloren.';
 
   @override
-  String get selectDate => 'Datum wählen';
-
-  @override
   String get cameraNotAvailableWeb => 'Kamera nicht verfügbar.';
 
   @override
@@ -888,9 +669,6 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get mealSavedBackground =>
       'Gespeichert. Die Analyse läuft weiter, sobald Kalorat geöffnet und online ist.';
-
-  @override
-  String get ml => 'ml';
 
   @override
   String get saveToGallery => 'Foto speichern';
@@ -1060,9 +838,6 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get mealDeleted => 'Mahlzeit gelöscht';
-
-  @override
-  String get quickLogFailed => 'Die Mahlzeit konnte nicht erfasst werden.';
 
   @override
   String get barcodeLookingUp => 'Produkt wird gesucht…';
@@ -1452,4 +1227,17 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get analysisFailed =>
       'Analyse fehlgeschlagen. Bitte erneut versuchen.';
+
+  @override
+  String get hapticsTest => 'Haptik testen';
+
+  @override
+  String get hapticsTestIntro =>
+      'Tippe jede Zeile an und hake an, was du gespürt hast. Schick mir dann einen Screenshot. 0 ist der echte iOS-Schalter: Spürst du dort nichts, gibt das iPhone gar keine Schalter-Haptik aus (z. B. Systemhaptik in den Einstellungen aus).';
+
+  @override
+  String get hapticsTestNative => 'iOS-Schalter von Hand';
+
+  @override
+  String get hapticsTestFelt => 'gespürt';
 }

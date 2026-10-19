@@ -3,13 +3,11 @@ import 'dart:io' show File;
 import 'package:camera/camera.dart';
 import 'package:flutter/foundation.dart' show Uint8List, ValueListenable;
 import 'package:flutter/material.dart';
-import 'package:gal/gal.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
-import 'package:share_plus/share_plus.dart';
 import '../extensions/l10n_extension.dart';
 import '../extensions/validation_l10n.dart';
 import '../models/models.dart';
@@ -24,6 +22,7 @@ import '../theme/app_theme.dart';
 import '../theme/app_typography.dart';
 import '../utils/analysis_error_message.dart';
 import '../utils/analysis_parser.dart';
+import '../utils/save_photo.dart';
 import '../utils/platform_utils.dart';
 import '../widgets/common/adaptive.dart';
 import '../widgets/widgets.dart';
@@ -886,46 +885,6 @@ class _HomeScreenState extends State<HomeScreen>
               MediaQuery.devicePixelRatioOf(context))
           .round();
 
-  Future<void> _saveCapturedPhoto(String photo) async {
-    final l10n = context.l10n;
-
-    try {
-      if (PlatformUtils.isWeb) {
-        final bytes = await PhotoStore.instance.read(photo);
-        if (bytes == null) throw StateError('Photo not found');
-        await SharePlus.instance.share(
-          ShareParams(
-            files: [
-              XFile.fromData(
-                bytes,
-                mimeType: 'image/jpeg',
-                name: 'kalorat_meal.jpg',
-              ),
-            ],
-          ),
-        );
-      } else {
-        await Gal.putImage(photo, album: 'Kalorat');
-      }
-
-      if (mounted) {
-        AppToast.show(
-          context,
-          l10n.saveToGallerySuccess,
-          kind: AppToastKind.info,
-        );
-      }
-    } catch (_) {
-      if (mounted) {
-        AppToast.show(
-          context,
-          l10n.saveToGalleryError,
-          kind: AppToastKind.info,
-        );
-      }
-    }
-  }
-
   Future<void> _openCapturedPhoto(int index) async {
     if (index < 0 || index >= _capturedPhotos.length) return;
     final photos = List<String>.from(_capturedPhotos);
@@ -934,7 +893,7 @@ class _HomeScreenState extends State<HomeScreen>
       images: [for (final p in photos) _photoImageProvider(p)],
       initialIndex: index,
       heroTag: (i) => PhotoReviewView.heroTag(photos[i]),
-      onSave: (i) => _saveCapturedPhoto(photos[i]),
+      onSave: (i) => savePhotoToGallery(context, photos[i]),
       onDelete: (i) => _removeCapturedPhoto(_capturedPhotos.indexOf(photos[i])),
     );
   }
@@ -1093,7 +1052,6 @@ class _HomeScreenState extends State<HomeScreen>
     }
 
     if (result != null) {
-      debugPrint('Analysis result received. Checking content...');
       final noFood =
           result['error'] == 'no_food_detected' ||
           // A description with no food in it comes back as zero calories.
@@ -1112,7 +1070,6 @@ class _HomeScreenState extends State<HomeScreen>
       }
 
       try {
-        debugPrint('Parsing meal data...');
         final parsed = parseAnalysisResult(result);
         final mealWithPortion = MealModel(
           id: mealId,
@@ -1140,10 +1097,7 @@ class _HomeScreenState extends State<HomeScreen>
           isPending: false,
         );
 
-        debugPrint('Meal parsed successfully: ${mealWithPortion.mealName}');
-
         if (mounted) {
-          debugPrint('Pushing MealDetailScreen...');
           void endAnalysis() {
             if (!mounted || !_isAnalyzing) return;
             setState(() {
@@ -1173,7 +1127,6 @@ class _HomeScreenState extends State<HomeScreen>
           await popped;
           route.animation?.removeStatusListener(onRouteShown);
           endAnalysis();
-          debugPrint('Returned from MealDetailScreen');
           await _resetCaptureState();
         }
       } catch (e, stack) {

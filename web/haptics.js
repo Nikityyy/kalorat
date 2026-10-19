@@ -21,13 +21,25 @@
     return false;
   }
 
+  // The last calls and what became of them, for the haptics test panel
+  // (web/haptics_test.js): no browser API says whether the phone buzzed.
+  var log = (window.kaloratHapticLog = []);
+  function note(text) {
+    var active = navigator.userActivation ? navigator.userActivation.isActive : 'n/a';
+    var ev = window.event ? window.event.type : '-';
+    log.push(Math.round(performance.now()) + ' ' + text + ' event ' + ev + ' activation ' + active);
+    if (log.length > 12) log.shift();
+  }
+
   if (typeof navigator.vibrate === 'function') {
     var PATTERNS = [10, 6, [12, 50, 12]];
     window.kaloratHaptic = function (kind) {
       if (throttled()) return;
       try {
-        navigator.vibrate(PATTERNS[kind] || PATTERNS[0]);
-      } catch (_) {}
+        note('vibrate ' + navigator.vibrate(PATTERNS[kind] || PATTERNS[0]));
+      } catch (e) {
+        note('error ' + e.message);
+      }
     };
     return;
   }
@@ -43,7 +55,9 @@
     typeof window.matchMedia === 'function' &&
     window.matchMedia('(pointer: coarse)').matches;
   if (!coarse) {
-    window.kaloratHaptic = function () {};
+    window.kaloratHaptic = function () {
+      note('skipped (no touch screen)');
+    };
     return;
   }
 
@@ -63,16 +77,19 @@
   function play(kind) {
     if (throttled()) return;
     try {
+      note('play');
       tick();
       if (kind === 2) setTimeout(tick, 120);
-    } catch (_) {}
+    } catch (e) {
+      note('error ' + e.message);
+    }
   }
 
   // Safari only plays the haptic shortly after a real tap (as the library
-  // found: about 850ms). Flutter reports a tap on pointerup, which can come
-  // just before Safari counts it as a gesture, so a request without a recent
-  // gesture waits for the next real touchend/click (up to 300ms) and is
-  // dropped after that. Listeners are passive and never touch the events.
+  // found: about 850ms). A request without a recent gesture (a tap Flutter
+  // reports late, e.g. after a double-tap wait) waits for the next real
+  // pointerup/touchend/click (up to 300ms) and is dropped after that.
+  // Listeners are passive and never touch the events.
   var GRANT_MS = 850;
   var PENDING_MAX_MS = 300;
   var lastGesture = 0;
@@ -86,9 +103,15 @@
     var kind = pendingKind;
     pendingKind = -1;
     if (lastGesture - pendingAt <= PENDING_MAX_MS) play(kind);
+    else note('dropped (no gesture in time)');
   }
 
   var opts = { capture: true, passive: true };
+  // pointerup comes first: Flutter reports a tap from it, so with this
+  // capture listener (it runs before Flutter's) the haptic plays inside the
+  // tap's own event instead of waiting for a later touchend or click, which
+  // iOS may never send to the page.
+  window.addEventListener('pointerup', onGesture, opts);
   window.addEventListener('touchend', onGesture, opts);
   window.addEventListener('click', onGesture, opts);
   window.addEventListener('keyup', onGesture, opts);
@@ -98,6 +121,7 @@
     if (now - lastGesture <= GRANT_MS) {
       play(kind);
     } else {
+      note('pending');
       pendingKind = kind;
       pendingAt = now;
     }

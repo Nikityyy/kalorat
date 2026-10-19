@@ -87,8 +87,6 @@ class UserModel extends HiveObject {
 
   Goal get goal => Goal.fromIndex(goalIndex);
   Gender get gender => Gender.fromIndex(genderIndex ?? 0);
-  Gender? get genderNullable =>
-      genderIndex != null ? Gender.fromIndex(genderIndex!) : null;
   ActivityLevel get activityLevel =>
       ActivityLevel.fromIndex(activityLevelIndex);
 
@@ -124,10 +122,7 @@ class UserModel extends HiveObject {
     bool? useAccurateMode,
   }) : height = height.clamp(50.0, 300.0),
        weight = weight.clamp(1.0, 500.0),
-       goalIndex = (goalIndex ?? goal ?? 1).clamp(
-         0,
-         Goal.values.length - 1,
-       ),
+       goalIndex = (goalIndex ?? goal ?? 1).clamp(0, Goal.values.length - 1),
        genderIndex = (genderIndex ?? gender)?.clamp(
          0,
          Gender.values.length - 1,

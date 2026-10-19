@@ -1,11 +1,8 @@
-import 'package:flutter/foundation.dart' show kIsWeb;
-
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart' show DateFormat;
 import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
 import 'package:provider/provider.dart';
 
-import '../services/barcode/barcode_preference.dart';
 import '../services/barcode/food_product.dart';
 import '../services/photo_store.dart';
 import '../utils/haptics.dart';
@@ -21,13 +18,13 @@ import '../theme/app_typography.dart';
 import '../utils/nutrition_units.dart';
 import '../widgets/common/adaptive.dart';
 import 'home/photo_viewer.dart';
+import 'meal_detail/retry_sheet.dart';
+import '../utils/analysis_parser.dart';
 import '../widgets/inputs/action_button.dart';
 import '../widgets/live_thought_panel.dart';
-import 'package:gal/gal.dart';
-import 'package:share_plus/share_plus.dart';
 import '../widgets/app_toast.dart';
-import '../widgets/barcode_switch_tile.dart';
 import '../utils/analysis_error_message.dart';
+import '../utils/save_photo.dart';
 import '../widgets/common/meal_mark.dart';
 import '../widgets/common/mono_digits.dart';
 import '../widgets/common/thin_bar.dart';
@@ -62,7 +59,6 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
   ImageProvider? _analysisHeroImageProvider;
 
   // FocusNode for retry context sheet — avoids autofocus keyboard-jump bug
-  final FocusNode _contextFocusNode = FocusNode();
 
   @override
   void initState() {
@@ -102,7 +98,6 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
 
   @override
   void dispose() {
-    _contextFocusNode.dispose();
     _thought.dispose();
     _photoPages.dispose();
     super.dispose();
@@ -183,47 +178,12 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
 
   /// Saves the photo at [index], by default the one shown.
   Future<void> _saveToGallery([int? index]) async {
-    final l10n = context.l10n;
     final photos = _meal.photoPaths;
     if (photos.isEmpty) return;
-    final path = photos[(index ?? _photoIndex).clamp(0, photos.length - 1)];
-
-    try {
-      if (kIsWeb) {
-        // On web: share/download the image via share_plus
-        final bytes = await PhotoStore.instance.read(path);
-        if (bytes == null) throw StateError('Photo not found');
-        await SharePlus.instance.share(
-          ShareParams(
-            files: [
-              XFile.fromData(
-                bytes,
-                mimeType: 'image/jpeg',
-                name: 'kalorat_meal.jpg',
-              ),
-            ],
-          ),
-        );
-      } else {
-        // On mobile: save the file path directly to device gallery (camera roll)
-        await Gal.putImage(path, album: 'Kalorat');
-      }
-      if (mounted) {
-        AppToast.show(
-          context,
-          l10n.saveToGallerySuccess,
-          kind: AppToastKind.info,
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        AppToast.show(
-          context,
-          l10n.saveToGalleryError,
-          kind: AppToastKind.info,
-        );
-      }
-    }
+    await savePhotoToGallery(
+      context,
+      photos[(index ?? _photoIndex).clamp(0, photos.length - 1)],
+    );
   }
 
   /// Logs this meal again as it was saved, as a new meal eaten now.
@@ -258,167 +218,18 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
     final apiKey = provider.apiKey;
     if (apiKey.isEmpty) return;
 
-    final l10n = context.l10n;
     // A meal logged from a barcode can be analysed as a meal instead, e.g.
     // when the code was on a package in the background. The product's name
     // and values must not steer that analysis.
     final barcodeProduct = FoodProduct.productNameOfMeal(_meal.mealContext);
-    final contextController = TextEditingController(
-      text: barcodeProduct == null ? _mealContext : null,
+    final request = await showRetrySheet(
+      context,
+      initialNote: barcodeProduct == null ? _mealContext : null,
+      barcodeProduct: barcodeProduct,
+      hasPhotos: _meal.photoPaths.isNotEmpty,
     );
-    bool shouldRetry = false;
-    bool useBarcode = barcodeProduct != null && BarcodePreference.useBarcode;
-    String? submittedContext;
-
-    await showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      isDismissible: true,
-      builder: (sheetContext) => StatefulBuilder(
-        builder: (sheetContext, setSheetState) => Padding(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(sheetContext).viewInsets.bottom,
-          ),
-          child: Container(
-            padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Center(
-                  child: Container(
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: AppColors.border,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 20),
-                Text(
-                  l10n.retrySheetTitle,
-                  style: AppTypography.displayMedium.copyWith(fontSize: 22),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  l10n.retrySheetSubtitle,
-                  style: AppTypography.bodySmall.copyWith(
-                    color: AppColors.text,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                if (barcodeProduct != null) ...[
-                  BarcodeSwitchTile(
-                    productName: barcodeProduct,
-                    value: useBarcode,
-                    onHint: l10n.barcodeRetryHint,
-                    onChanged: (value) {
-                      setSheetState(() => useBarcode = value);
-                      BarcodePreference.setUseBarcode(value);
-                    },
-                  ),
-                  const SizedBox(height: 12),
-                ],
-                TextField(
-                  controller: contextController,
-                  magnifierConfiguration: fieldMagnifier,
-                  focusNode: _contextFocusNode,
-                  enabled: !useBarcode,
-                  maxLines: 3,
-                  style: AppTypography.bodyMedium,
-                  decoration: InputDecoration(
-                    hintText: l10n.retrySheetHint,
-                    filled: true,
-                    fillColor: AppColors.surface,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(
-                        AppTheme.borderRadius,
-                      ),
-                      borderSide: BorderSide.none,
-                    ),
-                    contentPadding: const EdgeInsets.all(16),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: () => Navigator.pop(sheetContext),
-                        style: OutlinedButton.styleFrom(
-                          side: BorderSide(color: AppColors.surface),
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(
-                              AppTheme.borderRadius,
-                            ),
-                          ),
-                        ),
-                        child: Text(
-                          l10n.cancel,
-                          style: TextStyle(color: AppColors.text),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      flex: 2,
-                      child: ValueListenableBuilder<TextEditingValue>(
-                        valueListenable: contextController,
-                        builder: (_, value, _) {
-                          // Without a photo the note is the whole input.
-                          final canRetry =
-                              !useBarcode &&
-                              (_meal.photoPaths.isNotEmpty ||
-                                  value.text.trim().isNotEmpty);
-                          return ElevatedButton(
-                            onPressed: canRetry
-                                ? () {
-                                    final text = contextController.text.trim();
-                                    submittedContext = text.isNotEmpty
-                                        ? text
-                                        : null;
-                                    shouldRetry = true;
-                                    Navigator.pop(sheetContext);
-                                  }
-                                : null,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.primary,
-                              foregroundColor: AppColors.onPrimary,
-                              padding: const EdgeInsets.symmetric(vertical: 14),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(
-                                  AppTheme.borderRadius,
-                                ),
-                              ),
-                              elevation: 0,
-                            ),
-                            child: Text(
-                              l10n.retrySheetAction,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-
-    // Request focus AFTER sheet is displayed to avoid layout jump
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) _contextFocusNode.requestFocus();
-    });
-
-    if (!shouldRetry || !mounted) return;
+    if (request == null || !mounted) return;
+    final submittedContext = request.note;
 
     setState(() {
       _mealContext = submittedContext;
@@ -468,73 +279,29 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
           return;
         }
 
-        final detectedPortion = normalizeDetectedPortion(analysis);
-        final detectedQty = detectedPortion.quantity;
-        final detectedUnit = detectedPortion.unit;
-        final baseQuantityPerUnit = quantityPerUnitFor(detectedUnit);
-        double detectedMultiplier = (detectedUnit == 'serving')
-            ? detectedQty
-            : (detectedQty / baseQuantityPerUnit);
-        if (detectedMultiplier <= 0) detectedMultiplier = 1.0;
-
+        final parsed = parseAnalysisResult(analysis);
         setState(() {
           _meal = _meal.copyWith(
             mealContext: submittedContext,
-            mealName: analysis['meal_name'] ?? '',
-            calories: nutritionBaseValue(
-              analysis,
-              unit: detectedUnit,
-              valueKey: 'calories',
-              referenceKey: 'calories_per_100g',
-            ),
-            protein: nutritionBaseValue(
-              analysis,
-              unit: detectedUnit,
-              valueKey: 'protein',
-              referenceKey: 'protein_per_100g',
-            ),
-            carbs: nutritionBaseValue(
-              analysis,
-              unit: detectedUnit,
-              valueKey: 'carbs',
-              referenceKey: 'carbs_per_100g',
-            ),
-            fats: nutritionBaseValue(
-              analysis,
-              unit: detectedUnit,
-              valueKey: 'fats',
-              referenceKey: 'fats_per_100g',
-            ),
-            caloriesPer100g: (analysis['calories_per_100g'] as num?)
-                ?.toDouble(),
-            proteinPer100g: (analysis['protein_per_100g'] as num?)?.toDouble(),
-            carbsPer100g: (analysis['carbs_per_100g'] as num?)?.toDouble(),
-            fatsPer100g: (analysis['fats_per_100g'] as num?)?.toDouble(),
-            analysisNote:
-                analysis['uncertainty_note']?.toString().trim().isNotEmpty ==
-                    true
-                ? analysis['uncertainty_note'].toString().trim()
-                : null,
-            caloriesMin: (analysis['calories_min'] as num?)?.toDouble(),
-            caloriesMax: (analysis['calories_max'] as num?)?.toDouble(),
-            vitamins: analysis['vitamins'] != null
-                ? Map<String, double>.from(
-                    (analysis['vitamins'] as Map).map(
-                      (k, v) => MapEntry(k.toString(), (v ?? 0).toDouble()),
-                    ),
-                  )
-                : null,
-            minerals: analysis['minerals'] != null
-                ? Map<String, double>.from(
-                    (analysis['minerals'] as Map).map(
-                      (k, v) => MapEntry(k.toString(), (v ?? 0).toDouble()),
-                    ),
-                  )
-                : null,
-            portionUnit: detectedUnit,
-            quantityPerUnit: baseQuantityPerUnit,
+            mealName: parsed.mealName,
+            calories: parsed.calories,
+            protein: parsed.protein,
+            carbs: parsed.carbs,
+            fats: parsed.fats,
+            caloriesPer100g: parsed.caloriesPer100g,
+            proteinPer100g: parsed.proteinPer100g,
+            carbsPer100g: parsed.carbsPer100g,
+            fatsPer100g: parsed.fatsPer100g,
+            analysisConfidence: parsed.confidence,
+            analysisNote: parsed.note,
+            caloriesMin: parsed.caloriesMin,
+            caloriesMax: parsed.caloriesMax,
+            vitamins: parsed.vitamins,
+            minerals: parsed.minerals,
+            portionUnit: parsed.unit,
+            quantityPerUnit: parsed.quantityPerUnit,
           );
-          _portionMultiplier = detectedMultiplier;
+          _portionMultiplier = parsed.multiplier;
           _originalCalories = _meal.calories;
         });
 
@@ -594,20 +361,12 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
     final currentValue = serving
         ? _portionMultiplier
         : (_portionMultiplier * _meal.quantityPerUnit);
-    final values = await showPromptDialog(
+    final value = await showNumberPrompt(
       context,
       title: context.l10n.portionEdit,
-      fields: [
-        PromptField(
-          initial: PromptField.numberText(context, currentValue),
-          suffix: serving ? '×' : displayUnitFor(_meal.portionUnit),
-          keyboardType: PromptField.number,
-        ),
-      ],
+      initial: currentValue,
+      suffix: serving ? '×' : displayUnitFor(_meal.portionUnit),
     );
-    final value = values == null
-        ? null
-        : double.tryParse(values.first.replaceAll(',', '.'));
     if (value != null && mounted) _updatePortionByValue(value);
   }
 
@@ -665,21 +424,13 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
   }
 
   Future<void> _showEditCaloriesDialog() async {
-    final currentCal = (_meal.calories * _portionMultiplier).round();
-    final values = await showPromptDialog(
+    final newValue = await showNumberPrompt(
       context,
       title: context.l10n.editCalories,
-      fields: [
-        PromptField(
-          initial: currentCal.toString(),
-          suffix: 'kcal',
-          keyboardType: TextInputType.number,
-        ),
-      ],
+      initial: (_meal.calories * _portionMultiplier).roundToDouble(),
+      suffix: 'kcal',
+      decimals: 0,
     );
-    final newValue = values == null
-        ? null
-        : double.tryParse(values.first.replaceAll(',', '.'));
     if (newValue == null || !mounted) return;
     setState(() {
       // Calculate new base calories
@@ -700,22 +451,14 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
   Future<void> _showEditMacroDialog(
     String label,
     double currentValue,
-    Function(double) onSave,
+    ValueChanged<double> onSave,
   ) async {
-    final values = await showPromptDialog(
+    final newValue = await showNumberPrompt(
       context,
       title: '${context.l10n.edit} $label',
-      fields: [
-        PromptField(
-          initial: PromptField.numberText(context, currentValue),
-          suffix: 'g',
-          keyboardType: PromptField.number,
-        ),
-      ],
+      initial: currentValue,
+      suffix: 'g',
     );
-    final newValue = values == null
-        ? null
-        : double.tryParse(values.first.replaceAll(',', '.'));
     if (newValue != null && mounted) onSave(newValue);
   }
 
@@ -1358,83 +1101,48 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
     );
   }
 
-  void _editProtein() {
-    _showEditMacroDialog(
-      context.l10n.protein,
-      _meal.protein * _portionMultiplier,
-      (val) {
-        setState(() {
-          final newProtein = baseValueFromScaled(
-            scaledValue: val,
-            portionMultiplier: _portionMultiplier,
-          );
-          final newCalories = _meal.isCalorieOverride
-              ? _meal.calories
-              : (newProtein * 4) + (_meal.carbs * 4) + (_meal.fats * 9);
-          _meal = _meal.copyWith(
-            protein: newProtein,
-            calories: newCalories,
-            proteinPer100g: isPer100Unit(_meal.portionUnit)
-                ? newProtein
-                : _meal.proteinPer100g,
-            caloriesPer100g:
-                isPer100Unit(_meal.portionUnit) && !_meal.isCalorieOverride
-                ? newCalories
-                : _meal.caloriesPer100g,
-          );
-        });
-      },
-    );
-  }
+  void _editProtein() => _editMacro(_Macro.protein);
+  void _editCarbs() => _editMacro(_Macro.carbs);
+  void _editFats() => _editMacro(_Macro.fats);
 
-  void _editCarbs() {
-    _showEditMacroDialog(context.l10n.carbs, _meal.carbs * _portionMultiplier, (
-      val,
-    ) {
+  /// Edits one macro of the eaten amount. Calories follow the macros unless
+  /// they were typed in by hand; a per-100 meal keeps its reference in step.
+  void _editMacro(_Macro macro) {
+    final l10n = context.l10n;
+    final (label, current) = switch (macro) {
+      _Macro.protein => (l10n.protein, _meal.protein),
+      _Macro.carbs => (l10n.carbs, _meal.carbs),
+      _Macro.fats => (l10n.fats, _meal.fats),
+    };
+    _showEditMacroDialog(label, current * _portionMultiplier, (value) {
       setState(() {
-        final newCarbs = baseValueFromScaled(
-          scaledValue: val,
+        final base = baseValueFromScaled(
+          scaledValue: value,
           portionMultiplier: _portionMultiplier,
         );
-        final newCalories = _meal.isCalorieOverride
+        final protein = macro == _Macro.protein ? base : _meal.protein;
+        final carbs = macro == _Macro.carbs ? base : _meal.carbs;
+        final fats = macro == _Macro.fats ? base : _meal.fats;
+        final calories = _meal.isCalorieOverride
             ? _meal.calories
-            : (_meal.protein * 4) + (newCarbs * 4) + (_meal.fats * 9);
+            : protein * 4 + carbs * 4 + fats * 9;
+        final per100 = isPer100Unit(_meal.portionUnit);
         _meal = _meal.copyWith(
-          carbs: newCarbs,
-          calories: newCalories,
-          carbsPer100g: isPer100Unit(_meal.portionUnit)
-              ? newCarbs
+          protein: protein,
+          carbs: carbs,
+          fats: fats,
+          calories: calories,
+          proteinPer100g: per100 && macro == _Macro.protein
+              ? base
+              : _meal.proteinPer100g,
+          carbsPer100g: per100 && macro == _Macro.carbs
+              ? base
               : _meal.carbsPer100g,
-          caloriesPer100g:
-              isPer100Unit(_meal.portionUnit) && !_meal.isCalorieOverride
-              ? newCalories
-              : _meal.caloriesPer100g,
-        );
-      });
-    });
-  }
-
-  void _editFats() {
-    _showEditMacroDialog(context.l10n.fats, _meal.fats * _portionMultiplier, (
-      val,
-    ) {
-      setState(() {
-        final newFats = baseValueFromScaled(
-          scaledValue: val,
-          portionMultiplier: _portionMultiplier,
-        );
-        final newCalories = _meal.isCalorieOverride
-            ? _meal.calories
-            : (_meal.protein * 4) + (_meal.carbs * 4) + (newFats * 9);
-        _meal = _meal.copyWith(
-          fats: newFats,
-          calories: newCalories,
-          fatsPer100g: isPer100Unit(_meal.portionUnit)
-              ? newFats
+          fatsPer100g: per100 && macro == _Macro.fats
+              ? base
               : _meal.fatsPer100g,
-          caloriesPer100g:
-              isPer100Unit(_meal.portionUnit) && !_meal.isCalorieOverride
-              ? newCalories
+          caloriesPer100g: per100 && !_meal.isCalorieOverride
+              ? calories
               : _meal.caloriesPer100g,
         );
       });
@@ -1483,7 +1191,7 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
       ],
     );
     if (values == null || !mounted) return;
-    double? read(int i) => double.tryParse(values[i].replaceAll(',', '.'));
+    double? read(int i) => PromptField.parseNumber(values[i]);
     final calories = read(0);
     final fats = read(1);
     final carbs = read(2);
@@ -1586,6 +1294,8 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
     return '${value.toStringAsFixed(1)}g';
   }
 }
+
+enum _Macro { protein, carbs, fats }
 
 class _GlassButton extends StatelessWidget {
   final IconData icon;

@@ -1,6 +1,7 @@
 import 'package:provider/provider.dart';
 import '../providers/app_provider.dart';
 import 'package:flutter/material.dart';
+import '../l10n/app_localizations.dart';
 import '../extensions/l10n_extension.dart';
 import '../theme/app_colors.dart';
 import 'home_screen.dart';
@@ -143,7 +144,7 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
     );
   }
 
-  Widget _buildBody(dynamic l10n) {
+  Widget _buildBody(AppLocalizations l10n) {
     final provider = context.watch<AppProvider>();
     final hideNavigation = provider.isMealAnalysisActive;
 

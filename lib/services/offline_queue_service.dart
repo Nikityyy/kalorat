@@ -274,9 +274,4 @@ class OfflineQueueService {
     final message = error.toString();
     return message.length > 220 ? message.substring(0, 220) : message;
   }
-
-  int getPendingCount() => _databaseService
-      .getPendingMeals()
-      .where((meal) => meal.analysisStatus != 'failed')
-      .length;
 }

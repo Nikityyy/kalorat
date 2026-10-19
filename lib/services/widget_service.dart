@@ -5,8 +5,10 @@ import '../utils/platform_utils.dart';
 class WidgetService {
   static const String androidWidgetName = 'KaloratWidgetProvider';
   static const String androidMediumWidgetName = 'KaloratWidgetMediumProvider';
-  static const String iosWidgetName = 'KaloratWidget'; // This needs to match the iOS Widget class name
-  static const String appGroupId = 'group.com.hope.kalorat'; // Important for iOS! Must match the App Group created in Xcode.
+  static const String iosWidgetName =
+      'KaloratWidget'; // This needs to match the iOS Widget class name
+  static const String appGroupId =
+      'group.com.hope.kalorat'; // Important for iOS! Must match the App Group created in Xcode.
 
   static Future<void> initialize() async {
     if (PlatformUtils.isWeb) return;
@@ -21,7 +23,8 @@ class WidgetService {
   static Future<void> updateWidgetData({
     required int streak,
     required bool isTrackedToday,
-    required String weekHistoryJson, // JSON list of bools for the last 7 days [true, false, true...]
+    required String
+    weekHistoryJson, // JSON list of bools for the last 7 days [true, false, true...]
   }) async {
     if (PlatformUtils.isWeb) return;
 
@@ -36,11 +39,9 @@ class WidgetService {
         name: androidWidgetName,
         iOSName: iosWidgetName,
       );
-      
+
       // Trigger widget update for medium
-      await HomeWidget.updateWidget(
-        name: androidMediumWidgetName,
-      );
+      await HomeWidget.updateWidget(name: androidMediumWidgetName);
     } catch (e) {
       debugPrint('Error updating widget: $e');
     }

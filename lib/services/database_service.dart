@@ -231,10 +231,6 @@ class DatabaseService {
     return _mealsDateIndex[dateKey] ?? [];
   }
 
-  bool hasMealsOnDate(DateTime date) {
-    return _daysWithMeals.contains(_getDateKey(date));
-  }
-
   List<MealModel> getMealsByDateRange(DateTime start, DateTime end) {
     final meals = <MealModel>[];
 

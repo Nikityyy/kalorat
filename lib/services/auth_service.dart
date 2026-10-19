@@ -23,9 +23,6 @@ class AuthService {
   /// User's Supabase UID if signed in.
   String? get userId => currentUser?.id;
 
-  /// Stream of auth state changes for reactive UI.
-  Stream<AuthState> get authStateChanges => _client.auth.onAuthStateChange;
-
   /// Sign in with Google. Works on both Android and iOS.
   Future<(AuthResponse, String?)> signInWithGoogle() async {
     // Web-specific handling: Use Supabase OAuth redirect flow

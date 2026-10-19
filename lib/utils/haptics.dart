@@ -13,6 +13,10 @@ class Haptics {
   /// A picker or wheel moved to the next value.
   static void selection() => platform.selection();
 
+  /// The web build's haptics test panel (web/haptics_test.js), with its
+  /// texts as JSON.
+  static void openTest(String labelsJson) => platform.openTest(labelsJson);
+
   /// An action completed (photo captured).
   static void confirm() => platform.confirm();
 }
