@@ -60,7 +60,7 @@ class _MetricsStepState extends State<MetricsStep> {
                 Text(l10n.yourMeasurements, style: AppTypography.displayMedium),
                 const SizedBox(height: 32),
                 
-                Text(l10n.height, style: AppTypography.labelLarge.copyWith(color: AppColors.slate)),
+                Text(l10n.height, style: AppTypography.labelLarge.copyWith(color: AppColors.text)),
                 const SizedBox(height: 16),
                 SizedBox(
                   height: 220,
@@ -74,7 +74,7 @@ class _MetricsStepState extends State<MetricsStep> {
                 ),
                 
                 const SizedBox(height: 48),
-                Text(l10n.weight, style: AppTypography.labelLarge.copyWith(color: AppColors.slate)),
+                Text(l10n.weight, style: AppTypography.labelLarge.copyWith(color: AppColors.text)),
                 const SizedBox(height: 16),
                 WeightScalePicker(
                   minValue: 20,
@@ -180,14 +180,14 @@ class WeightScalePicker extends StatelessWidget {
                             value.toStringAsFixed(1),
                             style: AppTypography.heroNumber.copyWith(
                               fontSize: 48,
-                              color: AppColors.styrianForest,
+                              color: AppColors.primary,
                             ),
                           ),
                           const SizedBox(width: 5),
                           Text(
                             unit,
                             style: AppTypography.titleLarge.copyWith(
-                              color: AppColors.slate.withValues(alpha: 0.55),
+                              color: AppColors.text.withValues(alpha: 0.55),
                             ),
                           ),
                         ],
@@ -230,12 +230,12 @@ class ScalePainter extends CustomPainter {
     final radius = math.min(size.width * 0.43, size.height - 42);
     final arc = Rect.fromCircle(center: center, radius: radius);
     final background = Paint()
-      ..color = AppColors.borderGrey.withValues(alpha: 0.45)
+      ..color = AppColors.border.withValues(alpha: 0.45)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 12
       ..strokeCap = StrokeCap.round;
     final active = Paint()
-      ..color = AppColors.styrianForest
+      ..color = AppColors.primary
       ..style = PaintingStyle.stroke
       ..strokeWidth = 12
       ..strokeCap = StrokeCap.round;
@@ -243,7 +243,7 @@ class ScalePainter extends CustomPainter {
     canvas.drawArc(arc, math.pi, math.pi * fraction, false, active);
 
     final tickPaint = Paint()
-      ..color = AppColors.slate.withValues(alpha: 0.55)
+      ..color = AppColors.text.withValues(alpha: 0.55)
       ..strokeCap = StrokeCap.round;
     for (var index = 0; index <= 20; index++) {
       final angle = math.pi + math.pi * index / 20;
@@ -269,11 +269,11 @@ class ScalePainter extends CustomPainter {
       center,
       needleEnd,
       Paint()
-        ..color = AppColors.slate
+        ..color = AppColors.text
         ..strokeWidth = 5
         ..strokeCap = StrokeCap.round,
     );
-    canvas.drawCircle(center, 8, Paint()..color = AppColors.styrianForest);
+    canvas.drawCircle(center, 8, Paint()..color = AppColors.primary);
   }
 
   @override

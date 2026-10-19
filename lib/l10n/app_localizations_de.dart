@@ -385,11 +385,6 @@ class AppLocalizationsDe extends AppLocalizations {
   String get nameValidationError => 'Bitte gib deinen Namen ein';
 
   @override
-  String analysisError(String error) {
-    return 'Fehler bei der Analyse: $error';
-  }
-
-  @override
   String get mealSaved => 'Mahlzeit gespeichert';
 
   @override
@@ -920,7 +915,8 @@ class AppLocalizationsDe extends AppLocalizations {
   String get aiThinkingLabel => 'Denkt nach …';
 
   @override
-  String get analysisTimedOut => 'Analyse abgebrochen. Bitte erneut versuchen.';
+  String get analysisTimedOut =>
+      'Gemini hat nicht rechtzeitig geantwortet. Bitte erneut versuchen.';
 
   @override
   String get reference => 'Referenz';
@@ -968,11 +964,6 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String analysisConfidence(int percent) {
     return 'KI-Sicherheit: $percent%';
-  }
-
-  @override
-  String retryFailed(String error) {
-    return 'Erneuter Versuch fehlgeschlagen: $error';
   }
 
   @override
@@ -1131,11 +1122,6 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get analysisNoResult => 'Kein Ergebnis erhalten.';
-
-  @override
-  String analysisParseError(String error) {
-    return 'Die Analyse konnte nicht gelesen werden: $error';
-  }
 
   @override
   String get cameraDiagnosticsTitle => 'Kamera-Diagnose';
@@ -1454,4 +1440,16 @@ class AppLocalizationsDe extends AppLocalizations {
   String proteinPerDayPlan(int grams) {
     return '$grams g Protein pro Tag';
   }
+
+  @override
+  String get analysisNoConnection =>
+      'Keine Verbindung zu Gemini. Prüfe dein Internet und versuche es erneut.';
+
+  @override
+  String get analysisRateLimited =>
+      'Gemini ist gerade ausgelastet. Bitte gleich nochmal versuchen.';
+
+  @override
+  String get analysisFailed =>
+      'Analyse fehlgeschlagen. Bitte erneut versuchen.';
 }

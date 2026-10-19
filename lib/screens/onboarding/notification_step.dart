@@ -51,7 +51,7 @@ class _NotificationStepState extends State<NotificationStep> {
           Text(
             l10n.mealReminderBody,
             style: AppTypography.bodyMedium.copyWith(
-              color: AppColors.slate.withValues(alpha: 0.7),
+              color: AppColors.text.withValues(alpha: 0.7),
             ),
           ),
           const SizedBox(height: 48),
@@ -102,7 +102,7 @@ class _NotificationStepState extends State<NotificationStep> {
               child: Text(
                 l10n.laterButton,
                 style: AppTypography.labelLarge.copyWith(
-                  color: AppColors.slate.withValues(alpha: 0.6),
+                  color: AppColors.text.withValues(alpha: 0.6),
                   fontWeight: FontWeight.w600,
                 ),
               ),

@@ -34,13 +34,13 @@ class BespokeSelectionCard extends StatelessWidget {
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
             color: isSelected
-                ? AppColors.styrianForest.withValues(alpha: 0.08)
-                : AppColors.steel,
+                ? AppColors.primary.withValues(alpha: 0.08)
+                : AppColors.surface,
             borderRadius: BorderRadius.circular(AppTheme.borderRadius),
             border: Border.all(
               color: isSelected
-                  ? AppColors.styrianForest
-                  : AppColors.borderGrey,
+                  ? AppColors.primary
+                  : AppColors.border,
               width: isSelected ? 1.5 : 1.0,
             ),
             // No boxShadow - flat design mandate
@@ -56,8 +56,8 @@ class BespokeSelectionCard extends StatelessWidget {
                       title,
                       style: AppTypography.titleLarge.copyWith(
                         color: isSelected
-                            ? AppColors.styrianForest
-                            : AppColors.frost,
+                            ? AppColors.primary
+                            : AppColors.text,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -66,7 +66,7 @@ class BespokeSelectionCard extends StatelessWidget {
                       Text(
                         subtitle!,
                         style: AppTypography.bodyMedium.copyWith(
-                          color: AppColors.frost.withValues(alpha: 0.6),
+                          color: AppColors.text.withValues(alpha: 0.6),
                         ),
                       ),
                     ],
@@ -79,12 +79,12 @@ class BespokeSelectionCard extends StatelessWidget {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: isSelected
-                      ? AppColors.styrianForest
+                      ? AppColors.primary
                       : Colors.transparent,
                   border: Border.all(
                     color: isSelected
-                        ? AppColors.styrianForest
-                        : AppColors.borderGrey,
+                        ? AppColors.primary
+                        : AppColors.border,
                     width: 2,
                   ),
                 ),

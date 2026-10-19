@@ -34,8 +34,8 @@ class FirstUseCard extends StatelessWidget {
     final l10n = context.l10n;
     final background = onDark
         ? Colors.black.withValues(alpha: 0.78)
-        : AppColors.glacialWhite;
-    final foreground = onDark ? Colors.white : AppColors.slate;
+        : AppColors.surface;
+    final foreground = onDark ? Colors.white : AppColors.text;
 
     return Semantics(
       container: true,
@@ -45,7 +45,7 @@ class FirstUseCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: background,
           borderRadius: BorderRadius.circular(AppTheme.borderRadius),
-          border: onDark ? null : Border.all(color: AppColors.borderGrey),
+          border: onDark ? null : Border.all(color: AppColors.border),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

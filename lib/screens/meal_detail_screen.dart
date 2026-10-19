@@ -27,6 +27,7 @@ import 'package:gal/gal.dart';
 import 'package:share_plus/share_plus.dart';
 import '../widgets/app_toast.dart';
 import '../widgets/barcode_switch_tile.dart';
+import '../utils/analysis_error_message.dart';
 import '../widgets/common/meal_mark.dart';
 import '../widgets/common/mono_digits.dart';
 import '../widgets/common/thin_bar.dart';
@@ -289,7 +290,7 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
                     width: 40,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: AppColors.borderGrey,
+                      color: AppColors.border,
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
@@ -303,7 +304,7 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
                 Text(
                   l10n.retrySheetSubtitle,
                   style: AppTypography.bodySmall.copyWith(
-                    color: AppColors.slate,
+                    color: AppColors.text,
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -329,7 +330,7 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
                   decoration: InputDecoration(
                     hintText: l10n.retrySheetHint,
                     filled: true,
-                    fillColor: AppColors.pebble,
+                    fillColor: AppColors.surface,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(
                         AppTheme.borderRadius,
@@ -346,7 +347,7 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
                       child: OutlinedButton(
                         onPressed: () => Navigator.pop(sheetContext),
                         style: OutlinedButton.styleFrom(
-                          side: BorderSide(color: AppColors.pebble),
+                          side: BorderSide(color: AppColors.surface),
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(
@@ -356,7 +357,7 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
                         ),
                         child: Text(
                           l10n.cancel,
-                          style: TextStyle(color: AppColors.slate),
+                          style: TextStyle(color: AppColors.text),
                         ),
                       ),
                     ),
@@ -383,7 +384,7 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
                                   }
                                 : null,
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.styrianForest,
+                              backgroundColor: AppColors.primary,
                               foregroundColor: AppColors.onPrimary,
                               padding: const EdgeInsets.symmetric(vertical: 14),
                               shape: RoundedRectangleBorder(
@@ -555,8 +556,8 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
       if (mounted) {
         AppToast.show(
           context,
-          context.l10n.retryFailed(e.toString()),
-          kind: AppToastKind.info,
+          analysisErrorMessage(context.l10n, e),
+          kind: AppToastKind.error,
         );
       }
     } finally {
@@ -598,7 +599,7 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
       title: context.l10n.portionEdit,
       fields: [
         PromptField(
-          initial: currentValue.toStringAsFixed(1),
+          initial: PromptField.numberText(context, currentValue),
           suffix: serving ? '×' : displayUnitFor(_meal.portionUnit),
           keyboardType: PromptField.number,
         ),
@@ -706,7 +707,7 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
       title: '${context.l10n.edit} $label',
       fields: [
         PromptField(
-          initial: currentValue.toStringAsFixed(1),
+          initial: PromptField.numberText(context, currentValue),
           suffix: 'g',
           keyboardType: PromptField.number,
         ),
@@ -1444,6 +1445,10 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
     return isPer100Unit(_meal.portionUnit);
   }
 
+  String _numberOrEmpty(double? value, {int decimals = 1}) => value == null
+      ? ''
+      : PromptField.numberText(context, value, decimals: decimals);
+
   Future<void> _showEditPer100ReferenceDialog() async {
     if (!_canEditPer100Reference()) return;
     final l10n = context.l10n;
@@ -1452,25 +1457,25 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
       title: '${l10n.edit} ${l10n.reference}',
       fields: [
         PromptField(
-          initial: _meal.caloriesPer100g?.toStringAsFixed(0) ?? '',
+          initial: _numberOrEmpty(_meal.caloriesPer100g, decimals: 0),
           label: l10n.kcal.toUpperCase(),
           suffix: 'kcal',
           keyboardType: PromptField.number,
         ),
         PromptField(
-          initial: _meal.fatsPer100g?.toStringAsFixed(1) ?? '',
+          initial: _numberOrEmpty(_meal.fatsPer100g),
           label: l10n.fatsShort.toUpperCase(),
           suffix: 'g',
           keyboardType: PromptField.number,
         ),
         PromptField(
-          initial: _meal.carbsPer100g?.toStringAsFixed(1) ?? '',
+          initial: _numberOrEmpty(_meal.carbsPer100g),
           label: l10n.carbsShort.toUpperCase(),
           suffix: 'g',
           keyboardType: PromptField.number,
         ),
         PromptField(
-          initial: _meal.proteinPer100g?.toStringAsFixed(1) ?? '',
+          initial: _numberOrEmpty(_meal.proteinPer100g),
           label: l10n.proteinShort.toUpperCase(),
           suffix: 'g',
           keyboardType: PromptField.number,
@@ -1747,7 +1752,7 @@ class _CorrectionChip extends StatelessWidget {
                 color: selected ? AppColors.accentSoft : AppColors.canvas,
                 borderRadius: BorderRadius.circular(AppTheme.borderRadius),
                 border: Border.all(
-                  color: selected ? AppColors.primary : AppColors.borderGrey,
+                  color: selected ? AppColors.primary : AppColors.border,
                 ),
               ),
               child: FittedBox(

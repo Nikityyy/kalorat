@@ -22,7 +22,7 @@
   <meta property="og:image" content="icons/Icon-192.png">
   <meta name="twitter:card" content="summary_large_image">
 
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 
   <!-- Theme Color — the canvas of the light and the dark theme -->
   <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
@@ -129,10 +129,20 @@
         border-top-color: #1EB070;
       }
     }
+
+    /* Measures the screen edges kept for the status bar and the home
+       indicator; the app reads them through kaloratSafeArea. */
+    #safe-area-probe {
+      position: fixed;
+      visibility: hidden;
+      pointer-events: none;
+      padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+    }
   </style>
 </head>
 
 <body>
+  <div id="safe-area-probe"></div>
   <div id="splash">
     <div class="splash-logo"></div>
     <div class="splash-spinner"></div>
@@ -229,6 +239,13 @@
       if (!splash) return;
       splash.classList.add('fade-out');
       setTimeout(() => splash.remove(), 400);
+    };
+    window.kaloratSafeArea = function () {
+      const probe = document.getElementById('safe-area-probe');
+      if (!probe) return '0,0,0,0';
+      const s = getComputedStyle(probe);
+      return [s.paddingTop, s.paddingRight, s.paddingBottom, s.paddingLeft]
+        .map((v) => parseFloat(v) || 0).join(',');
     };
     // Safety net: never leave the splash covering the app if it never signals.
     setTimeout(window.kaloratHideSplash, 15000);

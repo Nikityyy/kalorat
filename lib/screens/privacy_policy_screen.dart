@@ -220,7 +220,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
             Text(
               section.body,
               style: AppTypography.bodyMedium.copyWith(
-                color: AppColors.slate,
+                color: AppColors.text,
                 height: 1.5,
               ),
             ),

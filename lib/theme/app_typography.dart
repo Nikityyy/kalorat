@@ -60,7 +60,7 @@ class AppTypography {
     fontFamily: mono,
     fontSize: 48,
     fontWeight: FontWeight.bold,
-    color: AppColors.styrianForest,
+    color: AppColors.primary,
     letterSpacing: -1.0,
   );
 
@@ -68,14 +68,14 @@ class AppTypography {
     fontFamily: mono,
     fontSize: 14,
     fontWeight: FontWeight.w500,
-    color: AppColors.styrianForest,
+    color: AppColors.primary,
   );
 
   static TextStyle get dataMedium => TextStyle(
     fontFamily: mono,
     fontSize: 22,
     fontWeight: FontWeight.w700,
-    color: AppColors.styrianForest,
+    color: AppColors.primary,
   );
 
   static TextStyle get bodySmall => TextStyle(

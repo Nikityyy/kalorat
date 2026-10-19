@@ -70,7 +70,7 @@ class _AddWeightScreenState extends State<AddWeightScreen> {
               child: Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  border: Border.all(color: AppColors.borderGrey),
+                  border: Border.all(color: AppColors.border),
                   borderRadius: BorderRadius.circular(AppTheme.borderRadius),
                 ),
                 child: Text(
@@ -106,7 +106,7 @@ class _AddWeightScreenState extends State<AddWeightScreen> {
             ElevatedButton(
               onPressed: _save,
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.styrianForest,
+                backgroundColor: AppColors.primary,
                 foregroundColor: AppColors.onPrimary,
                 padding: const EdgeInsets.symmetric(vertical: 16),
               ),

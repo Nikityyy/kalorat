@@ -142,14 +142,6 @@
   "buildingPlan": "Saving profile…",
   "apiKeyValidationError": "Enter a valid API key.",
   "nameValidationError": "Enter your name.",
-  "analysisError": "Analysis error: {error}",
-  "@analysisError": {
-    "placeholders": {
-      "error": {
-        "type": "String"
-      }
-    }
-  },
   "mealSaved": "Meal saved",
   "logYourWeight": "Log your weight",
   "weightReminderBody": "Log today's weight.",
@@ -342,7 +334,7 @@
   "dayStartsAtHint": "Meals logged before this time count towards the previous day",
   "aiThinkingTitle": "AI reasoning",
   "aiThinkingLabel": "Thinking…",
-  "analysisTimedOut": "Analysis timed out. Try again.",
+  "analysisTimedOut": "Gemini did not answer in time. Please try again.",
   "reference": "Reference",
   "showLess": "Show less",
   "showAllWeights": "Show all {count} weights",
@@ -384,14 +376,6 @@
     "placeholders": {
       "percent": {
         "type": "int"
-      }
-    }
-  },
-  "retryFailed": "Retry failed: {error}",
-  "@retryFailed": {
-    "placeholders": {
-      "error": {
-        "type": "String"
       }
     }
   },
@@ -452,7 +436,6 @@
   "retrySheetHint": "e.g. 2 portions, extra sauce",
   "retrySheetAction": "Analyze again",
   "analysisNoResult": "No result received.",
-  "analysisParseError": "The analysis could not be read: {error}",
   "cameraDiagnosticsTitle": "Camera diagnostics",
   "cameraCanvasPreviewOn": "Canvas preview: on",
   "cameraCanvasPreviewOff": "Canvas preview: off",
@@ -534,5 +517,8 @@
   "kcalOverToday": "{kcal} kcal over today",
   "quickLogShort": "Type it",
   "kcalPerDayPlan": "kcal a day",
-  "proteinPerDayPlan": "{grams} g protein a day"
+  "proteinPerDayPlan": "{grams} g protein a day",
+  "analysisNoConnection": "No connection to Gemini. Check your internet and try again.",
+  "analysisRateLimited": "Gemini is busy right now. Please try again in a moment.",
+  "analysisFailed": "Analysis failed. Please try again."
 }

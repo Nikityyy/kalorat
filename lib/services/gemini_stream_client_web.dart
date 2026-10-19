@@ -61,7 +61,9 @@ Stream<String> makeStreamRequestPlatform({
       final stream = ReadableStream(response.body);
       final reader = ReadableStreamDefaultReader(stream.getReader());
 
-      final deadline = DateTime.now().add(timeout);
+      // [timeout] bounds each wait for the next chunk, as on the other
+      // platforms: a model that keeps streaming its thoughts is still working.
+      final deadline = DateTime.now().add(timeout * 3);
       final decoder = utf8.decoder.startChunkedConversion(
         StringConversionSink.withCallback(controller.add),
       );
@@ -71,7 +73,9 @@ Stream<String> makeStreamRequestPlatform({
           throw TimeoutException('Gemini stream timed out');
         }
         final readPromise = reader.read();
-        final readResultObj = await readPromise.toDart.timeout(remaining);
+        final readResultObj = await readPromise.toDart.timeout(
+          remaining < timeout ? remaining : timeout,
+        );
         final readResult = ReadableStreamReadResult(readResultObj);
 
         if (readResult.done) {

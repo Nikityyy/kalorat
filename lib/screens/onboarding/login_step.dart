@@ -148,7 +148,7 @@ class _LoginStepState extends State<LoginStep> {
           Text(
             l10n.loginSubtitle,
             style: AppTypography.bodyMedium.copyWith(
-              color: AppColors.slate.withValues(alpha: 0.7),
+              color: AppColors.text.withValues(alpha: 0.7),
             ),
           ),
           const SizedBox(height: 48),
@@ -171,13 +171,13 @@ class _LoginStepState extends State<LoginStep> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: AppColors.error.withValues(alpha: 0.1),
+                color: AppColors.negative.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(AppTheme.borderRadius),
-                border: Border.all(color: AppColors.error),
+                border: Border.all(color: AppColors.negative),
               ),
               child: Text(
                 _error!,
-                style: AppTypography.bodySmall.copyWith(color: AppColors.error),
+                style: AppTypography.bodySmall.copyWith(color: AppColors.negative),
               ),
             ),
           ],
@@ -188,14 +188,14 @@ class _LoginStepState extends State<LoginStep> {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: AppColors.pebble.withValues(alpha: 0.3),
+              color: AppColors.surface.withValues(alpha: 0.3),
               borderRadius: BorderRadius.circular(AppTheme.borderRadius),
             ),
             child: Row(
               children: [
                 Icon(
                   Icons.info_outline,
-                  color: AppColors.slate.withValues(alpha: 0.6),
+                  color: AppColors.text.withValues(alpha: 0.6),
                   size: 20,
                 ),
                 const SizedBox(width: 12),
@@ -203,7 +203,7 @@ class _LoginStepState extends State<LoginStep> {
                   child: Text(
                     l10n.guestWarning,
                     style: AppTypography.bodySmall.copyWith(
-                      color: AppColors.slate.withValues(alpha: 0.7),
+                      color: AppColors.text.withValues(alpha: 0.7),
                     ),
                   ),
                 ),
@@ -224,7 +224,7 @@ class _LoginStepState extends State<LoginStep> {
                     ? l10n.loginNewHere
                     : l10n.continueAsGuest,
                 style: AppTypography.bodyMedium.copyWith(
-                  color: AppColors.slate.withValues(alpha: 0.5),
+                  color: AppColors.text.withValues(alpha: 0.5),
                   decoration: TextDecoration.underline,
                 ),
               ),

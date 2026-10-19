@@ -32,12 +32,12 @@ class PrimaryButton extends StatelessWidget {
               onPressed?.call();
             },
       style: ElevatedButton.styleFrom(
-        backgroundColor: AppColors.styrianForest,
+        backgroundColor: AppColors.primary,
         foregroundColor: AppColors.onPrimary,
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppTheme.borderRadius),
-          side: BorderSide(color: AppColors.borderGrey, width: 1),
+          side: BorderSide(color: AppColors.border, width: 1),
         ),
         elevation: 0,
         shadowColor: Colors.transparent,

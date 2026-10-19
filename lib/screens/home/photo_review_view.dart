@@ -41,7 +41,7 @@ class PhotoReviewView extends StatelessWidget {
     final l10n = context.l10n;
 
     return Container(
-      color: AppColors.glacialWhite,
+      color: AppColors.surface,
       padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top),
       child: Column(
         children: [
@@ -76,12 +76,12 @@ class PhotoReviewView extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: AppColors.glacialWhite,
+              color: AppColors.surface,
               borderRadius: BorderRadius.vertical(
                 top: Radius.circular(AppTheme.borderRadius),
               ),
               border: Border(
-                top: BorderSide(color: AppColors.borderGrey, width: 1),
+                top: BorderSide(color: AppColors.border, width: 1),
               ),
             ),
             child: SafeArea(
@@ -95,7 +95,7 @@ class PhotoReviewView extends StatelessWidget {
                         child: OutlinedButton(
                           onPressed: onDiscard,
                           style: OutlinedButton.styleFrom(
-                            side: BorderSide(color: AppColors.pebble),
+                            side: BorderSide(color: AppColors.surface),
                             padding: const EdgeInsets.symmetric(vertical: 16),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(
@@ -105,7 +105,7 @@ class PhotoReviewView extends StatelessWidget {
                           ),
                           child: Text(
                             l10n.discard,
-                            style: TextStyle(color: AppColors.slate),
+                            style: TextStyle(color: AppColors.text),
                           ),
                         ),
                       ),
@@ -114,7 +114,7 @@ class PhotoReviewView extends StatelessWidget {
                         child: OutlinedButton(
                           onPressed: onAddPhoto,
                           style: OutlinedButton.styleFrom(
-                            side: BorderSide(color: AppColors.styrianForest),
+                            side: BorderSide(color: AppColors.primary),
                             padding: const EdgeInsets.symmetric(vertical: 16),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(
@@ -124,7 +124,7 @@ class PhotoReviewView extends StatelessWidget {
                           ),
                           child: Text(
                             l10n.addPhoto,
-                            style: TextStyle(color: AppColors.styrianForest),
+                            style: TextStyle(color: AppColors.primary),
                           ),
                         ),
                       ),
@@ -306,7 +306,7 @@ class _PhotoTile extends StatelessWidget {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(AppTheme.borderRadius),
               border: Border.all(
-                color: lifted ? AppColors.styrianForest : AppColors.borderGrey,
+                color: lifted ? AppColors.primary : AppColors.border,
                 width: lifted ? 2 : 1,
               ),
             ),

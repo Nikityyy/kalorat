@@ -46,7 +46,7 @@ class _ActivityLevelStepState extends State<ActivityLevelStep> {
                 Text(
                   l10n.activityLevelSubtitle,
                   style: AppTypography.bodyMedium.copyWith(
-                    color: AppColors.slate.withValues(alpha: 0.6),
+                    color: AppColors.text.withValues(alpha: 0.6),
                   ),
                 ),
                 const SizedBox(height: 24),
@@ -105,7 +105,7 @@ class _ActivityLevelStepState extends State<ActivityLevelStep> {
     return BespokeSelectionCard(
       title: title,
       subtitle: subtitle,
-      icon: Icon(icon, color: AppColors.slate, size: 28),
+      icon: Icon(icon, color: AppColors.text, size: 28),
       isSelected: _selectedLevel == level,
       onTap: () => setState(() => _selectedLevel = level),
     );

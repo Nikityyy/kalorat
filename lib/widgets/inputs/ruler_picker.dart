@@ -74,14 +74,14 @@ class _RulerPickerState extends State<RulerPicker> {
               _formatValue(_currentValue),
               style: AppTypography.heroNumber.copyWith(
                 fontSize: 64,
-                color: AppColors.styrianForest,
+                color: AppColors.primary,
               ),
             ),
             const SizedBox(width: 4),
             Text(
               widget.unit,
               style: AppTypography.titleLarge.copyWith(
-                color: AppColors.slate.withValues(alpha: 0.5),
+                color: AppColors.text.withValues(alpha: 0.5),
               ),
             ),
           ],
@@ -99,7 +99,7 @@ class _RulerPickerState extends State<RulerPicker> {
                 width: 4,
                 height: 60,
                 decoration: BoxDecoration(
-                  color: AppColors.styrianForest,
+                  color: AppColors.primary,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -147,7 +147,7 @@ class _RulerPickerState extends State<RulerPicker> {
                             child: Container(
                               width: isMajor ? 3 : 2,
                               height: isMajor ? 50 : (isMedium ? 35 : 20),
-                              color: AppColors.slate.withValues(
+                              color: AppColors.text.withValues(
                                 alpha: isMajor ? 0.8 : 0.4,
                               ),
                             ),

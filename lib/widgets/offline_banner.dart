@@ -20,19 +20,19 @@ class OfflineBanner extends StatelessWidget {
           decoration: BoxDecoration(
             color: AppColors.canvas,
             borderRadius: BorderRadius.circular(AppTheme.borderRadius),
-            border: Border.all(color: AppColors.borderGrey, width: 1),
+            border: Border.all(color: AppColors.border, width: 1),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.wifi_off, color: AppColors.slate, size: 16),
+              Icon(Icons.wifi_off, color: AppColors.text, size: 16),
               const SizedBox(width: 8),
               Text(
                 l10n.offlineShort,
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w500,
-                  color: AppColors.slate,
+                  color: AppColors.text,
                 ),
               ),
             ],

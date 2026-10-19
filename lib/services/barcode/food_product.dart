@@ -159,14 +159,27 @@ class FoodProduct {
     );
   }
 
+  static final _volume = RegExp(r'\d\s*(ml|cl|dl|l)\b');
+  static final _weight = RegExp(r'\d\s*(mg|g|kg)\b');
+
+  /// Whether the product is measured in ml. The package text ("330 ml",
+  /// "0,33 l") decides first: Open Food Facts gives older drinks a unit of
+  /// 'g' next to it, since it once stored every quantity in grams.
   static bool _isLiquid(Map<String, dynamic> product) {
-    for (final key in ['serving_quantity_unit', 'product_quantity_unit']) {
+    for (final key in ['quantity', 'serving_size']) {
+      final text = product[key]?.toString().toLowerCase() ?? '';
+      final volume = _volume.firstMatch(text);
+      final weight = _weight.firstMatch(text);
+      if (volume != null && (weight == null || volume.start < weight.start)) {
+        return true;
+      }
+      if (weight != null) return false;
+    }
+    for (final key in ['product_quantity_unit', 'serving_quantity_unit']) {
       final unit = product[key]?.toString().trim().toLowerCase();
       if (unit == 'ml' || unit == 'cl' || unit == 'l') return true;
-      if (unit == 'g' || unit == 'kg') return false;
     }
-    final quantity = product['quantity']?.toString().toLowerCase() ?? '';
-    return RegExp(r'\d\s*(ml|cl|l)\b').hasMatch(quantity);
+    return false;
   }
 
   static double? _number(Object? value) {

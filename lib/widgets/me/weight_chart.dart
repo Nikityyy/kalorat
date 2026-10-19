@@ -226,7 +226,7 @@ class _WeightChartState extends State<WeightChart> {
             spots: spots,
             isCurved: spots.length > 2,
             preventCurveOverShooting: true,
-            color: AppColors.styrianForest,
+            color: AppColors.primary,
             barWidth: 2.5,
             dotData: FlDotData(show: weights.length <= 31),
             belowBarData: BarAreaData(show: true, color: AppColors.accentSoft),
@@ -243,7 +243,7 @@ class _WeightChartState extends State<WeightChart> {
         ],
         lineTouchData: LineTouchData(
           touchTooltipData: LineTouchTooltipData(
-            getTooltipColor: (_) => AppColors.styrianForest,
+            getTooltipColor: (_) => AppColors.primary,
             getTooltipItems: (touched) => touched.map((spot) {
               final date = plotStart.add(Duration(days: spot.x.round()));
               return LineTooltipItem(

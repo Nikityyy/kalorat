@@ -126,6 +126,26 @@ void main() {
     expect(water.unit, 'ml');
   });
 
+  test('the package text wins over a unit of g on a drink', () {
+    FoodProduct product(Map<String, dynamic> fields) =>
+        FoodProduct.fromOpenFoodFacts('1', {'product_name': 'X', ...fields})!;
+    // Older Open Food Facts entries: grams next to a volume.
+    expect(
+      product({
+        'quantity': '330 ml',
+        'product_quantity_unit': 'g',
+        'serving_quantity_unit': 'g',
+      }).unit,
+      'ml',
+    );
+    expect(product({'serving_size': '250ml (250 g)'}).unit, 'ml');
+    expect(product({'quantity': '33 cl'}).unit, 'ml');
+    expect(product({'quantity': '500 g', 'serving_size': '30 g'}).unit, 'gram');
+    expect(product({'quantity': '1 kg (1 l)'}).unit, 'gram');
+    expect(product({'product_quantity_unit': 'ml'}).unit, 'ml');
+    expect(product({}).unit, 'gram');
+  });
+
   test('a product without a name is no product', () {
     expect(FoodProduct.fromOpenFoodFacts('1', {'brands': 'X'}), isNull);
   });

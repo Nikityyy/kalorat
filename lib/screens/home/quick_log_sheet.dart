@@ -82,7 +82,7 @@ class _QuickLogSheetState extends State<_QuickLogSheet> {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: AppColors.borderGrey,
+                  color: AppColors.border,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -104,10 +104,10 @@ class _QuickLogSheetState extends State<_QuickLogSheet> {
               decoration: InputDecoration(
                 hintText: l10n.quickLogHint,
                 hintStyle: AppTypography.bodyMedium.copyWith(
-                  color: AppColors.slate.withValues(alpha: 0.5),
+                  color: AppColors.text.withValues(alpha: 0.5),
                 ),
                 filled: true,
-                fillColor: AppColors.pebble,
+                fillColor: AppColors.surface,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(AppTheme.borderRadius),
                   borderSide: BorderSide.none,
@@ -123,9 +123,9 @@ class _QuickLogSheetState extends State<_QuickLogSheet> {
                 child: ElevatedButton(
                   onPressed: value.text.trim().isEmpty ? null : _describe,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.styrianForest,
+                    backgroundColor: AppColors.primary,
                     foregroundColor: AppColors.onPrimary,
-                    disabledBackgroundColor: AppColors.pebble,
+                    disabledBackgroundColor: AppColors.surface,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(
@@ -148,7 +148,7 @@ class _QuickLogSheetState extends State<_QuickLogSheet> {
                 style: AppTypography.labelLarge.copyWith(
                   fontSize: 10,
                   letterSpacing: 1.0,
-                  color: AppColors.slate.withValues(alpha: 0.5),
+                  color: AppColors.text.withValues(alpha: 0.5),
                 ),
               ),
               const SizedBox(height: 4),
@@ -205,14 +205,14 @@ class _RecentMealRow extends StatelessWidget {
               '${meal.calories.round()} ${l10n.kcal}',
               style: AppTypography.dataMedium.copyWith(
                 fontSize: 12,
-                color: AppColors.slate.withValues(alpha: 0.7),
+                color: AppColors.text.withValues(alpha: 0.7),
               ),
             ),
             const SizedBox(width: 12),
             Icon(
               Icons.add_circle_outline,
               size: 22,
-              color: AppColors.styrianForest,
+              color: AppColors.primary,
             ),
           ],
         ),

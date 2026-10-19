@@ -25,9 +25,9 @@ class ActionButton extends StatelessWidget {
         width: double.infinity,
         height: 64,
         decoration: BoxDecoration(
-          color: AppColors.styrianForest, // Primary Forest Green
+          color: AppColors.primary, // Primary Forest Green
           borderRadius: BorderRadius.circular(AppTheme.borderRadius),
-          border: Border.all(color: AppColors.borderGrey, width: 1),
+          border: Border.all(color: AppColors.border, width: 1),
         ),
         child: Material(
           color: Colors.transparent,

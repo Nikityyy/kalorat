@@ -74,9 +74,14 @@
       var vw = video.videoWidth;
       var vh = video.videoHeight;
       if (!vw || !vh || video.readyState < 2) return;
-      var dpr = Math.min(window.devicePixelRatio || 1, 2);
-      var cw = Math.round(host.clientWidth * dpr);
-      var ch = Math.round(host.clientHeight * dpr);
+      // No more canvas pixels than the camera delivers: a bigger canvas only
+      // upscales the same frame and costs every draw (CSS scales it up).
+      var hw = host.clientWidth;
+      var hh = host.clientHeight;
+      var cover = Math.max(hw / vw, hh / vh);
+      var dpr = Math.min(window.devicePixelRatio || 1, 2, Math.max(1, 1 / cover));
+      var cw = Math.round(hw * dpr);
+      var ch = Math.round(hh * dpr);
       if (!cw || !ch) return;
       if (canvas.width !== cw || canvas.height !== ch) {
         canvas.width = cw;

@@ -330,7 +330,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.limestone,
+      backgroundColor: AppColors.canvas,
       body: SafeArea(
         child: Column(
           children: [
@@ -346,7 +346,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
                         onTap: _previousPage,
                         child: Icon(
                           Icons.arrow_back,
-                          color: AppColors.slate,
+                          color: AppColors.text,
                         ),
                       ),
                     )
@@ -364,7 +364,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
                           builder: (context, value, _) =>
                               LinearProgressIndicator(
                                 value: value,
-                                backgroundColor: AppColors.pebble.withValues(
+                                backgroundColor: AppColors.surface.withValues(
                                   alpha: 0.3,
                                 ),
                                 color: AppColors.primary,

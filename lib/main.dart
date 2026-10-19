@@ -12,6 +12,7 @@ import 'theme/app_colors.dart';
 import 'theme/app_theme.dart';
 import 'services/widget_service.dart';
 import 'utils/rebuild_all.dart';
+import 'widgets/common/browser_safe_area.dart';
 import 'utils/splash_stub.dart'
     if (dart.library.js_interop) 'utils/splash_web.dart'
     as splash;
@@ -139,9 +140,7 @@ class _KaloratAppState extends State<KaloratApp> with WidgetsBindingObserver {
                               fit: BoxFit.contain,
                             ),
                             const SizedBox(height: 24),
-                            CircularProgressIndicator(
-                              color: AppColors.styrianForest,
-                            ),
+                            CircularProgressIndicator(color: AppColors.primary),
                           ],
                         ),
                       ),
@@ -198,7 +197,7 @@ class _KaloratAppState extends State<KaloratApp> with WidgetsBindingObserver {
                         maxScaleFactor: maxTextScale,
                       ),
                     ),
-                    child: child!,
+                    child: BrowserSafeArea(child: child!),
                   ),
                 );
               },

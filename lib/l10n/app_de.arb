@@ -142,14 +142,6 @@
   "buildingPlan": "Profil wird gespeichert …",
   "apiKeyValidationError": "Bitte einen gültigen API-Key eingeben",
   "nameValidationError": "Bitte gib deinen Namen ein",
-  "analysisError": "Fehler bei der Analyse: {error}",
-  "@analysisError": {
-    "placeholders": {
-      "error": {
-        "type": "String"
-      }
-    }
-  },
   "mealSaved": "Mahlzeit gespeichert",
   "logYourWeight": "Gewicht eintragen",
   "weightReminderBody": "Gewicht von heute erfassen.",
@@ -342,7 +334,7 @@
   "dayStartsAtHint": "Mahlzeiten, die vor dieser Uhrzeit gespeichert werden, zählen zum Vortag",
   "aiThinkingTitle": "KI-Analyse",
   "aiThinkingLabel": "Denkt nach …",
-  "analysisTimedOut": "Analyse abgebrochen. Bitte erneut versuchen.",
+  "analysisTimedOut": "Gemini hat nicht rechtzeitig geantwortet. Bitte erneut versuchen.",
   "reference": "Referenz",
   "showLess": "Weniger anzeigen",
   "showAllWeights": "Alle {count} Gewichte anzeigen",
@@ -384,14 +376,6 @@
     "placeholders": {
       "percent": {
         "type": "int"
-      }
-    }
-  },
-  "retryFailed": "Erneuter Versuch fehlgeschlagen: {error}",
-  "@retryFailed": {
-    "placeholders": {
-      "error": {
-        "type": "String"
       }
     }
   },
@@ -470,14 +454,6 @@
   "retrySheetHint": "z. B. 2 Portionen, extra Sauce",
   "retrySheetAction": "Neu analysieren",
   "analysisNoResult": "Kein Ergebnis erhalten.",
-  "analysisParseError": "Die Analyse konnte nicht gelesen werden: {error}",
-  "@analysisParseError": {
-    "placeholders": {
-      "error": {
-        "type": "String"
-      }
-    }
-  },
   "cameraDiagnosticsTitle": "Kamera-Diagnose",
   "cameraCanvasPreviewOn": "Canvas-Vorschau: an",
   "cameraCanvasPreviewOff": "Canvas-Vorschau: aus",
@@ -759,5 +735,8 @@
         "type": "int"
       }
     }
-  }
+  },
+  "analysisNoConnection": "Keine Verbindung zu Gemini. Prüfe dein Internet und versuche es erneut.",
+  "analysisRateLimited": "Gemini ist gerade ausgelastet. Bitte gleich nochmal versuchen.",
+  "analysisFailed": "Analyse fehlgeschlagen. Bitte erneut versuchen."
 }

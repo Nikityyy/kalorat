@@ -83,7 +83,7 @@ class _HealthStepState extends State<HealthStep> {
           Text(
             l10n.healthOnboardingDescription,
             style: AppTypography.bodyLarge.copyWith(
-              color: AppColors.slate.withValues(alpha: 0.7),
+              color: AppColors.text.withValues(alpha: 0.7),
             ),
           ),
           const SizedBox(height: 32),
@@ -126,20 +126,20 @@ class _HealthStepState extends State<HealthStep> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: AppColors.error.withValues(alpha: 0.1),
+                color: AppColors.negative.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(AppTheme.borderRadius),
                 border: Border.all(
-                  color: AppColors.error.withValues(alpha: 0.3),
+                  color: AppColors.negative.withValues(alpha: 0.3),
                 ),
               ),
               child: Row(
                 children: [
-                  Icon(Icons.error_outline, color: AppColors.error, size: 20),
+                  Icon(Icons.error_outline, color: AppColors.negative, size: 20),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       _errorMessage!,
-                      style: TextStyle(color: AppColors.error, fontSize: 14),
+                      style: TextStyle(color: AppColors.negative, fontSize: 14),
                     ),
                   ),
                 ],
@@ -152,20 +152,20 @@ class _HealthStepState extends State<HealthStep> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: AppColors.success.withValues(alpha: 0.1),
+                color: AppColors.primary.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(AppTheme.borderRadius),
                 border: Border.all(
-                  color: AppColors.success.withValues(alpha: 0.3),
+                  color: AppColors.primary.withValues(alpha: 0.3),
                 ),
               ),
               child: Row(
                 children: [
-                  Icon(Icons.check_circle, color: AppColors.success, size: 20),
+                  Icon(Icons.check_circle, color: AppColors.primary, size: 20),
                   const SizedBox(width: 8),
                   Text(
                     l10n.healthConnected,
                     style: TextStyle(
-                      color: AppColors.success,
+                      color: AppColors.primary,
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
                     ),
@@ -194,7 +194,7 @@ class _HealthStepState extends State<HealthStep> {
               child: Text(
                 l10n.skipForNow,
                 style: TextStyle(
-                  color: AppColors.slate.withValues(alpha: 0.6),
+                  color: AppColors.text.withValues(alpha: 0.6),
                   fontSize: 16,
                 ),
               ),
@@ -223,7 +223,7 @@ class _HealthStepState extends State<HealthStep> {
         Expanded(
           child: Text(
             text,
-            style: AppTypography.bodyMedium.copyWith(color: AppColors.slate),
+            style: AppTypography.bodyMedium.copyWith(color: AppColors.text),
           ),
         ),
       ],

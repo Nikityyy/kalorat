@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 import '../../extensions/l10n_extension.dart';
 import '../../theme/app_colors.dart';
@@ -61,6 +62,21 @@ class PromptField {
   });
 
   static const number = TextInputType.numberWithOptions(decimal: true);
+
+  /// [value] as the user types it: "330", "12,5" in German. No grouping,
+  /// since the fields read both "," and "." as the decimal point.
+  static String numberText(
+    BuildContext context,
+    double value, {
+    int decimals = 1,
+  }) {
+    var text = value.toStringAsFixed(decimals);
+    if (text.contains('.')) text = text.replaceFirst(RegExp(r'\.?0+$'), '');
+    final locale = Localizations.localeOf(context).toString();
+    final comma =
+        NumberFormat.decimalPattern(locale).symbols.DECIMAL_SEP == ',';
+    return comma ? text.replaceAll('.', ',') : text;
+  }
 }
 
 /// Asks for one or more values, like an iOS alert with text fields or a

@@ -106,7 +106,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
 
     return Scaffold(
-      backgroundColor: AppColors.limestone,
+      backgroundColor: AppColors.canvas,
       appBar: AppBar(
         title: Text(
           l10n.settings,
@@ -203,7 +203,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         style: TextStyle(
           fontFamily: AppTypography.mono,
           fontSize: 12,
-          color: AppColors.slate.withValues(alpha: 0.6),
+          color: AppColors.text.withValues(alpha: 0.6),
         ),
       ),
     );
@@ -220,7 +220,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       SwitchListTile(
         title: Text(
           l10n.gramModeTitle,
-          style: TextStyle(color: AppColors.slate),
+          style: TextStyle(color: AppColors.text),
         ),
         subtitle: Text(
           l10n.gramModeSubtitle,
@@ -234,7 +234,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       SwitchListTile(
         title: Text(
           l10n.accurateModeTitle,
-          style: TextStyle(color: AppColors.slate),
+          style: TextStyle(color: AppColors.text),
         ),
         subtitle: Text(
           l10n.accurateModeSubtitle,
@@ -285,7 +285,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           child: ListTile(
             title: Text(
               l10n.mealReminders,
-              style: TextStyle(color: AppColors.slate),
+              style: TextStyle(color: AppColors.text),
             ),
             trailing: _buildOnlyInAppBadge(l10n),
           ),
@@ -295,7 +295,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           child: ListTile(
             title: Text(
               l10n.weightReminders,
-              style: TextStyle(color: AppColors.slate),
+              style: TextStyle(color: AppColors.text),
             ),
             trailing: _buildOnlyInAppBadge(l10n),
           ),
@@ -305,7 +305,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         SwitchListTile(
           title: Text(
             l10n.mealReminders,
-            style: TextStyle(color: AppColors.slate),
+            style: TextStyle(color: AppColors.text),
           ),
           value: user.mealRemindersEnabled,
           activeThumbColor: AppColors.primary,
@@ -331,7 +331,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         SwitchListTile(
           title: Text(
             l10n.weightReminders,
-            style: TextStyle(color: AppColors.slate),
+            style: TextStyle(color: AppColors.text),
           ),
           value: user.weightRemindersEnabled,
           activeThumbColor: AppColors.primary,
@@ -376,7 +376,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           l10n.apiKeyInfo,
           style: TextStyle(
             fontSize: 12,
-            color: AppColors.slate.withValues(alpha: 0.6),
+            color: AppColors.text.withValues(alpha: 0.6),
           ),
         ),
       ),
@@ -389,13 +389,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
           child: ListTile(
             leading: Icon(
               Icons.favorite_border,
-              color: AppColors.slate.withValues(alpha: 0.5),
+              color: AppColors.text.withValues(alpha: 0.5),
             ),
             title: Text(
               l10n.syncWith(PlatformUtils.healthAppName),
               style: TextStyle(
                 fontWeight: FontWeight.w600,
-                color: AppColors.slate.withValues(alpha: 0.7),
+                color: AppColors.text.withValues(alpha: 0.7),
               ),
             ),
             trailing: _buildOnlyInAppBadge(l10n),
@@ -407,7 +407,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             l10n.syncWith(PlatformUtils.healthAppName),
             style: TextStyle(
               fontWeight: FontWeight.w600,
-              color: AppColors.slate,
+              color: AppColors.text,
             ),
           ),
           subtitle: Text(
@@ -415,8 +415,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
             style: TextStyle(
               fontSize: 12,
               color: user.healthSyncEnabled
-                  ? AppColors.success
-                  : AppColors.slate.withValues(alpha: 0.6),
+                  ? AppColors.primary
+                  : AppColors.text.withValues(alpha: 0.6),
             ),
           ),
           value: user.healthSyncEnabled,
@@ -452,7 +452,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           SwitchListTile(
             title: Text(
               l10n.syncMeals,
-              style: TextStyle(fontSize: 14, color: AppColors.slate),
+              style: TextStyle(fontSize: 14, color: AppColors.text),
             ),
             value: user.syncMealsToHealth,
             activeThumbColor: AppColors.primary,
@@ -461,7 +461,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           SwitchListTile(
             title: Text(
               l10n.syncWeight,
-              style: TextStyle(fontSize: 14, color: AppColors.slate),
+              style: TextStyle(fontSize: 14, color: AppColors.text),
             ),
             value: user.syncWeightToHealth,
             activeThumbColor: AppColors.primary,
@@ -476,15 +476,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: AppColors.pebble.withValues(alpha: 0.5),
+        color: AppColors.surface.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(AppTheme.borderRadius / 2),
-        border: Border.all(color: AppColors.slate.withValues(alpha: 0.2)),
+        border: Border.all(color: AppColors.text.withValues(alpha: 0.2)),
       ),
       child: Text(
         l10n.featureOnlyInApp,
         style: TextStyle(
           fontSize: 11,
-          color: AppColors.slate.withValues(alpha: 0.6),
+          color: AppColors.text.withValues(alpha: 0.6),
           fontWeight: FontWeight.w500,
         ),
       ),
@@ -510,7 +510,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             l10n.activityLevel,
             style: TextStyle(
               fontSize: 16,
-              color: AppColors.slate.withValues(alpha: 0.6),
+              color: AppColors.text.withValues(alpha: 0.6),
             ),
           ),
         ),
@@ -520,16 +520,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             decoration: BoxDecoration(
-              color: AppColors.pebble.withValues(alpha: 0.3),
+              color: AppColors.surface.withValues(alpha: 0.3),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppColors.pebble),
+              border: Border.all(color: AppColors.surface),
             ),
             child: DropdownButtonHideUnderline(
               child: DropdownButton<int>(
                 value: user.activityLevelIndex,
                 isExpanded: true,
-                icon: Icon(Icons.arrow_drop_down, color: AppColors.slate),
-                dropdownColor: AppColors.limestone,
+                icon: Icon(Icons.arrow_drop_down, color: AppColors.text),
+                dropdownColor: AppColors.canvas,
                 borderRadius: BorderRadius.circular(12),
                 items: List.generate(levels.length, (index) {
                   return DropdownMenuItem(
@@ -566,12 +566,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
         autofillHints: autofillHints,
         keyboardType: keyboardType,
         obscureText: obscureText,
-        style: TextStyle(color: AppColors.slate),
+        style: TextStyle(color: AppColors.text),
         decoration: InputDecoration(
           labelText: label,
-          labelStyle: TextStyle(color: AppColors.slate.withValues(alpha: 0.6)),
+          labelStyle: TextStyle(color: AppColors.text.withValues(alpha: 0.6)),
           border: UnderlineInputBorder(
-            borderSide: BorderSide(color: AppColors.pebble),
+            borderSide: BorderSide(color: AppColors.surface),
           ),
           focusedBorder: UnderlineInputBorder(
             borderSide: BorderSide(color: AppColors.primary),
@@ -595,12 +595,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
           l10n.birthdate,
           style: TextStyle(
             fontSize: 16,
-            color: AppColors.slate.withValues(alpha: 0.6),
+            color: AppColors.text.withValues(alpha: 0.6),
           ),
         ),
         subtitle: Text(
           formattedDate,
-          style: TextStyle(fontSize: 16, color: AppColors.slate),
+          style: TextStyle(fontSize: 16, color: AppColors.text),
         ),
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
@@ -652,7 +652,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             l10n.genderLabel,
             style: TextStyle(
               fontSize: 16,
-              color: AppColors.slate.withValues(alpha: 0.6),
+              color: AppColors.text.withValues(alpha: 0.6),
             ),
           ),
         ),
@@ -679,7 +679,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             l10n.goalLabel,
             style: TextStyle(
               fontSize: 16,
-              color: AppColors.slate.withValues(alpha: 0.6),
+              color: AppColors.text.withValues(alpha: 0.6),
             ),
           ),
         ),
@@ -709,7 +709,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         children: [
           for (var i = 0; i < labels.length; i++)
             RadioListTile<int>(
-              title: Text(labels[i], style: TextStyle(color: AppColors.slate)),
+              title: Text(labels[i], style: TextStyle(color: AppColors.text)),
               value: i,
               activeColor: AppColors.primary,
               contentPadding: const EdgeInsets.symmetric(horizontal: 4),
@@ -758,14 +758,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
         title: Text(
           isGuest ? l10n.guestMode : (user.email ?? l10n.account),
-          style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.slate),
+          style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.text),
         ),
         subtitle: isGuest
             ? Text(
                 l10n.accountSection,
                 style: TextStyle(
                   fontSize: 12,
-                  color: AppColors.slate.withValues(alpha: 0.6),
+                  color: AppColors.text.withValues(alpha: 0.6),
                 ),
               )
             : null,
@@ -777,7 +777,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           leading: Icon(Icons.login, color: AppColors.primary),
           title: Text(
             l10n.loginToSync,
-            style: TextStyle(color: AppColors.slate),
+            style: TextStyle(color: AppColors.text),
           ),
           trailing: const Icon(Icons.arrow_forward_ios, size: 16),
           onTap: () async {
@@ -818,7 +818,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                 )
               : Icon(Icons.sync, color: AppColors.primary),
-          title: Text(l10n.syncData, style: TextStyle(color: AppColors.slate)),
+          title: Text(l10n.syncData, style: TextStyle(color: AppColors.text)),
           subtitle: user.lastSyncTimestamp != null
               ? Text(
                   DateFormat.yMd(
@@ -826,7 +826,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ).add_Hm().format(user.lastSyncTimestamp!),
                   style: TextStyle(
                     fontSize: 12,
-                    color: AppColors.slate.withValues(alpha: 0.6),
+                    color: AppColors.text.withValues(alpha: 0.6),
                   ),
                 )
               : null,
@@ -875,10 +875,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 },
         ),
         ListTile(
-          leading: const Icon(Icons.logout, color: AppColors.error),
+          leading: Icon(Icons.logout, color: AppColors.negative),
           title: Text(
             l10n.logOut,
-            style: const TextStyle(color: AppColors.error),
+            style: TextStyle(color: AppColors.negative),
           ),
           onTap: () async {
             final confirm = await showConfirmDialog(
@@ -912,10 +912,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
           },
         ),
         ListTile(
-          leading: const Icon(Icons.delete_forever, color: AppColors.error),
+          leading: Icon(Icons.delete_forever, color: AppColors.negative),
           title: Text(
             l10n.deleteAccount,
-            style: TextStyle(color: AppColors.slate),
+            style: TextStyle(color: AppColors.text),
           ),
           onTap: () async {
             final confirm = await showConfirmDialog(
@@ -952,7 +952,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       // Data Export/Import
       ListTile(
         leading: Icon(Icons.upload, color: AppColors.primary),
-        title: Text(l10n.exportData, style: TextStyle(color: AppColors.slate)),
+        title: Text(l10n.exportData, style: TextStyle(color: AppColors.text)),
         onTap: () async {
           final path = await provider.exportData();
           if (path != null && mounted) {
@@ -978,7 +978,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         leading: Icon(Icons.description_outlined, color: AppColors.primary),
         title: Text(
           l10n.exportMarkdown,
-          style: TextStyle(color: AppColors.slate),
+          style: TextStyle(color: AppColors.text),
         ),
         onTap: () async {
           final path = await provider.exportMarkdownReport(l10n);
@@ -1001,7 +1001,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ),
       ListTile(
         leading: Icon(Icons.download, color: AppColors.primary),
-        title: Text(l10n.importData, style: TextStyle(color: AppColors.slate)),
+        title: Text(l10n.importData, style: TextStyle(color: AppColors.text)),
         onTap: () async {
           final success = await provider.importData();
           if (mounted) {
@@ -1018,7 +1018,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           leading: Icon(Icons.restore, color: AppColors.primary),
           title: Text(
             l10n.restoreImportBackup,
-            style: TextStyle(color: AppColors.slate),
+            style: TextStyle(color: AppColors.text),
           ),
           onTap: () async {
             try {
@@ -1059,14 +1059,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
             children: [
               Text(
                 l10n.dayStartsAt,
-                style: TextStyle(fontSize: 16, color: AppColors.slate),
+                style: TextStyle(fontSize: 16, color: AppColors.text),
               ),
               DropdownButtonHideUnderline(
                 child: DropdownButton<int>(
                   value: user.dayStartHour,
                   alignment: Alignment.centerRight,
                   icon: Icon(Icons.arrow_drop_down, color: AppColors.primary),
-                  dropdownColor: AppColors.limestone,
+                  dropdownColor: AppColors.canvas,
                   borderRadius: BorderRadius.circular(12),
                   items: List.generate(7, (index) {
                     final hourStr = index.toString().padLeft(2, '0');
@@ -1094,7 +1094,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             l10n.dayStartsAtHint,
             style: TextStyle(
               fontSize: 12,
-              color: AppColors.slate.withValues(alpha: 0.6),
+              color: AppColors.text.withValues(alpha: 0.6),
             ),
           ),
         ),
@@ -1108,7 +1108,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         leading: Icon(Icons.privacy_tip_outlined, color: AppColors.primary),
         title: Text(
           l10n.privacyPolicy,
-          style: TextStyle(color: AppColors.slate),
+          style: TextStyle(color: AppColors.text),
         ),
         trailing: const Icon(Icons.chevron_right, size: 20),
         onTap: () => Navigator.of(context).push(

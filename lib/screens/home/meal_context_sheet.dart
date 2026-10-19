@@ -114,7 +114,7 @@ class _MealContextSheetState extends State<_MealContextSheet> {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: AppColors.borderGrey,
+                  color: AppColors.border,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -149,10 +149,10 @@ class _MealContextSheetState extends State<_MealContextSheet> {
               decoration: InputDecoration(
                 hintText: l10n.mealContextHint,
                 hintStyle: AppTypography.bodyMedium.copyWith(
-                  color: AppColors.slate.withValues(alpha: 0.5),
+                  color: AppColors.text.withValues(alpha: 0.5),
                 ),
                 filled: true,
-                fillColor: AppColors.pebble,
+                fillColor: AppColors.surface,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(AppTheme.borderRadius),
                   borderSide: BorderSide.none,
@@ -169,7 +169,7 @@ class _MealContextSheetState extends State<_MealContextSheet> {
                       onPressed: () =>
                           Navigator.pop(context, const MealContextResult()),
                       style: OutlinedButton.styleFrom(
-                        side: BorderSide(color: AppColors.pebble),
+                        side: BorderSide(color: AppColors.surface),
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(
@@ -179,7 +179,7 @@ class _MealContextSheetState extends State<_MealContextSheet> {
                       ),
                       child: Text(
                         l10n.mealContextSkip,
-                        style: TextStyle(color: AppColors.slate),
+                        style: TextStyle(color: AppColors.text),
                       ),
                     ),
                   ),
@@ -188,7 +188,7 @@ class _MealContextSheetState extends State<_MealContextSheet> {
                     child: OutlinedButton(
                       onPressed: () => _submit(background: true),
                       style: OutlinedButton.styleFrom(
-                        side: BorderSide(color: AppColors.pebble),
+                        side: BorderSide(color: AppColors.surface),
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(
@@ -198,7 +198,7 @@ class _MealContextSheetState extends State<_MealContextSheet> {
                       ),
                       child: Text(
                         l10n.mealContextBackground,
-                        style: TextStyle(color: AppColors.slate),
+                        style: TextStyle(color: AppColors.text),
                       ),
                     ),
                   ),
@@ -211,7 +211,7 @@ class _MealContextSheetState extends State<_MealContextSheet> {
               child: ElevatedButton(
                 onPressed: _submit,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.styrianForest,
+                  backgroundColor: AppColors.primary,
                   foregroundColor: AppColors.onPrimary,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(

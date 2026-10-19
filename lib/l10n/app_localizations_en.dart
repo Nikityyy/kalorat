@@ -380,11 +380,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get nameValidationError => 'Enter your name.';
 
   @override
-  String analysisError(String error) {
-    return 'Analysis error: $error';
-  }
-
-  @override
   String get mealSaved => 'Meal saved';
 
   @override
@@ -907,7 +902,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get aiThinkingLabel => 'Thinking…';
 
   @override
-  String get analysisTimedOut => 'Analysis timed out. Try again.';
+  String get analysisTimedOut =>
+      'Gemini did not answer in time. Please try again.';
 
   @override
   String get reference => 'Reference';
@@ -954,11 +950,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String analysisConfidence(int percent) {
     return 'AI confidence: $percent%';
-  }
-
-  @override
-  String retryFailed(String error) {
-    return 'Retry failed: $error';
   }
 
   @override
@@ -1115,11 +1106,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get analysisNoResult => 'No result received.';
-
-  @override
-  String analysisParseError(String error) {
-    return 'The analysis could not be read: $error';
-  }
 
   @override
   String get cameraDiagnosticsTitle => 'Camera diagnostics';
@@ -1435,4 +1421,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String proteinPerDayPlan(int grams) {
     return '$grams g protein a day';
   }
+
+  @override
+  String get analysisNoConnection =>
+      'No connection to Gemini. Check your internet and try again.';
+
+  @override
+  String get analysisRateLimited =>
+      'Gemini is busy right now. Please try again in a moment.';
+
+  @override
+  String get analysisFailed => 'Analysis failed. Please try again.';
 }

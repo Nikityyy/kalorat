@@ -313,12 +313,38 @@ class GeminiService {
         'GeminiService',
         'Model $model failed after ${stopwatch.elapsedMilliseconds}ms: $e',
       );
+      if (e is GeminiError) rethrow;
+      if (e is TimeoutException) {
+        throw GeminiError(
+          GeminiErrorType.timedOut,
+          'Gemini did not answer in time',
+          technicalDetails: e.toString(),
+        );
+      }
       final errorText = e.toString();
       if (errorText.contains('429')) {
         _coolDownModel(model, const Duration(seconds: 30));
         throw GeminiError(
           GeminiErrorType.rateLimited,
           'Gemini rate limit reached. Please retry shortly.',
+          technicalDetails: errorText,
+        );
+      }
+      if (errorText.contains('401') || errorText.contains('403')) {
+        throw GeminiError(
+          GeminiErrorType.invalidApiKey,
+          'Gemini refused the API key',
+          technicalDetails: errorText,
+        );
+      }
+      // The browser's fetch fails with these when there is no connection.
+      if (e is http.ClientException ||
+          RegExp(
+            r'Failed to fetch|Load failed|NetworkError',
+          ).hasMatch(errorText)) {
+        throw GeminiError(
+          GeminiErrorType.networkError,
+          'No connection to Gemini',
           technicalDetails: errorText,
         );
       }
@@ -441,11 +467,12 @@ class GeminiService {
     // history, proxies and logs.
     final url = '$_baseUrlBase/$modelName:streamGenerateContent?alt=sse';
     // Streaming keeps the analysis panel responsive by delivering the model's
-    // short thought summaries before the final structured JSON. The request
-    // timeout still bounds the total analysis duration.
+    // short thought summaries before the final structured JSON. The timeout
+    // bounds each wait for the next chunk; a whole analysis with several
+    // photos often takes longer than one such wait.
     final timeout = useAccurateMode
-        ? const Duration(seconds: 30)
-        : const Duration(seconds: 20);
+        ? const Duration(seconds: 45)
+        : const Duration(seconds: 30);
 
     final requestHeaders = {
       'Content-Type': 'application/json',

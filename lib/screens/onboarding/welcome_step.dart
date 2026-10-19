@@ -32,9 +32,9 @@ class WelcomeStep extends StatelessWidget {
             alignment: Alignment.topRight,
             child: Container(
               decoration: BoxDecoration(
-                color: AppColors.pebble,
+                color: AppColors.surface,
                 borderRadius: BorderRadius.circular(AppTheme.borderRadius),
-                border: Border.all(color: AppColors.pebble),
+                border: Border.all(color: AppColors.surface),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -72,7 +72,7 @@ class WelcomeStep extends StatelessWidget {
             child: Text(
               AppLocalizations.of(context)!.welcomeHaveAccount,
               style: AppTypography.bodyMedium.copyWith(
-                color: AppColors.slate,
+                color: AppColors.text,
                 decoration: TextDecoration.underline,
               ),
             ),
@@ -95,7 +95,7 @@ class WelcomeStep extends StatelessWidget {
         child: Text(
           code,
           style: AppTypography.labelLarge.copyWith(
-            color: isActive ? AppColors.onPrimary : AppColors.slate,
+            color: isActive ? AppColors.onPrimary : AppColors.text,
             fontSize: 14,
           ),
         ),

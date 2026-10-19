@@ -29,7 +29,7 @@ class BarcodeSwitchTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     return Material(
-      color: AppColors.pebble,
+      color: AppColors.surface,
       borderRadius: BorderRadius.circular(AppTheme.borderRadius),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
@@ -40,7 +40,7 @@ class BarcodeSwitchTile extends StatelessWidget {
             children: [
               Icon(
                 Icons.barcode_reader,
-                color: value ? AppColors.styrianForest : AppColors.slate,
+                color: value ? AppColors.primary : AppColors.text,
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -61,7 +61,7 @@ class BarcodeSwitchTile extends StatelessWidget {
                           ? onHint ?? l10n.barcodeSwitchOn
                           : l10n.barcodeSwitchOff,
                       style: AppTypography.bodySmall.copyWith(
-                        color: AppColors.slate,
+                        color: AppColors.text,
                       ),
                     ),
                   ],

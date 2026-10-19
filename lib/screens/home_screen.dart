@@ -22,6 +22,7 @@ import '../services/gemini_service.dart';
 import '../services/hints/first_use_hints.dart';
 import '../theme/app_theme.dart';
 import '../theme/app_typography.dart';
+import '../utils/analysis_error_message.dart';
 import '../utils/analysis_parser.dart';
 import '../utils/platform_utils.dart';
 import '../widgets/common/adaptive.dart';
@@ -101,6 +102,7 @@ class _HomeScreenState extends State<HomeScreen>
   CameraController? _barcodeController;
   Future<void> _barcodeSync = Future.value();
   bool _routeIsCurrent = true;
+  Future<void> _previewSync = Future.value();
   bool _barcodeBusy = false;
   String? _lastBarcode;
   DateTime _lastBarcodeSeen = DateTime.fromMillisecondsSinceEpoch(0);
@@ -190,6 +192,31 @@ class _HomeScreenState extends State<HomeScreen>
     } catch (_) {
       await _initCamera(forceRestart: true);
     }
+  }
+
+  /// The photo review covers the camera; behind it the live preview would
+  /// only cost frames (on an iPhone it is drawn into a canvas each frame,
+  /// which made taps on the review screen lag). Back on the camera, it plays
+  /// again.
+  void _syncCameraPreview() {
+    _previewSync = _previewSync
+        .then((_) async {
+          final controller = _cameraController;
+          if (!mounted ||
+              !_cameraTabIsActive ||
+              _isAnalyzing ||
+              controller == null ||
+              !controller.value.isInitialized) {
+            return;
+          }
+          final covered = _capturedPhotos.isNotEmpty && !_isTakingMore;
+          if (covered && !_isPreviewPaused) {
+            await _pauseCameraPreview();
+          } else if (!covered && _isPreviewPaused) {
+            await _resumeCameraPreview();
+          }
+        })
+        .catchError((Object e) => debugPrint('Camera preview: $e'));
   }
 
   Future<void> _initWebCameraIfGranted() async {
@@ -1053,12 +1080,7 @@ class _HomeScreenState extends State<HomeScreen>
     } catch (e) {
       debugPrint('Analysis stream error: $e');
       if (mounted) {
-        String errorMsg;
-        if (e is GeminiError && e.type == GeminiErrorType.timedOut) {
-          errorMsg = l10n.analysisTimedOut;
-        } else {
-          errorMsg = l10n.analysisError(e.toString());
-        }
+        final errorMsg = analysisErrorMessage(l10n, e);
         setState(() {
           _isAnalyzing = false;
           _analysisHeroImageProvider = null;
@@ -1162,7 +1184,7 @@ class _HomeScreenState extends State<HomeScreen>
             _analysisHeroImageProvider = null;
           });
           provider.setMealAnalysisActive(false);
-          _showMessage(l10n.analysisParseError('$e'), kind: AppToastKind.error);
+          _showMessage(l10n.analysisFailed, kind: AppToastKind.error);
         }
       }
     } else {
@@ -1237,7 +1259,10 @@ class _HomeScreenState extends State<HomeScreen>
     // A sheet or screen on top stops scanning: it rebuilds this screen when
     // it opens and closes.
     _routeIsCurrent = ModalRoute.of(context)?.isCurrent ?? true;
-    WidgetsBinding.instance.addPostFrameCallback((_) => _syncBarcodeScanner());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _syncCameraPreview();
+      _syncBarcodeScanner();
+    });
     final provider = context.watch<AppProvider>();
     final isOnline = provider.isOnline;
 

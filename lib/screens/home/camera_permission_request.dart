@@ -28,7 +28,7 @@ class CameraPermissionRequest extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: AppColors.canvas,
                   borderRadius: BorderRadius.circular(AppTheme.borderRadius),
-                  border: Border.all(color: AppColors.borderGrey),
+                  border: Border.all(color: AppColors.border),
                 ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -37,20 +37,20 @@ class CameraPermissionRequest extends StatelessWidget {
                       width: 88,
                       height: 88,
                       decoration: BoxDecoration(
-                        color: AppColors.styrianForest.withValues(alpha: 0.1),
+                        color: AppColors.primary.withValues(alpha: 0.1),
                         shape: BoxShape.circle,
                       ),
                       child: Icon(
                         Icons.camera_alt_outlined,
                         size: 42,
-                        color: AppColors.styrianForest,
+                        color: AppColors.primary,
                       ),
                     ),
                     const SizedBox(height: 24),
                     Text(
                       l10n.cameraNeeded,
                       style: AppTypography.displayMedium.copyWith(
-                        color: AppColors.slate,
+                        color: AppColors.text,
                       ),
                       textAlign: TextAlign.center,
                     ),
@@ -58,7 +58,7 @@ class CameraPermissionRequest extends StatelessWidget {
                     Text(
                       l10n.cameraPermissionText,
                       style: AppTypography.bodyMedium.copyWith(
-                        color: AppColors.slate.withValues(alpha: 0.65),
+                        color: AppColors.text.withValues(alpha: 0.65),
                       ),
                       textAlign: TextAlign.center,
                     ),

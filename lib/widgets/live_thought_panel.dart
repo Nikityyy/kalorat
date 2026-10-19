@@ -219,7 +219,7 @@ class _FluidAnalysisRailState extends State<FluidAnalysisRail>
                 width: 44,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: AppColors.styrianForest,
+                  color: AppColors.primary,
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
@@ -244,7 +244,7 @@ class _PanelHeader extends StatelessWidget {
           width: 18,
           height: 18,
           decoration: BoxDecoration(
-            color: AppColors.styrianForest,
+            color: AppColors.primary,
             borderRadius: BorderRadius.circular(4),
           ),
           child: const Icon(Icons.auto_awesome, size: 12, color: Colors.white),
@@ -256,7 +256,7 @@ class _PanelHeader extends StatelessWidget {
             fontFamily: AppTypography.mono,
             fontSize: 11,
             fontWeight: FontWeight.w700,
-            color: AppColors.styrianForest,
+            color: AppColors.primary,
             letterSpacing: 0,
           ),
         ),
@@ -419,7 +419,7 @@ class _MarkdownBullet extends StatelessWidget {
             height: 5,
             margin: const EdgeInsets.only(top: 8, right: 10),
             decoration: BoxDecoration(
-              color: AppColors.styrianForest,
+              color: AppColors.primary,
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -450,7 +450,7 @@ class _Cursor extends StatelessWidget {
         width: 9,
         height: 9,
         decoration: BoxDecoration(
-          color: AppColors.styrianForest,
+          color: AppColors.primary,
           borderRadius: BorderRadius.circular(3),
         ),
       ),

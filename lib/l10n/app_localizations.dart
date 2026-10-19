@@ -824,12 +824,6 @@ abstract class AppLocalizations {
   /// **'Bitte gib deinen Namen ein'**
   String get nameValidationError;
 
-  /// No description provided for @analysisError.
-  ///
-  /// In de, this message translates to:
-  /// **'Fehler bei der Analyse: {error}'**
-  String analysisError(String error);
-
   /// No description provided for @mealSaved.
   ///
   /// In de, this message translates to:
@@ -1841,7 +1835,7 @@ abstract class AppLocalizations {
   /// No description provided for @analysisTimedOut.
   ///
   /// In de, this message translates to:
-  /// **'Analyse abgebrochen. Bitte erneut versuchen.'**
+  /// **'Gemini hat nicht rechtzeitig geantwortet. Bitte erneut versuchen.'**
   String get analysisTimedOut;
 
   /// No description provided for @reference.
@@ -1921,12 +1915,6 @@ abstract class AppLocalizations {
   /// In de, this message translates to:
   /// **'KI-Sicherheit: {percent}%'**
   String analysisConfidence(int percent);
-
-  /// No description provided for @retryFailed.
-  ///
-  /// In de, this message translates to:
-  /// **'Erneuter Versuch fehlgeschlagen: {error}'**
-  String retryFailed(String error);
 
   /// No description provided for @retryAnalysis.
   ///
@@ -2209,12 +2197,6 @@ abstract class AppLocalizations {
   /// In de, this message translates to:
   /// **'Kein Ergebnis erhalten.'**
   String get analysisNoResult;
-
-  /// No description provided for @analysisParseError.
-  ///
-  /// In de, this message translates to:
-  /// **'Die Analyse konnte nicht gelesen werden: {error}'**
-  String analysisParseError(String error);
 
   /// No description provided for @cameraDiagnosticsTitle.
   ///
@@ -2707,6 +2689,24 @@ abstract class AppLocalizations {
   /// In de, this message translates to:
   /// **'{grams} g Protein pro Tag'**
   String proteinPerDayPlan(int grams);
+
+  /// No description provided for @analysisNoConnection.
+  ///
+  /// In de, this message translates to:
+  /// **'Keine Verbindung zu Gemini. Prüfe dein Internet und versuche es erneut.'**
+  String get analysisNoConnection;
+
+  /// No description provided for @analysisRateLimited.
+  ///
+  /// In de, this message translates to:
+  /// **'Gemini ist gerade ausgelastet. Bitte gleich nochmal versuchen.'**
+  String get analysisRateLimited;
+
+  /// No description provided for @analysisFailed.
+  ///
+  /// In de, this message translates to:
+  /// **'Analyse fehlgeschlagen. Bitte erneut versuchen.'**
+  String get analysisFailed;
 }
 
 class _AppLocalizationsDelegate

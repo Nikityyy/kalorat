@@ -5,8 +5,8 @@ import 'package:flutter/material.dart';
 /// The brand palette.
 ///
 /// The named brand colors (`pureWhite`, `deepSpaceBlack`, …) are fixed. The
-/// role colors (`canvas`, `surface`, `border`, `text`, `primary`, `onPrimary`
-/// and the older aliases that map to them) follow the theme: [setDark] is
+/// role colors (`canvas`, `surface`, `border`, `text`, `primary`, `onPrimary`,
+/// …) follow the theme: [setDark] is
 /// called whenever the theme changes, and the app is rebuilt, so a widget just
 /// reads them where it builds.
 class AppColors {
@@ -18,13 +18,11 @@ class AppColors {
 
   // Brand colors, fixed in both themes.
   static const Color styrianForestColor = Color(0xFF0F5838); // Primary Accent
-  static const Color styrianForestDark = Color(0xFF0A3C26); // Hover state
   static const Color styrianForestLight = Color(0xFF1EB070); // Light variant
 
   static const Color pureWhite = Color(0xFFFFFFFF);
   static const Color offWhite = Color(0xFFF9FAFB);
   static const Color subtleAsh = Color(0xFFE5E7EB); // 1px hard border, light
-  static const Color lightSurface = Color(0xFFF3F4F6);
 
   static const Color deepSpaceBlack = Color(0xFF0A0A0A); // Dark canvas
   static const Color richCharcoal = Color(0xFF141414); // Dark surface
@@ -33,10 +31,6 @@ class AppColors {
 
   // Functional colors, fixed.
   static const Color signalRed = Color(0xFFED2939); // Error/Alert
-  static const Color error = signalRed;
-  static const Color warning = Color(0xFFF59E0B); // Warning Amber
-  static const Color infoBlue = Color(0xFF3B82F6); // Info
-  static const Color transparent = Colors.transparent;
 
   // Roles that follow the theme.
 
@@ -59,8 +53,6 @@ class AppColors {
   /// Text and icons on a [primary] fill.
   static Color get onPrimary => _dark ? deepSpaceBlack : pureWhite;
 
-  static Color get success => primary;
-
   /// Secondary text: captions, units, the second line of a row.
   static Color get ink2 =>
       _dark ? const Color(0xFFA3A9A5) : const Color(0xFF4B524E);
@@ -76,19 +68,4 @@ class AppColors {
 
   /// Destructive actions and errors.
   static Color get negative => _dark ? const Color(0xFFFF5A66) : signalRed;
-
-  // Older names, kept so existing code continues to compile. They map to the
-  // roles above.
-  static Color get background => canvas;
-  static Color get styrianForest => primary;
-  static Color get glacialWhite => surface;
-  static Color get steel => surface;
-  static Color get frost => text;
-  static Color get borderGrey => border;
-  static Color get kaiserRed => signalRed;
-  static Color get glacierMint => primary;
-  static Color get amber => warning;
-  static Color get limestone => canvas;
-  static Color get pebble => surface;
-  static Color get slate => text;
 }

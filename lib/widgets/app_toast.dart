@@ -104,7 +104,7 @@ class _ToastViewState extends State<_ToastView>
   }
 
   Color get _accent => switch (widget.kind) {
-    AppToastKind.success => AppColors.styrianForest,
+    AppToastKind.success => AppColors.primary,
     AppToastKind.error => AppColors.signalRed,
     AppToastKind.info => AppColors.border,
   };
@@ -171,7 +171,7 @@ class _ToastViewState extends State<_ToastView>
                           fontFamily: AppTypography.outfit,
                           fontSize: 14,
                           fontWeight: FontWeight.w700,
-                          color: AppColors.styrianForest,
+                          color: AppColors.primary,
                         ),
                       ),
                     ),

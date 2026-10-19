@@ -115,11 +115,11 @@ class _ApiKeyStepState extends State<ApiKeyStep> {
               hintText: 'API Key',
               hintStyle: AppTypography.displayMedium.copyWith(
                 fontSize: 18,
-                color: AppColors.slate.withValues(alpha: 0.3),
+                color: AppColors.text.withValues(alpha: 0.3),
               ),
               errorText: _errorMessage,
               border: UnderlineInputBorder(
-                borderSide: BorderSide(color: AppColors.pebble, width: 2),
+                borderSide: BorderSide(color: AppColors.surface, width: 2),
               ),
               focusedBorder: UnderlineInputBorder(
                 borderSide: BorderSide(color: AppColors.primary, width: 2),

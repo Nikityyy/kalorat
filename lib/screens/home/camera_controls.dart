@@ -92,7 +92,7 @@ class _CameraCircleButton extends StatelessWidget {
             height: 52,
             decoration: BoxDecoration(
               color: active
-                  ? AppColors.styrianForest
+                  ? AppColors.primary
                   : Colors.black.withValues(alpha: 0.45),
               shape: BoxShape.circle,
               border: Border.all(
@@ -293,7 +293,7 @@ class CameraBottomBar extends StatelessWidget {
                       child: isCapturing
                           ? Center(
                               child: CircularProgressIndicator(
-                                color: AppColors.styrianForest,
+                                color: AppColors.primary,
                               ),
                             )
                           : null,

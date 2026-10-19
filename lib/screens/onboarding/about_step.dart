@@ -82,11 +82,11 @@ class _AboutStepState extends State<AboutStep> {
                   decoration: InputDecoration(
                     hintText: l10n.onboardingNameHint,
                     hintStyle: AppTypography.displayMedium.copyWith(
-                      color: AppColors.slate.withValues(alpha: 0.3),
+                      color: AppColors.text.withValues(alpha: 0.3),
                     ),
                     errorText: _errorMessage,
                     border: UnderlineInputBorder(
-                      borderSide: BorderSide(color: AppColors.pebble, width: 2),
+                      borderSide: BorderSide(color: AppColors.surface, width: 2),
                     ),
                     focusedBorder: UnderlineInputBorder(
                       borderSide: BorderSide(
@@ -137,7 +137,7 @@ class _AboutStepState extends State<AboutStep> {
     return BespokeSelectionCard(
       title: title,
       subtitle: subtitle,
-      icon: Icon(icon, color: AppColors.slate, size: 28),
+      icon: Icon(icon, color: AppColors.text, size: 28),
       isSelected: _goalIndex == index,
       onTap: () => setState(() => _goalIndex = index),
     );

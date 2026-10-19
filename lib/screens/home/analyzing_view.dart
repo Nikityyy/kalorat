@@ -27,7 +27,7 @@ class AnalyzingView extends StatelessWidget {
         // 1. Background Image (Actual captured photo); a meal described in
         // words has none.
         if (heroImage == null)
-          Positioned.fill(child: ColoredBox(color: AppColors.styrianForest))
+          Positioned.fill(child: ColoredBox(color: AppColors.primary))
         else
           Positioned(
             top: 0,

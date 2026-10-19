@@ -77,12 +77,12 @@ class _DemographicsStepState extends State<DemographicsStep> {
           Text(l10n.calculateMetabolicRate, style: AppTypography.bodyMedium),
           const SizedBox(height: 32),
           
-          Text(l10n.biologicalSex, style: AppTypography.labelLarge.copyWith(color: AppColors.slate)),
+          Text(l10n.biologicalSex, style: AppTypography.labelLarge.copyWith(color: AppColors.text)),
           const SizedBox(height: 16),
           _buildSexCards(l10n),
           
           const SizedBox(height: 32),
-          Text(l10n.age, style: AppTypography.labelLarge.copyWith(color: AppColors.slate)),
+          Text(l10n.age, style: AppTypography.labelLarge.copyWith(color: AppColors.text)),
           const SizedBox(height: 16),
           Expanded(
             child: Center(

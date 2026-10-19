@@ -97,4 +97,31 @@ void main() {
       expect(values, isNull);
     });
   }
+
+  for (final (locale, expected) in [
+    ('de', ['330', '12,5', '0,3', '70']),
+    ('en', ['330', '12.5', '0.3', '70']),
+  ]) {
+    testWidgets('number fields start without a trailing zero in $locale', (
+      tester,
+    ) async {
+      late List<String> texts;
+      await tester.pumpWidget(
+        Localizations(
+          locale: Locale(locale),
+          delegates: const [GlobalWidgetsLocalizations.delegate],
+          child: Builder(
+            builder: (context) {
+              texts = [
+                for (final v in [330.0, 12.5, 0.25, 70.04])
+                  PromptField.numberText(context, v),
+              ];
+              return const SizedBox();
+            },
+          ),
+        ),
+      );
+      expect(texts, expected);
+    });
+  }
 }

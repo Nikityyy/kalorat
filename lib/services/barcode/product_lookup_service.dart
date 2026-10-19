@@ -60,7 +60,7 @@ class ProductLookupService {
   static const _fields =
       'code,product_name,product_name_de,product_name_en,generic_name,'
       'generic_name_de,generic_name_en,brands,quantity,serving_quantity,'
-      'serving_quantity_unit,product_quantity,product_quantity_unit,nutriments';
+      'serving_quantity_unit,serving_size,product_quantity,product_quantity_unit,nutriments';
   static const foundTtl = Duration(days: 30);
   static const notFoundTtl = Duration(hours: 1);
   static const timeout = Duration(seconds: 6);
@@ -143,11 +143,16 @@ class ProductLookupService {
     );
   }
 
+  /// Raised when the way a product is read changes, so cached products are
+  /// read again (2: drinks with a unit of g, see FoodProduct._isLiquid).
+  static const _cacheVersion = 2;
+
   Future<ProductLookupResult?> _readCache(String code) async {
     try {
       final raw = await _cache.read(code);
       if (raw == null) return null;
       final json = jsonDecode(raw) as Map<String, dynamic>;
+      if (json['v'] != _cacheVersion) return null;
       final at = DateTime.fromMillisecondsSinceEpoch(json['at'] as int);
       final product = json['product'] is Map
           ? FoodProduct.fromJson(Map<String, dynamic>.from(json['product']))
@@ -173,6 +178,7 @@ class ProductLookupService {
       await _cache.write(
         code,
         jsonEncode({
+          'v': _cacheVersion,
           'at': _now().millisecondsSinceEpoch,
           'product': result.product?.toJson(),
         }),

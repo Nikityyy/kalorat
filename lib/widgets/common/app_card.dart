@@ -31,7 +31,7 @@ class AppCard extends StatelessWidget {
       Radius.circular(AppTheme.borderRadius),
     );
 
-    final Color effectiveColor = backgroundColor ?? AppColors.steel;
+    final Color effectiveColor = backgroundColor ?? AppColors.surface;
 
     return GestureDetector(
       onTap: onTap,
@@ -43,7 +43,7 @@ class AppCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: effectiveColor,
           borderRadius: borderRadius,
-          border: Border.all(color: AppColors.borderGrey, width: 1.0),
+          border: Border.all(color: AppColors.border, width: 1.0),
         ),
         child: child,
       ),
