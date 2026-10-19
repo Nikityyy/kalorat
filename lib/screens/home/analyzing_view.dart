@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../extensions/l10n_extension.dart';
 import '../../theme/app_colors.dart';
+import '../../theme/app_theme.dart';
 import '../../theme/app_typography.dart';
 import '../../widgets/live_thought_panel.dart';
 
@@ -26,9 +27,7 @@ class AnalyzingView extends StatelessWidget {
         // 1. Background Image (Actual captured photo); a meal described in
         // words has none.
         if (heroImage == null)
-          Positioned.fill(
-            child: ColoredBox(color: AppColors.styrianForest),
-          )
+          Positioned.fill(child: ColoredBox(color: AppColors.styrianForest))
         else
           Positioned(
             top: 0,
@@ -50,8 +49,11 @@ class AnalyzingView extends StatelessWidget {
           bottom: 0,
           child: Container(
             decoration: BoxDecoration(
-              color: AppColors.glacialWhite,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+              color: AppColors.canvas,
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(AppTheme.sheetRadius),
+              ),
+              border: Border(top: BorderSide(color: AppColors.border)),
             ),
             child: SingleChildScrollView(
               padding: const EdgeInsets.fromLTRB(24, 32, 24, 48),

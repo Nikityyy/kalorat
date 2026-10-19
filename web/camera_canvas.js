@@ -18,7 +18,17 @@
     return navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1;
   }
 
+  // Read once and updated by kaloratSetCameraCanvas: the draw loop asks on
+  // every display frame, and localStorage is not free on every frame.
+  var cached = null;
+
   function enabled() {
+    if (cached !== null) return cached;
+    cached = read();
+    return cached;
+  }
+
+  function read() {
     try {
       var stored = localStorage.getItem(KEY);
       if (stored === '1') return true;
@@ -32,6 +42,7 @@
     try {
       localStorage.setItem(KEY, on ? '1' : '0');
     } catch (_) {}
+    cached = !!on;
   };
 
   function attach(video) {
@@ -46,6 +57,8 @@
     host.appendChild(canvas);
     var ctx = canvas.getContext('2d', { alpha: false });
     var shown = false;
+    var lastTime = -1;
+    var lastSize = '';
 
     function frame() {
       if (!video.isConnected) return; // camera was torn down
@@ -69,6 +82,12 @@
         canvas.width = cw;
         canvas.height = ch;
       }
+      // The display runs at 60 or 120 Hz, the camera at about 30: copy a
+      // frame only when the camera has delivered a new one.
+      var size = cw + 'x' + ch + video.style.transform;
+      if (video.currentTime === lastTime && size === lastSize) return;
+      lastTime = video.currentTime;
+      lastSize = size;
       var s = Math.max(cw / vw, ch / vh);
       var dw = vw * s;
       var dh = vh * s;

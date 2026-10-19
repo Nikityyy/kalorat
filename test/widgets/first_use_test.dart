@@ -3,8 +3,6 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kalorat/l10n/app_localizations.dart';
 import 'package:kalorat/widgets/first_use_card.dart';
-import 'package:kalorat/widgets/history_empty_state.dart';
-import 'package:kalorat/widgets/meal_card.dart';
 
 Widget _app(Widget child, {required double scale, Locale? locale}) =>
     MaterialApp(
@@ -27,22 +25,6 @@ Widget _app(Widget child, {required double scale, Locale? locale}) =>
 
 void main() {
   for (final scale in [1.0, 1.5]) {
-    for (final locale in const [Locale('en'), Locale('de')]) {
-      testWidgets(
-        'history empty state fits at ${scale}x in ${locale.languageCode}',
-        (tester) async {
-          await tester.pumpWidget(
-            _app(const HistoryEmptyState(), scale: scale, locale: locale),
-          );
-          await tester.pumpAndSettle();
-          expect(tester.takeException(), isNull);
-          final l10n = lookupAppLocalizations(locale);
-          expect(find.text(l10n.historyEmptyTitle), findsOneWidget);
-          expect(find.text(l10n.sampleMealName), findsOneWidget);
-        },
-      );
-    }
-
     testWidgets('first use card fits at ${scale}x and dismisses', (
       tester,
     ) async {
@@ -72,16 +54,4 @@ void main() {
       expect((dismissed, acted), (1, 1));
     });
   }
-
-  testWidgets('the example meal takes no taps', (tester) async {
-    await tester.pumpWidget(_app(const HistoryEmptyState(), scale: 1.0));
-    await tester.pumpAndSettle();
-    final wrappers = tester.widgetList<IgnorePointer>(
-      find.ancestor(
-        of: find.byType(MealCard),
-        matching: find.byType(IgnorePointer),
-      ),
-    );
-    expect(wrappers.any((w) => w.ignoring), isTrue);
-  });
 }

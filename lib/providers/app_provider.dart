@@ -8,20 +8,34 @@ import '../models/models.dart';
 import '../services/services.dart';
 import '../services/theme_preference.dart';
 import '../utils/app_logger.dart';
+import '../utils/insights.dart';
+import '../utils/platform_utils.dart';
 
 class StreakData {
+  /// Days in a row with at least one analysed meal, up to today. A day not
+  /// logged yet today does not break it.
   final int streak;
-  final int availableFreezes;
-  final Set<DateTime> frozenDays;
-  final List<bool>
-  last7DaysPresence; // true = logged or frozen, false = missed (for Zeigarnik block)
 
-  StreakData({
-    required this.streak,
-    required this.availableFreezes,
-    required this.frozenDays,
-    required this.last7DaysPresence,
-  });
+  /// The last seven days, oldest first, true where a meal was logged. The
+  /// home screen widget shows it.
+  final List<bool> last7DaysPresence;
+
+  StreakData({required this.streak, required this.last7DaysPresence});
+}
+
+/// Logged days in a row ending at [today], or at the day before while
+/// [today] has nothing yet. Days are UTC dates at midnight.
+int countStreak(Set<DateTime> loggedDays, DateTime today) {
+  var day = today;
+  if (!loggedDays.contains(day)) {
+    day = DateTime.utc(day.year, day.month, day.day - 1);
+  }
+  var streak = 0;
+  while (loggedDays.contains(day)) {
+    streak++;
+    day = DateTime.utc(day.year, day.month, day.day - 1);
+  }
+  return streak;
 }
 
 class AppProvider extends ChangeNotifier with WidgetsBindingObserver {
@@ -310,6 +324,13 @@ class AppProvider extends ChangeNotifier with WidgetsBindingObserver {
     (item) => item['id'] == id && item['type'].toString().startsWith('meal_'),
   );
 
+  /// The ids of all meals waiting to sync, read from the queue once; a list
+  /// asks this instead of [isMealSyncPending] per row.
+  Set<String> mealIdsPendingSync() => {
+    for (final item in _databaseService.getSyncQueue())
+      if (item['type'].toString().startsWith('meal_')) item['id'].toString(),
+  };
+
   Future<void> loginWithSupabase({
     required String userId,
     required String email,
@@ -526,6 +547,36 @@ class AppProvider extends ChangeNotifier with WidgetsBindingObserver {
   // Meal operations
   List<MealModel> getAllMeals() => _databaseService.getAllMeals();
 
+  bool get hasMeals => _databaseService.hasMeals;
+
+  ExpenditureEstimate? _cachedExpenditure;
+  Object? _cachedExpenditureKey;
+
+  /// [estimateExpenditure] over the whole history, kept until a meal or a
+  /// weight changes or the day turns: it walks every meal, and the Progress
+  /// screen asks on every build.
+  ExpenditureEstimate expenditureEstimate() {
+    final weights = this.weights;
+    final dayStartHour = _user?.dayStartHour ?? 0;
+    final now = DateTime.now();
+    final day = logicalDay(now, dayStartHour: dayStartHour);
+    final key = (
+      _statsCacheVersion,
+      Object.hashAll([for (final w in weights) Object.hash(w.date, w.weight)]),
+      day,
+      dayStartHour,
+    );
+    final cached = _cachedExpenditure;
+    if (cached != null && key == _cachedExpenditureKey) return cached;
+    _cachedExpenditureKey = key;
+    return _cachedExpenditure = estimateExpenditure(
+      meals: getAllMeals(),
+      weights: weights,
+      now: now,
+      dayStartHour: dayStartHour,
+    );
+  }
+
   MealModel? getMealById(String id) => _databaseService.getMealById(id);
 
   List<MealModel> getMealsByDate(DateTime date) =>
@@ -637,7 +688,9 @@ class AppProvider extends ChangeNotifier with WidgetsBindingObserver {
   void _invalidateStatsCache() {
     _statsCacheVersion++;
 
-    // Sync to native home widgets
+    // Sync to native home widgets. The web has none, and the streak walks
+    // every meal.
+    if (PlatformUtils.isWeb) return;
     try {
       final currentStreakData = streakData;
       // Use the last element (today) to check if tracked today
@@ -709,6 +762,8 @@ class AppProvider extends ChangeNotifier with WidgetsBindingObserver {
     final success = await _exportImportService.importData();
     if (success) {
       _user = _databaseService.getUser();
+      // The imported meals replace the ones the cached totals were built from.
+      _invalidateStatsCache();
       notifyListeners();
     }
     return success;
@@ -812,108 +867,40 @@ class AppProvider extends ChangeNotifier with WidgetsBindingObserver {
     return _cachedMonthStats!;
   }
 
-  /// Computes streak data forwards from the beginning of time
+  /// Counts the logged days in a row that end today, or yesterday while
+  /// today has nothing logged yet.
   StreakData get streakData {
     if (_cachedStreakData != null &&
         _cachedStreakVersion == _statsCacheVersion) {
       return _cachedStreakData!;
     }
 
-    final allMeals = _databaseService.getAllMeals();
-    if (allMeals.isEmpty) {
-      _cachedStreakData = StreakData(
-        streak: 0,
-        availableFreezes: 0,
-        frozenDays: {},
-        last7DaysPresence: List.generate(7, (_) => false),
-      );
-      _cachedStreakVersion = _statsCacheVersion;
-      return _cachedStreakData!;
-    }
-
     final offset = _user?.dayStartHour ?? 0;
-    final uniqueDays = <DateTime>{};
-    for (final m in allMeals) {
+    final loggedDays = <DateTime>{};
+    for (final m in _databaseService.getAllMeals()) {
       if (!m.isPending) {
         final adjusted = m.timestamp.subtract(Duration(hours: offset));
-        uniqueDays.add(
+        loggedDays.add(
           DateTime.utc(adjusted.year, adjusted.month, adjusted.day),
         );
       }
     }
 
-    if (uniqueDays.isEmpty) {
-      _cachedStreakData = StreakData(
-        streak: 0,
-        availableFreezes: 0,
-        frozenDays: {},
-        last7DaysPresence: List.generate(7, (_) => false),
-      );
-      _cachedStreakVersion = _statsCacheVersion;
-      return _cachedStreakData!;
-    }
-
-    final sortedDays = uniqueDays.toList()..sort((a, b) => a.compareTo(b));
-
-    int streak = 0;
-    int availableFreezes = 0;
-    int consecutiveDaysForFreeze = 0;
-    Set<DateTime> frozenDays = {};
-
-    final firstDay = sortedDays.first;
-    final now = DateTime.now();
-    final logicalNow = now.subtract(Duration(hours: offset));
+    final logicalNow = DateTime.now().subtract(Duration(hours: offset));
     final today = DateTime.utc(
       logicalNow.year,
       logicalNow.month,
       logicalNow.day,
     );
 
-    DateTime checkDay = firstDay;
-
-    while (!checkDay.isAfter(today)) {
-      if (uniqueDays.contains(checkDay)) {
-        streak++;
-        consecutiveDaysForFreeze++;
-        if (consecutiveDaysForFreeze >= 7) {
-          availableFreezes = (availableFreezes + 1).clamp(0, 2);
-          consecutiveDaysForFreeze = 0;
-        }
-      } else {
-        if (checkDay.isAtSameMomentAs(today)) {
-          // Do nothing, day isn't over.
-        } else if (availableFreezes > 0) {
-          availableFreezes--;
-          streak++;
-          frozenDays.add(checkDay);
-          consecutiveDaysForFreeze = 0;
-        } else {
-          streak = 0;
-          consecutiveDaysForFreeze = 0;
-          frozenDays.clear();
-          availableFreezes = 0;
-        }
-      }
-      checkDay = DateTime.utc(checkDay.year, checkDay.month, checkDay.day + 1);
-    }
-
-    // Calculate last 7 days presence for Zeigarnik UI
-    // Days are [today - 6, today - 5, ..., today]
-    List<bool> last7 = [];
-    for (int i = 6; i >= 0; i--) {
-      final d = DateTime.utc(today.year, today.month, today.day - i);
-      if (uniqueDays.contains(d) || frozenDays.contains(d)) {
-        last7.add(true);
-      } else {
-        last7.add(false);
-      }
-    }
-
     _cachedStreakData = StreakData(
-      streak: streak,
-      availableFreezes: availableFreezes,
-      frozenDays: frozenDays,
-      last7DaysPresence: last7,
+      streak: countStreak(loggedDays, today),
+      last7DaysPresence: [
+        for (var i = 6; i >= 0; i--)
+          loggedDays.contains(
+            DateTime.utc(today.year, today.month, today.day - i),
+          ),
+      ],
     );
     _cachedStreakVersion = _statsCacheVersion;
     return _cachedStreakData!;

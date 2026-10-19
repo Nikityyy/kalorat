@@ -4,6 +4,7 @@ import '../../theme/app_colors.dart';
 import '../../extensions/l10n_extension.dart';
 import '../../widgets/inputs/action_button.dart';
 import '../../widgets/inputs/bespoke_selection_card.dart';
+import '../../widgets/common/adaptive.dart';
 
 /// The name and the goal on one page.
 class AboutStep extends StatefulWidget {
@@ -68,6 +69,9 @@ class _AboutStepState extends State<AboutStep> {
                 const SizedBox(height: 24),
                 TextField(
                   controller: _controller,
+                  autofillHints: const [AutofillHints.givenName],
+                  textCapitalization: TextCapitalization.words,
+                  magnifierConfiguration: fieldMagnifier,
                   style: AppTypography.displayMedium,
                   textInputAction: TextInputAction.done,
                   onChanged: (_) {

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:kalorat/l10n/app_localizations.dart';
 import '../../theme/app_typography.dart';
 import '../../theme/app_colors.dart';
+import '../../theme/app_theme.dart';
 import '../../widgets/inputs/action_button.dart';
 
 class WelcomeStep extends StatelessWidget {
@@ -32,7 +33,7 @@ class WelcomeStep extends StatelessWidget {
             child: Container(
               decoration: BoxDecoration(
                 color: AppColors.pebble,
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(AppTheme.borderRadius),
                 border: Border.all(color: AppColors.pebble),
               ),
               child: Row(
@@ -89,7 +90,7 @@ class WelcomeStep extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
           color: isActive ? AppColors.primary : Colors.transparent,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(AppTheme.borderRadius),
         ),
         child: Text(
           code,

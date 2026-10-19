@@ -341,7 +341,7 @@ abstract class AppLocalizations {
   /// No description provided for @analyzing.
   ///
   /// In de, this message translates to:
-  /// **'Analysiere...'**
+  /// **'Analysiere …'**
   String get analyzing;
 
   /// No description provided for @mealName.
@@ -407,7 +407,7 @@ abstract class AppLocalizations {
   /// No description provided for @processingQueue.
   ///
   /// In de, this message translates to:
-  /// **'Verarbeite ausstehende Mahlzeiten...'**
+  /// **'Ausstehende Mahlzeiten werden verarbeitet …'**
   String get processingQueue;
 
   /// No description provided for @analysisWaitingForResume.
@@ -728,12 +728,6 @@ abstract class AppLocalizations {
   /// **'Onboarding starten'**
   String get startOnboarding;
 
-  /// No description provided for @meTitle.
-  ///
-  /// In de, this message translates to:
-  /// **'Profil'**
-  String get meTitle;
-
   /// No description provided for @deleteWeight.
   ///
   /// In de, this message translates to:
@@ -815,7 +809,7 @@ abstract class AppLocalizations {
   /// No description provided for @buildingPlan.
   ///
   /// In de, this message translates to:
-  /// **'Profil wird gespeichert...'**
+  /// **'Profil wird gespeichert …'**
   String get buildingPlan;
 
   /// No description provided for @apiKeyValidationError.
@@ -920,12 +914,6 @@ abstract class AppLocalizations {
   /// **'Divers'**
   String get other;
 
-  /// No description provided for @yourBmi.
-  ///
-  /// In de, this message translates to:
-  /// **'DEIN BMI'**
-  String get yourBmi;
-
   /// No description provided for @healthyRange.
   ///
   /// In de, this message translates to:
@@ -935,7 +923,7 @@ abstract class AppLocalizations {
   /// No description provided for @status.
   ///
   /// In de, this message translates to:
-  /// **'STATUS'**
+  /// **'Status'**
   String get status;
 
   /// No description provided for @weightProgress.
@@ -947,7 +935,7 @@ abstract class AppLocalizations {
   /// No description provided for @caloriesConsumed.
   ///
   /// In de, this message translates to:
-  /// **'KALORIEN AUFGENOMMEN'**
+  /// **'Gegessene Kalorien'**
   String get caloriesConsumed;
 
   /// No description provided for @proteinShort.
@@ -1016,18 +1004,6 @@ abstract class AppLocalizations {
   /// **'Kein Essen erkannt. Bitte versuche es erneut.'**
   String get noFoodDetected;
 
-  /// No description provided for @myHistory.
-  ///
-  /// In de, this message translates to:
-  /// **'Meine Historie'**
-  String get myHistory;
-
-  /// No description provided for @noMealsRecorded.
-  ///
-  /// In de, this message translates to:
-  /// **'Keine Mahlzeiten erfasst.'**
-  String get noMealsRecorded;
-
   /// No description provided for @deleteQuestion.
   ///
   /// In de, this message translates to:
@@ -1076,6 +1052,30 @@ abstract class AppLocalizations {
   /// **'+ Foto'**
   String get addPhoto;
 
+  /// No description provided for @reorderPhotosHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Halten und ziehen, um die Reihenfolge zu ändern'**
+  String get reorderPhotosHint;
+
+  /// No description provided for @coverPhoto.
+  ///
+  /// In de, this message translates to:
+  /// **'Titelbild'**
+  String get coverPhoto;
+
+  /// No description provided for @movePhotoEarlier.
+  ///
+  /// In de, this message translates to:
+  /// **'Nach vorne'**
+  String get movePhotoEarlier;
+
+  /// No description provided for @movePhotoLater.
+  ///
+  /// In de, this message translates to:
+  /// **'Nach hinten'**
+  String get movePhotoLater;
+
   /// No description provided for @startAnalysis.
   ///
   /// In de, this message translates to:
@@ -1087,6 +1087,18 @@ abstract class AppLocalizations {
   /// In de, this message translates to:
   /// **'Analyse Ergebnis'**
   String get analysisResult;
+
+  /// No description provided for @yourDescription.
+  ///
+  /// In de, this message translates to:
+  /// **'Deine Beschreibung'**
+  String get yourDescription;
+
+  /// No description provided for @yourNote.
+  ///
+  /// In de, this message translates to:
+  /// **'Deine Notiz'**
+  String get yourNote;
 
   /// No description provided for @saveMeal.
   ///
@@ -1682,23 +1694,11 @@ abstract class AppLocalizations {
   /// **'Schwere körperliche Arbeit'**
   String get veryActiveSubtitle;
 
-  /// No description provided for @dailyAvg.
-  ///
-  /// In de, this message translates to:
-  /// **'ø / Tag'**
-  String get dailyAvg;
-
   /// No description provided for @streak.
   ///
   /// In de, this message translates to:
   /// **'Serie'**
   String get streak;
-
-  /// No description provided for @streakDays.
-  ///
-  /// In de, this message translates to:
-  /// **'{count} Tage'**
-  String streakDays(int count);
 
   /// No description provided for @discardPhotos.
   ///
@@ -1763,7 +1763,7 @@ abstract class AppLocalizations {
   /// No description provided for @mealContextHint.
   ///
   /// In de, this message translates to:
-  /// **'z.B. Vanillepudding, 200g, Angaben von der Packung...'**
+  /// **'z. B. Vanillepudding, 200 g, Angaben von der Packung'**
   String get mealContextHint;
 
   /// No description provided for @mealContextSkip.
@@ -1835,7 +1835,7 @@ abstract class AppLocalizations {
   /// No description provided for @aiThinkingLabel.
   ///
   /// In de, this message translates to:
-  /// **'KI denkt nach...'**
+  /// **'Denkt nach …'**
   String get aiThinkingLabel;
 
   /// No description provided for @analysisTimedOut.
@@ -2102,6 +2102,12 @@ abstract class AppLocalizations {
   /// **'Rückgängig'**
   String get quickLogUndo;
 
+  /// No description provided for @mealDeleted.
+  ///
+  /// In de, this message translates to:
+  /// **'Mahlzeit gelöscht'**
+  String get mealDeleted;
+
   /// No description provided for @quickLogFailed.
   ///
   /// In de, this message translates to:
@@ -2189,7 +2195,7 @@ abstract class AppLocalizations {
   /// No description provided for @retrySheetHint.
   ///
   /// In de, this message translates to:
-  /// **'z.B. 2 Portionen, extra Sauce ...'**
+  /// **'z. B. 2 Portionen, extra Sauce'**
   String get retrySheetHint;
 
   /// No description provided for @retrySheetAction.
@@ -2197,12 +2203,6 @@ abstract class AppLocalizations {
   /// In de, this message translates to:
   /// **'Neu analysieren'**
   String get retrySheetAction;
-
-  /// No description provided for @estimatedRange.
-  ///
-  /// In de, this message translates to:
-  /// **'Geschätzter Bereich: {range}'**
-  String estimatedRange(String range);
 
   /// No description provided for @analysisNoResult.
   ///
@@ -2252,24 +2252,6 @@ abstract class AppLocalizations {
   /// **'Kein Import-Backup vorhanden.'**
   String get restoreBackupMissing;
 
-  /// No description provided for @insightsTitle.
-  ///
-  /// In de, this message translates to:
-  /// **'Auswertung'**
-  String get insightsTitle;
-
-  /// No description provided for @weeklySummaryTitle.
-  ///
-  /// In de, this message translates to:
-  /// **'Letzte 7 Tage'**
-  String get weeklySummaryTitle;
-
-  /// No description provided for @weeklyAvgIntake.
-  ///
-  /// In de, this message translates to:
-  /// **'Ø Aufnahme pro Tag'**
-  String get weeklyAvgIntake;
-
   /// No description provided for @weeklyOnTarget.
   ///
   /// In de, this message translates to:
@@ -2294,30 +2276,6 @@ abstract class AppLocalizations {
   /// **'{count} von {total} Tagen erfasst'**
   String weeklyDaysLogged(int count, int total);
 
-  /// No description provided for @weeklyTarget.
-  ///
-  /// In de, this message translates to:
-  /// **'Ziel {kcal} kcal'**
-  String weeklyTarget(String kcal);
-
-  /// No description provided for @weeklyWeightSpan.
-  ///
-  /// In de, this message translates to:
-  /// **'in {days} Tagen'**
-  String weeklyWeightSpan(int days);
-
-  /// No description provided for @weeklyWeightNeedMore.
-  ///
-  /// In de, this message translates to:
-  /// **'Zwei Wiegungen zeigen die Entwicklung.'**
-  String get weeklyWeightNeedMore;
-
-  /// No description provided for @weeklyNoMeals.
-  ///
-  /// In de, this message translates to:
-  /// **'In den letzten 7 Tagen wurde keine Mahlzeit erfasst.'**
-  String get weeklyNoMeals;
-
   /// No description provided for @burnTitle.
   ///
   /// In de, this message translates to:
@@ -2329,12 +2287,6 @@ abstract class AppLocalizations {
   /// In de, this message translates to:
   /// **'Aus {days} erfassten Tagen und {weighIns} Wiegungen der letzten 4 Wochen.'**
   String burnBasis(int days, int weighIns);
-
-  /// No description provided for @burnWeightTrend.
-  ///
-  /// In de, this message translates to:
-  /// **'Gewichtstrend: {rate} kg pro Woche'**
-  String burnWeightTrend(String rate);
 
   /// No description provided for @burnFormula.
   ///
@@ -2359,12 +2311,6 @@ abstract class AppLocalizations {
   /// In de, this message translates to:
   /// **'Eine Schätzung: Sie ist nur so genau wie deine erfassten Mahlzeiten und Wiegungen.'**
   String get burnDisclaimer;
-
-  /// No description provided for @correctionPrompt.
-  ///
-  /// In de, this message translates to:
-  /// **'Mit einem Tipp korrigieren'**
-  String get correctionPrompt;
 
   /// No description provided for @correctionLower.
   ///
@@ -2438,24 +2384,6 @@ abstract class AppLocalizations {
   /// **'Doppelte Mahlzeiten-IDs im Import.'**
   String get validationDuplicateMeals;
 
-  /// No description provided for @thisWeekTitle.
-  ///
-  /// In de, this message translates to:
-  /// **'Wochenziel'**
-  String get thisWeekTitle;
-
-  /// No description provided for @startWeekStrong.
-  ///
-  /// In de, this message translates to:
-  /// **'Beginne deine Woche stark.'**
-  String get startWeekStrong;
-
-  /// No description provided for @keepMomentum.
-  ///
-  /// In de, this message translates to:
-  /// **'Bleib dran!'**
-  String get keepMomentum;
-
   /// No description provided for @hintGotIt.
   ///
   /// In de, this message translates to:
@@ -2498,30 +2426,6 @@ abstract class AppLocalizations {
   /// **'Einstellungen öffnen'**
   String get hintBackupAction;
 
-  /// No description provided for @historyEmptyTitle.
-  ///
-  /// In de, this message translates to:
-  /// **'Hier erscheinen deine Mahlzeiten'**
-  String get historyEmptyTitle;
-
-  /// No description provided for @historyEmptyBody.
-  ///
-  /// In de, this message translates to:
-  /// **'Jede analysierte Mahlzeit steht hier, nach Tag, Woche, Monat oder Jahr sortiert. Wechsle zur Kamera, um die erste zu erfassen.'**
-  String get historyEmptyBody;
-
-  /// No description provided for @historyExampleLabel.
-  ///
-  /// In de, this message translates to:
-  /// **'Beispiel'**
-  String get historyExampleLabel;
-
-  /// No description provided for @sampleMealName.
-  ///
-  /// In de, this message translates to:
-  /// **'Porridge'**
-  String get sampleMealName;
-
   /// No description provided for @welcomeHaveAccount.
   ///
   /// In de, this message translates to:
@@ -2557,6 +2461,252 @@ abstract class AppLocalizations {
   /// In de, this message translates to:
   /// **'Dunkel'**
   String get themeDark;
+
+  /// No description provided for @todayWithDate.
+  ///
+  /// In de, this message translates to:
+  /// **'Heute, {date}'**
+  String todayWithDate(String date);
+
+  /// No description provided for @yesterdayWithDate.
+  ///
+  /// In de, this message translates to:
+  /// **'Gestern, {date}'**
+  String yesterdayWithDate(String date);
+
+  /// No description provided for @pickDay.
+  ///
+  /// In de, this message translates to:
+  /// **'Tag wählen'**
+  String get pickDay;
+
+  /// No description provided for @previousDay.
+  ///
+  /// In de, this message translates to:
+  /// **'Vorheriger Tag'**
+  String get previousDay;
+
+  /// No description provided for @nextDay.
+  ///
+  /// In de, this message translates to:
+  /// **'Nächster Tag'**
+  String get nextDay;
+
+  /// No description provided for @kcalOfTarget.
+  ///
+  /// In de, this message translates to:
+  /// **'kcal von {target}'**
+  String kcalOfTarget(String target);
+
+  /// No description provided for @kcalToEatToday.
+  ///
+  /// In de, this message translates to:
+  /// **'kcal für heute'**
+  String get kcalToEatToday;
+
+  /// No description provided for @kcalLeftOf.
+  ///
+  /// In de, this message translates to:
+  /// **'kcal übrig von {target}'**
+  String kcalLeftOf(String target);
+
+  /// No description provided for @kcalOverTarget.
+  ///
+  /// In de, this message translates to:
+  /// **'kcal über deinen {target}'**
+  String kcalOverTarget(String target);
+
+  /// No description provided for @proteinOfTarget.
+  ///
+  /// In de, this message translates to:
+  /// **'{eaten} von {target} g Protein'**
+  String proteinOfTarget(int eaten, int target);
+
+  /// No description provided for @proteinReached.
+  ///
+  /// In de, this message translates to:
+  /// **'Proteinziel erreicht'**
+  String get proteinReached;
+
+  /// No description provided for @proteinToGo.
+  ///
+  /// In de, this message translates to:
+  /// **'Noch {grams} g Protein'**
+  String proteinToGo(int grams);
+
+  /// No description provided for @mealsCount.
+  ///
+  /// In de, this message translates to:
+  /// **'{count, plural, =1{1 Mahlzeit} other{{count} Mahlzeiten}}'**
+  String mealsCount(int count);
+
+  /// No description provided for @pastDayEmpty.
+  ///
+  /// In de, this message translates to:
+  /// **'An diesem Tag ist nichts eingetragen.'**
+  String get pastDayEmpty;
+
+  /// No description provided for @todayEmptyBody.
+  ///
+  /// In de, this message translates to:
+  /// **'Deine erste Mahlzeit beginnt den Aufstieg. Fotografiere den Teller, Kalorat erledigt den Rest.'**
+  String get todayEmptyBody;
+
+  /// No description provided for @openCamera.
+  ///
+  /// In de, this message translates to:
+  /// **'Kamera öffnen'**
+  String get openCamera;
+
+  /// No description provided for @tabCamera.
+  ///
+  /// In de, this message translates to:
+  /// **'Kamera'**
+  String get tabCamera;
+
+  /// No description provided for @tabProgress.
+  ///
+  /// In de, this message translates to:
+  /// **'Fortschritt'**
+  String get tabProgress;
+
+  /// No description provided for @bodyTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Körper'**
+  String get bodyTitle;
+
+  /// No description provided for @streakLine.
+  ///
+  /// In de, this message translates to:
+  /// **'{count, plural, =1{1 Tag in Folge eingetragen} other{{count} Tage in Folge eingetragen}}'**
+  String streakLine(int count);
+
+  /// No description provided for @streakNone.
+  ///
+  /// In de, this message translates to:
+  /// **'Trag heute etwas ein, um eine Serie zu starten.'**
+  String get streakNone;
+
+  /// No description provided for @previousPeriod.
+  ///
+  /// In de, this message translates to:
+  /// **'Vorheriger Zeitraum'**
+  String get previousPeriod;
+
+  /// No description provided for @nextPeriod.
+  ///
+  /// In de, this message translates to:
+  /// **'Nächster Zeitraum'**
+  String get nextPeriod;
+
+  /// No description provided for @averagePerDay.
+  ///
+  /// In de, this message translates to:
+  /// **'Durchschnitt pro Tag'**
+  String get averagePerDay;
+
+  /// No description provided for @periodNoMeals.
+  ///
+  /// In de, this message translates to:
+  /// **'In diesem Zeitraum ist nichts eingetragen.'**
+  String get periodNoMeals;
+
+  /// No description provided for @proteinAveragePerDay.
+  ///
+  /// In de, this message translates to:
+  /// **'Protein {average} von {target} g pro Tag'**
+  String proteinAveragePerDay(int average, int target);
+
+  /// No description provided for @burnPerDay.
+  ///
+  /// In de, this message translates to:
+  /// **'etwa {kcal} kcal pro Tag'**
+  String burnPerDay(int kcal);
+
+  /// No description provided for @gramsProtein.
+  ///
+  /// In de, this message translates to:
+  /// **'{grams} g Protein'**
+  String gramsProtein(int grams);
+
+  /// No description provided for @moreActions.
+  ///
+  /// In de, this message translates to:
+  /// **'Weitere Aktionen'**
+  String get moreActions;
+
+  /// No description provided for @todayAt.
+  ///
+  /// In de, this message translates to:
+  /// **'Heute, {time}'**
+  String todayAt(String time);
+
+  /// No description provided for @yesterdayAt.
+  ///
+  /// In de, this message translates to:
+  /// **'Gestern, {time}'**
+  String yesterdayAt(String time);
+
+  /// No description provided for @portionLess.
+  ///
+  /// In de, this message translates to:
+  /// **'Kleinere Portion'**
+  String get portionLess;
+
+  /// No description provided for @portionMore.
+  ///
+  /// In de, this message translates to:
+  /// **'Größere Portion'**
+  String get portionMore;
+
+  /// No description provided for @portionEdit.
+  ///
+  /// In de, this message translates to:
+  /// **'Portion eingeben'**
+  String get portionEdit;
+
+  /// No description provided for @confidenceShort.
+  ///
+  /// In de, this message translates to:
+  /// **'Zu {percent} % sicher'**
+  String confidenceShort(int percent);
+
+  /// No description provided for @probablyBetween.
+  ///
+  /// In de, this message translates to:
+  /// **'wahrscheinlich {low}–{high} kcal'**
+  String probablyBetween(int low, int high);
+
+  /// No description provided for @kcalLeftToday.
+  ///
+  /// In de, this message translates to:
+  /// **'{kcal} kcal heute übrig'**
+  String kcalLeftToday(int kcal);
+
+  /// No description provided for @kcalOverToday.
+  ///
+  /// In de, this message translates to:
+  /// **'{kcal} kcal über dem Ziel'**
+  String kcalOverToday(int kcal);
+
+  /// No description provided for @quickLogShort.
+  ///
+  /// In de, this message translates to:
+  /// **'Eintippen'**
+  String get quickLogShort;
+
+  /// No description provided for @kcalPerDayPlan.
+  ///
+  /// In de, this message translates to:
+  /// **'kcal pro Tag'**
+  String get kcalPerDayPlan;
+
+  /// No description provided for @proteinPerDayPlan.
+  ///
+  /// In de, this message translates to:
+  /// **'{grams} g Protein pro Tag'**
+  String proteinPerDayPlan(int grams);
 }
 
 class _AppLocalizationsDelegate

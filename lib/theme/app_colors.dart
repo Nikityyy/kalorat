@@ -61,6 +61,22 @@ class AppColors {
 
   static Color get success => primary;
 
+  /// Secondary text: captions, units, the second line of a row.
+  static Color get ink2 =>
+      _dark ? const Color(0xFFA3A9A5) : const Color(0xFF4B524E);
+
+  /// Tertiary text and inactive glyphs (axis labels, the inactive tab).
+  static Color get ink3 =>
+      _dark ? const Color(0xFF868C88) : const Color(0xFF687069);
+
+  /// A wash of the accent: the area under the day's ridge, selected rows.
+  static Color get accentSoft => _dark
+      ? styrianForestLight.withValues(alpha: 0.14)
+      : styrianForestColor.withValues(alpha: 0.08);
+
+  /// Destructive actions and errors.
+  static Color get negative => _dark ? const Color(0xFFFF5A66) : signalRed;
+
   // Older names, kept so existing code continues to compile. They map to the
   // roles above.
   static Color get background => canvas;

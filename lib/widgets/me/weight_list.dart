@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../models/weight_model.dart';
 import '../../theme/app_colors.dart';
-import '../../theme/app_theme.dart';
+import 'package:intl/intl.dart';
+import '../common/mono_digits.dart';
 import '../../theme/app_typography.dart';
 import '../../extensions/l10n_extension.dart';
 
@@ -36,76 +37,8 @@ class _WeightListState extends State<WeightList> {
 
     return Column(
       children: [
-        ...visibleWeights.map(
-          (weight) => Container(
-            margin: const EdgeInsets.only(bottom: 8),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: BoxDecoration(
-              color: AppColors.limestone,
-              borderRadius: BorderRadius.circular(AppTheme.borderRadius),
-              border: Border.all(color: AppColors.pebble),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  '${weight.date.day}.${weight.date.month}.${weight.date.year}',
-                  style: AppTypography.bodyMedium.copyWith(
-                    color: AppColors.slate.withValues(alpha: 0.7),
-                  ),
-                ),
-                Row(
-                  children: [
-                    if (weight.isPending) ...[
-                      const Icon(Icons.cloud_upload_outlined, size: 16),
-                      const SizedBox(width: 8),
-                    ],
-                    Text(
-                      '${weight.weight.toStringAsFixed(1)} kg',
-                      style: AppTypography.bodyMedium.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.slate,
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    IconButton(
-                      icon: Icon(
-                        Icons.edit_outlined,
-                        color: AppColors.slate,
-                        size: 20,
-                      ),
-                      tooltip: context.l10n.editWeight,
-                      onPressed: () => widget.onEdit(weight),
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(
-                        minWidth: 44,
-                        minHeight: 44,
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    IconButton(
-                      icon: Icon(
-                        Icons.delete_outline,
-                        color: AppColors.slate, // Muted slate, not red
-                        size: 20,
-                      ),
-                      tooltip: context.l10n.delete,
-                      onPressed: () => widget.onDelete(weight),
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(
-                        minWidth: 44,
-                        minHeight: 44,
-                      ),
-                      style: IconButton.styleFrom(
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ),
+        for (var i = 0; i < visibleWeights.length; i++)
+          _row(context, visibleWeights[i], i == visibleWeights.length - 1),
         if (widget.weights.length > 5)
           TextButton.icon(
             onPressed: () => setState(() => _expanded = !_expanded),
@@ -117,6 +50,50 @@ class _WeightListState extends State<WeightList> {
             ),
           ),
       ],
+    );
+  }
+
+  Widget _row(BuildContext context, WeightModel weight, bool last) {
+    final l10n = context.l10n;
+    final language = Localizations.localeOf(context).languageCode;
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      decoration: BoxDecoration(
+        border: Border(
+          top: BorderSide(color: AppColors.border),
+          bottom: last ? BorderSide(color: AppColors.border) : BorderSide.none,
+        ),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: MonoDigits(
+              DateFormat.yMMMd(language).format(weight.date),
+              style: AppTypography.body,
+            ),
+          ),
+          if (weight.isPending) ...[
+            Icon(Icons.cloud_upload_outlined, size: 16, color: AppColors.ink3),
+            const SizedBox(width: 8),
+          ],
+          Text(
+            weight.weight.toStringAsFixed(1),
+            style: AppTypography.number(size: 17),
+          ),
+          Text(' ${l10n.kg}', style: AppTypography.secondary),
+          const SizedBox(width: 8),
+          IconButton(
+            icon: Icon(Icons.edit, color: AppColors.ink2, size: 20),
+            tooltip: l10n.editWeight,
+            onPressed: () => widget.onEdit(weight),
+          ),
+          IconButton(
+            icon: Icon(Icons.delete, color: AppColors.ink2, size: 20),
+            tooltip: l10n.delete,
+            onPressed: () => widget.onDelete(weight),
+          ),
+        ],
+      ),
     );
   }
 }

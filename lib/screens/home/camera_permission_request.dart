@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../extensions/l10n_extension.dart';
 import '../../theme/app_colors.dart';
+import '../../theme/app_theme.dart';
 import '../../theme/app_typography.dart';
 import '../../widgets/inputs/action_button.dart';
 
@@ -26,7 +27,7 @@ class CameraPermissionRequest extends StatelessWidget {
                 padding: const EdgeInsets.all(32),
                 decoration: BoxDecoration(
                   color: AppColors.canvas,
-                  borderRadius: BorderRadius.circular(24),
+                  borderRadius: BorderRadius.circular(AppTheme.borderRadius),
                   border: Border.all(color: AppColors.borderGrey),
                 ),
                 child: Column(

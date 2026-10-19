@@ -220,6 +220,8 @@ class DatabaseService {
   }
 
   // Meal operations
+  bool get hasMeals => _mealsBox.isNotEmpty;
+
   List<MealModel> getAllMeals() {
     return _mealsBox.values.toList()..sort(compareMealsNewestFirst);
   }

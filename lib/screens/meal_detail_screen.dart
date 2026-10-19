@@ -1,4 +1,3 @@
-import 'dart:math' as math;
 import 'package:flutter/foundation.dart' show kIsWeb;
 
 import 'package:flutter/material.dart';
@@ -20,12 +19,17 @@ import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 import '../theme/app_typography.dart';
 import '../utils/nutrition_units.dart';
+import '../widgets/common/adaptive.dart';
+import 'home/photo_viewer.dart';
 import '../widgets/inputs/action_button.dart';
 import '../widgets/live_thought_panel.dart';
 import 'package:gal/gal.dart';
 import 'package:share_plus/share_plus.dart';
 import '../widgets/app_toast.dart';
 import '../widgets/barcode_switch_tile.dart';
+import '../widgets/common/meal_mark.dart';
+import '../widgets/common/mono_digits.dart';
+import '../widgets/common/thin_bar.dart';
 
 class MealDetailScreen extends StatefulWidget {
   final MealModel meal;
@@ -50,7 +54,9 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
   /// The calories before any one-tap correction, so it can be undone.
   late double _originalCalories;
   bool _isAnalyzing = false;
-  String _liveThoughtText = '';
+  int _photoIndex = 0;
+  final _photoPages = PageController();
+  final ThoughtBuffer _thought = ThoughtBuffer();
   String? _mealContext;
   ImageProvider? _analysisHeroImageProvider;
 
@@ -96,11 +102,21 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
   @override
   void dispose() {
     _contextFocusNode.dispose();
+    _thought.dispose();
+    _photoPages.dispose();
     super.dispose();
   }
 
+  // Full screen width in device pixels: the photos never show larger, and a
+  // 1600 px original decoded at full size costs memory and upload time.
   ImageProvider _mealPhotoImageProvider(String photo) =>
-      PhotoStore.instance.imageProvider(photo);
+      PhotoStore.instance.imageProvider(
+        photo,
+        cacheWidth:
+            (MediaQuery.sizeOf(context).width *
+                    MediaQuery.devicePixelRatioOf(context))
+                .round(),
+      );
 
   void _updatePortion(double change) {
     setState(() {
@@ -110,18 +126,16 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
   }
 
   Future<void> _editTimestamp() async {
-    final date = await showDatePicker(
-      context: context,
-      initialDate: _meal.timestamp,
-      firstDate: DateTime(2000),
-      lastDate: DateTime.now(),
+    final picked = await pickDate(
+      context,
+      initial: _meal.timestamp,
+      first: DateTime(2000),
+      last: DateTime.now(),
+      withTime: true,
     );
-    if (date == null || !mounted) return;
-    final time = await showTimePicker(
-      context: context,
-      initialTime: TimeOfDay.fromDateTime(_meal.timestamp),
-    );
-    if (time == null || !mounted) return;
+    if (picked == null || !mounted) return;
+    final time = TimeOfDay.fromDateTime(picked);
+    final date = picked;
     setState(() {
       _meal = _meal.copyWith(
         timestamp: DateTime(
@@ -148,10 +162,30 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
     });
   }
 
-  Future<void> _saveToGallery() async {
+  /// Opens the photos full screen at the one shown, and keeps showing the
+  /// one the viewer was closed on.
+  Future<void> _openPhotos(int index) async {
+    final photos = _meal.photoPaths;
+    final shown = await showPhotoViewer(
+      context,
+      images: [for (final p in photos) PhotoStore.instance.imageProvider(p)],
+      initialIndex: index,
+      heroTag: (i) => _photoHeroTag(i),
+      onSave: _saveToGallery,
+    );
+    if (shown != null && shown != _photoIndex && _photoPages.hasClients) {
+      _photoPages.jumpToPage(shown);
+    }
+  }
+
+  Object _photoHeroTag(int i) => 'meal-photo-${_meal.id}-$i';
+
+  /// Saves the photo at [index], by default the one shown.
+  Future<void> _saveToGallery([int? index]) async {
     final l10n = context.l10n;
-    if (_meal.photoPaths.isEmpty) return;
-    final path = _meal.photoPaths.first;
+    final photos = _meal.photoPaths;
+    if (photos.isEmpty) return;
+    final path = photos[(index ?? _photoIndex).clamp(0, photos.length - 1)];
 
     try {
       if (kIsWeb) {
@@ -238,7 +272,6 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
       isDismissible: true,
       builder: (sheetContext) => StatefulBuilder(
         builder: (sheetContext, setSheetState) => Padding(
@@ -246,10 +279,6 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
             bottom: MediaQuery.of(sheetContext).viewInsets.bottom,
           ),
           child: Container(
-            decoration: BoxDecoration(
-              color: AppColors.glacialWhite,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-            ),
             padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -292,6 +321,7 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
                 ],
                 TextField(
                   controller: contextController,
+                  magnifierConfiguration: fieldMagnifier,
                   focusNode: _contextFocusNode,
                   enabled: !useBarcode,
                   maxLines: 3,
@@ -395,8 +425,8 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
       _analysisHeroImageProvider = _meal.photoPaths.isNotEmpty
           ? _mealPhotoImageProvider(_meal.photoPaths.first)
           : null;
-      _liveThoughtText = '';
     });
+    _thought.clear();
 
     Map<String, dynamic>? result;
 
@@ -417,9 +447,7 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
       await for (final event in stream) {
         if (!mounted) break;
         if (event is ThoughtChunk) {
-          setState(() {
-            _liveThoughtText += event.text;
-          });
+          _thought.append(event.text);
         } else if (event is AnalysisResult) {
           result = event.data;
         }
@@ -536,8 +564,8 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
         setState(() {
           _isAnalyzing = false;
           _analysisHeroImageProvider = null;
-          _liveThoughtText = '';
         });
+        _thought.clear();
       }
     }
   }
@@ -560,54 +588,26 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
     };
   }
 
-  void _showEditPortionDialog() {
-    double currentValue = (_meal.portionUnit == 'serving')
+  Future<void> _showEditPortionDialog() async {
+    final serving = _meal.portionUnit == 'serving';
+    final currentValue = serving
         ? _portionMultiplier
         : (_portionMultiplier * _meal.quantityPerUnit);
-
-    final controller = TextEditingController(
-      text: currentValue.toStringAsFixed(1),
+    final values = await showPromptDialog(
+      context,
+      title: context.l10n.portionEdit,
+      fields: [
+        PromptField(
+          initial: currentValue.toStringAsFixed(1),
+          suffix: serving ? '×' : displayUnitFor(_meal.portionUnit),
+          keyboardType: PromptField.number,
+        ),
+      ],
     );
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppColors.glacialWhite,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppTheme.borderRadius),
-        ),
-        title: Text(
-          _meal.portionUnit == 'serving' ? 'Portion' : 'Menge',
-          style: AppTypography.displayMedium.copyWith(fontSize: 24),
-        ),
-        content: TextField(
-          controller: controller,
-          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          style: AppTypography.bodyMedium,
-          decoration: InputDecoration(
-            suffixText: _meal.portionUnit == 'serving'
-                ? 'x'
-                : displayUnitFor(_meal.portionUnit),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(context.l10n.cancel),
-          ),
-          TextButton(
-            onPressed: () {
-              final val = double.tryParse(controller.text.replaceAll(',', '.'));
-              if (val != null) {
-                _updatePortionByValue(val);
-                Navigator.pop(context);
-              }
-            },
-            child: Text(context.l10n.save),
-          ),
-        ],
-      ),
-    );
+    final value = values == null
+        ? null
+        : double.tryParse(values.first.replaceAll(',', '.'));
+    if (value != null && mounted) _updatePortionByValue(value);
   }
 
   Future<void> _saveMeal() async {
@@ -652,188 +652,70 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
     }
   }
 
-  void _showEditMealNameDialog() {
-    final controller = TextEditingController(text: _meal.mealName);
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppColors.glacialWhite,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppTheme.borderRadius),
-        ),
-        title: Text(
-          context.l10n.editMealName,
-          style: AppTypography.displayMedium.copyWith(fontSize: 24),
-        ),
-        content: TextField(
-          controller: controller,
-          style: AppTypography.bodyMedium,
-          decoration: InputDecoration(
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-            focusedBorder: OutlineInputBorder(
-              borderSide: BorderSide(color: AppColors.styrianForest),
-            ),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(
-              context.l10n.cancel,
-              style: TextStyle(color: AppColors.slate),
-            ),
-          ),
-          TextButton(
-            onPressed: () {
-              if (controller.text.isNotEmpty) {
-                setState(() {
-                  _meal = _meal.copyWith(mealName: controller.text);
-                });
-                Navigator.pop(context);
-              }
-            },
-            child: Text(
-              context.l10n.save,
-              style: TextStyle(
-                color: AppColors.styrianForest,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-        ],
-      ),
+  Future<void> _showEditMealNameDialog() async {
+    final values = await showPromptDialog(
+      context,
+      title: context.l10n.editMealName,
+      fields: [PromptField(initial: _meal.mealName)],
     );
+    final name = values?.first ?? '';
+    if (name.isEmpty || !mounted) return;
+    setState(() => _meal = _meal.copyWith(mealName: name));
   }
 
-  void _showEditCaloriesDialog() {
+  Future<void> _showEditCaloriesDialog() async {
     final currentCal = (_meal.calories * _portionMultiplier).round();
-    final controller = TextEditingController(text: currentCal.toString());
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppColors.glacialWhite,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppTheme.borderRadius),
-        ),
-        title: Text(
-          context.l10n.editCalories,
-          style: AppTypography.displayMedium.copyWith(fontSize: 24),
-        ),
-        content: TextField(
-          controller: controller,
+    final values = await showPromptDialog(
+      context,
+      title: context.l10n.editCalories,
+      fields: [
+        PromptField(
+          initial: currentCal.toString(),
+          suffix: 'kcal',
           keyboardType: TextInputType.number,
-          style: AppTypography.bodyMedium,
-          decoration: InputDecoration(
-            suffixText: 'kcal',
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-            focusedBorder: OutlineInputBorder(
-              borderSide: BorderSide(color: AppColors.styrianForest),
-            ),
-          ),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(
-              context.l10n.cancel,
-              style: TextStyle(color: AppColors.slate),
-            ),
-          ),
-          TextButton(
-            onPressed: () {
-              final newValue = double.tryParse(controller.text);
-              if (newValue != null) {
-                setState(() {
-                  // Calculate new base calories
-                  final newBase = baseValueFromScaled(
-                    scaledValue: newValue,
-                    portionMultiplier: _portionMultiplier,
-                  );
-                  _meal = _meal.copyWith(
-                    calories: newBase,
-                    caloriesPer100g: isPer100Unit(_meal.portionUnit)
-                        ? newBase
-                        : _meal.caloriesPer100g,
-                    isCalorieOverride: true, // Force manual mode
-                  );
-                });
-                Navigator.pop(context);
-              }
-            },
-            child: Text(
-              context.l10n.save,
-              style: TextStyle(
-                color: AppColors.styrianForest,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-        ],
-      ),
+      ],
     );
+    final newValue = values == null
+        ? null
+        : double.tryParse(values.first.replaceAll(',', '.'));
+    if (newValue == null || !mounted) return;
+    setState(() {
+      // Calculate new base calories
+      final newBase = baseValueFromScaled(
+        scaledValue: newValue,
+        portionMultiplier: _portionMultiplier,
+      );
+      _meal = _meal.copyWith(
+        calories: newBase,
+        caloriesPer100g: isPer100Unit(_meal.portionUnit)
+            ? newBase
+            : _meal.caloriesPer100g,
+        isCalorieOverride: true, // Force manual mode
+      );
+    });
   }
 
-  void _showEditMacroDialog(
+  Future<void> _showEditMacroDialog(
     String label,
     double currentValue,
     Function(double) onSave,
-  ) {
-    final controller = TextEditingController(
-      text: currentValue.toStringAsFixed(1),
+  ) async {
+    final values = await showPromptDialog(
+      context,
+      title: '${context.l10n.edit} $label',
+      fields: [
+        PromptField(
+          initial: currentValue.toStringAsFixed(1),
+          suffix: 'g',
+          keyboardType: PromptField.number,
+        ),
+      ],
     );
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppColors.glacialWhite,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppTheme.borderRadius),
-        ),
-        title: Text(
-          '${context.l10n.edit} $label',
-          style: AppTypography.displayMedium.copyWith(fontSize: 24),
-        ),
-        content: TextField(
-          controller: controller,
-          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          style: AppTypography.bodyMedium,
-          decoration: InputDecoration(
-            suffixText: 'g',
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-            focusedBorder: OutlineInputBorder(
-              borderSide: BorderSide(color: AppColors.styrianForest),
-            ),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(
-              context.l10n.cancel,
-              style: TextStyle(color: AppColors.slate),
-            ),
-          ),
-          TextButton(
-            onPressed: () {
-              final newValue = double.tryParse(
-                controller.text.replaceAll(',', '.'),
-              );
-              if (newValue != null) {
-                onSave(newValue);
-                Navigator.pop(context);
-              }
-            },
-            child: Text(
-              context.l10n.save,
-              style: TextStyle(
-                color: AppColors.styrianForest,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
+    final newValue = values == null
+        ? null
+        : double.tryParse(values.first.replaceAll(',', '.'));
+    if (newValue != null && mounted) onSave(newValue);
   }
 
   Widget _buildAnalyzingView() {
@@ -861,8 +743,11 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
           bottom: 0,
           child: Container(
             decoration: BoxDecoration(
-              color: AppColors.glacialWhite,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+              color: AppColors.canvas,
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(AppTheme.sheetRadius),
+              ),
+              border: Border(top: BorderSide(color: AppColors.border)),
             ),
             child: SingleChildScrollView(
               padding: const EdgeInsets.fromLTRB(24, 32, 24, 48),
@@ -874,10 +759,13 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 32),
-                  LiveThoughtPanel(
-                    thoughtText: _liveThoughtText,
-                    titleLabel: l10n.aiThinkingTitle,
-                    thinkingLabel: l10n.aiThinkingLabel,
+                  ValueListenableBuilder<String>(
+                    valueListenable: _thought,
+                    builder: (context, thought, _) => LiveThoughtPanel(
+                      thoughtText: thought,
+                      titleLabel: l10n.aiThinkingTitle,
+                      thinkingLabel: l10n.aiThinkingLabel,
+                    ),
                   ),
                   const SizedBox(height: 24),
                 ],
@@ -892,317 +780,238 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final screenHeight = MediaQuery.of(context).size.height;
+    final media = MediaQuery.of(context);
     final isKeyboardVisible = KeyboardVisibilityProvider.isKeyboardVisible(
       context,
     );
 
     if (_isAnalyzing) {
       return Scaffold(
-        backgroundColor: AppColors.glacialWhite,
+        backgroundColor: AppColors.canvas,
         body: _buildAnalyzingView(),
       );
     }
 
-    return Scaffold(
-      backgroundColor: AppColors.glacialWhite,
-      body: Stack(
-        children: [
-          // 1. Background Image (Featured photo); a meal logged without one
-          // gets a plain brand band.
-          if (_meal.photoPaths.isEmpty)
-            Positioned(
-              top: 0,
-              left: 0,
-              right: 0,
-              height: screenHeight * 0.35,
-              child: ColoredBox(color: AppColors.styrianForestColor),
-            )
-          else
-            Positioned(
-              top: 0,
-              left: 0,
-              right: 0,
-              height: screenHeight * 0.35,
-              child: Image(
-                image: _mealPhotoImageProvider(_meal.photoPaths.first),
-                fit: BoxFit.cover,
-              ),
-            ),
-
-          // 2. Back Button (Overlay)
-          Positioned(
-            top: MediaQuery.of(context).padding.top + 8,
-            left: 16,
-            right: 16,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                CircleAvatar(
-                  backgroundColor: Colors.black26,
-                  child: IconButton(
-                    icon: const Icon(Icons.arrow_back, color: Colors.white),
-                    tooltip: context.l10n.back,
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                ),
-                Row(
-                  children: [
-                    if (_meal.photoPaths.isNotEmpty)
-                      CircleAvatar(
-                        backgroundColor: Colors.black26,
-                        child: IconButton(
-                          icon: const Icon(Icons.download, color: Colors.white),
-                          onPressed: _saveToGallery,
-                          tooltip: context.l10n.saveToGallery,
-                        ),
-                      ),
-                    if (!widget.isNewEntry && !_meal.isPending) ...[
-                      const SizedBox(width: 8),
-                      CircleAvatar(
-                        backgroundColor: Colors.black26,
-                        child: IconButton(
-                          icon: const Icon(Icons.replay, color: Colors.white),
-                          onPressed: _logAgain,
-                          tooltip: context.l10n.quickLogAgainAction,
-                        ),
-                      ),
-                    ],
-                    const SizedBox(width: 8),
-                    CircleAvatar(
-                      backgroundColor: Colors.black26,
-                      child: IconButton(
-                        icon: const Icon(Icons.refresh, color: Colors.white),
-                        onPressed: _showContextAndRetry,
-                        tooltip: context.l10n.retryAnalysis,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-
-          // 3. Content Sheet
-          Positioned(
-            top: screenHeight * 0.3,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: Container(
-              decoration: BoxDecoration(
-                color: AppColors.glacialWhite,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
-              ),
-              child: Column(
+    final photoHeight = media.size.height * 0.42;
+    final photos = _meal.photoPaths;
+    final context0 = _mealContext?.trim() ?? '';
+    // What was typed with the meal; a barcode meal's context is its product.
+    final typed =
+        context0.isEmpty ||
+            FoodProduct.productNameOfMeal(_meal.mealContext) != null
+        ? null
+        : context0;
+    final details = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Semantics(
+          button: true,
+          hint: l10n.editMealName,
+          child: GestureDetector(
+            onTap: _showEditMealNameDialog,
+            child: Text.rich(
+              TextSpan(
                 children: [
-                  Expanded(
-                    child: SingleChildScrollView(
-                      padding: const EdgeInsets.fromLTRB(24, 32, 24, 160),
-                      child: Column(
-                        children: [
-                          // Meal Name
-                          GestureDetector(
-                            onTap: _showEditMealNameDialog,
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Flexible(
-                                  child: Text(
-                                    _meal.mealName,
-                                    style: AppTypography.displayMedium.copyWith(
-                                      fontSize: 32,
-                                    ),
-                                    textAlign: TextAlign.center,
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Icon(
-                                  Icons.edit,
-                                  size: 20,
-                                  color: AppColors.styrianForest.withValues(
-                                    alpha: 0.5,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-
-                          const SizedBox(height: 24),
-
-                          GestureDetector(
-                            onTap: _editTimestamp,
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.schedule_outlined,
-                                  size: 18,
-                                  color: AppColors.styrianForest,
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  DateFormat.yMd(
-                                    Localizations.localeOf(context).toString(),
-                                  ).add_Hm().format(_meal.timestamp),
-                                  style: AppTypography.bodyMedium.copyWith(
-                                    color: AppColors.styrianForest,
-                                  ),
-                                ),
-                                const SizedBox(width: 6),
-                                Icon(
-                                  Icons.edit_outlined,
-                                  size: 16,
-                                  color: AppColors.styrianForest,
-                                ),
-                              ],
-                            ),
-                          ),
-
-                          const SizedBox(height: 24),
-
-                          // Portion Control
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 4,
-                                  vertical: 4,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: AppColors.glacialWhite,
-                                  borderRadius: BorderRadius.circular(24),
-                                  border: Border.all(
-                                    color: AppColors.borderGrey,
-                                  ),
-                                ),
-                                child: Row(
-                                  children: [
-                                    IconButton(
-                                      onPressed: _portionMultiplier > 0.1
-                                          ? () {
-                                              if (_meal.portionUnit ==
-                                                  'serving') {
-                                                _updatePortion(-0.5);
-                                              } else {
-                                                _updatePortion(
-                                                  -50.0 / _meal.quantityPerUnit,
-                                                );
-                                              }
-                                            }
-                                          : null,
-                                      icon: Icon(
-                                        Icons.remove,
-                                        color: _portionMultiplier > 0.1
-                                            ? AppColors.styrianForest
-                                            : AppColors.borderGrey,
-                                      ),
-                                      padding: EdgeInsets.zero,
-                                      constraints: const BoxConstraints(),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    GestureDetector(
-                                      onTap: _showEditPortionDialog,
-                                      child: Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 12,
-                                          vertical: 4,
-                                        ),
-                                        child: Text(
-                                          _meal.portionUnit == 'serving'
-                                              ? '${_portionMultiplier.toStringAsFixed(1)}x'
-                                              : '${(_portionMultiplier * _meal.quantityPerUnit).round()} ${displayUnitFor(_meal.portionUnit)}',
-                                          style: AppTypography.bodyMedium
-                                              .copyWith(
-                                                fontWeight: FontWeight.bold,
-                                                color: AppColors.styrianForest,
-                                              ),
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    IconButton(
-                                      onPressed: () {
-                                        if (_meal.portionUnit == 'serving') {
-                                          _updatePortion(0.5);
-                                        } else {
-                                          _updatePortion(
-                                            50.0 / _meal.quantityPerUnit,
-                                          );
-                                        }
-                                      },
-                                      icon: Icon(
-                                        Icons.add,
-                                        color: AppColors.styrianForest,
-                                      ),
-                                      padding: EdgeInsets.zero,
-                                      constraints: const BoxConstraints(),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-
-                          const SizedBox(height: 24),
-
-                          _buildNutritionOverview(),
-
-                          if (_hasUncertaintyNote()) ...[
-                            const SizedBox(height: 16),
-                            _buildUncertaintyNote(),
-                          ],
-
-                          if (_hasPer100Reference() ||
-                              _canEditPer100Reference()) ...[
-                            const SizedBox(height: 16),
-                            _buildPer100Reference(),
-                          ],
-                        ],
-                      ),
+                  TextSpan(
+                    text: _meal.mealName.isNotEmpty
+                        ? _meal.mealName
+                        : l10n.mealName,
+                  ),
+                  WidgetSpan(
+                    alignment: PlaceholderAlignment.middle,
+                    child: Padding(
+                      padding: const EdgeInsetsDirectional.only(start: 8),
+                      child: Icon(Icons.edit, size: 20, color: AppColors.ink3),
                     ),
                   ),
                 ],
               ),
+              style: AppTypography.title,
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        _buildTimeChip(),
+        if (typed != null) ...[
+          const SizedBox(height: 20),
+          _buildTypedText(typed),
+        ],
+        const SizedBox(height: 22),
+        _buildNutritionOverview(),
+        if (_hasUncertaintyNote()) ...[
+          const SizedBox(height: 16),
+          _buildUncertaintyNote(),
+        ],
+        const SizedBox(height: 20),
+        _buildMacroRows(),
+        if (_hasPer100Reference() || _canEditPer100Reference()) ...[
+          const SizedBox(height: 20),
+          _buildPer100Reference(),
+        ],
+      ],
+    );
+
+    return Scaffold(
+      backgroundColor: AppColors.canvas,
+      body: Stack(
+        children: [
+          // 1. The meal's photos, swiped through, and under them its
+          // numbers; the photos scroll away with the content. A meal logged
+          // without a photo starts with its name.
+          Positioned.fill(
+            child: SingleChildScrollView(
+              padding: EdgeInsets.only(bottom: media.padding.bottom + 120),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  if (photos.isEmpty)
+                    Padding(
+                      padding: EdgeInsets.fromLTRB(
+                        20,
+                        media.padding.top + 72,
+                        20,
+                        0,
+                      ),
+                      child: details,
+                    )
+                  else ...[
+                    SizedBox(
+                      height: photoHeight + AppTheme.borderRadius,
+                      child: PageView.builder(
+                        controller: _photoPages,
+                        itemCount: photos.length,
+                        onPageChanged: (i) {
+                          Haptics.selection();
+                          setState(() => _photoIndex = i);
+                        },
+                        itemBuilder: (context, i) => GestureDetector(
+                          onTap: () => _openPhotos(i),
+                          child: Hero(
+                            tag: _photoHeroTag(i),
+                            child: Image(
+                              image: _mealPhotoImageProvider(photos[i]),
+                              fit: BoxFit.cover,
+                              gaplessPlayback: true,
+                              errorBuilder: (_, _, _) => MealMark(
+                                name: _meal.mealName,
+                                size: 120,
+                                fill: true,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    Transform.translate(
+                      offset: const Offset(0, -AppTheme.borderRadius),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: AppColors.canvas,
+                          borderRadius: const BorderRadius.vertical(
+                            top: Radius.circular(AppTheme.borderRadius),
+                          ),
+                          border: Border(
+                            top: BorderSide(color: AppColors.border),
+                          ),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(20, 22, 20, 0),
+                          child: details,
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+          // Keeps the round buttons readable on a bright photo.
+          if (photos.isNotEmpty)
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              height: media.padding.top + 72,
+              child: IgnorePointer(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.black.withValues(alpha: 0.35),
+                        Colors.black.withValues(alpha: 0),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
+          // 2. Back and the meal's other actions.
+          Positioned(
+            top: media.padding.top + 8,
+            left: 16,
+            right: 16,
+            child: Row(
+              children: [
+                _GlassButton(
+                  icon: Icons.arrow_back,
+                  tooltip: widget.isNewEntry ? l10n.discard : l10n.back,
+                  onPressed: () => Navigator.pop(context),
+                  plain: photos.isEmpty,
+                ),
+                const Spacer(),
+                if (photos.length > 1)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.42),
+                      borderRadius: BorderRadius.circular(
+                        AppTheme.borderRadius,
+                      ),
+                    ),
+                    child: Text(
+                      '${_photoIndex + 1}/${photos.length}',
+                      style: AppTypography.number(
+                        size: 14,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                const SizedBox(width: 8),
+                _buildMoreMenu(),
+              ],
             ),
           ),
 
-          // 4. Sticky Bottom Bar
+          // 4. Portion and save, on an opaque bar.
           if (!isKeyboardVisible)
             Positioned(
               left: 0,
               right: 0,
               bottom: 0,
               child: Container(
-                padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
+                padding: EdgeInsets.fromLTRB(
+                  20,
+                  12,
+                  20,
+                  media.padding.bottom + 16,
+                ),
                 decoration: BoxDecoration(
-                  color: AppColors.glacialWhite,
-                  border: Border(
-                    top: BorderSide(
-                      color: AppColors.borderGrey.withValues(alpha: 0.5),
-                    ),
-                  ),
+                  color: AppColors.canvas,
+                  border: Border(top: BorderSide(color: AppColors.border)),
                 ),
                 child: Row(
                   children: [
-                    // Cancel Button (Small icon/text)
-                    IconButton(
-                      onPressed: () => Navigator.pop(context),
-                      icon: Icon(
-                        Icons.close,
-                        color: AppColors.slate,
-                        size: 24,
-                      ),
-                      tooltip: l10n.discard,
-                    ),
-                    const SizedBox(width: 16),
-                    // Log Entry Button (Expanded)
+                    _buildPortionStepper(),
+                    const SizedBox(width: 12),
                     Expanded(
                       child: ActionButton(
-                        text: widget.isNewEntry
-                            ? l10n.saveMeal
-                            : l10n.saveChanges,
+                        text: widget.isNewEntry ? l10n.saveMeal : l10n.save,
                         onPressed: _saveMeal,
                       ),
                     ),
@@ -1210,6 +1019,190 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
                 ),
               ),
             ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMoreMenu() {
+    final l10n = context.l10n;
+    final canDelete = !widget.isNewEntry && !_meal.isPending;
+    return PopupMenuButton<String>(
+      tooltip: l10n.moreActions,
+      position: PopupMenuPosition.under,
+      onOpened: Haptics.tick,
+      onSelected: (value) {
+        switch (value) {
+          case 'photo':
+            _saveToGallery();
+          case 'again':
+            _logAgain();
+          case 'retry':
+            _showContextAndRetry();
+          case 'delete':
+            _deleteMeal();
+        }
+      },
+      itemBuilder: (context) => [
+        if (_meal.photoPaths.isNotEmpty)
+          _menuItem('photo', Icons.download, l10n.saveToGallery),
+        if (canDelete)
+          _menuItem('again', Icons.replay, l10n.quickLogAgainAction),
+        _menuItem('retry', Icons.refresh, l10n.retryAnalysis),
+        if (canDelete) ...[
+          const PopupMenuDivider(),
+          _menuItem('delete', Icons.delete, l10n.delete, destructive: true),
+        ],
+      ],
+      child: _GlassButton(
+        icon: Icons.more_horiz,
+        plain: _meal.photoPaths.isEmpty,
+      ),
+    );
+  }
+
+  PopupMenuItem<String> _menuItem(
+    String value,
+    IconData icon,
+    String label, {
+    bool destructive = false,
+  }) {
+    final color = destructive ? AppColors.negative : AppColors.text;
+    final text = Text(label, style: AppTypography.body.copyWith(color: color));
+    final glyph = Icon(icon, size: 20, color: color);
+    return PopupMenuItem(
+      value: value,
+      child: Row(children: [glyph, const SizedBox(width: 12), text]),
+    );
+  }
+
+  Future<void> _deleteMeal() async {
+    final l10n = context.l10n;
+    final confirmed = await showConfirmDialog(
+      context,
+      title: l10n.deleteQuestion,
+      message: l10n.deleteMealConfirmation,
+      confirmLabel: l10n.delete,
+      destructive: true,
+    );
+    if (!confirmed || !mounted) return;
+    await context.read<AppProvider>().deleteMeal(_meal.id);
+    if (mounted) Navigator.pop(context);
+  }
+
+  Widget _buildTypedText(String text) {
+    final l10n = context.l10n;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppTheme.borderRadius),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            _meal.photoPaths.isEmpty ? l10n.yourDescription : l10n.yourNote,
+            style: AppTypography.meta,
+          ),
+          const SizedBox(height: 4),
+          Text(text, style: AppTypography.body),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTimeChip() {
+    final l10n = context.l10n;
+    final language = Localizations.localeOf(context).languageCode;
+    final t = _meal.timestamp;
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final day = DateTime(t.year, t.month, t.day);
+    final clock = DateFormat.Hm(language).format(t);
+    final label = day == today
+        ? l10n.todayAt(clock)
+        : day == today.subtract(const Duration(days: 1))
+        ? l10n.yesterdayAt(clock)
+        : '${DateFormat.yMMMd(language).format(t)}, $clock';
+    return Semantics(
+      button: true,
+      child: GestureDetector(
+        onTap: _editTimestamp,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(AppTheme.borderRadius),
+            border: Border.all(color: AppColors.border),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.schedule, size: 16, color: AppColors.ink2),
+              const SizedBox(width: 6),
+              MonoDigits(label, style: AppTypography.secondary),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPortionStepper() {
+    final l10n = context.l10n;
+    final serving = _meal.portionUnit == 'serving';
+    final canShrink = _portionMultiplier > 0.1;
+    void change(double sign) {
+      Haptics.selection();
+      _updatePortion(sign * (serving ? 0.5 : 50.0 / _meal.quantityPerUnit));
+    }
+
+    final label = serving
+        ? '${_portionMultiplier.toStringAsFixed(1)}×'
+        : '${(_portionMultiplier * _meal.quantityPerUnit).round()} ${displayUnitFor(_meal.portionUnit)}';
+    return Container(
+      height: 54,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(AppTheme.borderRadius),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          IconButton(
+            onPressed: canShrink ? () => change(-1) : null,
+            tooltip: l10n.portionLess,
+            icon: Icon(
+              Icons.remove,
+              color: canShrink ? AppColors.text : AppColors.border,
+            ),
+          ),
+          Semantics(
+            button: true,
+            hint: l10n.portionEdit,
+            child: GestureDetector(
+              onTap: _showEditPortionDialog,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(minWidth: 48),
+                child: Text(
+                  label,
+                  textAlign: TextAlign.center,
+                  style: AppTypography.number(
+                    size: 16,
+                    weight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          IconButton(
+            onPressed: () => change(1),
+            tooltip: l10n.portionMore,
+            icon: Icon(Icons.add, color: AppColors.text),
+          ),
         ],
       ),
     );
@@ -1230,9 +1223,6 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
     final low = _meal.caloriesMin;
     final high = _meal.caloriesMax;
     final scale = _portionMultiplier;
-    final range = low != null && high != null
-        ? '${(low * scale).round()}–${(high * scale).round()} kcal'
-        : null;
     final note = _meal.analysisNote?.trim() ?? '';
     final confidence = _meal.analysisConfidence;
     final choices = calorieChoices(
@@ -1248,72 +1238,40 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
       CalorieChoiceKind.higher => l10n.correctionHigher,
     };
 
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppColors.pebble.withValues(alpha: 0.25),
-        borderRadius: BorderRadius.circular(AppTheme.borderRadius),
-        border: Border.all(color: AppColors.borderGrey),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(Icons.info_outline, color: AppColors.styrianForest),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (confidence != null) ...[
-                  Text(
-                    l10n.analysisConfidence((confidence * 100).round()),
-                    style: AppTypography.bodySmall.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+    final parts = <String>[
+      if (confidence != null) l10n.confidenceShort((confidence * 100).round()),
+      if (low != null && high != null)
+        l10n.probablyBetween((low * scale).round(), (high * scale).round()),
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (parts.isNotEmpty)
+          MonoDigits(parts.join(' · '), style: AppTypography.secondary),
+        if (choices.isNotEmpty) ...[
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              for (var i = 0; i < choices.length; i++) ...[
+                if (i > 0) const SizedBox(width: 8),
+                Expanded(
+                  child: _CorrectionChip(
+                    label: choiceLabel(choices[i].kind),
+                    kcal: choices[i].kcal,
+                    selected: choices[i].kcal == shown,
+                    onTap: () => _applyCalories(choices[i].kcal.toDouble()),
                   ),
-                  const SizedBox(height: 6),
-                  _ConfidenceBar(confidence: confidence),
-                ],
-                if (range != null) ...[
-                  if (confidence != null) const SizedBox(height: 8),
-                  Text(
-                    l10n.estimatedRange(range),
-                    style: AppTypography.bodyMedium.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-                if (choices.isNotEmpty) ...[
-                  const SizedBox(height: 10),
-                  Text(l10n.correctionPrompt, style: AppTypography.bodySmall),
-                  const SizedBox(height: 6),
-                  Row(
-                    children: [
-                      for (var i = 0; i < choices.length; i++) ...[
-                        if (i > 0) const SizedBox(width: 8),
-                        Expanded(
-                          child: _CorrectionChip(
-                            label: choiceLabel(choices[i].kind),
-                            kcal: choices[i].kcal,
-                            selected: choices[i].kcal == shown,
-                            onTap: () =>
-                                _applyCalories(choices[i].kcal.toDouble()),
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ],
-                if (note.isNotEmpty) ...[
-                  if (range != null) const SizedBox(height: 8),
-                  Text(note, style: AppTypography.bodySmall),
-                ],
+                ),
               ],
-            ),
+            ],
           ),
         ],
-      ),
+        if (note.isNotEmpty) ...[
+          const SizedBox(height: 10),
+          Text(note, style: AppTypography.secondary),
+        ],
+      ],
     );
   }
 
@@ -1338,82 +1296,64 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
 
   Widget _buildNutritionOverview() {
     final l10n = context.l10n;
-    final caloriesValue = _meal.calories * _portionMultiplier;
+    final calories = (_meal.calories * _portionMultiplier).round();
+    return Semantics(
+      button: true,
+      label: '$calories ${l10n.kcal}',
+      hint: l10n.editCalories,
+      excludeSemantics: true,
+      child: GestureDetector(
+        onTap: _showEditCaloriesDialog,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.baseline,
+          textBaseline: TextBaseline.alphabetic,
+          children: [
+            Text('$calories', style: AppTypography.hero(size: 56)),
+            const SizedBox(width: 8),
+            Text(
+              l10n.kcal,
+              style: AppTypography.body.copyWith(color: AppColors.ink2),
+            ),
+            const SizedBox(width: 8),
+            Icon(Icons.edit, size: 18, color: AppColors.ink3),
+          ],
+        ),
+      ),
+    );
+  }
 
+  /// Protein, carbohydrates and fat, each with its share of the calories as
+  /// a thin ink bar. Protein leads: it is what a training day is about.
+  Widget _buildMacroRows() {
+    final l10n = context.l10n;
     final protein = _meal.protein * _portionMultiplier;
     final carbs = _meal.carbs * _portionMultiplier;
     final fats = _meal.fats * _portionMultiplier;
-    final proteinCalories = protein * 4;
-    final carbsCalories = carbs * 4;
-    final fatCalories = fats * 9;
-    final macroCalories = proteinCalories + carbsCalories + fatCalories;
-
-    int percent(double value) {
-      if (macroCalories <= 0) return 0;
-      return ((value / macroCalories) * 100).round();
-    }
-
-    // At large text sizes the macro rows need the full card width.
-    final stacked = MediaQuery.textScalerOf(context).scale(1) > 1.25;
-    final ring = GestureDetector(
-      onTap: _showEditCaloriesDialog,
-      child: _CalorieRing(
-        calories: caloriesValue.round(),
-        isOverride: _meal.isCalorieOverride,
-        proteinCalories: proteinCalories,
-        carbsCalories: carbsCalories,
-        fatCalories: fatCalories,
-      ),
-    );
-    final rows = Column(
+    final total = protein * 4 + carbs * 4 + fats * 9;
+    double share(double kcal) => total <= 0 ? 0 : kcal / total;
+    return Column(
       children: [
-        _MacroSummaryRow(
-          label: l10n.fats,
-          value: '${fats.toStringAsFixed(1)}g',
-          percent: percent(fatCalories),
-          color: const Color(0xFFFF5A5F),
-          onTap: _editFats,
-        ),
-        _MacroSummaryRow(
-          label: l10n.carbs,
-          value: '${carbs.toStringAsFixed(1)}g',
-          percent: percent(carbsCalories),
-          color: const Color(0xFFFF8A00),
-          onTap: _editCarbs,
-        ),
-        _MacroSummaryRow(
+        _MacroRow(
           label: l10n.protein,
-          value: '${protein.toStringAsFixed(1)}g',
-          percent: percent(proteinCalories),
-          color: const Color(0xFF2F73D9),
+          grams: protein,
+          share: share(protein * 4),
+          strong: true,
           onTap: _editProtein,
         ),
+        _MacroRow(
+          label: l10n.carbs,
+          grams: carbs,
+          share: share(carbs * 4),
+          onTap: _editCarbs,
+        ),
+        _MacroRow(
+          label: l10n.fats,
+          grams: fats,
+          share: share(fats * 9),
+          onTap: _editFats,
+          last: true,
+        ),
       ],
-    );
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.canvas,
-        borderRadius: BorderRadius.circular(AppTheme.borderRadius),
-        border: Border.all(color: AppColors.border, width: 1),
-      ),
-      child: stacked
-          ? Column(
-              children: [
-                ring,
-                const SizedBox(height: 12),
-                SizedBox(width: double.infinity, child: rows),
-              ],
-            )
-          : Row(
-              children: [
-                ring,
-                const SizedBox(width: 18),
-                Expanded(child: rows),
-              ],
-            ),
     );
   }
 
@@ -1504,143 +1444,73 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
     return isPer100Unit(_meal.portionUnit);
   }
 
-  void _showEditPer100ReferenceDialog() {
+  Future<void> _showEditPer100ReferenceDialog() async {
     if (!_canEditPer100Reference()) return;
-
-    final caloriesController = TextEditingController(
-      text: _meal.caloriesPer100g?.toStringAsFixed(0) ?? '',
+    final l10n = context.l10n;
+    final values = await showPromptDialog(
+      context,
+      title: '${l10n.edit} ${l10n.reference}',
+      fields: [
+        PromptField(
+          initial: _meal.caloriesPer100g?.toStringAsFixed(0) ?? '',
+          label: l10n.kcal.toUpperCase(),
+          suffix: 'kcal',
+          keyboardType: PromptField.number,
+        ),
+        PromptField(
+          initial: _meal.fatsPer100g?.toStringAsFixed(1) ?? '',
+          label: l10n.fatsShort.toUpperCase(),
+          suffix: 'g',
+          keyboardType: PromptField.number,
+        ),
+        PromptField(
+          initial: _meal.carbsPer100g?.toStringAsFixed(1) ?? '',
+          label: l10n.carbsShort.toUpperCase(),
+          suffix: 'g',
+          keyboardType: PromptField.number,
+        ),
+        PromptField(
+          initial: _meal.proteinPer100g?.toStringAsFixed(1) ?? '',
+          label: l10n.proteinShort.toUpperCase(),
+          suffix: 'g',
+          keyboardType: PromptField.number,
+        ),
+      ],
     );
-    final proteinController = TextEditingController(
-      text: _meal.proteinPer100g?.toStringAsFixed(1) ?? '',
-    );
-    final carbsController = TextEditingController(
-      text: _meal.carbsPer100g?.toStringAsFixed(1) ?? '',
-    );
-    final fatsController = TextEditingController(
-      text: _meal.fatsPer100g?.toStringAsFixed(1) ?? '',
-    );
-
-    double? readNumber(TextEditingController controller) {
-      return double.tryParse(controller.text.trim().replaceAll(',', '.'));
-    }
-
-    Widget field({
-      required TextEditingController controller,
-      required String label,
-      required String suffix,
-    }) {
-      return TextField(
-        controller: controller,
-        keyboardType: const TextInputType.numberWithOptions(decimal: true),
-        style: AppTypography.bodyMedium,
-        decoration: InputDecoration(
-          labelText: label,
-          suffixText: suffix,
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-          focusedBorder: OutlineInputBorder(
-            borderSide: BorderSide(color: AppColors.styrianForest),
-          ),
+    if (values == null || !mounted) return;
+    double? read(int i) => double.tryParse(values[i].replaceAll(',', '.'));
+    final calories = read(0);
+    final fats = read(1);
+    final carbs = read(2);
+    final protein = read(3);
+    setState(() {
+      _meal = _meal.copyWith(
+        caloriesPer100g: calories,
+        proteinPer100g: protein,
+        carbsPer100g: carbs,
+        fatsPer100g: fats,
+        calories: per100ReferenceFor(
+          unit: _meal.portionUnit,
+          baseValue: _meal.calories,
+          explicitReference: calories,
+        ),
+        protein: per100ReferenceFor(
+          unit: _meal.portionUnit,
+          baseValue: _meal.protein,
+          explicitReference: protein,
+        ),
+        carbs: per100ReferenceFor(
+          unit: _meal.portionUnit,
+          baseValue: _meal.carbs,
+          explicitReference: carbs,
+        ),
+        fats: per100ReferenceFor(
+          unit: _meal.portionUnit,
+          baseValue: _meal.fats,
+          explicitReference: fats,
         ),
       );
-    }
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppColors.glacialWhite,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppTheme.borderRadius),
-        ),
-        title: Text(
-          '${context.l10n.edit} ${context.l10n.reference}',
-          style: AppTypography.displayMedium.copyWith(fontSize: 24),
-        ),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              field(
-                controller: caloriesController,
-                label: context.l10n.kcal.toUpperCase(),
-                suffix: 'kcal',
-              ),
-              const SizedBox(height: 12),
-              field(
-                controller: fatsController,
-                label: context.l10n.fatsShort.toUpperCase(),
-                suffix: 'g',
-              ),
-              const SizedBox(height: 12),
-              field(
-                controller: carbsController,
-                label: context.l10n.carbsShort.toUpperCase(),
-                suffix: 'g',
-              ),
-              const SizedBox(height: 12),
-              field(
-                controller: proteinController,
-                label: context.l10n.proteinShort.toUpperCase(),
-                suffix: 'g',
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(
-              context.l10n.cancel,
-              style: TextStyle(color: AppColors.slate),
-            ),
-          ),
-          TextButton(
-            onPressed: () {
-              final calories = readNumber(caloriesController);
-              final protein = readNumber(proteinController);
-              final carbs = readNumber(carbsController);
-              final fats = readNumber(fatsController);
-
-              setState(() {
-                _meal = _meal.copyWith(
-                  caloriesPer100g: calories,
-                  proteinPer100g: protein,
-                  carbsPer100g: carbs,
-                  fatsPer100g: fats,
-                  calories: per100ReferenceFor(
-                    unit: _meal.portionUnit,
-                    baseValue: _meal.calories,
-                    explicitReference: calories,
-                  ),
-                  protein: per100ReferenceFor(
-                    unit: _meal.portionUnit,
-                    baseValue: _meal.protein,
-                    explicitReference: protein,
-                  ),
-                  carbs: per100ReferenceFor(
-                    unit: _meal.portionUnit,
-                    baseValue: _meal.carbs,
-                    explicitReference: carbs,
-                  ),
-                  fats: per100ReferenceFor(
-                    unit: _meal.portionUnit,
-                    baseValue: _meal.fats,
-                    explicitReference: fats,
-                  ),
-                );
-              });
-              Navigator.pop(context);
-            },
-            child: Text(
-              context.l10n.save,
-              style: TextStyle(
-                color: AppColors.styrianForest,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
+    });
   }
 
   Widget _buildPer100Reference() {
@@ -1653,7 +1523,7 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppTheme.borderRadius),
         border: Border.all(color: AppColors.border, width: 1),
       ),
       child: Column(
@@ -1664,24 +1534,18 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
               Expanded(
                 child: Text(
                   '${l10n.reference} / $unit',
-                  style: AppTypography.dataLabel.copyWith(
-                    fontSize: 11,
-                    color: AppColors.styrianForest,
-                    letterSpacing: 0,
+                  style: AppTypography.secondary.copyWith(
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
               ),
               if (canEdit)
                 InkWell(
                   onTap: _showEditPer100ReferenceDialog,
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(AppTheme.borderRadius),
                   child: Padding(
                     padding: const EdgeInsets.all(4),
-                    child: Icon(
-                      Icons.edit,
-                      size: 16,
-                      color: AppColors.styrianForest.withValues(alpha: 0.7),
-                    ),
+                    child: Icon(Icons.edit, size: 16, color: AppColors.ink3),
                   ),
                 ),
             ],
@@ -1690,19 +1554,19 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
           Row(
             children: [
               _Per100Value(
-                label: l10n.kcal.toUpperCase(),
+                label: l10n.kcal,
                 value: _meal.caloriesPer100g?.toStringAsFixed(0) ?? '-',
               ),
               _Per100Value(
-                label: l10n.fatsShort.toUpperCase(),
+                label: l10n.fatsShort,
                 value: _formatPer100Macro(_meal.fatsPer100g),
               ),
               _Per100Value(
-                label: l10n.carbsShort.toUpperCase(),
+                label: l10n.carbsShort,
                 value: _formatPer100Macro(_meal.carbsPer100g),
               ),
               _Per100Value(
-                label: l10n.proteinShort.toUpperCase(),
+                label: l10n.proteinShort,
                 value: _formatPer100Macro(_meal.proteinPer100g),
               ),
             ],
@@ -1718,222 +1582,110 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
   }
 }
 
-class _CalorieRing extends StatelessWidget {
-  final int calories;
-  final bool isOverride;
-  final double proteinCalories;
-  final double carbsCalories;
-  final double fatCalories;
+class _GlassButton extends StatelessWidget {
+  final IconData icon;
+  final String? tooltip;
+  final VoidCallback? onPressed;
 
-  const _CalorieRing({
-    required this.calories,
-    required this.isOverride,
-    required this.proteinCalories,
-    required this.carbsCalories,
-    required this.fatCalories,
+  /// Over the page instead of over a photo.
+  final bool plain;
+
+  const _GlassButton({
+    required this.icon,
+    this.tooltip,
+    this.onPressed,
+    this.plain = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: 104,
-      height: 104,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          SizedBox(
-            width: 96,
-            height: 96,
-            child: CustomPaint(
-              painter: _MacroCalorieRingPainter(
-                proteinCalories: proteinCalories,
-                carbsCalories: carbsCalories,
-                fatCalories: fatCalories,
-                strokeWidth: 8,
-              ),
-            ),
-          ),
-          // Keeps the number inside the ring when the text size is large.
-          SizedBox(
-            width: 70,
-            child: FittedBox(
-              fit: BoxFit.scaleDown,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '$calories',
-                        style: AppTypography.titleLarge.copyWith(
-                          fontSize: 26,
-                          color: AppColors.text,
-                        ),
-                      ),
-                      if (isOverride) ...[
-                        const SizedBox(width: 3),
-                        const Icon(Icons.lock_open, size: 12),
-                      ],
-                    ],
-                  ),
-                  Text(
-                    'kcal',
-                    style: AppTypography.labelLarge.copyWith(
-                      fontSize: 11,
-                      color: AppColors.text,
-                      letterSpacing: 0,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
+    final circle = Container(
+      width: 44,
+      height: 44,
+      decoration: BoxDecoration(
+        color: plain ? AppColors.surface : Colors.black.withValues(alpha: 0.42),
+        shape: BoxShape.circle,
+        border: plain ? Border.all(color: AppColors.border) : null,
+      ),
+      child: Icon(icon, color: plain ? AppColors.text : Colors.white, size: 22),
+    );
+    if (onPressed == null) return circle;
+    return Semantics(
+      button: true,
+      label: tooltip,
+      excludeSemantics: true,
+      child: GestureDetector(
+        onTap: () {
+          Haptics.tick();
+          onPressed!();
+        },
+        child: circle,
       ),
     );
   }
 }
 
-class _MacroCalorieRingPainter extends CustomPainter {
-  final double proteinCalories;
-  final double carbsCalories;
-  final double fatCalories;
-  final double strokeWidth;
-
-  const _MacroCalorieRingPainter({
-    required this.proteinCalories,
-    required this.carbsCalories,
-    required this.fatCalories,
-    required this.strokeWidth,
-  });
-
-  static const _proteinColor = Color(0xFF2F73D9);
-  static const _carbsColor = Color(0xFFFF8A00);
-  static const _fatColor = Color(0xFFFF5A5F);
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final center = Offset(size.width / 2, size.height / 2);
-    final radius = (size.shortestSide - strokeWidth) / 2;
-    final rect = Rect.fromCircle(center: center, radius: radius);
-    final total = proteinCalories + carbsCalories + fatCalories;
-
-    final trackPaint = Paint()
-      ..color = AppColors.border.withValues(alpha: 0.45)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = strokeWidth
-      ..strokeCap = StrokeCap.round;
-    canvas.drawCircle(center, radius, trackPaint);
-
-    if (total <= 0) return;
-
-    final paint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = strokeWidth
-      ..strokeCap = StrokeCap.round;
-
-    var startAngle = -math.pi / 2;
-    const gap = 0.035;
-    final segments = [
-      MapEntry(fatCalories, _fatColor),
-      MapEntry(carbsCalories, _carbsColor),
-      MapEntry(proteinCalories, _proteinColor),
-    ];
-
-    for (final segment in segments) {
-      final calories = segment.key;
-      if (calories <= 0) continue;
-      final sweep = (calories / total) * math.pi * 2;
-      paint.color = segment.value;
-      canvas.drawArc(
-        rect,
-        startAngle,
-        (sweep - gap).clamp(0.0, math.pi * 2).toDouble(),
-        false,
-        paint,
-      );
-      startAngle += sweep;
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant _MacroCalorieRingPainter oldDelegate) {
-    return proteinCalories != oldDelegate.proteinCalories ||
-        carbsCalories != oldDelegate.carbsCalories ||
-        fatCalories != oldDelegate.fatCalories ||
-        strokeWidth != oldDelegate.strokeWidth;
-  }
-}
-
-class _MacroSummaryRow extends StatelessWidget {
+class _MacroRow extends StatelessWidget {
   final String label;
-  final String value;
-  final int percent;
-  final Color color;
+  final double grams;
+  final double share;
+  final bool strong;
+  final bool last;
   final VoidCallback onTap;
 
-  const _MacroSummaryRow({
+  const _MacroRow({
     required this.label,
-    required this.value,
-    required this.percent,
-    required this.color,
+    required this.grams,
+    required this.share,
     required this.onTap,
+    this.strong = false,
+    this.last = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(minHeight: 44),
-        child: Row(
-          children: [
-            Container(
-              width: 9,
-              height: 9,
-              decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+    final weight = strong ? FontWeight.w600 : FontWeight.w400;
+    return Semantics(
+      button: true,
+      label: '$label ${grams.toStringAsFixed(1)} ${context.l10n.grams}',
+      excludeSemantics: true,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          decoration: BoxDecoration(
+            border: Border(
+              top: BorderSide(color: AppColors.border),
+              bottom: last
+                  ? BorderSide(color: AppColors.border)
+                  : BorderSide.none,
             ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: FittedBox(
-                fit: BoxFit.scaleDown,
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  label,
-                  style: AppTypography.labelLarge.copyWith(
-                    fontSize: 12,
-                    color: AppColors.text,
-                    letterSpacing: 0,
+          ),
+          child: Column(
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      label,
+                      style: AppTypography.body.copyWith(fontWeight: weight),
+                    ),
                   ),
-                  maxLines: 1,
-                ),
+                  Text(
+                    grams.toStringAsFixed(1),
+                    style: AppTypography.number(size: 17, weight: weight),
+                  ),
+                  Text(
+                    ' ${context.l10n.grams}',
+                    style: AppTypography.secondary,
+                  ),
+                ],
               ),
-            ),
-            Text(
-              value,
-              style: AppTypography.labelLarge.copyWith(
-                fontSize: 12,
-                color: AppColors.text,
-                letterSpacing: 0,
-              ),
-            ),
-            const SizedBox(width: 12),
-            ConstrainedBox(
-              constraints: const BoxConstraints(minWidth: 34),
-              child: Text(
-                '$percent%',
-                textAlign: TextAlign.right,
-                style: AppTypography.labelLarge.copyWith(
-                  fontSize: 12,
-                  color: AppColors.slate,
-                  letterSpacing: 0,
-                ),
-              ),
-            ),
-          ],
+              const SizedBox(height: 8),
+              ThinBar(share: share),
+            ],
+          ),
         ),
       ),
     );
@@ -1952,50 +1704,10 @@ class _Per100Value extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            value,
-            style: AppTypography.dataMedium.copyWith(
-              fontSize: 16,
-              color: AppColors.text,
-              letterSpacing: 0,
-            ),
-          ),
+          Text(value, style: AppTypography.number(size: 17)),
           const SizedBox(height: 2),
-          Text(
-            label,
-            style: AppTypography.dataLabel.copyWith(
-              fontSize: 10,
-              color: AppColors.text.withValues(alpha: 0.45),
-              letterSpacing: 0,
-            ),
-          ),
+          Text(label, style: AppTypography.meta),
         ],
-      ),
-    );
-  }
-}
-
-/// How sure the AI is, as a bar: green when sure, amber and red when not.
-class _ConfidenceBar extends StatelessWidget {
-  final double confidence;
-
-  const _ConfidenceBar({required this.confidence});
-
-  @override
-  Widget build(BuildContext context) {
-    final value = confidence.clamp(0.0, 1.0);
-    final color = value >= 0.75
-        ? AppColors.primary
-        : value >= 0.5
-        ? AppColors.amber
-        : AppColors.kaiserRed;
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(3),
-      child: LinearProgressIndicator(
-        value: value,
-        minHeight: 6,
-        color: color,
-        backgroundColor: AppColors.borderGrey,
       ),
     );
   }
@@ -2017,7 +1729,7 @@ class _CorrectionChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final foreground = selected ? AppColors.onPrimary : AppColors.slate;
+    final foreground = selected ? AppColors.primary : AppColors.ink2;
     return Semantics(
       button: true,
       selected: selected,
@@ -2032,7 +1744,7 @@ class _CorrectionChip extends StatelessWidget {
               alignment: Alignment.center,
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
               decoration: BoxDecoration(
-                color: selected ? AppColors.primary : AppColors.glacialWhite,
+                color: selected ? AppColors.accentSoft : AppColors.canvas,
                 borderRadius: BorderRadius.circular(AppTheme.borderRadius),
                 border: Border.all(
                   color: selected ? AppColors.primary : AppColors.borderGrey,
@@ -2046,16 +1758,14 @@ class _CorrectionChip extends StatelessWidget {
                   children: [
                     Text(
                       label,
-                      style: AppTypography.bodySmall.copyWith(
-                        fontSize: 12,
+                      style: AppTypography.secondary.copyWith(
+                        fontWeight: FontWeight.w600,
                         color: foreground,
                       ),
                     ),
                     Text(
                       '$kcal kcal',
-                      style: AppTypography.dataLabel.copyWith(
-                        color: foreground,
-                      ),
+                      style: AppTypography.number(size: 13, color: foreground),
                     ),
                   ],
                 ),

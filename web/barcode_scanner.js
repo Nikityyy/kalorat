@@ -17,7 +17,9 @@
 (function () {
   'use strict';
   var MAX_EDGE = 960;
-  var INTERVAL_MS = 90;
+  // About six grabs a second: still finds a barcode within a moment, and
+  // leaves the main thread to the preview.
+  var INTERVAL_MS = 160;
   // The picture kept on a hit: the size meal photos are stored at.
   var PHOTO_EDGE = 1600;
 

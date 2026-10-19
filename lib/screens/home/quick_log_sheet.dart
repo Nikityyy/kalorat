@@ -4,6 +4,7 @@ import '../../models/models.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_theme.dart';
 import '../../theme/app_typography.dart';
+import '../../widgets/common/adaptive.dart';
 
 /// What the user chose in the quick log sheet.
 sealed class QuickLogResult {
@@ -32,7 +33,6 @@ Future<QuickLogResult?> showQuickLogSheet(
 }) => showModalBottomSheet<QuickLogResult>(
   context: context,
   isScrollControlled: true,
-  backgroundColor: Colors.transparent,
   builder: (_) => _QuickLogSheet(recent: recent),
 );
 
@@ -72,10 +72,6 @@ class _QuickLogSheetState extends State<_QuickLogSheet> {
       padding: EdgeInsets.only(bottom: media.viewInsets.bottom),
       child: Container(
         constraints: BoxConstraints(maxHeight: media.size.height * 0.85),
-        decoration: BoxDecoration(
-          color: AppColors.glacialWhite,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-        ),
         padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -99,6 +95,7 @@ class _QuickLogSheetState extends State<_QuickLogSheet> {
             const SizedBox(height: 12),
             TextField(
               controller: _controller,
+              magnifierConfiguration: fieldMagnifier,
               focusNode: _focusNode,
               maxLines: 3,
               minLines: 2,

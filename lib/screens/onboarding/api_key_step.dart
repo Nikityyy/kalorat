@@ -6,6 +6,7 @@ import '../../theme/app_colors.dart';
 import '../../extensions/l10n_extension.dart';
 import '../../widgets/inputs/action_button.dart';
 import '../../services/services.dart';
+import '../../widgets/common/adaptive.dart';
 
 class ApiKeyStep extends StatefulWidget {
   final Function(String) onNext;
@@ -107,6 +108,7 @@ class _ApiKeyStepState extends State<ApiKeyStep> {
 
           TextField(
             controller: _controller,
+            magnifierConfiguration: fieldMagnifier,
             style: AppTypography.displayMedium.copyWith(fontSize: 18),
             obscureText: true,
             decoration: InputDecoration(

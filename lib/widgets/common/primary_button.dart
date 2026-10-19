@@ -1,5 +1,3 @@
-import '../../utils/platform_utils.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_theme.dart';
@@ -26,35 +24,6 @@ class PrimaryButton extends StatelessWidget {
       Pressable(enabled: !isLoading && onPressed != null, child: _button());
 
   Widget _button() {
-    final bool isIos = PlatformUtils.isIOS;
-
-    if (isIos) {
-      return CupertinoButton(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-        color: AppColors.styrianForest,
-        borderRadius: BorderRadius.circular(AppTheme.borderRadius),
-        onPressed: isLoading
-            ? null
-            : () {
-                Haptics.tick();
-                onPressed?.call();
-              },
-        child: isLoading
-            ? CupertinoActivityIndicator(color: AppColors.onPrimary)
-            : Row(
-                mainAxisSize: MainAxisSize.min,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  if (icon != null) ...[
-                    Icon(icon, color: AppColors.onPrimary, size: 20),
-                    const SizedBox(width: 8),
-                  ],
-                  Text(text, style: AppTypography.labelLarge),
-                ],
-              ),
-      );
-    }
-
     return ElevatedButton(
       onPressed: isLoading
           ? null

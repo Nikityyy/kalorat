@@ -7,6 +7,7 @@ import '../../theme/app_colors.dart';
 import '../../theme/app_theme.dart';
 import '../../theme/app_typography.dart';
 import '../../widgets/barcode_switch_tile.dart';
+import '../../widgets/common/adaptive.dart';
 
 /// What the user chose in the "Anything to add?" sheet.
 class MealContextResult {
@@ -37,7 +38,6 @@ Future<MealContextResult?> showMealContextSheet(
 }) => showModalBottomSheet<MealContextResult>(
   context: context,
   isScrollControlled: true,
-  backgroundColor: Colors.transparent,
   isDismissible: true,
   builder: (_) => _MealContextSheet(initialText: initialText, barcode: barcode),
 );
@@ -103,10 +103,6 @@ class _MealContextSheetState extends State<_MealContextSheet> {
         bottom: MediaQuery.of(context).viewInsets.bottom,
       ),
       child: Container(
-        decoration: BoxDecoration(
-          color: AppColors.glacialWhite,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-        ),
         padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -142,6 +138,7 @@ class _MealContextSheetState extends State<_MealContextSheet> {
             ],
             TextField(
               controller: _controller,
+              magnifierConfiguration: fieldMagnifier,
               // The note is for the analysis; a product brings its values.
               enabled: !_barcodeOn,
               // NO autofocus here — we use a FocusNode + postFrameCallback

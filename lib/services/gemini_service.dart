@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:image/image.dart' as img;
 import '../utils/app_logger.dart';
 import '../utils/nutrition_units.dart';
+import '../utils/photo_downscale.dart';
 import 'gemini_stream_client.dart';
 import 'photo_store.dart';
 
@@ -343,15 +344,20 @@ class GeminiService {
           final bytes = await PhotoStore.instance.read(path);
           if (bytes == null || bytes.isEmpty) return <Map<String, dynamic>>[];
 
-          final prepared =
-              await compute<Map<String, dynamic>, Map<String, String>>(
-                _prepareImageInIsolate,
-                {
-                  'bytes': bytes,
-                  'labelHint': labelHint,
-                  'mimeType': _mimeTypeForPath(path),
-                },
-              );
+          final browserJpeg = await downscaleForAnalysis(
+            bytes,
+            labelHint ? 1536 : 1024,
+          );
+          final prepared = browserJpeg != null
+              ? {'data': base64Encode(browserJpeg), 'mimeType': 'image/jpeg'}
+              : await compute<Map<String, dynamic>, Map<String, String>>(
+                  _prepareImageInIsolate,
+                  {
+                    'bytes': bytes,
+                    'labelHint': labelHint,
+                    'mimeType': _mimeTypeForPath(path),
+                  },
+                );
           return <Map<String, dynamic>>[
             {
               'inline_data': {

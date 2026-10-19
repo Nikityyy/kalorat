@@ -2,9 +2,14 @@ import 'package:flutter/material.dart';
 import '../../extensions/l10n_extension.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_theme.dart';
+import 'package:provider/provider.dart';
+import '../../providers/app_provider.dart';
+import '../../theme/app_typography.dart';
 import '../../utils/haptics.dart';
+import '../../widgets/common/mono_digits.dart';
 
-/// The text logo at the top of the camera. Five quick taps show camera layout
+/// What is left of today's calories, at the top of the camera: the number
+/// that decides what goes on the plate. Five quick taps show camera layout
 /// measurements; a long press would drift into the tab swipe, so it is taps.
 class CameraLogo extends StatelessWidget {
   final VoidCallback onTap;
@@ -13,30 +18,39 @@ class CameraLogo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final provider = context.watch<AppProvider>();
+    final user = provider.user;
+    final l10n = context.l10n;
+    final String label;
+    if (user == null) {
+      label = l10n.appTitle;
+    } else {
+      final left =
+          user.dailyCalorieTarget - (provider.getTodayStats()['calories'] ?? 0);
+      label = left >= 0
+          ? l10n.kcalLeftToday(left.round())
+          : l10n.kcalOverToday((-left).round());
+    }
     return Positioned(
-      top: MediaQuery.of(context).padding.top + 16,
-      left: 80,
-      right: 80,
+      top: MediaQuery.of(context).padding.top + 20,
+      left: 84,
+      right: 84,
       child: GestureDetector(
         behavior: HitTestBehavior.translucent,
         onTap: onTap,
-        child: SizedBox(
-          height: 52,
-          child: Center(
-            child: Image.asset(
-              'assets/kalorat-textlogo.webp',
-              color: Colors.white,
-              colorBlendMode: BlendMode.srcIn,
-              height: 26,
-              fit: BoxFit.contain,
-              errorBuilder: (context, error, stackTrace) => const Text(
-                'kalorat',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: -0.5,
-                ),
+        child: Center(
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            decoration: BoxDecoration(
+              color: Colors.black.withValues(alpha: 0.6),
+              borderRadius: BorderRadius.circular(AppTheme.borderRadius),
+            ),
+            child: MonoDigits(
+              label,
+              maxLines: 1,
+              style: AppTypography.secondary.copyWith(
+                color: Colors.white,
+                fontWeight: FontWeight.w500,
               ),
             ),
           ),
@@ -223,7 +237,13 @@ class CameraBottomBar extends StatelessWidget {
           bottom: MediaQuery.of(context).padding.bottom + 24,
           top: 40,
         ),
-        decoration: const BoxDecoration(color: Colors.black45),
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Color(0x00000000), Color(0x99000000)],
+          ),
+        ),
         child: Stack(
           alignment: Alignment.center,
           children: [
@@ -238,17 +258,9 @@ class CameraBottomBar extends StatelessWidget {
                     Haptics.tick();
                     onGallery();
                   },
-                  child: Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.2),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      Icons.photo_library_outlined,
-                      color: Colors.white,
-                      size: 28,
-                    ),
+                  child: _SideButton(
+                    icon: Icons.photo_library,
+                    label: l10n.gallery,
                   ),
                 ),
               ),
@@ -303,17 +315,9 @@ class CameraBottomBar extends StatelessWidget {
                       Haptics.tick();
                       onQuickLog();
                     },
-                    child: Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.2),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        Icons.edit_note_outlined,
-                        color: Colors.white,
-                        size: 28,
-                      ),
+                    child: _SideButton(
+                      icon: Icons.edit_note,
+                      label: l10n.quickLogShort,
                     ),
                   ),
                 ),
@@ -341,15 +345,15 @@ class CameraBottomBar extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.all(4),
                         decoration: BoxDecoration(
-                          color: AppColors.styrianForest,
+                          color: AppColors.styrianForestColor,
                           shape: BoxShape.circle,
                         ),
                         child: Text(
                           '$photoCount',
-                          style: TextStyle(
+                          style: AppTypography.number(
+                            size: 13,
+                            weight: FontWeight.w700,
                             color: Colors.white,
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
                           ),
                         ),
                       ),
@@ -360,6 +364,41 @@ class CameraBottomBar extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// A square 12px-radius button with its label under it, beside the shutter.
+class _SideButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+
+  const _SideButton({required this.icon, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 52,
+          height: 52,
+          decoration: BoxDecoration(
+            color: Colors.black.withValues(alpha: 0.45),
+            borderRadius: BorderRadius.circular(AppTheme.borderRadius),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
+          ),
+          child: Icon(icon, color: Colors.white, size: 26),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          label,
+          style: AppTypography.meta.copyWith(
+            color: Colors.white,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
     );
   }
 }

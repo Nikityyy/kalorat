@@ -1,13 +1,12 @@
 import 'package:provider/provider.dart';
 import '../providers/app_provider.dart';
-import '../utils/platform_utils.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../extensions/l10n_extension.dart';
 import '../theme/app_colors.dart';
 import 'home_screen.dart';
-import 'me_screen.dart';
-import 'history_screen.dart';
+import 'progress_screen.dart';
+import 'today_screen.dart';
+import '../widgets/floating_tab_bar.dart';
 import '../utils/haptics.dart';
 import '../widgets/app_toast.dart';
 
@@ -26,13 +25,9 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
   // Set by the camera while two fingers pinch, so a pinch never pages.
   final ValueNotifier<bool> _pagingLocked = ValueNotifier(false);
 
-  int _currentIndex = 1; // Start at Home (center)
+  int _currentIndex = 1; // Opens on the camera, in the middle
   late final PageController _pageController;
   late final ValueNotifier<bool> _cameraTabActive;
-  final Set<int> _swipePointers = {};
-  Offset? _swipeStart;
-  int? _swipePointer;
-  bool _swipeCancelled = false;
 
   @override
   void initState() {
@@ -48,18 +43,82 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
     _pageController.dispose();
     _cameraTabActive.dispose();
     _pagingLocked.dispose();
+    _dayRequest.dispose();
+    _todayTabActive.dispose();
+    _todayReselected.dispose();
+    _progressReselected.dispose();
     super.dispose();
   }
 
-  List<Widget> get _screens => [
-    const MeScreen(key: ValueKey('me')),
+  /// A day the Progress tab asked the Today tab to show.
+  final ValueNotifier<DateTime?> _dayRequest = ValueNotifier(null);
+  late final ValueNotifier<bool> _todayTabActive = ValueNotifier(
+    _currentIndex == 0,
+  );
+
+  // Bumped when the shown tab is tapped again: it scrolls back to its top.
+  final ValueNotifier<int> _todayReselected = ValueNotifier(0);
+  final ValueNotifier<int> _progressReselected = ValueNotifier(0);
+
+  late final List<Widget> _screens = [
+    TodayScreen(
+      key: const ValueKey('today'),
+      activeListenable: _todayTabActive,
+      dayRequest: _dayRequest,
+      reselected: _todayReselected,
+      onOpenCamera: () => _goTo(1),
+    ),
     HomeScreen(
       key: const ValueKey('home'),
       activeListenable: _cameraTabActive,
       pagingLock: _pagingLocked,
     ),
-    const HistoryScreen(key: ValueKey('history')),
+    ProgressScreen(
+      key: const ValueKey('progress'),
+      reselected: _progressReselected,
+      onOpenDay: (day) {
+        _dayRequest.value = day;
+        _goTo(0);
+      },
+    ),
   ];
+
+  void _setActive(int index) {
+    _cameraTabActive.value = index == 1;
+    _todayTabActive.value = index == 0;
+  }
+
+  void _goTo(int index) {
+    final from = _currentIndex;
+    // The camera starts only once its page has settled: starting it during
+    // the slide costs frames. Leaving it stops it at once.
+    if (index == 1) {
+      _todayTabActive.value = false;
+    } else {
+      _setActive(index);
+    }
+    setState(() => _currentIndex = index);
+    // Today and Progress sit either side of the camera; sliding between them
+    // would drag the live camera through the screen, so that tap switches
+    // in place, like a tab bar does.
+    if ((index - from).abs() > 1) {
+      _navigating = true;
+      _pageController.jumpToPage(index);
+      _navigating = false;
+      return;
+    }
+    _navigating = true;
+    _pageController
+        .animateToPage(
+          index,
+          duration: const Duration(milliseconds: 320),
+          curve: Curves.easeOutCubic,
+        )
+        .whenComplete(() {
+          _navigating = false;
+          if (mounted && _currentIndex == index) _setActive(index);
+        });
+  }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
@@ -68,61 +127,20 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
     }
   }
 
-  void _handlePointerDown(PointerDownEvent event) {
-    _swipePointers.add(event.pointer);
-    if (_swipePointers.length == 1) {
-      _swipeStart = event.position;
-      _swipePointer = event.pointer;
-      _swipeCancelled = false;
-    } else {
-      _swipeCancelled = true;
-    }
-  }
-
-  void _handlePointerUp(PointerEvent event) {
-    if (event.pointer == _swipePointer && !_swipeCancelled) {
-      final delta = event.position - _swipeStart!;
-      if (delta.dx.abs() >= 80 && delta.dx.abs() > delta.dy.abs() * 1.5) {
-        final next = (_currentIndex + (delta.dx < 0 ? 1 : -1)).clamp(
-          0,
-          _screens.length - 1,
-        );
-        if (next != _currentIndex) {
-          _cameraTabActive.value = next == 1;
-          if (PlatformUtils.isIOS) {
-            setState(() => _currentIndex = next);
-          } else {
-            _pageController.animateToPage(
-              next,
-              duration: const Duration(milliseconds: 300),
-              curve: Curves.easeInOut,
-            );
-          }
-        }
-      }
-    }
-    _swipePointers.remove(event.pointer);
-    if (_swipePointers.isEmpty) {
-      _swipeStart = null;
-      _swipePointer = null;
-      _swipeCancelled = false;
-    }
-  }
-
-  Widget _withTabSwipe(Widget child) => Listener(
-    behavior: HitTestBehavior.translucent,
-    onPointerDown: _handlePointerDown,
-    onPointerUp: _handlePointerUp,
-    onPointerCancel: _handlePointerUp,
-    child: child,
-  );
-
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
 
-    // PopScope prevents system back from navigating to onboarding
-    return PopScope(canPop: false, child: _buildBody(l10n));
+    // Back on Today or Progress returns to the camera, where the app opens,
+    // as Android apps do with their tabs; back on the camera leaves the app.
+    // It never goes back to the onboarding.
+    return PopScope(
+      canPop: _currentIndex == 1,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _goTo(1);
+      },
+      child: _buildBody(l10n),
+    );
   }
 
   Widget _buildBody(dynamic l10n) {
@@ -145,136 +163,63 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
       });
     }
 
-    if (PlatformUtils.isIOS) {
-      return _withTabSwipe(
-        CupertinoTabScaffold(
-          tabBar: CupertinoTabBar(
-            height: hideNavigation ? 0 : 50,
-            currentIndex: _currentIndex,
-            onTap: (index) {
-              Haptics.tick();
-              _cameraTabActive.value = index == 1;
-              setState(() => _currentIndex = index);
-            },
-            activeColor: AppColors.styrianForest,
-            inactiveColor: AppColors.slate.withValues(alpha: 0.5),
-            backgroundColor: AppColors.limestone, // Strictly Matte
-            items: [
-              BottomNavigationBarItem(
-                icon: const Icon(CupertinoIcons.person_fill),
-                label: l10n.me,
-              ),
-              BottomNavigationBarItem(
-                icon: Container(
-                  padding: const EdgeInsets.all(4),
-                  decoration: BoxDecoration(
-                    color: _currentIndex == 1
-                        ? AppColors.styrianForest.withValues(alpha: 0.1)
-                        : Colors.transparent,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(CupertinoIcons.camera_fill, size: 28),
-                ),
-                label: l10n.home,
-              ),
-              BottomNavigationBarItem(
-                icon: const Icon(CupertinoIcons.clock_fill),
-                label: l10n.history,
-              ),
-            ],
-          ),
-          tabBuilder: (context, index) {
-            return CupertinoTabView(builder: (context) => _screens[index]);
-          },
-        ),
-      );
-    }
-
+    final media = MediaQuery.of(context);
+    // The tab bar floats over the pages; the pages keep their content clear
+    // of it through the bottom padding.
+    final barSpace = hideNavigation ? 0.0 : FloatingTabBar.height + 12;
     return Scaffold(
-      body: Column(
+      backgroundColor: AppColors.canvas,
+      body: Stack(
         children: [
-          Expanded(
-            // The page follows the finger, rubber-bands at the ends and settles
-            // with the platform's scroll physics (iOS bounce on iPhone).
-            child: ValueListenableBuilder<bool>(
-              valueListenable: _pagingLocked,
-              builder: (context, locked, _) => PageView(
-                controller: _pageController,
-                physics: locked ? const NeverScrollableScrollPhysics() : null,
-                onPageChanged: (index) {
-                  _cameraTabActive.value = index == 1;
-                  if (!_navigating) Haptics.selection();
-                  setState(() => _currentIndex = index);
-                },
-                children: _screens,
+          Positioned.fill(
+            child: MediaQuery(
+              data: media.copyWith(
+                padding: media.padding.copyWith(
+                  bottom: media.padding.bottom + barSpace,
+                ),
+              ),
+              // The page follows the finger, rubber-bands at the ends and
+              // settles with the platform's scroll physics.
+              child: ValueListenableBuilder<bool>(
+                valueListenable: _pagingLocked,
+                builder: (context, locked, _) => PageView(
+                  controller: _pageController,
+                  physics: locked ? const NeverScrollableScrollPhysics() : null,
+                  onPageChanged: (index) {
+                    // A tab tap already set the target page.
+                    if (_navigating) return;
+                    _setActive(index);
+                    Haptics.selection();
+                    setState(() => _currentIndex = index);
+                  },
+                  children: _screens,
+                ),
               ),
             ),
           ),
+          if (!hideNavigation)
+            Positioned(
+              left: 16,
+              right: 16,
+              bottom: media.padding.bottom + 8,
+              child: FloatingTabBar(
+                currentIndex: _currentIndex,
+                onCamera: _currentIndex == 1,
+                labels: [l10n.today, l10n.tabCamera, l10n.tabProgress],
+                onTap: (index) {
+                  Haptics.tick();
+                  if (index != _currentIndex) {
+                    _goTo(index);
+                  } else if (index == 0) {
+                    _todayReselected.value++;
+                  } else if (index == 2) {
+                    _progressReselected.value++;
+                  }
+                },
+              ),
+            ),
         ],
       ),
-      bottomNavigationBar: hideNavigation
-          ? null
-          : NavigationBarTheme(
-              data: NavigationBarThemeData(
-                labelTextStyle: WidgetStateProperty.all(
-                  TextStyle(
-                    fontWeight: FontWeight.w500,
-                    color: AppColors.slate,
-                  ),
-                ),
-                iconTheme: WidgetStateProperty.resolveWith((states) {
-                  if (states.contains(WidgetState.selected)) {
-                    return IconThemeData(color: AppColors.onPrimary);
-                  }
-                  return IconThemeData(color: AppColors.slate);
-                }),
-              ),
-              child: NavigationBar(
-                selectedIndex: _currentIndex,
-                onDestinationSelected: (index) {
-                  Haptics.tick();
-                  _cameraTabActive.value = index == 1;
-                  setState(() => _currentIndex = index);
-                  _navigating = true;
-                  _pageController
-                      .animateToPage(
-                        index,
-                        duration: const Duration(milliseconds: 320),
-                        curve: Curves.easeOutCubic,
-                      )
-                      .whenComplete(() => _navigating = false);
-                },
-                backgroundColor: AppColors.limestone,
-                indicatorColor: AppColors.styrianForest,
-                surfaceTintColor: Colors.transparent,
-                destinations: [
-                  NavigationDestination(
-                    icon: const Icon(Icons.person_outline),
-                    selectedIcon: Icon(
-                      Icons.person,
-                      color: AppColors.onPrimary,
-                    ),
-                    label: l10n.me,
-                  ),
-                  NavigationDestination(
-                    icon: const Icon(Icons.camera_alt_outlined),
-                    selectedIcon: Icon(
-                      Icons.camera_alt,
-                      color: AppColors.onPrimary,
-                    ),
-                    label: l10n.home,
-                  ),
-                  NavigationDestination(
-                    icon: const Icon(Icons.history_outlined),
-                    selectedIcon: Icon(
-                      Icons.history,
-                      color: AppColors.onPrimary,
-                    ),
-                    label: l10n.history,
-                  ),
-                ],
-              ),
-            ),
     );
   }
 }

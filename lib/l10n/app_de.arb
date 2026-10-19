@@ -40,7 +40,7 @@
   "takePhoto": "Foto aufnehmen",
   "addMorePhotos": "Weitere Fotos hinzufügen",
   "analyzeMeal": "Mahlzeit checken",
-  "analyzing": "Analysiere...",
+  "analyzing": "Analysiere …",
   "mealName": "Mahlzeit",
   "calories": "Kalorien",
   "protein": "Eiweiß",
@@ -51,7 +51,7 @@
   "manualEntry": "Manuell eingeben",
   "offlineMessage": "Du bist offline. Die AI wird die Mahlzeit analysieren, sobald du wieder online bist und die App öffnest.",
   "pendingAnalysis": "Ausstehende Analysen",
-  "processingQueue": "Verarbeite ausstehende Mahlzeiten...",
+  "processingQueue": "Ausstehende Mahlzeiten werden verarbeitet …",
   "analysisWaitingForResume": "Wartet darauf, dass Kalorat fortgesetzt wird",
   "analysisFailedTapToRetry": "Analyse fehlgeschlagen · zum Wiederholen tippen",
   "analysisRetrying": "Neuer Versuch ({attempt}/3)",
@@ -112,7 +112,6 @@
   "cameraPermission": "Kamera-Berechtigung wird benötigt",
   "grantPermission": "Berechtigung erteilen",
   "startOnboarding": "Onboarding starten",
-  "meTitle": "Profil",
   "deleteWeight": "Gewicht löschen?",
   "deleteWeightConfirm": "Möchtest du diesen Eintrag wirklich löschen?",
   "name": "Name",
@@ -140,7 +139,7 @@
   },
   "importSuccessful": "Import erfolgreich",
   "importFailed": "Import fehlgeschlagen",
-  "buildingPlan": "Profil wird gespeichert...",
+  "buildingPlan": "Profil wird gespeichert …",
   "apiKeyValidationError": "Bitte einen gültigen API-Key eingeben",
   "nameValidationError": "Bitte gib deinen Namen ein",
   "analysisError": "Fehler bei der Analyse: {error}",
@@ -165,7 +164,6 @@
   "male": "Männlich",
   "female": "Weiblich",
   "other": "Divers",
-  "yourBmi": "DEIN BMI",
   "healthyRange": "Gesunder Bereich: {min} - {max} kg",
   "@healthyRange": {
     "placeholders": {
@@ -177,9 +175,9 @@
       }
     }
   },
-  "status": "STATUS",
+  "status": "Status",
   "weightProgress": "Gewichtsverlauf",
-  "caloriesConsumed": "KALORIEN AUFGENOMMEN",
+  "caloriesConsumed": "Gegessene Kalorien",
   "proteinShort": "Eiw.",
   "carbsShort": "KH",
   "fatsShort": "Fett",
@@ -191,8 +189,6 @@
   "noDataAvailable": "Keine Daten verfügbar",
   "recentHistory": "Verlauf der letzten Tage",
   "noFoodDetected": "Kein Essen erkannt. Bitte versuche es erneut.",
-  "myHistory": "Meine Historie",
-  "noMealsRecorded": "Keine Mahlzeiten erfasst.",
   "deleteQuestion": "Löschen?",
   "deleteMealConfirmation": "Möchtest du diese Mahlzeit wirklich löschen?",
   "cameraNeeded": "Kamera benötigt",
@@ -201,8 +197,14 @@
   "reviewPhotos": "Fotos überprüfen",
   "discard": "Verwerfen",
   "addPhoto": "+ Foto",
+  "reorderPhotosHint": "Halten und ziehen, um die Reihenfolge zu ändern",
+  "coverPhoto": "Titelbild",
+  "movePhotoEarlier": "Nach vorne",
+  "movePhotoLater": "Nach hinten",
   "startAnalysis": "Analyse starten",
   "analysisResult": "Analyse Ergebnis",
+  "yourDescription": "Deine Beschreibung",
+  "yourNote": "Deine Notiz",
   "saveMeal": "Eintrag loggen",
   "welcomeSlogan": "Kalorien, präzise getrackt.",
   "getStarted": "Los geht's",
@@ -316,16 +318,7 @@
   "moderatelyActiveSubtitle": "Sport 3-5x pro Woche",
   "activeSubtitle": "Sport 6-7x pro Woche",
   "veryActiveSubtitle": "Schwere körperliche Arbeit",
-  "dailyAvg": "ø / Tag",
   "streak": "Serie",
-  "streakDays": "{count} Tage",
-  "@streakDays": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
   "discardPhotos": "Fotos verwerfen?",
   "discardPhotosConfirm": "Deine aufgenommenen Fotos gehen verloren.",
   "selectDate": "Datum wählen",
@@ -336,7 +329,7 @@
   "reloadButton": "Neu laden",
   "laterButton": "Später",
   "mealContextTitle": "Noch etwas hinzufügen?",
-  "mealContextHint": "z.B. Vanillepudding, 200g, Angaben von der Packung...",
+  "mealContextHint": "z. B. Vanillepudding, 200 g, Angaben von der Packung",
   "mealContextSkip": "Ohne Hinweis",
   "mealContextAnalyze": "Analysieren",
   "mealContextBackground": "Im Hintergrund",
@@ -348,7 +341,7 @@
   "dayStartsAt": "Tag beginnt um",
   "dayStartsAtHint": "Mahlzeiten, die vor dieser Uhrzeit gespeichert werden, zählen zum Vortag",
   "aiThinkingTitle": "KI-Analyse",
-  "aiThinkingLabel": "KI denkt nach...",
+  "aiThinkingLabel": "Denkt nach …",
   "analysisTimedOut": "Analyse abgebrochen. Bitte erneut versuchen.",
   "reference": "Referenz",
   "showLess": "Weniger anzeigen",
@@ -438,6 +431,7 @@
     }
   },
   "quickLogUndo": "Rückgängig",
+  "mealDeleted": "Mahlzeit gelöscht",
   "quickLogFailed": "Die Mahlzeit konnte nicht erfasst werden.",
   "barcodeLookingUp": "Produkt wird gesucht…",
   "barcodeNotFound": "Produkt nicht gefunden. Fotografiere stattdessen die Nährwerttabelle.",
@@ -473,16 +467,8 @@
   "barcodeRetryHint": "Ausschalten, um das Foto als Mahlzeit zu analysieren",
   "retrySheetTitle": "Analyse wiederholen",
   "retrySheetSubtitle": "Hinweis bearbeiten oder direkt neu analysieren",
-  "retrySheetHint": "z.B. 2 Portionen, extra Sauce ...",
+  "retrySheetHint": "z. B. 2 Portionen, extra Sauce",
   "retrySheetAction": "Neu analysieren",
-  "estimatedRange": "Geschätzter Bereich: {range}",
-  "@estimatedRange": {
-    "placeholders": {
-      "range": {
-        "type": "String"
-      }
-    }
-  },
   "analysisNoResult": "Kein Ergebnis erhalten.",
   "analysisParseError": "Die Analyse konnte nicht gelesen werden: {error}",
   "@analysisParseError": {
@@ -498,9 +484,6 @@
   "backupShareText": "Kalorat-Backup",
   "reportShareText": "Kalorat-Markdown-Bericht",
   "restoreBackupMissing": "Kein Import-Backup vorhanden.",
-  "insightsTitle": "Auswertung",
-  "weeklySummaryTitle": "Letzte 7 Tage",
-  "weeklyAvgIntake": "Ø Aufnahme pro Tag",
   "weeklyOnTarget": "Im Ziel",
   "weeklyAboveTarget": "{kcal} kcal über dem Ziel",
   "@weeklyAboveTarget": {
@@ -529,24 +512,6 @@
       }
     }
   },
-  "weeklyTarget": "Ziel {kcal} kcal",
-  "@weeklyTarget": {
-    "placeholders": {
-      "kcal": {
-        "type": "String"
-      }
-    }
-  },
-  "weeklyWeightSpan": "in {days} Tagen",
-  "@weeklyWeightSpan": {
-    "placeholders": {
-      "days": {
-        "type": "int"
-      }
-    }
-  },
-  "weeklyWeightNeedMore": "Zwei Wiegungen zeigen die Entwicklung.",
-  "weeklyNoMeals": "In den letzten 7 Tagen wurde keine Mahlzeit erfasst.",
   "burnTitle": "Geschätzter Tagesverbrauch",
   "burnBasis": "Aus {days} erfassten Tagen und {weighIns} Wiegungen der letzten 4 Wochen.",
   "@burnBasis": {
@@ -556,14 +521,6 @@
       },
       "weighIns": {
         "type": "int"
-      }
-    }
-  },
-  "burnWeightTrend": "Gewichtstrend: {rate} kg pro Woche",
-  "@burnWeightTrend": {
-    "placeholders": {
-      "rate": {
-        "type": "String"
       }
     }
   },
@@ -588,7 +545,6 @@
   },
   "burnImplausible": "Die Werte passen nicht zusammen. Vermutlich fehlen Mahlzeiten oder Wiegungen.",
   "burnDisclaimer": "Eine Schätzung: Sie ist nur so genau wie deine erfassten Mahlzeiten und Wiegungen.",
-  "correctionPrompt": "Mit einem Tipp korrigieren",
   "correctionLower": "Weniger",
   "correctionCurrent": "Jetzt",
   "correctionHigher": "Mehr",
@@ -608,9 +564,6 @@
   "validationWeightRange": "Das Gewicht muss zwischen 20 und 400 kg liegen.",
   "validationWeightFuture": "Das Gewichtsdatum liegt in der Zukunft.",
   "validationDuplicateMeals": "Doppelte Mahlzeiten-IDs im Import.",
-  "thisWeekTitle": "Wochenziel",
-  "startWeekStrong": "Beginne deine Woche stark.",
-  "keepMomentum": "Bleib dran!",
   "hintGotIt": "Verstanden",
   "hintNotNow": "Nicht jetzt",
   "hintCameraTitle": "Foto deiner Mahlzeit",
@@ -618,14 +571,193 @@
   "hintBackupTitle": "Sichere deine Mahlzeiten",
   "hintBackupBody": "Deine Daten liegen nur auf diesem Gerät. Mit Google anmelden sichert sie und macht sie auf anderen Geräten verfügbar.",
   "hintBackupAction": "Einstellungen öffnen",
-  "historyEmptyTitle": "Hier erscheinen deine Mahlzeiten",
-  "historyEmptyBody": "Jede analysierte Mahlzeit steht hier, nach Tag, Woche, Monat oder Jahr sortiert. Wechsle zur Kamera, um die erste zu erfassen.",
-  "historyExampleLabel": "Beispiel",
-  "sampleMealName": "Porridge",
   "welcomeHaveAccount": "Ich habe schon ein Konto",
   "loginNewHere": "Neu hier? Profil einrichten",
   "themeTitle": "Darstellung",
   "themeSystem": "System",
   "themeLight": "Hell",
-  "themeDark": "Dunkel"
+  "themeDark": "Dunkel",
+  "todayWithDate": "Heute, {date}",
+  "@todayWithDate": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "yesterdayWithDate": "Gestern, {date}",
+  "@yesterdayWithDate": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "pickDay": "Tag wählen",
+  "previousDay": "Vorheriger Tag",
+  "nextDay": "Nächster Tag",
+  "kcalOfTarget": "kcal von {target}",
+  "@kcalOfTarget": {
+    "placeholders": {
+      "target": {
+        "type": "String"
+      }
+    }
+  },
+  "kcalToEatToday": "kcal für heute",
+  "kcalLeftOf": "kcal übrig von {target}",
+  "@kcalLeftOf": {
+    "placeholders": {
+      "target": {
+        "type": "String"
+      }
+    }
+  },
+  "kcalOverTarget": "kcal über deinen {target}",
+  "@kcalOverTarget": {
+    "placeholders": {
+      "target": {
+        "type": "String"
+      }
+    }
+  },
+  "proteinOfTarget": "{eaten} von {target} g Protein",
+  "@proteinOfTarget": {
+    "placeholders": {
+      "eaten": {
+        "type": "int"
+      },
+      "target": {
+        "type": "int"
+      }
+    }
+  },
+  "proteinReached": "Proteinziel erreicht",
+  "proteinToGo": "Noch {grams} g Protein",
+  "@proteinToGo": {
+    "placeholders": {
+      "grams": {
+        "type": "int"
+      }
+    }
+  },
+  "mealsCount": "{count, plural, =1{1 Mahlzeit} other{{count} Mahlzeiten}}",
+  "@mealsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "pastDayEmpty": "An diesem Tag ist nichts eingetragen.",
+  "todayEmptyBody": "Deine erste Mahlzeit beginnt den Aufstieg. Fotografiere den Teller, Kalorat erledigt den Rest.",
+  "openCamera": "Kamera öffnen",
+  "tabCamera": "Kamera",
+  "tabProgress": "Fortschritt",
+  "bodyTitle": "Körper",
+  "streakLine": "{count, plural, =1{1 Tag in Folge eingetragen} other{{count} Tage in Folge eingetragen}}",
+  "@streakLine": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "streakNone": "Trag heute etwas ein, um eine Serie zu starten.",
+  "previousPeriod": "Vorheriger Zeitraum",
+  "nextPeriod": "Nächster Zeitraum",
+  "averagePerDay": "Durchschnitt pro Tag",
+  "periodNoMeals": "In diesem Zeitraum ist nichts eingetragen.",
+  "proteinAveragePerDay": "Protein {average} von {target} g pro Tag",
+  "@proteinAveragePerDay": {
+    "placeholders": {
+      "average": {
+        "type": "int"
+      },
+      "target": {
+        "type": "int"
+      }
+    }
+  },
+  "burnPerDay": "etwa {kcal} kcal pro Tag",
+  "@burnPerDay": {
+    "placeholders": {
+      "kcal": {
+        "type": "int"
+      }
+    }
+  },
+  "gramsProtein": "{grams} g Protein",
+  "@gramsProtein": {
+    "placeholders": {
+      "grams": {
+        "type": "int"
+      }
+    }
+  },
+  "moreActions": "Weitere Aktionen",
+  "todayAt": "Heute, {time}",
+  "@todayAt": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "yesterdayAt": "Gestern, {time}",
+  "@yesterdayAt": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "portionLess": "Kleinere Portion",
+  "portionMore": "Größere Portion",
+  "portionEdit": "Portion eingeben",
+  "confidenceShort": "Zu {percent} % sicher",
+  "@confidenceShort": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "probablyBetween": "wahrscheinlich {low}–{high} kcal",
+  "@probablyBetween": {
+    "placeholders": {
+      "low": {
+        "type": "int"
+      },
+      "high": {
+        "type": "int"
+      }
+    }
+  },
+  "kcalLeftToday": "{kcal} kcal heute übrig",
+  "@kcalLeftToday": {
+    "placeholders": {
+      "kcal": {
+        "type": "int"
+      }
+    }
+  },
+  "kcalOverToday": "{kcal} kcal über dem Ziel",
+  "@kcalOverToday": {
+    "placeholders": {
+      "kcal": {
+        "type": "int"
+      }
+    }
+  },
+  "quickLogShort": "Eintippen",
+  "kcalPerDayPlan": "kcal pro Tag",
+  "proteinPerDayPlan": "{grams} g Protein pro Tag",
+  "@proteinPerDayPlan": {
+    "placeholders": {
+      "grams": {
+        "type": "int"
+      }
+    }
+  }
 }

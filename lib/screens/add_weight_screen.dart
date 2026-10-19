@@ -1,5 +1,3 @@
-import '../utils/platform_utils.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart' show DateFormat;
 import 'package:kalorat/theme/app_colors.dart';
@@ -9,6 +7,7 @@ import 'package:provider/provider.dart';
 import '../models/models.dart';
 import '../providers/app_provider.dart';
 import '../theme/app_theme.dart';
+import '../widgets/common/adaptive.dart';
 import '../widgets/app_toast.dart';
 
 class AddWeightScreen extends StatefulWidget {
@@ -90,6 +89,7 @@ class _AddWeightScreenState extends State<AddWeightScreen> {
             const SizedBox(height: 8),
             TextField(
               controller: _weightController,
+              magnifierConfiguration: fieldMagnifier,
               keyboardType: const TextInputType.numberWithOptions(
                 decimal: true,
               ),
@@ -122,29 +122,13 @@ class _AddWeightScreenState extends State<AddWeightScreen> {
   }
 
   void _pickDate(BuildContext context) async {
-    if (PlatformUtils.isIOS) {
-      showCupertinoModalPopup(
-        context: context,
-        builder: (ctx) => Container(
-          height: 250,
-          color: CupertinoColors.systemBackground.resolveFrom(context),
-          child: CupertinoDatePicker(
-            mode: CupertinoDatePickerMode.date,
-            initialDateTime: _selectedDate,
-            maximumDate: DateTime.now(),
-            onDateTimeChanged: (date) => setState(() => _selectedDate = date),
-          ),
-        ),
-      );
-    } else {
-      final date = await showDatePicker(
-        context: context,
-        initialDate: _selectedDate,
-        firstDate: DateTime(2020),
-        lastDate: DateTime.now(),
-      );
-      if (date != null) setState(() => _selectedDate = date);
-    }
+    final date = await pickDate(
+      context,
+      initial: _selectedDate,
+      first: DateTime(2020),
+      last: DateTime.now(),
+    );
+    if (date != null && mounted) setState(() => _selectedDate = date);
   }
 
   void _save() async {
@@ -165,29 +149,16 @@ class _AddWeightScreenState extends State<AddWeightScreen> {
     if (previous != null &&
         (weight - previous).abs() > 10 &&
         (weight - previous).abs() / previous > 0.1) {
-      final confirmed = await showDialog<bool>(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: Text(context.l10n.largeWeightJump),
-          content: Text(
-            context.l10n.confirmWeightJump(
-              previous.toStringAsFixed(1),
-              weight.toStringAsFixed(1),
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: Text(context.l10n.cancel),
-            ),
-            TextButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: Text(context.l10n.save),
-            ),
-          ],
+      final confirmed = await showConfirmDialog(
+        context,
+        title: context.l10n.largeWeightJump,
+        message: context.l10n.confirmWeightJump(
+          previous.toStringAsFixed(1),
+          weight.toStringAsFixed(1),
         ),
+        confirmLabel: context.l10n.save,
       );
-      if (confirmed != true) return;
+      if (!confirmed) return;
     }
 
     try {

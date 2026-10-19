@@ -1,5 +1,6 @@
 import '../utils/app_version.dart';
 import '../utils/platform_utils.dart';
+import '../utils/haptics.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -14,7 +15,9 @@ import '../services/notification_service.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 import '../theme/app_typography.dart';
+import '../widgets/common/adaptive.dart';
 import '../widgets/common/app_card.dart';
+import '../widgets/common/segmented_tabs.dart';
 import '../widgets/common/primary_button.dart';
 import '../widgets/app_toast.dart';
 import 'privacy_policy_screen.dart';
@@ -120,7 +123,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
           children: [
             // 1. Profile
             _buildSection(l10n.profile, [
-              _buildTextField(l10n.name, _nameController),
+              _buildTextField(
+                l10n.name,
+                _nameController,
+                autofillHints: const [AutofillHints.givenName],
+              ),
               _buildTextField(
                 l10n.heightCm,
                 _heightController,
@@ -253,33 +260,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(l10n.themeTitle, style: TextStyle(color: AppColors.slate)),
+          Text(l10n.themeTitle, style: AppTypography.body),
           const SizedBox(height: 8),
-          SizedBox(
-            width: double.infinity,
-            child: SegmentedButton<ThemeMode>(
-              showSelectedIcon: false,
-              segments: [
-                for (final entry in modes.entries)
-                  ButtonSegment(
-                    value: entry.key,
-                    label: FittedBox(
-                      fit: BoxFit.scaleDown,
-                      child: Text(entry.value),
-                    ),
-                  ),
-              ],
-              selected: {provider.themeMode},
-              onSelectionChanged: (selection) =>
-                  provider.setThemeMode(selection.first),
-              style: SegmentedButton.styleFrom(
-                foregroundColor: AppColors.slate,
-                selectedForegroundColor: AppColors.onPrimary,
-                selectedBackgroundColor: AppColors.primary,
-                side: BorderSide(color: AppColors.border),
-                minimumSize: const Size(0, 44),
-              ),
-            ),
+          SegmentedTabs(
+            labels: modes.values.toList(),
+            selected: modes.keys.toList().indexOf(provider.themeMode),
+            onChanged: (i) => provider.setThemeMode(modes.keys.elementAt(i)),
           ),
         ],
       ),
@@ -570,11 +556,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
     TextEditingController controller, {
     TextInputType? keyboardType,
     bool obscureText = false,
+    Iterable<String>? autofillHints,
   }) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: TextField(
         controller: controller,
+        magnifierConfiguration: fieldMagnifier,
+        autofillHints: autofillHints,
         keyboardType: keyboardType,
         obscureText: obscureText,
         style: TextStyle(color: AppColors.slate),
@@ -667,26 +656,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
           ),
         ),
-        RadioGroup<int>(
-          groupValue: user.genderIndex,
-          onChanged: (val) {
-            if (val != null) {
-              provider.updateUser(gender: val);
-            }
-          },
-          child: Column(
-            children: List.generate(genders.length, (index) {
-              return RadioListTile<int>(
-                title: Text(
-                  genders[index],
-                  style: TextStyle(color: AppColors.slate),
-                ),
-                value: index,
-                activeColor: AppColors.primary,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 4),
-              );
-            }),
-          ),
+        _choices(
+          labels: genders,
+          selected: user.genderIndex ?? -1,
+          onSelected: (val) => provider.updateUser(gender: val),
         ),
       ],
     );
@@ -710,28 +683,39 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
           ),
         ),
-        RadioGroup<int>(
-          groupValue: user.goalIndex,
-          onChanged: (val) {
-            if (val != null) {
-              provider.updateUser(goal: val);
-            }
-          },
-          child: Column(
-            children: List.generate(goals.length, (index) {
-              return RadioListTile<int>(
-                title: Text(
-                  goals[index],
-                  style: TextStyle(color: AppColors.slate),
-                ),
-                value: index,
-                activeColor: AppColors.primary,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 4),
-              );
-            }),
-          ),
+        _choices(
+          labels: goals,
+          selected: user.goalIndex,
+          onSelected: (val) => provider.updateUser(goal: val),
         ),
       ],
+    );
+  }
+
+  /// One of several options, as radio buttons.
+  Widget _choices({
+    required List<String> labels,
+    required int selected,
+    required ValueChanged<int> onSelected,
+  }) {
+    return RadioGroup<int>(
+      groupValue: selected,
+      onChanged: (val) {
+        if (val == null) return;
+        Haptics.selection();
+        onSelected(val);
+      },
+      child: Column(
+        children: [
+          for (var i = 0; i < labels.length; i++)
+            RadioListTile<int>(
+              title: Text(labels[i], style: TextStyle(color: AppColors.slate)),
+              value: i,
+              activeColor: AppColors.primary,
+              contentPadding: const EdgeInsets.symmetric(horizontal: 4),
+            ),
+        ],
+      ),
     );
   }
 
@@ -743,25 +727,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final now = DateTime.now();
     final birthdate = _selectedBirthdate ?? now;
 
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: birthdate,
-      firstDate: DateTime(1900),
-      lastDate: now,
-      locale: language == 'de' ? const Locale('de') : const Locale('en'),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: Theme.of(context).colorScheme.copyWith(
-              primary: AppColors.primary,
-              onPrimary: AppColors.onPrimary,
-              surface: AppColors.canvas,
-              onSurface: AppColors.slate,
-            ),
-          ),
-          child: child!,
-        );
-      },
+    final picked = await pickDate(
+      context,
+      initial: birthdate,
+      first: DateTime(1900),
+      last: now,
     );
 
     if (picked != null && mounted) {
@@ -911,28 +881,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
             style: const TextStyle(color: AppColors.error),
           ),
           onTap: () async {
-            final confirm = await showDialog<bool>(
-              context: context,
-              builder: (context) => AlertDialog(
-                title: Text(l10n.logOut),
-                content: Text(l10n.logOutConfirm),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(context, false),
-                    child: Text(l10n.cancel),
-                  ),
-                  TextButton(
-                    onPressed: () => Navigator.pop(context, true),
-                    child: Text(
-                      l10n.logOut,
-                      style: const TextStyle(color: AppColors.error),
-                    ),
-                  ),
-                ],
-              ),
+            final confirm = await showConfirmDialog(
+              context,
+              title: l10n.logOut,
+              message: l10n.logOutConfirm,
+              confirmLabel: l10n.logOut,
+              destructive: true,
             );
 
-            if (confirm == true && mounted) {
+            if (confirm && mounted) {
               // Sign out from Auth Service
               await authService.signOut();
 
@@ -961,30 +918,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
             style: TextStyle(color: AppColors.slate),
           ),
           onTap: () async {
-            final confirm = await showDialog<bool>(
-              context: context,
-              builder: (context) => AlertDialog(
-                title: Text(l10n.deleteAccount),
-                content: Text(
-                  l10n.deleteAccountConfirm,
-                ), // Ensure this string exists or use a hardcoded warning
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(context, false),
-                    child: Text(l10n.cancel),
-                  ),
-                  TextButton(
-                    onPressed: () => Navigator.pop(context, true),
-                    child: Text(
-                      l10n.deleteAccount,
-                      style: const TextStyle(color: AppColors.error),
-                    ),
-                  ),
-                ],
-              ),
+            final confirm = await showConfirmDialog(
+              context,
+              title: l10n.deleteAccount,
+              message: l10n.deleteAccountConfirm,
+              confirmLabel: l10n.deleteAccount,
+              destructive: true,
             );
 
-            if (confirm == true && mounted) {
+            if (confirm && mounted) {
               await authService.deleteAccount();
               // Update Provider State to Guest
               await provider.updateUser(
@@ -1173,30 +1115,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
           MaterialPageRoute<void>(builder: (_) => const PrivacyPolicyScreen()),
         ),
       ),
-      const Divider(height: 1, indent: 16, endIndent: 16),
-      ListTile(
-        leading: Icon(Icons.description_outlined, color: AppColors.primary),
-        title: Text(
-          l10n.termsOfService,
-          style: TextStyle(color: AppColors.slate),
-        ),
-        trailing: const Icon(Icons.open_in_new, size: 16),
-        onTap: () {
-          showDialog(
-            context: context,
-            builder: (context) => AlertDialog(
-              title: Text(l10n.termsOfService),
-              content: const Text("Terms of Service placeholder."),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text("OK"),
-                ),
-              ],
-            ),
-          );
-        },
-      ),
     ]);
   }
 
@@ -1204,17 +1122,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          title,
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: AppColors.slate,
+        Padding(
+          padding: const EdgeInsets.only(left: 4),
+          child: Text(
+            title,
+            style: AppTypography.secondary.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 8),
         AppCard(
-          backgroundColor: AppColors.pebble.withValues(alpha: 0.3),
+          backgroundColor: AppColors.surface,
           padding: EdgeInsets.zero,
           child: Column(children: children),
         ),

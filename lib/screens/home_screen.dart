@@ -20,10 +20,11 @@ import '../services/photo_store.dart';
 import '../utils/photo_downscale.dart';
 import '../services/gemini_service.dart';
 import '../services/hints/first_use_hints.dart';
-import '../theme/app_colors.dart';
+import '../theme/app_theme.dart';
 import '../theme/app_typography.dart';
 import '../utils/analysis_parser.dart';
 import '../utils/platform_utils.dart';
+import '../widgets/common/adaptive.dart';
 import '../widgets/widgets.dart';
 import 'home/analyzing_view.dart';
 import 'home/camera_controls.dart';
@@ -116,7 +117,7 @@ class _HomeScreenState extends State<HomeScreen>
   int _photoScanGeneration = 0;
 
   // Live thought summary text accumulated during streaming analysis
-  String _liveThoughtText = '';
+  final ThoughtBuffer _thought = ThoughtBuffer();
   ImageProvider? _analysisHeroImageProvider;
 
   static const String _pendingPhotosBox = DatabaseService.pendingPhotosBoxName;
@@ -209,6 +210,7 @@ class _HomeScreenState extends State<HomeScreen>
     _logoTapTimer?.cancel();
     _photoScanGeneration++;
     _photoBarcode.dispose();
+    _thought.dispose();
     final controller = _cameraController;
     unawaited(
       _barcodeScanner.dispose().whenComplete(() => controller?.dispose()),
@@ -851,6 +853,12 @@ class _HomeScreenState extends State<HomeScreen>
   ImageProvider _photoImageProvider(String photo, {int? cacheWidth}) =>
       PhotoStore.instance.imageProvider(photo, cacheWidth: cacheWidth);
 
+  /// The screen's width in device pixels: the most a full-width photo needs.
+  int _screenPixelWidth() =>
+      (MediaQuery.sizeOf(context).width *
+              MediaQuery.devicePixelRatioOf(context))
+          .round();
+
   Future<void> _saveCapturedPhoto(String photo) async {
     final l10n = context.l10n;
 
@@ -893,13 +901,21 @@ class _HomeScreenState extends State<HomeScreen>
 
   Future<void> _openCapturedPhoto(int index) async {
     if (index < 0 || index >= _capturedPhotos.length) return;
-    final photo = _capturedPhotos[index];
+    final photos = List<String>.from(_capturedPhotos);
     await showPhotoViewer(
       context,
-      image: _photoImageProvider(photo),
-      onSave: () => _saveCapturedPhoto(photo),
-      onDelete: () => _removeCapturedPhoto(index),
+      images: [for (final p in photos) _photoImageProvider(p)],
+      initialIndex: index,
+      heroTag: (i) => PhotoReviewView.heroTag(photos[i]),
+      onSave: (i) => _saveCapturedPhoto(photos[i]),
+      onDelete: (i) => _removeCapturedPhoto(_capturedPhotos.indexOf(photos[i])),
     );
+  }
+
+  /// Moves a photo in the review grid; the first one is the meal's cover.
+  void _reorderCapturedPhoto(int from, int to) {
+    setState(() => _capturedPhotos.insert(to, _capturedPhotos.removeAt(from)));
+    unawaited(_persistPhotos());
   }
 
   Future<void> _analyzeMeal({
@@ -988,6 +1004,7 @@ class _HomeScreenState extends State<HomeScreen>
     } finally {
       await provider.discardPendingMeal(mealId);
       OfflineQueueService.release(mealId);
+      if (mounted && _cameraTabIsActive) unawaited(_resumeCameraPreview());
     }
   }
 
@@ -1002,11 +1019,17 @@ class _HomeScreenState extends State<HomeScreen>
     setState(() {
       _isAnalyzing = true;
       _analysisHeroImageProvider = _capturedPhotos.isNotEmpty
-          ? _photoImageProvider(_capturedPhotos.first)
+          ? _photoImageProvider(
+              _capturedPhotos.first,
+              cacheWidth: _screenPixelWidth(),
+            )
           : null;
-      _liveThoughtText = '';
     });
+    _thought.clear();
     provider.setMealAnalysisActive(true);
+    // The analysis covers the whole screen; the live preview underneath
+    // would only cost frames.
+    unawaited(_pauseCameraPreview());
 
     Map<String, dynamic>? result;
 
@@ -1022,9 +1045,7 @@ class _HomeScreenState extends State<HomeScreen>
       await for (final event in stream) {
         if (!mounted) break;
         if (event is ThoughtChunk) {
-          setState(() {
-            _liveThoughtText += event.text;
-          });
+          _thought.append(event.text);
         } else if (event is AnalysisResult) {
           result = event.data;
         }
@@ -1044,7 +1065,7 @@ class _HomeScreenState extends State<HomeScreen>
         });
         provider.setMealAnalysisActive(false);
         _showMessage(errorMsg, kind: AppToastKind.error);
-        setState(() => _liveThoughtText = '');
+        _thought.clear();
         return;
       }
     }
@@ -1194,34 +1215,15 @@ class _HomeScreenState extends State<HomeScreen>
 
   Future<void> _clearPhotos() async {
     final l10n = context.l10n;
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(l10n.discardPhotos),
-        content: Text(l10n.discardPhotosConfirm),
-        backgroundColor: AppColors.limestone,
-        surfaceTintColor: Colors.transparent,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: Text(
-              l10n.cancel,
-              style: TextStyle(color: AppColors.slate),
-            ),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: Text(
-              l10n.discard,
-              style: const TextStyle(color: AppColors.error),
-            ),
-          ),
-        ],
-      ),
+    final confirmed = await showConfirmDialog(
+      context,
+      title: l10n.discardPhotos,
+      message: l10n.discardPhotosConfirm,
+      confirmLabel: l10n.discard,
+      destructive: true,
     );
 
-    if (confirmed == true) {
+    if (confirmed) {
       for (final photo in List<String>.from(_capturedPhotos)) {
         await _deleteStoredPhotoIfDisposable(photo);
       }
@@ -1266,9 +1268,12 @@ class _HomeScreenState extends State<HomeScreen>
         Positioned.fill(child: _buildCamera()),
         if (_isAnalyzing)
           Positioned.fill(
-            child: AnalyzingView(
-              heroImage: _analysisHeroImageProvider,
-              thoughtText: _liveThoughtText,
+            child: ValueListenableBuilder<String>(
+              valueListenable: _thought,
+              builder: (context, thought, _) => AnalyzingView(
+                heroImage: _analysisHeroImageProvider,
+                thoughtText: thought,
+              ),
             ),
           )
         else if (_capturedPhotos.isEmpty && _showCameraHint)
@@ -1292,9 +1297,14 @@ class _HomeScreenState extends State<HomeScreen>
             child: PhotoReviewView(
               photos: _capturedPhotos,
               isAnalyzing: _isAnalyzing,
-              imageFor: _photoImageProvider,
+              // Two photos side by side: half the screen is enough.
+              imageFor: (photo) => _photoImageProvider(
+                photo,
+                cacheWidth: (_screenPixelWidth() / 2).round(),
+              ),
               onOpen: _openCapturedPhoto,
               onRemove: _removeCapturedPhoto,
+              onReorder: _reorderCapturedPhoto,
               onDiscard: _clearPhotos,
               onAddPhoto: _switchToCameraMode,
               onAnalyze: _showContextAndAnalyze,
@@ -1351,10 +1361,7 @@ class _HomeScreenState extends State<HomeScreen>
                             width: 68,
                             height: 68,
                             decoration: BoxDecoration(
-                              border: Border.all(
-                                color: Colors.white,
-                                width: 2,
-                              ),
+                              border: Border.all(color: Colors.white, width: 2),
                               borderRadius: BorderRadius.circular(34),
                             ),
                           ),
@@ -1374,7 +1381,9 @@ class _HomeScreenState extends State<HomeScreen>
                               ),
                               decoration: BoxDecoration(
                                 color: Colors.black.withValues(alpha: 0.45),
-                                borderRadius: BorderRadius.circular(16),
+                                borderRadius: BorderRadius.circular(
+                                  AppTheme.borderRadius,
+                                ),
                               ),
                               child: Text(
                                 '${_currentZoomLevel.toStringAsFixed(1)}x',
@@ -1432,8 +1441,10 @@ class _HomeScreenState extends State<HomeScreen>
         if (canShowCamera)
           Positioned.fill(child: _buildCameraPreview(_cameraController!))
         else
+          // Black while the camera starts, as the system camera does, in
+          // either theme.
           Container(
-            color: AppColors.slate,
+            color: Colors.black,
             child: Center(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -1449,15 +1460,15 @@ class _HomeScreenState extends State<HomeScreen>
                         ),
                       ),
                     )
-                  else ...[
-                    Image.asset(
-                      'assets/kalorat-favicon-android.webp',
-                      width: 72,
-                      height: 72,
+                  else
+                    const SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white54,
+                      ),
                     ),
-                    const SizedBox(height: 20),
-                    CircularProgressIndicator(color: Colors.white),
-                  ],
                 ],
               ),
             ),

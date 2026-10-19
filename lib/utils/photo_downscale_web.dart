@@ -29,3 +29,24 @@ Future<Uint8List> downscaleForStorage(Uint8List bytes) async {
     return bytes;
   }
 }
+
+/// A JPEG of at most [maxDimension] px for the analysis, made by the browser
+/// off the main thread. On the web `compute` runs on the main thread, where
+/// the pure-Dart decoder froze the app for most of a second per photo.
+/// Null when the browser can't decode the photo.
+Future<Uint8List?> downscaleForAnalysis(
+  Uint8List bytes,
+  int maxDimension,
+) async {
+  try {
+    final result = (await _downscaleJpeg(
+      bytes.toJS,
+      maxDimension,
+      0.82,
+    ).toDart).toDart;
+    return result.isEmpty ? null : result;
+  } catch (e) {
+    AppLogger.warning('PhotoDownscale', 'Browser resize failed: $e');
+    return null;
+  }
+}

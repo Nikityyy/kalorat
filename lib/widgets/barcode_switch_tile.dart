@@ -67,7 +67,7 @@ class BarcodeSwitchTile extends StatelessWidget {
                   ],
                 ),
               ),
-              Switch.adaptive(
+              Switch(
                 value: value,
                 activeThumbColor: AppColors.primary,
                 onChanged: onChanged,

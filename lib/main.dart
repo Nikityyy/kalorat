@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show defaultTargetPlatform, kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
 
@@ -24,8 +24,12 @@ void main() async {
   // The app is a single screen stack of its own. Without browser history, the
   // system edge-swipe cannot step "back" into an earlier page state (the
   // loading screen) on an iPhone home-screen app; in-app swipe-back and the
-  // back arrows still work.
-  setUrlStrategy(null);
+  // back arrows still work. Android keeps the history: its back button goes
+  // through it, and without it back leaves the app from any screen.
+  if (defaultTargetPlatform == TargetPlatform.iOS ||
+      defaultTargetPlatform == TargetPlatform.macOS) {
+    setUrlStrategy(null);
+  }
   WidgetsFlutterBinding.ensureInitialized();
   await WidgetService.initialize();
 
@@ -152,7 +156,10 @@ class _KaloratAppState extends State<KaloratApp> with WidgetsBindingObserver {
             return MaterialApp(
               debugShowCheckedModeBanner: false,
               title: 'Kalorat',
+              // A drag on a list puts the keyboard away, as on both platforms.
               scrollBehavior: const MaterialScrollBehavior().copyWith(
+                keyboardDismissBehavior:
+                    ScrollViewKeyboardDismissBehavior.onDrag,
                 dragDevices: {
                   PointerDeviceKind.touch,
                   PointerDeviceKind.mouse,

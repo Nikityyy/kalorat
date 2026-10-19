@@ -131,7 +131,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get analyzeMeal => 'Mahlzeit checken';
 
   @override
-  String get analyzing => 'Analysiere...';
+  String get analyzing => 'Analysiere …';
 
   @override
   String get mealName => 'Mahlzeit';
@@ -165,7 +165,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get pendingAnalysis => 'Ausstehende Analysen';
 
   @override
-  String get processingQueue => 'Verarbeite ausstehende Mahlzeiten...';
+  String get processingQueue => 'Ausstehende Mahlzeiten werden verarbeitet …';
 
   @override
   String get analysisWaitingForResume =>
@@ -332,9 +332,6 @@ class AppLocalizationsDe extends AppLocalizations {
   String get startOnboarding => 'Onboarding starten';
 
   @override
-  String get meTitle => 'Profil';
-
-  @override
   String get deleteWeight => 'Gewicht löschen?';
 
   @override
@@ -379,7 +376,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get importFailed => 'Import fehlgeschlagen';
 
   @override
-  String get buildingPlan => 'Profil wird gespeichert...';
+  String get buildingPlan => 'Profil wird gespeichert …';
 
   @override
   String get apiKeyValidationError => 'Bitte einen gültigen API-Key eingeben';
@@ -435,21 +432,18 @@ class AppLocalizationsDe extends AppLocalizations {
   String get other => 'Divers';
 
   @override
-  String get yourBmi => 'DEIN BMI';
-
-  @override
   String healthyRange(String min, String max) {
     return 'Gesunder Bereich: $min - $max kg';
   }
 
   @override
-  String get status => 'STATUS';
+  String get status => 'Status';
 
   @override
   String get weightProgress => 'Gewichtsverlauf';
 
   @override
-  String get caloriesConsumed => 'KALORIEN AUFGENOMMEN';
+  String get caloriesConsumed => 'Gegessene Kalorien';
 
   @override
   String get proteinShort => 'Eiw.';
@@ -485,12 +479,6 @@ class AppLocalizationsDe extends AppLocalizations {
   String get noFoodDetected => 'Kein Essen erkannt. Bitte versuche es erneut.';
 
   @override
-  String get myHistory => 'Meine Historie';
-
-  @override
-  String get noMealsRecorded => 'Keine Mahlzeiten erfasst.';
-
-  @override
   String get deleteQuestion => 'Löschen?';
 
   @override
@@ -517,10 +505,29 @@ class AppLocalizationsDe extends AppLocalizations {
   String get addPhoto => '+ Foto';
 
   @override
+  String get reorderPhotosHint =>
+      'Halten und ziehen, um die Reihenfolge zu ändern';
+
+  @override
+  String get coverPhoto => 'Titelbild';
+
+  @override
+  String get movePhotoEarlier => 'Nach vorne';
+
+  @override
+  String get movePhotoLater => 'Nach hinten';
+
+  @override
   String get startAnalysis => 'Analyse starten';
 
   @override
   String get analysisResult => 'Analyse Ergebnis';
+
+  @override
+  String get yourDescription => 'Deine Beschreibung';
+
+  @override
+  String get yourNote => 'Deine Notiz';
 
   @override
   String get saveMeal => 'Eintrag loggen';
@@ -836,15 +843,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get veryActiveSubtitle => 'Schwere körperliche Arbeit';
 
   @override
-  String get dailyAvg => 'ø / Tag';
-
-  @override
   String get streak => 'Serie';
-
-  @override
-  String streakDays(int count) {
-    return '$count Tage';
-  }
 
   @override
   String get discardPhotos => 'Fotos verwerfen?';
@@ -880,7 +879,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get mealContextHint =>
-      'z.B. Vanillepudding, 200g, Angaben von der Packung...';
+      'z. B. Vanillepudding, 200 g, Angaben von der Packung';
 
   @override
   String get mealContextSkip => 'Ohne Hinweis';
@@ -918,7 +917,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get aiThinkingTitle => 'KI-Analyse';
 
   @override
-  String get aiThinkingLabel => 'KI denkt nach...';
+  String get aiThinkingLabel => 'Denkt nach …';
 
   @override
   String get analysisTimedOut => 'Analyse abgebrochen. Bitte erneut versuchen.';
@@ -1069,6 +1068,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get quickLogUndo => 'Rückgängig';
 
   @override
+  String get mealDeleted => 'Mahlzeit gelöscht';
+
+  @override
   String get quickLogFailed => 'Die Mahlzeit konnte nicht erfasst werden.';
 
   @override
@@ -1122,15 +1124,10 @@ class AppLocalizationsDe extends AppLocalizations {
       'Hinweis bearbeiten oder direkt neu analysieren';
 
   @override
-  String get retrySheetHint => 'z.B. 2 Portionen, extra Sauce ...';
+  String get retrySheetHint => 'z. B. 2 Portionen, extra Sauce';
 
   @override
   String get retrySheetAction => 'Neu analysieren';
-
-  @override
-  String estimatedRange(String range) {
-    return 'Geschätzter Bereich: $range';
-  }
 
   @override
   String get analysisNoResult => 'Kein Ergebnis erhalten.';
@@ -1159,15 +1156,6 @@ class AppLocalizationsDe extends AppLocalizations {
   String get restoreBackupMissing => 'Kein Import-Backup vorhanden.';
 
   @override
-  String get insightsTitle => 'Auswertung';
-
-  @override
-  String get weeklySummaryTitle => 'Letzte 7 Tage';
-
-  @override
-  String get weeklyAvgIntake => 'Ø Aufnahme pro Tag';
-
-  @override
   String get weeklyOnTarget => 'Im Ziel';
 
   @override
@@ -1186,33 +1174,11 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
-  String weeklyTarget(String kcal) {
-    return 'Ziel $kcal kcal';
-  }
-
-  @override
-  String weeklyWeightSpan(int days) {
-    return 'in $days Tagen';
-  }
-
-  @override
-  String get weeklyWeightNeedMore => 'Zwei Wiegungen zeigen die Entwicklung.';
-
-  @override
-  String get weeklyNoMeals =>
-      'In den letzten 7 Tagen wurde keine Mahlzeit erfasst.';
-
-  @override
   String get burnTitle => 'Geschätzter Tagesverbrauch';
 
   @override
   String burnBasis(int days, int weighIns) {
     return 'Aus $days erfassten Tagen und $weighIns Wiegungen der letzten 4 Wochen.';
-  }
-
-  @override
-  String burnWeightTrend(String rate) {
-    return 'Gewichtstrend: $rate kg pro Woche';
   }
 
   @override
@@ -1232,9 +1198,6 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get burnDisclaimer =>
       'Eine Schätzung: Sie ist nur so genau wie deine erfassten Mahlzeiten und Wiegungen.';
-
-  @override
-  String get correctionPrompt => 'Mit einem Tipp korrigieren';
 
   @override
   String get correctionLower => 'Weniger';
@@ -1278,15 +1241,6 @@ class AppLocalizationsDe extends AppLocalizations {
   String get validationDuplicateMeals => 'Doppelte Mahlzeiten-IDs im Import.';
 
   @override
-  String get thisWeekTitle => 'Wochenziel';
-
-  @override
-  String get startWeekStrong => 'Beginne deine Woche stark.';
-
-  @override
-  String get keepMomentum => 'Bleib dran!';
-
-  @override
   String get hintGotIt => 'Verstanden';
 
   @override
@@ -1310,19 +1264,6 @@ class AppLocalizationsDe extends AppLocalizations {
   String get hintBackupAction => 'Einstellungen öffnen';
 
   @override
-  String get historyEmptyTitle => 'Hier erscheinen deine Mahlzeiten';
-
-  @override
-  String get historyEmptyBody =>
-      'Jede analysierte Mahlzeit steht hier, nach Tag, Woche, Monat oder Jahr sortiert. Wechsle zur Kamera, um die erste zu erfassen.';
-
-  @override
-  String get historyExampleLabel => 'Beispiel';
-
-  @override
-  String get sampleMealName => 'Porridge';
-
-  @override
   String get welcomeHaveAccount => 'Ich habe schon ein Konto';
 
   @override
@@ -1339,4 +1280,178 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get themeDark => 'Dunkel';
+
+  @override
+  String todayWithDate(String date) {
+    return 'Heute, $date';
+  }
+
+  @override
+  String yesterdayWithDate(String date) {
+    return 'Gestern, $date';
+  }
+
+  @override
+  String get pickDay => 'Tag wählen';
+
+  @override
+  String get previousDay => 'Vorheriger Tag';
+
+  @override
+  String get nextDay => 'Nächster Tag';
+
+  @override
+  String kcalOfTarget(String target) {
+    return 'kcal von $target';
+  }
+
+  @override
+  String get kcalToEatToday => 'kcal für heute';
+
+  @override
+  String kcalLeftOf(String target) {
+    return 'kcal übrig von $target';
+  }
+
+  @override
+  String kcalOverTarget(String target) {
+    return 'kcal über deinen $target';
+  }
+
+  @override
+  String proteinOfTarget(int eaten, int target) {
+    return '$eaten von $target g Protein';
+  }
+
+  @override
+  String get proteinReached => 'Proteinziel erreicht';
+
+  @override
+  String proteinToGo(int grams) {
+    return 'Noch $grams g Protein';
+  }
+
+  @override
+  String mealsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count Mahlzeiten',
+      one: '1 Mahlzeit',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get pastDayEmpty => 'An diesem Tag ist nichts eingetragen.';
+
+  @override
+  String get todayEmptyBody =>
+      'Deine erste Mahlzeit beginnt den Aufstieg. Fotografiere den Teller, Kalorat erledigt den Rest.';
+
+  @override
+  String get openCamera => 'Kamera öffnen';
+
+  @override
+  String get tabCamera => 'Kamera';
+
+  @override
+  String get tabProgress => 'Fortschritt';
+
+  @override
+  String get bodyTitle => 'Körper';
+
+  @override
+  String streakLine(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count Tage in Folge eingetragen',
+      one: '1 Tag in Folge eingetragen',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get streakNone => 'Trag heute etwas ein, um eine Serie zu starten.';
+
+  @override
+  String get previousPeriod => 'Vorheriger Zeitraum';
+
+  @override
+  String get nextPeriod => 'Nächster Zeitraum';
+
+  @override
+  String get averagePerDay => 'Durchschnitt pro Tag';
+
+  @override
+  String get periodNoMeals => 'In diesem Zeitraum ist nichts eingetragen.';
+
+  @override
+  String proteinAveragePerDay(int average, int target) {
+    return 'Protein $average von $target g pro Tag';
+  }
+
+  @override
+  String burnPerDay(int kcal) {
+    return 'etwa $kcal kcal pro Tag';
+  }
+
+  @override
+  String gramsProtein(int grams) {
+    return '$grams g Protein';
+  }
+
+  @override
+  String get moreActions => 'Weitere Aktionen';
+
+  @override
+  String todayAt(String time) {
+    return 'Heute, $time';
+  }
+
+  @override
+  String yesterdayAt(String time) {
+    return 'Gestern, $time';
+  }
+
+  @override
+  String get portionLess => 'Kleinere Portion';
+
+  @override
+  String get portionMore => 'Größere Portion';
+
+  @override
+  String get portionEdit => 'Portion eingeben';
+
+  @override
+  String confidenceShort(int percent) {
+    return 'Zu $percent % sicher';
+  }
+
+  @override
+  String probablyBetween(int low, int high) {
+    return 'wahrscheinlich $low–$high kcal';
+  }
+
+  @override
+  String kcalLeftToday(int kcal) {
+    return '$kcal kcal heute übrig';
+  }
+
+  @override
+  String kcalOverToday(int kcal) {
+    return '$kcal kcal über dem Ziel';
+  }
+
+  @override
+  String get quickLogShort => 'Eintippen';
+
+  @override
+  String get kcalPerDayPlan => 'kcal pro Tag';
+
+  @override
+  String proteinPerDayPlan(int grams) {
+    return '$grams g Protein pro Tag';
+  }
 }

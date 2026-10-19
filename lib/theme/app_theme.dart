@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'app_colors.dart';
@@ -5,11 +6,21 @@ import 'app_typography.dart';
 
 class AppTheme {
   static const double borderRadius = 12.0;
+
+  /// Surfaces that meet the screen edge (bottom sheets), closer to the
+  /// device's own corners than a card is.
+  static const double sheetRadius = 24.0;
   static const double _borderWidth = 1.0;
 
-  static ThemeData get lightTheme => _build(Brightness.light);
+  static bool get _apple =>
+      defaultTargetPlatform == TargetPlatform.iOS ||
+      defaultTargetPlatform == TargetPlatform.macOS;
 
-  static ThemeData get darkTheme => _build(Brightness.dark);
+  // Built once: the app root rebuilds on every provider change, and building
+  // and comparing two full themes each time is not free.
+  static final ThemeData lightTheme = _build(Brightness.light);
+
+  static final ThemeData darkTheme = _build(Brightness.dark);
 
   /// Builds one theme from the role colors. They follow [AppColors.setDark],
   /// so that is set for the duration and put back afterwards.
@@ -68,8 +79,10 @@ class AppTheme {
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: true,
-        titleTextStyle: AppTypography.titleLarge,
-        foregroundColor: AppColors.primary,
+        titleTextStyle: AppTypography.body.copyWith(
+          fontWeight: FontWeight.w600,
+        ),
+        foregroundColor: AppColors.text,
       ),
       textTheme: TextTheme(
         displayLarge: AppTypography.displayLarge,
@@ -97,6 +110,15 @@ class AppTheme {
         backgroundColor: AppColors.canvas,
         elevation: 0,
         shape: flatShape,
+        titleTextStyle: AppTypography.heading,
+        contentTextStyle: AppTypography.body.copyWith(color: AppColors.ink2),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          foregroundColor: AppColors.primary,
+          textStyle: AppTypography.body.copyWith(fontWeight: FontWeight.w600),
+          minimumSize: const Size(48, 44),
+        ),
       ),
       bottomSheetTheme: BottomSheetThemeData(
         backgroundColor: AppColors.canvas,
@@ -104,10 +126,11 @@ class AppTheme {
         modalElevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: const BorderRadius.vertical(
-            top: Radius.circular(borderRadius),
+            top: Radius.circular(sheetRadius),
           ),
           side: border,
         ),
+        clipBehavior: Clip.antiAlias,
       ),
       snackBarTheme: SnackBarThemeData(elevation: 0, shape: flatShape),
       popupMenuTheme: PopupMenuThemeData(
@@ -127,6 +150,8 @@ class AppTheme {
       ),
       // Horizontal slide on Apple platforms; slide with a cross-fade
       // elsewhere. Both are the native motion of the platform.
+      // iOS has no ink ripple: a press only highlights. Android keeps it.
+      splashFactory: _apple ? NoSplash.splashFactory : null,
       pageTransitionsTheme: const PageTransitionsTheme(
         builders: {
           TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),

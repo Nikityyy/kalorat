@@ -4,7 +4,8 @@ import 'package:intl/intl.dart';
 import '../../extensions/l10n_extension.dart';
 import '../../models/weight_model.dart';
 import '../../theme/app_colors.dart';
-import '../../theme/app_theme.dart';
+import '../common/mono_digits.dart';
+import '../common/segmented_tabs.dart';
 import '../../theme/app_typography.dart';
 
 enum _WeightRange { week, month, year }
@@ -69,82 +70,55 @@ class _WeightChartState extends State<WeightChart> {
       return !date.isBefore(start) && !date.isAfter(today);
     }).toList()..sort((a, b) => a.date.compareTo(b.date));
 
-    return Container(
-      height: 350,
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(8, 6, 8, 20),
-      decoration: BoxDecoration(
-        color: AppColors.limestone,
-        borderRadius: BorderRadius.circular(AppTheme.borderRadius),
-        border: Border.all(color: AppColors.borderGrey.withValues(alpha: 0.5)),
-      ),
-      child: Column(
-        children: [
-          _buildRangeSelector(l10n),
-          if (weeklyWeightDifference(widget.weights)
-              case final difference?) ...[
-            const SizedBox(height: 8),
-            Text(
-              l10n.weeklyDifference(
-                '${difference >= 0 ? '+' : ''}${difference.toStringAsFixed(1)}',
+    final latest = widget.weights.isEmpty
+        ? null
+        : widget.weights.reduce((a, b) => a.date.isAfter(b.date) ? a : b);
+    final difference = weeklyWeightDifference(widget.weights);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (latest != null) ...[
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
+            children: [
+              Text(
+                latest.weight.toStringAsFixed(1),
+                style: AppTypography.hero(size: 44),
               ),
-              style: AppTypography.dataLabel.copyWith(color: AppColors.slate),
-            ),
-          ],
-          const SizedBox(height: 16),
-          Expanded(
-            child: visible.isEmpty
-                ? _buildEmptyState(l10n)
-                : _buildChart(context, visible),
+              const SizedBox(width: 6),
+              Text(
+                l10n.kg,
+                style: AppTypography.body.copyWith(color: AppColors.ink2),
+              ),
+            ],
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildRangeSelector(dynamic l10n) {
-    final labels = {
-      _WeightRange.week: l10n.week,
-      _WeightRange.month: l10n.month,
-      _WeightRange.year: l10n.year,
-    };
-
-    return Container(
-      height: 48,
-      padding: const EdgeInsets.all(4),
-      decoration: BoxDecoration(
-        color: AppColors.canvas,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.borderGrey),
-      ),
-      child: Row(
-        children: _WeightRange.values.map((range) {
-          final selected = range == _range;
-          return Expanded(
-            child: InkWell(
-              onTap: () => setState(() => _range = range),
-              borderRadius: BorderRadius.circular(10),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 150),
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: selected
-                      ? AppColors.styrianForest
-                      : Colors.transparent,
-                  borderRadius: BorderRadius.circular(10),
+          if (difference != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: MonoDigits(
+                l10n.weeklyDifference(
+                  '${difference >= 0 ? '+' : '−'}${difference.abs().toStringAsFixed(1)}',
                 ),
-                child: Text(
-                  labels[range],
-                  style: AppTypography.labelLarge.copyWith(
-                    color: selected ? AppColors.onPrimary : AppColors.slate,
-                    fontSize: 14,
-                  ),
-                ),
+                style: AppTypography.secondary,
               ),
             ),
-          );
-        }).toList(),
-      ),
+          const SizedBox(height: 16),
+        ],
+        SegmentedTabs(
+          labels: [l10n.week, l10n.month, l10n.year],
+          selected: _range.index,
+          onChanged: (i) => setState(() => _range = _WeightRange.values[i]),
+        ),
+        const SizedBox(height: 16),
+        SizedBox(
+          height: 200,
+          child: visible.isEmpty
+              ? _buildEmptyState(l10n)
+              : _buildChart(context, visible),
+        ),
+      ],
     );
   }
 
@@ -188,10 +162,8 @@ class _WeightChartState extends State<WeightChart> {
         gridData: FlGridData(
           drawVerticalLine: false,
           horizontalInterval: yInterval,
-          getDrawingHorizontalLine: (_) => FlLine(
-            color: AppColors.borderGrey.withValues(alpha: 0.2),
-            strokeWidth: 1,
-          ),
+          getDrawingHorizontalLine: (_) =>
+              FlLine(color: AppColors.border, strokeWidth: 1),
         ),
         titlesData: FlTitlesData(
           topTitles: const AxisTitles(
@@ -207,9 +179,10 @@ class _WeightChartState extends State<WeightChart> {
               reservedSize: 44,
               getTitlesWidget: (value, _) => Text(
                 value.toStringAsFixed(1),
-                style: AppTypography.dataLabel.copyWith(
-                  color: AppColors.slate.withValues(alpha: 0.55),
-                  fontSize: 10,
+                style: AppTypography.number(
+                  size: 12,
+                  weight: FontWeight.w400,
+                  color: AppColors.ink3,
                 ),
               ),
             ),
@@ -219,20 +192,27 @@ class _WeightChartState extends State<WeightChart> {
               showTitles: true,
               interval: xInterval,
               reservedSize: 28,
-              getTitlesWidget: (value, _) {
+              getTitlesWidget: (value, meta) {
                 final date = plotStart.add(Duration(days: value.round()));
                 final label = plotDays > 60
                     ? DateFormat.MMM(
                         Localizations.localeOf(context).languageCode,
                       ).format(date)
-                    : '${date.day}.${date.month}.';
-                return Padding(
-                  padding: const EdgeInsets.only(top: 8),
+                    : DateFormat.Md(
+                        Localizations.localeOf(context).languageCode,
+                      ).format(date);
+                // The first and last dates sit on the chart's edges; keep
+                // them inside it instead of half cut off.
+                return SideTitleWidget(
+                  meta: meta,
+                  space: 8,
+                  fitInside: SideTitleFitInsideData.fromTitleMeta(meta),
                   child: Text(
                     label,
-                    style: AppTypography.dataLabel.copyWith(
-                      color: AppColors.slate.withValues(alpha: 0.55),
-                      fontSize: 9,
+                    style: AppTypography.number(
+                      size: 12,
+                      weight: FontWeight.w400,
+                      color: AppColors.ink3,
                     ),
                   ),
                 );
@@ -247,19 +227,16 @@ class _WeightChartState extends State<WeightChart> {
             isCurved: spots.length > 2,
             preventCurveOverShooting: true,
             color: AppColors.styrianForest,
-            barWidth: 3,
+            barWidth: 2.5,
             dotData: FlDotData(show: weights.length <= 31),
-            belowBarData: BarAreaData(
-              show: true,
-              color: AppColors.styrianForest.withValues(alpha: 0.12),
-            ),
+            belowBarData: BarAreaData(show: true, color: AppColors.accentSoft),
           ),
           if (trend.isNotEmpty)
             LineChartBarData(
               spots: trend,
               isCurved: false,
-              color: AppColors.slate.withValues(alpha: 0.55),
-              barWidth: 2,
+              color: AppColors.ink3,
+              barWidth: 1.2,
               dashArray: [6, 4],
               dotData: const FlDotData(show: false),
             ),
@@ -270,7 +247,7 @@ class _WeightChartState extends State<WeightChart> {
             getTooltipItems: (touched) => touched.map((spot) {
               final date = plotStart.add(Duration(days: spot.x.round()));
               return LineTooltipItem(
-                '${date.day}.${date.month}.${date.year}\n${spot.y.toStringAsFixed(1)} ${context.l10n.kg}',
+                '${DateFormat.yMMMd(Localizations.localeOf(context).languageCode).format(date)}\n${spot.y.toStringAsFixed(1)} ${context.l10n.kg}',
                 TextStyle(color: AppColors.onPrimary),
               );
             }).toList(),
@@ -283,9 +260,7 @@ class _WeightChartState extends State<WeightChart> {
   Widget _buildEmptyState(dynamic l10n) => Center(
     child: Text(
       l10n.noDataAvailable,
-      style: AppTypography.bodyMedium.copyWith(
-        color: AppColors.slate.withValues(alpha: 0.5),
-      ),
+      style: AppTypography.secondary,
       textAlign: TextAlign.center,
     ),
   );

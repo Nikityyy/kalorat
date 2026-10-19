@@ -130,7 +130,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get analyzeMeal => 'Analyze';
 
   @override
-  String get analyzing => 'Analyzing...';
+  String get analyzing => 'Analyzing…';
 
   @override
   String get mealName => 'Meal';
@@ -164,7 +164,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pendingAnalysis => 'Pending analyses';
 
   @override
-  String get processingQueue => 'Processing pending meals...';
+  String get processingQueue => 'Processing pending meals…';
 
   @override
   String get analysisWaitingForResume => 'Waiting for Kalorat to resume';
@@ -325,10 +325,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get grantPermission => 'Grant permission';
 
   @override
-  String get startOnboarding => 'Start Onboarding';
-
-  @override
-  String get meTitle => 'Profile';
+  String get startOnboarding => 'Set up your profile';
 
   @override
   String get deleteWeight => 'Delete weight?';
@@ -374,7 +371,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get importFailed => 'Import failed';
 
   @override
-  String get buildingPlan => 'Saving profile...';
+  String get buildingPlan => 'Saving profile…';
 
   @override
   String get apiKeyValidationError => 'Enter a valid API key.';
@@ -430,21 +427,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get other => 'Other';
 
   @override
-  String get yourBmi => 'YOUR BMI';
-
-  @override
   String healthyRange(String min, String max) {
     return 'Healthy range: $min - $max kg';
   }
 
   @override
-  String get status => 'STATUS';
+  String get status => 'Status';
 
   @override
-  String get weightProgress => 'Weight Progress';
+  String get weightProgress => 'Weight progress';
 
   @override
-  String get caloriesConsumed => 'CALORIES CONSUMED';
+  String get caloriesConsumed => 'Calories eaten';
 
   @override
   String get proteinShort => 'Prot';
@@ -462,7 +456,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get logMeals => 'Log meals';
 
   @override
-  String get logMealsSubtitle => 'Morning, Lunch, Dinner';
+  String get logMealsSubtitle => 'Morning, lunch, dinner';
 
   @override
   String get logWeight => 'Log weight';
@@ -474,16 +468,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noDataAvailable => 'No data available';
 
   @override
-  String get recentHistory => 'Recent History';
+  String get recentHistory => 'Recent history';
 
   @override
   String get noFoodDetected => 'No food detected. Try again.';
-
-  @override
-  String get myHistory => 'My History';
-
-  @override
-  String get noMealsRecorded => 'No meals recorded.';
 
   @override
   String get deleteQuestion => 'Delete?';
@@ -493,7 +481,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Do you really want to delete this meal?';
 
   @override
-  String get cameraNeeded => 'Camera Access Needed';
+  String get cameraNeeded => 'Camera access needed';
 
   @override
   String get cameraPermissionText =>
@@ -503,7 +491,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get backToSelection => 'Back to selection';
 
   @override
-  String get reviewPhotos => 'Review Photos';
+  String get reviewPhotos => 'Review photos';
 
   @override
   String get discard => 'Discard';
@@ -512,19 +500,37 @@ class AppLocalizationsEn extends AppLocalizations {
   String get addPhoto => '+ Photo';
 
   @override
-  String get startAnalysis => 'Start Analysis';
+  String get reorderPhotosHint => 'Hold and drag to change the order';
 
   @override
-  String get analysisResult => 'Analysis Result';
+  String get coverPhoto => 'Cover';
 
   @override
-  String get saveMeal => 'Log Entry';
+  String get movePhotoEarlier => 'Move earlier';
+
+  @override
+  String get movePhotoLater => 'Move later';
+
+  @override
+  String get startAnalysis => 'Analyze';
+
+  @override
+  String get analysisResult => 'Analysis result';
+
+  @override
+  String get yourDescription => 'Your description';
+
+  @override
+  String get yourNote => 'Your note';
+
+  @override
+  String get saveMeal => 'Log meal';
 
   @override
   String get welcomeSlogan => 'Calories, tracked with precision.';
 
   @override
-  String get getStarted => 'Get Started';
+  String get getStarted => 'Get started';
 
   @override
   String get genderLabel => 'Gender';
@@ -533,7 +539,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get goalLabel => 'Goal';
 
   @override
-  String get geminiApiKeyLabel => 'Gemini API Key';
+  String get geminiApiKeyLabel => 'Gemini API key';
 
   @override
   String get ok => 'OK';
@@ -560,7 +566,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get buildMassSubtitle => 'Calorie surplus';
 
   @override
-  String get createPlan => 'Create Plan';
+  String get createPlan => 'Create plan';
 
   @override
   String get aiConfigure => 'Configure AI';
@@ -579,7 +585,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get integrations => 'Integrations';
 
   @override
-  String get accountAndData => 'Account & Data';
+  String get accountAndData => 'Account and data';
 
   @override
   String get enterApiKeyError => 'Enter an API key.';
@@ -588,7 +594,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get invalidApiKeyError => 'Invalid API Key. Please check your input.';
 
   @override
-  String get validateAndContinue => 'Validate & Continue';
+  String get validateAndContinue => 'Check and continue';
 
   @override
   String get nameSubtitle => 'Shown in your profile.';
@@ -609,13 +615,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get weightSaved => 'Weight saved';
 
   @override
-  String get goalWeightLoss => 'Weight Loss';
+  String get goalWeightLoss => 'Weight loss';
 
   @override
-  String get goalMaintainWeight => 'Maintain Weight';
+  String get goalMaintainWeight => 'Maintain weight';
 
   @override
-  String get goalMuscleGain => 'Muscle Gain';
+  String get goalMuscleGain => 'Muscle gain';
 
   @override
   String get editMealName => 'Edit meal name';
@@ -627,7 +633,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get date => 'Date';
 
   @override
-  String get healthIntegration => 'Health Integration';
+  String get healthIntegration => 'Health integration';
 
   @override
   String get healthSyncEnabled => 'Sync with Health';
@@ -664,7 +670,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get healthSyncSuccess => 'Synced with health app';
 
   @override
-  String get healthOnboardingTitle => 'Connect Your Health';
+  String get healthOnboardingTitle => 'Connect your health app';
 
   @override
   String get healthOnboardingDescription =>
@@ -680,7 +686,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get healthOnboardingBenefit3 => 'Unified health dashboard';
 
   @override
-  String get connectNow => 'Connect Now';
+  String get connectNow => 'Connect now';
 
   @override
   String get skipForNow => 'Skip for now';
@@ -700,7 +706,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get healthConnectionFailed => 'Connection failed';
 
   @override
-  String get loginTitle => 'Sign In';
+  String get loginTitle => 'Sign in';
 
   @override
   String get loginSubtitle => 'Sync your data across all your devices';
@@ -724,20 +730,20 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get logOut => 'Sign Out';
+  String get logOut => 'Sign out';
 
   @override
-  String get deleteAccount => 'Delete Account';
+  String get deleteAccount => 'Delete account';
 
   @override
   String get deleteAccountConfirm =>
       'Are you sure? All your data will be permanently deleted.';
 
   @override
-  String get requestData => 'Request My Data';
+  String get requestData => 'Request my data';
 
   @override
-  String get guestMode => 'Guest Mode';
+  String get guestMode => 'Guest mode';
 
   @override
   String get loginToSync => 'Sign in to sync your data';
@@ -779,7 +785,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get privacyPolicy => 'Privacy Policy';
 
   @override
-  String get termsOfService => 'Terms of Service';
+  String get termsOfService => 'Terms of service';
 
   @override
   String get featureOnlyInApp => 'Only in app';
@@ -789,22 +795,22 @@ class AppLocalizationsEn extends AppLocalizations {
       'Health integration requires the native app';
 
   @override
-  String get activityLevel => 'Activity Level';
+  String get activityLevel => 'Activity level';
 
   @override
   String get sedentary => 'Sedentary';
 
   @override
-  String get lightlyActive => 'Lightly Active';
+  String get lightlyActive => 'Lightly active';
 
   @override
-  String get moderatelyActive => 'Moderately Active';
+  String get moderatelyActive => 'Moderately active';
 
   @override
   String get activeLevel => 'Active';
 
   @override
-  String get veryActive => 'Very Active';
+  String get veryActive => 'Very active';
 
   @override
   String get activityLevelSubtitle => 'To calculate your calorie needs.';
@@ -825,15 +831,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get veryActiveSubtitle => 'Heavy physical labor';
 
   @override
-  String get dailyAvg => 'ø / day';
-
-  @override
   String get streak => 'Streak';
-
-  @override
-  String streakDays(int count) {
-    return '$count days';
-  }
 
   @override
   String get discardPhotos => 'Discard photos?';
@@ -852,7 +850,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Allow camera access or use the gallery button.';
 
   @override
-  String get updateAvailable => 'Update Available';
+  String get updateAvailable => 'Update available';
 
   @override
   String get updateReady => 'A new version is available.';
@@ -868,7 +866,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get mealContextHint =>
-      'e.g. Vanilla pudding, 200g, info from label...';
+      'e.g. vanilla pudding, 200 g, info from the label';
 
   @override
   String get mealContextSkip => 'No note';
@@ -903,10 +901,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Meals logged before this time count towards the previous day';
 
   @override
-  String get aiThinkingTitle => 'AI Reasoning';
+  String get aiThinkingTitle => 'AI reasoning';
 
   @override
-  String get aiThinkingLabel => 'AI is thinking...';
+  String get aiThinkingLabel => 'Thinking…';
 
   @override
   String get analysisTimedOut => 'Analysis timed out. Try again.';
@@ -985,7 +983,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get aBitAboutYou => 'About you';
 
   @override
-  String get biologicalSex => 'Biological Sex';
+  String get biologicalSex => 'Biological sex';
 
   @override
   String get yourMeasurements => 'Your measurements';
@@ -997,7 +995,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get basedOnProfile => 'Based on your profile.';
 
   @override
-  String get dailyCalorieTarget => 'Daily Calorie Target';
+  String get dailyCalorieTarget => 'Daily calorie target';
 
   @override
   String get signUpToSave =>
@@ -1056,6 +1054,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get quickLogUndo => 'Undo';
 
   @override
+  String get mealDeleted => 'Meal deleted';
+
+  @override
   String get quickLogFailed => 'Could not log the meal.';
 
   @override
@@ -1107,15 +1108,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get retrySheetSubtitle => 'Edit the note or analyze again right away';
 
   @override
-  String get retrySheetHint => 'e.g. 2 portions, extra sauce ...';
+  String get retrySheetHint => 'e.g. 2 portions, extra sauce';
 
   @override
   String get retrySheetAction => 'Analyze again';
-
-  @override
-  String estimatedRange(String range) {
-    return 'Estimated range: $range';
-  }
 
   @override
   String get analysisNoResult => 'No result received.';
@@ -1144,15 +1140,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get restoreBackupMissing => 'No import backup available.';
 
   @override
-  String get insightsTitle => 'Insights';
-
-  @override
-  String get weeklySummaryTitle => 'Last 7 days';
-
-  @override
-  String get weeklyAvgIntake => 'Average intake per day';
-
-  @override
   String get weeklyOnTarget => 'On target';
 
   @override
@@ -1171,32 +1158,11 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String weeklyTarget(String kcal) {
-    return 'Target $kcal kcal';
-  }
-
-  @override
-  String weeklyWeightSpan(int days) {
-    return 'over $days days';
-  }
-
-  @override
-  String get weeklyWeightNeedMore => 'Two weigh-ins show the trend.';
-
-  @override
-  String get weeklyNoMeals => 'No meals logged in the last 7 days.';
-
-  @override
   String get burnTitle => 'Estimated daily burn';
 
   @override
   String burnBasis(int days, int weighIns) {
     return 'From $days logged days and $weighIns weigh-ins in the last 4 weeks.';
-  }
-
-  @override
-  String burnWeightTrend(String rate) {
-    return 'Weight trend: $rate kg per week';
   }
 
   @override
@@ -1216,9 +1182,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get burnDisclaimer =>
       'An estimate: only as accurate as your logged meals and weigh-ins.';
-
-  @override
-  String get correctionPrompt => 'Correct with one tap';
 
   @override
   String get correctionLower => 'Lower';
@@ -1259,15 +1222,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get validationDuplicateMeals => 'Duplicate meal IDs in the import.';
 
   @override
-  String get thisWeekTitle => 'This week';
-
-  @override
-  String get startWeekStrong => 'Start your week strong.';
-
-  @override
-  String get keepMomentum => 'Keep the momentum going!';
-
-  @override
   String get hintGotIt => 'Got it';
 
   @override
@@ -1291,19 +1245,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get hintBackupAction => 'Open settings';
 
   @override
-  String get historyEmptyTitle => 'Your meals will appear here';
-
-  @override
-  String get historyEmptyBody =>
-      'Every analysed meal is listed here, sorted by day, week, month or year. Switch to the camera to log your first one.';
-
-  @override
-  String get historyExampleLabel => 'Example';
-
-  @override
-  String get sampleMealName => 'Oatmeal';
-
-  @override
   String get welcomeHaveAccount => 'I already have an account';
 
   @override
@@ -1320,4 +1261,178 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get themeDark => 'Dark';
+
+  @override
+  String todayWithDate(String date) {
+    return 'Today, $date';
+  }
+
+  @override
+  String yesterdayWithDate(String date) {
+    return 'Yesterday, $date';
+  }
+
+  @override
+  String get pickDay => 'Choose a day';
+
+  @override
+  String get previousDay => 'Previous day';
+
+  @override
+  String get nextDay => 'Next day';
+
+  @override
+  String kcalOfTarget(String target) {
+    return 'kcal of $target';
+  }
+
+  @override
+  String get kcalToEatToday => 'kcal to eat today';
+
+  @override
+  String kcalLeftOf(String target) {
+    return 'kcal left of $target';
+  }
+
+  @override
+  String kcalOverTarget(String target) {
+    return 'kcal over your $target';
+  }
+
+  @override
+  String proteinOfTarget(int eaten, int target) {
+    return '$eaten of $target g protein';
+  }
+
+  @override
+  String get proteinReached => 'Protein target reached';
+
+  @override
+  String proteinToGo(int grams) {
+    return '$grams g protein still to go';
+  }
+
+  @override
+  String mealsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count meals',
+      one: '1 meal',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get pastDayEmpty => 'Nothing was logged on this day.';
+
+  @override
+  String get todayEmptyBody =>
+      'Your first meal starts the climb. Photograph the plate and Kalorat fills in the rest.';
+
+  @override
+  String get openCamera => 'Open camera';
+
+  @override
+  String get tabCamera => 'Camera';
+
+  @override
+  String get tabProgress => 'Progress';
+
+  @override
+  String get bodyTitle => 'Body';
+
+  @override
+  String streakLine(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'logged $count days in a row',
+      one: 'logged 1 day in a row',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get streakNone => 'Log something today to start a streak.';
+
+  @override
+  String get previousPeriod => 'Previous period';
+
+  @override
+  String get nextPeriod => 'Next period';
+
+  @override
+  String get averagePerDay => 'Average per day';
+
+  @override
+  String get periodNoMeals => 'Nothing was logged in this period.';
+
+  @override
+  String proteinAveragePerDay(int average, int target) {
+    return 'Protein $average of $target g a day';
+  }
+
+  @override
+  String burnPerDay(int kcal) {
+    return 'about $kcal kcal a day';
+  }
+
+  @override
+  String gramsProtein(int grams) {
+    return '$grams g protein';
+  }
+
+  @override
+  String get moreActions => 'More actions';
+
+  @override
+  String todayAt(String time) {
+    return 'Today, $time';
+  }
+
+  @override
+  String yesterdayAt(String time) {
+    return 'Yesterday, $time';
+  }
+
+  @override
+  String get portionLess => 'Smaller portion';
+
+  @override
+  String get portionMore => 'Larger portion';
+
+  @override
+  String get portionEdit => 'Enter the portion';
+
+  @override
+  String confidenceShort(int percent) {
+    return '$percent% sure';
+  }
+
+  @override
+  String probablyBetween(int low, int high) {
+    return 'probably $low–$high kcal';
+  }
+
+  @override
+  String kcalLeftToday(int kcal) {
+    return '$kcal kcal left today';
+  }
+
+  @override
+  String kcalOverToday(int kcal) {
+    return '$kcal kcal over today';
+  }
+
+  @override
+  String get quickLogShort => 'Type it';
+
+  @override
+  String get kcalPerDayPlan => 'kcal a day';
+
+  @override
+  String proteinPerDayPlan(int grams) {
+    return '$grams g protein a day';
+  }
 }

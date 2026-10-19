@@ -1,7 +1,48 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../theme/app_colors.dart';
 import '../theme/app_typography.dart';
+
+final _headingPattern = RegExp(r'^(#{1,3})\s+(.+)$');
+final _bulletPattern = RegExp(r'^[-*]\s+(.+)$');
+
+/// The thought text streamed during an analysis. Chunks arrive many times a
+/// second; listeners hear about them at most every [_interval], so only the
+/// panel rebuilds, and not on every chunk.
+class ThoughtBuffer extends ValueNotifier<String> {
+  ThoughtBuffer() : super('');
+
+  static const _interval = Duration(milliseconds: 120);
+  final StringBuffer _pending = StringBuffer();
+  Timer? _timer;
+
+  void append(String text) {
+    _pending.write(text);
+    _timer ??= Timer(_interval, _flush);
+  }
+
+  void _flush() {
+    _timer = null;
+    if (_pending.isEmpty) return;
+    value = value + _pending.toString();
+    _pending.clear();
+  }
+
+  void clear() {
+    _timer?.cancel();
+    _timer = null;
+    _pending.clear();
+    value = '';
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+}
 
 class LiveThoughtPanel extends StatefulWidget {
   final String thoughtText;
@@ -51,6 +92,9 @@ class _LiveThoughtPanelState extends State<LiveThoughtPanel>
     if (oldWidget.thoughtText != widget.thoughtText) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!_thoughtScrollController.hasClients) return;
+        final position = _thoughtScrollController.position;
+        // One follow animation at a time; the next update catches up.
+        if (position.isScrollingNotifier.value) return;
         _thoughtScrollController.animateTo(
           _thoughtScrollController.position.maxScrollExtent,
           duration: const Duration(milliseconds: 260),
@@ -296,8 +340,8 @@ class _MarkdownThoughtText extends StatelessWidget {
         continue;
       }
 
-      final headingMatch = RegExp(r'^(#{1,3})\s+(.+)$').firstMatch(line);
-      final bulletMatch = RegExp(r'^[-*]\s+(.+)$').firstMatch(line);
+      final headingMatch = _headingPattern.firstMatch(line);
+      final bulletMatch = _bulletPattern.firstMatch(line);
 
       if (headingMatch != null) {
         flushParagraph();

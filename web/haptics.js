@@ -2,10 +2,8 @@
 //
 // Android browsers have navigator.vibrate. iOS Safari (and the home screen
 // PWA) does not, but toggling an <input type="checkbox" switch> plays the
-// system switch haptic. That is the trick behind ios-vibrator-pro-max; this
-// is only its core: one invisible label, clicked from a user gesture. The
-// library's own setup (moving <body> into a label, forwarding events) is not
-// used because it changes touch handling for the whole page.
+// system switch haptic. That is the trick behind ios-haptics and
+// ios-vibrator-pro-max; the iOS part below follows ios-haptics.
 //
 // Browsers only allow the haptic during a user gesture, so callers trigger it
 // from tap handlers. Anywhere else it silently does nothing.
@@ -34,48 +32,39 @@
     return;
   }
 
-  var supportsSwitch =
-    window.CSS &&
-    typeof CSS.supports === 'function' &&
-    (CSS.supports('appearance', 'switch') ||
-      CSS.supports('-webkit-appearance', 'switch'));
-  if (!supportsSwitch) {
+  // iOS: the system plays its switch haptic when an <input type=checkbox
+  // switch> toggles (iOS 18 and later). Done exactly as ios-haptics does it,
+  // which is known to work on iPhones: a fresh hidden label in <head>,
+  // clicked and removed again. Only touch screens get it. The old check,
+  // CSS.supports('appearance', 'switch'), is not a reliable test for the
+  // switch haptic, so it is gone; on a browser without the switch the click
+  // does nothing.
+  var coarse =
+    typeof window.matchMedia === 'function' &&
+    window.matchMedia('(pointer: coarse)').matches;
+  if (!coarse) {
     window.kaloratHaptic = function () {};
     return;
   }
 
-  var label = null;
-
-  function mount() {
-    if (label) return label;
-    if (!document.body) return null;
-    label = document.createElement('label');
+  function tick() {
+    var label = document.createElement('label');
     label.setAttribute('aria-hidden', 'true');
-    label.tabIndex = -1;
-    // Rendered but invisible, 1px, never hit by touches or the pointer.
-    label.style.cssText =
-      'position:fixed;left:0;top:0;width:1px;height:1px;overflow:hidden;' +
-      'opacity:0;pointer-events:none;contain:strict;';
+    label.style.display = 'none';
     var input = document.createElement('input');
     input.type = 'checkbox';
     input.setAttribute('switch', '');
-    input.tabIndex = -1;
-    input.style.cssText = 'display:none !important';
     label.appendChild(input);
-    document.body.appendChild(label);
-    return label;
-  }
-
-  function tick() {
-    var el = mount();
-    if (el) el.click();
+    document.head.appendChild(label);
+    label.click();
+    document.head.removeChild(label);
   }
 
   function play(kind) {
     if (throttled()) return;
     try {
       tick();
-      if (kind === 2) setTimeout(tick, 70);
+      if (kind === 2) setTimeout(tick, 120);
     } catch (_) {}
   }
 
