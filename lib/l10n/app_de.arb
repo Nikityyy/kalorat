@@ -636,27 +636,5 @@
   },
   "analysisNoConnection": "Keine Verbindung zu Gemini. Prüfe dein Internet und versuche es erneut.",
   "analysisRateLimited": "Gemini ist gerade ausgelastet. Bitte gleich nochmal versuchen.",
-  "analysisFailed": "Analyse fehlgeschlagen. Bitte erneut versuchen.",
-  "hapticsTest": "Haptik-Test",
-  "hapticsTestIntro": "Tippe jede Taste ein paar Mal mit dem Finger an und merk dir, bei welchen Nummern du ein Klicken spürst.",
-  "hapticsTestCounts": "App: {taps} · Schalter: {toggles}",
-  "hapticsProbeVisible": "Sichtbarer Schalter über der Taste",
-  "hapticsProbeClear": "Unsichtbarer Schalter (Deckkraft 0)",
-  "hapticsProbeFaint": "Unsichtbarer Schalter (Deckkraft 0,01)",
-  "hapticsProbeStill": "Unsichtbarer Schalter, touch-action: none",
-  "hapticsProbeLabel": "Unsichtbares Label, Schalter woanders",
-  "hapticsProbeOutside": "Unsichtbarer Schalter außerhalb von Flutter",
-  "hapticsProbeScripted": "Alter Weg: Klick per Skript",
-  "hapticsProbeVibrate": "navigator.vibrate (Android)",
-  "@hapticsTestCounts": {
-    "description": "Haptics test row: taps the app saw, times the switch toggled.",
-    "placeholders": {
-      "taps": {
-        "type": "int"
-      },
-      "toggles": {
-        "type": "int"
-      }
-    }
-  }
+  "analysisFailed": "Analyse fehlgeschlagen. Bitte erneut versuchen."
 }

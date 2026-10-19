@@ -1199,40 +1199,4 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get analysisFailed => 'Analysis failed. Please try again.';
-
-  @override
-  String get hapticsTest => 'Haptics test';
-
-  @override
-  String get hapticsTestIntro =>
-      'Tap each button a few times with your finger and note which numbers you feel a click on.';
-
-  @override
-  String hapticsTestCounts(int taps, int toggles) {
-    return 'App: $taps · Switch: $toggles';
-  }
-
-  @override
-  String get hapticsProbeVisible => 'Visible switch over the button';
-
-  @override
-  String get hapticsProbeClear => 'Invisible switch (opacity 0)';
-
-  @override
-  String get hapticsProbeFaint => 'Invisible switch (opacity 0.01)';
-
-  @override
-  String get hapticsProbeStill => 'Invisible switch, touch-action: none';
-
-  @override
-  String get hapticsProbeLabel => 'Invisible label, switch elsewhere';
-
-  @override
-  String get hapticsProbeOutside => 'Invisible switch outside Flutter';
-
-  @override
-  String get hapticsProbeScripted => 'Old way: click from script';
-
-  @override
-  String get hapticsProbeVibrate => 'navigator.vibrate (Android)';
 }

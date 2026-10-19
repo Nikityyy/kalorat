@@ -60,8 +60,6 @@ class AppProvider extends ChangeNotifier with WidgetsBindingObserver {
 
   // Stats cache for performance (invalidated via version counter)
   int _statsCacheVersion = 0;
-  Map<String, double>? _cachedTodayStats;
-  int _cachedTodayVersion = -1;
   StreakData? _cachedStreakData;
   int _cachedStreakVersion = -1;
 
@@ -787,30 +785,6 @@ class AppProvider extends ChangeNotifier with WidgetsBindingObserver {
       'fats': totalFats,
       'mealCount': meals.where((m) => !m.isPending).length.toDouble(),
     };
-  }
-
-  DateTime _getLogicalDayStart(DateTime date) {
-    final offset = _user?.dayStartHour ?? 0;
-    final logicalDate = date.subtract(Duration(hours: offset));
-    return DateTime(
-      logicalDate.year,
-      logicalDate.month,
-      logicalDate.day,
-      offset,
-    );
-  }
-
-  Map<String, double> getTodayStats() {
-    if (_cachedTodayStats != null &&
-        _cachedTodayVersion == _statsCacheVersion) {
-      return _cachedTodayStats!;
-    }
-
-    final start = _getLogicalDayStart(DateTime.now());
-    final end = start.add(const Duration(days: 1));
-    _cachedTodayStats = getStatsForDateRange(start, end);
-    _cachedTodayVersion = _statsCacheVersion;
-    return _cachedTodayStats!;
   }
 
   /// Counts the logged days in a row that end today, or yesterday while

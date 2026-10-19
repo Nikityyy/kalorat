@@ -11,6 +11,7 @@ import 'screens/onboarding/onboarding_flow.dart';
 import 'theme/app_colors.dart';
 import 'theme/app_theme.dart';
 import 'services/widget_service.dart';
+import 'utils/haptics.dart';
 import 'utils/rebuild_all.dart';
 import 'widgets/common/browser_safe_area.dart';
 import 'utils/splash_stub.dart'
@@ -58,6 +59,7 @@ void main() async {
   );
 
   runApp(const KaloratApp());
+  WidgetsBinding.instance.addPostFrameCallback((_) => Haptics.init());
 }
 
 /// Largest text size the layouts support.

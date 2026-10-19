@@ -1217,41 +1217,4 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get analysisFailed =>
       'Analyse fehlgeschlagen. Bitte erneut versuchen.';
-
-  @override
-  String get hapticsTest => 'Haptik-Test';
-
-  @override
-  String get hapticsTestIntro =>
-      'Tippe jede Taste ein paar Mal mit dem Finger an und merk dir, bei welchen Nummern du ein Klicken spürst.';
-
-  @override
-  String hapticsTestCounts(int taps, int toggles) {
-    return 'App: $taps · Schalter: $toggles';
-  }
-
-  @override
-  String get hapticsProbeVisible => 'Sichtbarer Schalter über der Taste';
-
-  @override
-  String get hapticsProbeClear => 'Unsichtbarer Schalter (Deckkraft 0)';
-
-  @override
-  String get hapticsProbeFaint => 'Unsichtbarer Schalter (Deckkraft 0,01)';
-
-  @override
-  String get hapticsProbeStill => 'Unsichtbarer Schalter, touch-action: none';
-
-  @override
-  String get hapticsProbeLabel => 'Unsichtbares Label, Schalter woanders';
-
-  @override
-  String get hapticsProbeOutside =>
-      'Unsichtbarer Schalter außerhalb von Flutter';
-
-  @override
-  String get hapticsProbeScripted => 'Alter Weg: Klick per Skript';
-
-  @override
-  String get hapticsProbeVibrate => 'navigator.vibrate (Android)';
 }

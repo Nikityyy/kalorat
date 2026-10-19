@@ -432,16 +432,5 @@
   "proteinPerDayPlan": "{grams} g protein a day",
   "analysisNoConnection": "No connection to Gemini. Check your internet and try again.",
   "analysisRateLimited": "Gemini is busy right now. Please try again in a moment.",
-  "analysisFailed": "Analysis failed. Please try again.",
-  "hapticsTest": "Haptics test",
-  "hapticsTestIntro": "Tap each button a few times with your finger and note which numbers you feel a click on.",
-  "hapticsTestCounts": "App: {taps} · Switch: {toggles}",
-  "hapticsProbeVisible": "Visible switch over the button",
-  "hapticsProbeClear": "Invisible switch (opacity 0)",
-  "hapticsProbeFaint": "Invisible switch (opacity 0.01)",
-  "hapticsProbeStill": "Invisible switch, touch-action: none",
-  "hapticsProbeLabel": "Invisible label, switch elsewhere",
-  "hapticsProbeOutside": "Invisible switch outside Flutter",
-  "hapticsProbeScripted": "Old way: click from script",
-  "hapticsProbeVibrate": "navigator.vibrate (Android)"
+  "analysisFailed": "Analysis failed. Please try again."
 }
