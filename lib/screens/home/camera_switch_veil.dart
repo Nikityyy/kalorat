@@ -3,9 +3,10 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 
 /// The last picture of the camera, blurred, over the preview while the
-/// camera switches between back and front. Once the other camera plays
-/// ([reveal]), it fades into the live preview, which reads as the picture
-/// coming into focus, then [onDone] is called.
+/// camera starts again: after a switch between back and front, or when the
+/// camera tab comes back. Once the preview shows a new frame ([reveal]), it
+/// fades into the live picture, which reads as the picture coming into
+/// focus, then [onDone] is called.
 ///
 /// [snapshot] comes blurred and darkened already (see
 /// `kaloratPreviewSnapshot` in web/camera_devices.js), so no filter runs on
@@ -52,11 +53,7 @@ class _CameraSwitchVeilState extends State<CameraSwitchVeil>
     if (widget.reveal && !old.reveal) _startReveal();
   }
 
-  Future<void> _startReveal() async {
-    // The new preview needs a frame or two before it shows a picture.
-    await Future<void>.delayed(const Duration(milliseconds: 90));
-    if (mounted) _controller.forward();
-  }
+  void _startReveal() => _controller.forward();
 
   void _onStatus(AnimationStatus status) {
     if (status == AnimationStatus.completed) widget.onDone();

@@ -8,5 +8,10 @@ Future<List<CameraDescription>?> quickWebCameras({bool fresh = false}) async =>
 
 void forgetQuickWebCameras() {}
 
-/// The web build shows the last preview frame while the camera switches.
+/// The web build shows the last preview frame, softened, while the camera
+/// starts again.
 Future<Uint8List?> previewSnapshot() async => null;
+
+Future<void> previewNextFrame({
+  Duration timeout = const Duration(milliseconds: 1500),
+}) async {}

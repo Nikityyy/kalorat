@@ -19,6 +19,9 @@ external void _forget();
 @JS('kaloratPreviewSnapshot')
 external JSPromise<JSUint8Array?> _snapshot();
 
+@JS('kaloratPreviewNextFrame')
+external JSPromise<JSAny?> _nextFrame(int timeoutMs);
+
 /// The back and front camera, found without the plugin's
 /// `availableCameras()`, which opens every camera of the device one after
 /// the other. Null when they cannot be found this way; then the plugin's
@@ -64,11 +67,21 @@ void forgetQuickWebCameras() {
   } catch (_) {}
 }
 
-/// A small JPEG of what the camera preview shows now, or null.
+/// A soft PNG of what the camera preview shows now, or null.
 Future<Uint8List?> previewSnapshot() async {
   try {
     return (await _snapshot().toDart)?.toDart;
   } catch (_) {
     return null;
   }
+}
+
+/// Completes once the playing preview shows a new frame, or after
+/// [timeout].
+Future<void> previewNextFrame({
+  Duration timeout = const Duration(milliseconds: 1500),
+}) async {
+  try {
+    await _nextFrame(timeout.inMilliseconds).toDart;
+  } catch (_) {}
 }

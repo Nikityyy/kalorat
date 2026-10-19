@@ -107,8 +107,11 @@ class _HomeScreenState extends State<HomeScreen>
 
   /// While the camera switches between back and front.
   bool _isSwitchingCamera = false;
-  Uint8List? _switchSnapshot;
-  bool _switchSnapshotMirrored = false;
+  // The last picture, softened, over the preview while the camera starts
+  // again (see _coverPreview).
+  Uint8List? _veil;
+  bool _veilMirrored = false;
+  bool _veilReveal = false;
   bool _quickCamerasFailed = false;
   Future<void> _previewSync = Future.value();
   bool _barcodeBusy = false;
@@ -186,10 +189,37 @@ class _HomeScreenState extends State<HomeScreen>
     }
     if (_isTorchOn) await _setTorchMode(false);
     await _stopBarcodeScanner();
+    // A paused preview keeps its last frame, sharp; the soft cover hides
+    // that until the camera plays again.
+    await _coverPreview();
     try {
       await controller.pausePreview();
       _isPreviewPaused = true;
     } catch (_) {}
+  }
+
+  /// Lays the last picture of the preview, softened, over it, until
+  /// [_revealPreview] fades it into the live picture: while the other camera
+  /// starts, or while the camera tab is away and comes back. Web only; the
+  /// snapshot takes a few milliseconds.
+  Future<void> _coverPreview() async {
+    final bytes = await previewSnapshot();
+    if (!mounted || bytes == null) return;
+    setState(() {
+      _veil = bytes;
+      _veilMirrored = _frontCamera;
+      _veilReveal = false;
+    });
+  }
+
+  /// Fades the cover out once the preview shows a new frame.
+  Future<void> _revealPreview() async {
+    final veil = _veil;
+    if (veil == null) return;
+    await previewNextFrame();
+    if (mounted && identical(_veil, veil)) {
+      setState(() => _veilReveal = true);
+    }
   }
 
   Future<void> _resumeCameraPreview() async {
@@ -202,6 +232,7 @@ class _HomeScreenState extends State<HomeScreen>
     try {
       await controller.resumePreview();
       _isPreviewPaused = false;
+      unawaited(_revealPreview());
       _syncBarcodeScanner();
     } catch (_) {
       await _initCamera(forceRestart: true);
@@ -484,6 +515,7 @@ class _HomeScreenState extends State<HomeScreen>
           _cameraPreviewKey++;
         });
       }
+      unawaited(_revealPreview());
     } catch (e) {
       debugPrint('Camera init error: $e');
       if (_dropQuickCameras()) {
@@ -644,30 +676,13 @@ class _HomeScreenState extends State<HomeScreen>
     var retry = false;
     final oldController = _cameraController;
     final nextIndex = ((_selectedCameraIndex ?? 0) + 1) % _cameras!.length;
-    // The last picture stays, blurred, until the other camera shows one. It
-    // is taken now; its JPEG is made while the old camera is released.
-    final snapshot = previewSnapshot();
-    final mirrored = _frontCamera;
+    await _coverPreview();
     if (mounted) {
       setState(() {
         _isSwitchingCamera = true;
         _isCameraInitialized = false;
       });
     }
-    unawaited(
-      snapshot.then((bytes) {
-        // Too late once the other camera shows its own picture.
-        if (mounted &&
-            _isSwitchingCamera &&
-            !_isCameraInitialized &&
-            bytes != null) {
-          setState(() {
-            _switchSnapshot = bytes;
-            _switchSnapshotMirrored = mirrored;
-          });
-        }
-      }),
-    );
     try {
       if (_isTorchOn) await _setTorchMode(false);
       await _stopBarcodeScanner();
@@ -684,10 +699,11 @@ class _HomeScreenState extends State<HomeScreen>
           _cameraPreviewKey++;
         });
       }
+      unawaited(_revealPreview());
     } catch (e) {
       debugPrint('Camera switch error: $e');
       _cameraController = null;
-      _switchSnapshot = null;
+      _veil = null;
       if (_dropQuickCameras()) {
         retry = true;
       } else if (mounted) {
@@ -1481,7 +1497,7 @@ class _HomeScreenState extends State<HomeScreen>
 
     // While the camera switches, the controls stay where they are.
     final showControls = canShowCamera || _isSwitchingCamera;
-    final snapshot = _switchSnapshot;
+    final veil = _veil;
 
     return Stack(
       children: [
@@ -1521,16 +1537,16 @@ class _HomeScreenState extends State<HomeScreen>
             ),
           ),
 
-        if (snapshot != null)
+        if (veil != null)
           Positioned.fill(
             child: CameraSwitchVeil(
-              key: ObjectKey(snapshot),
-              snapshot: snapshot,
-              mirrored: _switchSnapshotMirrored,
-              reveal: canShowCamera && !_isSwitchingCamera,
+              key: ObjectKey(veil),
+              snapshot: veil,
+              mirrored: _veilMirrored,
+              reveal: _veilReveal,
               onDone: () {
-                if (mounted && identical(_switchSnapshot, snapshot)) {
-                  setState(() => _switchSnapshot = null);
+                if (mounted && identical(_veil, veil)) {
+                  setState(() => _veil = null);
                 }
               },
             ),
