@@ -118,3 +118,51 @@ double baseValueFromScaled({
   if (portionMultiplier <= 0) return scaledValue;
   return scaledValue / portionMultiplier;
 }
+
+/// Energy per 100 g that agrees with the macros. A model's kcal often drifts
+/// from its own protein/carbs/fat; the macros win when the two differ by
+/// more than 15 % (and 15 kcal), since they are what the user tracks. Drinks
+/// with alcohol keep a higher kcal: alcohol has 7 kcal/g and no macro.
+double atwaterConsistentKcal(
+  double kcal, {
+  required double protein,
+  required double carbs,
+  required double fats,
+  bool liquid = false,
+}) {
+  final atwater = protein * 4 + carbs * 4 + fats * 9;
+  final diff = (kcal - atwater).abs();
+  if (diff <= 15 || diff <= atwater * 0.15) return kcal;
+  if (liquid && kcal > atwater) return kcal;
+  return atwater;
+}
+
+const Map<String, String> _htmlEntities = {
+  '&auml;': 'ä',
+  '&ouml;': 'ö',
+  '&uuml;': 'ü',
+  '&Auml;': 'Ä',
+  '&Ouml;': 'Ö',
+  '&Uuml;': 'Ü',
+  '&szlig;': 'ß',
+  '&eacute;': 'é',
+  '&egrave;': 'è',
+  '&quot;': '"',
+  '&#39;': "'",
+  '&apos;': "'",
+  '&lt;': '<',
+  '&gt;': '>',
+  '&nbsp;': ' ',
+  '&amp;': '&',
+};
+
+/// Model text with HTML entities turned back into characters: the model
+/// sometimes writes "H&auml;hnchen" for "Hähnchen".
+String decodeHtmlEntities(String text) {
+  if (!text.contains('&')) return text;
+  var result = text;
+  _htmlEntities.forEach((entity, char) {
+    result = result.replaceAll(entity, char);
+  });
+  return result;
+}

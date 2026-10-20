@@ -1,17 +1,23 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:math' as math;
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:image/image.dart' as img;
+import '../utils/analysis_parser.dart';
 import '../utils/app_logger.dart';
 import '../utils/nutrition_units.dart';
 import '../utils/photo_downscale.dart';
 import 'gemini_stream_client.dart';
+import 'nutrition_reference.dart';
 import 'photo_store.dart';
 
-/// Decode, resize, recompress, and optionally crop an image off the UI isolate.
-/// The crop is only generated when the user note suggests a nutrition/ingredient
-/// label is present; ordinary meal photos send one resized image part.
+/// Longest side of a photo sent for analysis. Large enough for label text
+/// and small items such as a glaze or a drizzle of oil; a 1536 px JPEG is
+/// still only a few hundred KB.
+const int _analysisMaxDimension = 1536;
+
+/// Decode, resize and recompress an image off the UI isolate.
 Map<String, String> _prepareImageInIsolate(Map<String, dynamic> input) {
   final bytes = Uint8List.fromList((input['bytes'] as List).cast<int>());
   final decoded = img.decodeImage(bytes);
@@ -20,7 +26,7 @@ Map<String, String> _prepareImageInIsolate(Map<String, dynamic> input) {
     return {'data': base64Encode(bytes), 'mimeType': sourceMimeType};
   }
 
-  final maxDimension = input['labelHint'] == true ? 1536 : 1024;
+  final maxDimension = input['maxDimension'] as int;
   final longest = decoded.width > decoded.height
       ? decoded.width
       : decoded.height;
@@ -49,25 +55,6 @@ String _mimeTypeForPath(String path) {
   if (lower.endsWith('.webp')) return 'image/webp';
   if (lower.endsWith('.heic') || lower.endsWith('.heif')) return 'image/heic';
   return 'image/jpeg';
-}
-
-String _sanitizeVisibleThoughtText(String text) {
-  if (text.isEmpty) return text;
-
-  final withoutFences = text
-      .replaceAll(RegExp(r'```[a-zA-Z]*'), '')
-      .replaceAll('```', '');
-  final lines = withoutFences.replaceAll('\r\n', '\n').replaceAll('\r', '\n');
-  return lines
-      .split('\n')
-      .where((line) {
-        final lower = line.toLowerCase();
-        return !lower.contains('json') &&
-            !lower.contains('schema') &&
-            !lower.contains('response format') &&
-            !lower.contains('raw json');
-      })
-      .join('\n');
 }
 
 /// Outcome of checking an API key. [unreachable] means the key could not be
@@ -102,10 +89,18 @@ abstract class AnalysisProgress {
   const AnalysisProgress();
 }
 
-/// A chunk of the model's live thought summary text.
-class ThoughtChunk extends AnalysisProgress {
-  final String text;
-  const ThoughtChunk(this.text);
+/// The names of the meal's components the answer has named so far.
+class ComponentsSeen extends AnalysisProgress {
+  final List<String> names;
+  const ComponentsSeen(this.names);
+}
+
+/// One of [total] parallel estimates is done; [calories] is its total.
+class EstimateReady extends AnalysisProgress {
+  final int count;
+  final int total;
+  final double calories;
+  const EstimateReady(this.count, this.total, this.calories);
 }
 
 /// The final JSON analysis result.
@@ -217,8 +212,10 @@ class GeminiService {
       _preferredFlashModels,
     );
 
-    // Flash Lite is the default model in both modes. Accurate Mode changes
-    // thinking depth and output budget, not the model alias.
+    // Flash Lite in both modes, Flash only when Flash Lite fails. On the
+    // free tier Flash allows 20 requests a day against 500 for Flash Lite,
+    // and in a test on weighed meals it was not more accurate, but took
+    // about 40 s instead of 16 s.
     return [...preferredLite, ...preferredFull];
   }
 
@@ -251,7 +248,10 @@ class GeminiService {
 
   /// Streaming version of analyzeMeal that yields [AnalysisProgress] events.
   ///
-  /// The normal path is one compact structured Gemini call.
+  /// Accurate Mode runs [ensembleSize] independent estimates in parallel
+  /// and keeps the median one: a single estimate of the same photo varies by
+  /// about 9 % from run to run, the median of three by about 4 %. They run at
+  /// the same time, so it takes about as long as one. Fast Mode runs one.
   Stream<AnalysisProgress> analyzeMealStream(
     List<String> imagePaths, {
     bool useGrams = false,
@@ -259,6 +259,7 @@ class GeminiService {
     bool useAccurateMode = true,
     bool allowEstimateVariation = false,
     Map<String, dynamic>? previousAnalysis,
+    List<String> leftoverPaths = const [],
   }) async* {
     if (apiKey.isEmpty) {
       throw GeminiError(GeminiErrorType.invalidApiKey, 'API key is not set');
@@ -269,101 +270,271 @@ class GeminiService {
     if (textOnly && (mealContext == null || mealContext.trim().isEmpty)) {
       throw GeminiError(GeminiErrorType.noFood, 'Nothing to analyze');
     }
-    final imageParts = textOnly
+    final leftoverParts = textOnly || leftoverPaths.isEmpty
         ? <Map<String, dynamic>>[]
-        : await _prepareImageParts(imagePaths, mealContext);
+        : await _prepareImageParts(leftoverPaths);
+    final imageParts = [
+      if (!textOnly) ...await _prepareImageParts(imagePaths),
+      // Photos of what was left on the plate come after the meal, behind a
+      // note that names them, so the answer counts only what was eaten.
+      if (leftoverParts.isNotEmpty) ...[
+        {'text': _leftoverNote(leftoverParts.length)},
+        ...leftoverParts,
+      ],
+    ];
     final candidates = _orderedModelsForMode(
       await _getAvailableModels(),
       useAccurateMode: useAccurateMode,
     );
-    final model = candidates.isNotEmpty
-        ? candidates.first
-        : 'gemini-flash-lite-latest';
+    final runs = useAccurateMode ? ensembleSize : 1;
 
-    try {
-      Map<String, dynamic>? result;
-      await for (final event in _makeStreamRequest(
-        model,
-        imageParts,
-        imageCount: imagePaths.length,
-        useGrams: useGrams,
-        mealContext: mealContext,
-        useAccurateMode: useAccurateMode,
-        allowEstimateVariation: allowEstimateVariation,
-        previousAnalysis: previousAnalysis,
-      )) {
-        if (event is AnalysisResult) {
-          result = event.data;
-        } else {
-          yield event;
+    final controller = StreamController<AnalysisProgress>();
+    final results = <Map<String, dynamic>>[];
+    Object? firstError;
+    var finished = 0;
+    // Component names come from one run, so the analysis view tells one
+    // story instead of three interleaved ones.
+    int? storyRun;
+    Timer? straggler;
+
+    void close() {
+      straggler?.cancel();
+      if (!controller.isClosed) controller.close();
+    }
+
+    // The parallel estimates use Flash Lite only. If one of them fails, the
+    // others still give the result, and a slow Flash stand-in would only
+    // spend Flash's small daily quota and hold the meal up. Flash steps in
+    // below when every estimate failed.
+    final ensembleModels = runs > 1 ? candidates.take(1).toList() : candidates;
+    for (var run = 0; run < runs; run++) {
+      unawaited(() async {
+        try {
+          await for (final event in _runWithFallback(
+            ensembleModels,
+            imageParts,
+            imageCount: imagePaths.length,
+            leftovers: leftoverParts.isNotEmpty,
+            useGrams: useGrams,
+            mealContext: mealContext,
+            useAccurateMode: useAccurateMode,
+            allowEstimateVariation: allowEstimateVariation,
+            previousAnalysis: previousAnalysis,
+          )) {
+            if (controller.isClosed) return;
+            if (event is AnalysisResult) {
+              final normalized = _normalizeAnalysisResult(
+                event.data,
+                subtractLeftovers: leftoverParts.isNotEmpty,
+              );
+              results.add(normalized);
+              controller.add(
+                EstimateReady(
+                  results.length,
+                  runs,
+                  mealTotalCalories(normalized),
+                ),
+              );
+            } else {
+              storyRun ??= run;
+              if (storyRun == run) controller.add(event);
+            }
+          }
+        } catch (e) {
+          AppLogger.warning('GeminiService', 'Estimate $run failed: $e');
+          firstError ??= e;
         }
-      }
+        finished++;
+        if (finished == runs) {
+          close();
+        } else if (results.length >= 2 && straggler == null) {
+          // Two estimates are enough for a result; a slow third one must
+          // not hold up the meal for long.
+          straggler = Timer(_stragglerWait, close);
+        }
+      }());
+    }
 
-      if (result == null) {
-        throw GeminiError(GeminiErrorType.parseError, 'Empty analysis result');
+    yield* controller.stream;
+
+    final fallbackModels = candidates.skip(ensembleModels.length).toList();
+    final ensembleError = firstError;
+    if (results.isEmpty &&
+        fallbackModels.isNotEmpty &&
+        ensembleError is GeminiError &&
+        _isRetryable(ensembleError)) {
+      AppLogger.warning('GeminiService', 'All estimates failed, next model');
+      try {
+        await for (final event in _runWithFallback(
+          fallbackModels,
+          imageParts,
+          imageCount: imagePaths.length,
+          leftovers: leftoverParts.isNotEmpty,
+          useGrams: useGrams,
+          mealContext: mealContext,
+          useAccurateMode: useAccurateMode,
+          allowEstimateVariation: allowEstimateVariation,
+          previousAnalysis: previousAnalysis,
+        )) {
+          if (event is AnalysisResult) {
+            final normalized = _normalizeAnalysisResult(
+              event.data,
+              subtractLeftovers: leftoverParts.isNotEmpty,
+            );
+            results.add(normalized);
+            yield EstimateReady(1, 1, mealTotalCalories(normalized));
+          } else {
+            yield event;
+          }
+        }
+      } catch (e) {
+        firstError = e;
       }
-      final normalized = _normalizeAnalysisResult(result);
-      AppLogger.info(
-        'GeminiService',
-        'analysis_complete model=$model latency_ms=${stopwatch.elapsedMilliseconds}',
-      );
-      yield AnalysisResult(normalized);
-    } catch (e) {
+    }
+
+    if (results.isEmpty) {
+      final error = firstError;
       AppLogger.warning(
         'GeminiService',
-        'Model $model failed after ${stopwatch.elapsedMilliseconds}ms: $e',
+        'Analysis failed after ${stopwatch.elapsedMilliseconds}ms: $error',
       );
-      if (e is GeminiError) rethrow;
-      if (e is TimeoutException) {
-        throw GeminiError(
-          GeminiErrorType.timedOut,
-          'Gemini did not answer in time',
-          technicalDetails: e.toString(),
-        );
-      }
-      final errorText = e.toString();
-      if (errorText.contains('429')) {
-        _coolDownModel(model, const Duration(seconds: 30));
-        throw GeminiError(
-          GeminiErrorType.rateLimited,
-          'Gemini rate limit reached. Please retry shortly.',
-          technicalDetails: errorText,
-        );
-      }
-      if (errorText.contains('401') || errorText.contains('403')) {
-        throw GeminiError(
-          GeminiErrorType.invalidApiKey,
-          'Gemini refused the API key',
-          technicalDetails: errorText,
-        );
-      }
-      // The browser's fetch fails with these when there is no connection.
-      if (e is http.ClientException ||
-          RegExp(
-            r'Failed to fetch|Load failed|NetworkError',
-          ).hasMatch(errorText)) {
-        throw GeminiError(
-          GeminiErrorType.networkError,
-          'No connection to Gemini',
-          technicalDetails: errorText,
-        );
-      }
-      if (errorText.contains('404')) {
-        _coolDownModel(model, const Duration(minutes: 10));
-      }
-      rethrow;
+      if (error is GeminiError) throw error;
+      throw GeminiError(
+        GeminiErrorType.unknown,
+        'Analysis failed',
+        technicalDetails: error?.toString(),
+      );
     }
+    AppLogger.info(
+      'GeminiService',
+      'analysis_complete runs=${results.length}/$runs '
+          'latency_ms=${stopwatch.elapsedMilliseconds}',
+    );
+    yield AnalysisResult(medianEstimate(results));
+  }
+
+  /// How many estimates Accurate Mode runs.
+  static const int ensembleSize = 3;
+
+  /// The third estimate usually lands within two seconds of the second.
+  static const Duration _stragglerWait = Duration(seconds: 2);
+
+  /// One estimate: Flash Lite first. When it is rate limited, overloaded or
+  /// gone, the next model takes over, so a busy Flash Lite still gives an
+  /// answer.
+  Stream<AnalysisProgress> _runWithFallback(
+    List<String> candidates,
+    List<Map<String, dynamic>> imageParts, {
+    required int imageCount,
+    bool leftovers = false,
+    required bool useGrams,
+    required String? mealContext,
+    required bool useAccurateMode,
+    required bool allowEstimateVariation,
+    required Map<String, dynamic>? previousAnalysis,
+  }) async* {
+    final models = candidates.isNotEmpty
+        ? candidates
+        : const ['gemini-flash-lite-latest'];
+    for (var i = 0; i < models.length; i++) {
+      final model = models[i];
+      try {
+        // await for, not yield*: an error inside yield* goes straight to the
+        // listener and never reaches this catch.
+        await for (final event in _makeStreamRequest(
+          model,
+          imageParts,
+          imageCount: imageCount,
+          leftovers: leftovers,
+          useGrams: useGrams,
+          mealContext: mealContext,
+          useAccurateMode: useAccurateMode,
+          allowEstimateVariation: allowEstimateVariation,
+          previousAnalysis: previousAnalysis,
+        )) {
+          yield event;
+        }
+        return;
+      } catch (e) {
+        final error = _mapError(e, model);
+        final last = i == models.length - 1;
+        if (last || !_isRetryable(error)) throw error;
+        AppLogger.warning('GeminiService', '$model failed, next model: $e');
+      }
+    }
+  }
+
+  /// Whether another model may succeed where this one failed.
+  static bool _isRetryable(GeminiError error) =>
+      error.type == GeminiErrorType.rateLimited ||
+      RegExp(r'HTTP (404|500|503)').hasMatch(error.technicalDetails ?? '');
+
+  /// Turns a request failure into a [GeminiError] and rests the model when
+  /// it is out of quota or gone.
+  GeminiError _mapError(Object e, String model) {
+    if (e is GeminiError) return e;
+    final errorText = e.toString();
+    if (e is TimeoutException) {
+      return GeminiError(
+        GeminiErrorType.timedOut,
+        'Gemini did not answer in time',
+        technicalDetails: errorText,
+      );
+    }
+    if (errorText.contains('HTTP 429')) {
+      // A spent daily quota comes back after Google's reset at midnight
+      // Pacific time; a per-minute limit after a short pause.
+      _coolDownModel(
+        model,
+        errorText.contains('PerDay')
+            ? _untilQuotaReset(DateTime.now().toUtc())
+            : const Duration(seconds: 30),
+      );
+      return GeminiError(
+        GeminiErrorType.rateLimited,
+        'Gemini rate limit reached. Please retry shortly.',
+        technicalDetails: errorText,
+      );
+    }
+    if (errorText.contains('HTTP 401') || errorText.contains('HTTP 403')) {
+      return GeminiError(
+        GeminiErrorType.invalidApiKey,
+        'Gemini refused the API key',
+        technicalDetails: errorText,
+      );
+    }
+    // The browser's fetch fails with these when there is no connection.
+    if (e is http.ClientException ||
+        RegExp(
+          r'Failed to fetch|Load failed|NetworkError',
+        ).hasMatch(errorText)) {
+      return GeminiError(
+        GeminiErrorType.networkError,
+        'No connection to Gemini',
+        technicalDetails: errorText,
+      );
+    }
+    if (errorText.contains('HTTP 404')) {
+      _coolDownModel(model, const Duration(minutes: 10));
+    }
+    return GeminiError(
+      GeminiErrorType.unknown,
+      'Gemini request failed',
+      technicalDetails: errorText,
+    );
+  }
+
+  /// Time until 08:00 UTC, which is midnight Pacific time in winter and one
+  /// hour after it in summer, so the quota is always back by then.
+  static Duration _untilQuotaReset(DateTime nowUtc) {
+    var reset = DateTime.utc(nowUtc.year, nowUtc.month, nowUtc.day, 8);
+    if (!reset.isAfter(nowUtc)) reset = reset.add(const Duration(days: 1));
+    return reset.difference(nowUtc);
   }
 
   Future<List<Map<String, dynamic>>> _prepareImageParts(
     List<String> imagePaths,
-    String? mealContext,
   ) async {
-    final note = mealContext?.toLowerCase() ?? '';
-    final labelHint = RegExp(
-      r'label|etikett|nutrition|naehr|nähr|ingredient|zutaten|package|packung|verpack',
-    ).hasMatch(note);
-
     final preparedPerImage = await Future.wait(
       imagePaths.map((path) async {
         try {
@@ -372,7 +543,7 @@ class GeminiService {
 
           final browserJpeg = await downscaleForAnalysis(
             bytes,
-            labelHint ? 1536 : 1024,
+            _analysisMaxDimension,
           );
           final prepared = browserJpeg != null
               ? {'data': base64Encode(browserJpeg), 'mimeType': 'image/jpeg'}
@@ -380,7 +551,7 @@ class GeminiService {
                   _prepareImageInIsolate,
                   {
                     'bytes': bytes,
-                    'labelHint': labelHint,
+                    'maxDimension': _analysisMaxDimension,
                     'mimeType': _mimeTypeForPath(path),
                   },
                 );
@@ -408,12 +579,13 @@ class GeminiService {
     return parts;
   }
 
-  /// Performs one compact structured streaming request. The public API
-  /// yields thought summaries and then the final structured result.
+  /// Performs one compact structured streaming request. It yields the
+  /// component names as the answer names them, then the structured result.
   Stream<AnalysisProgress> _makeStreamRequest(
     String modelName,
     List<Map<String, dynamic>> imageParts, {
     required int imageCount,
+    bool leftovers = false,
     bool useGrams = false,
     String? mealContext,
     bool useAccurateMode = true,
@@ -453,23 +625,24 @@ class GeminiService {
         // the same compact structured response with a lower thinking level.
         // maxOutputTokens includes hidden thinking tokens, so these budgets
         // avoid truncating multi-item JSON when thinking is enabled.
-        'maxOutputTokens': useAccurateMode ? 3072 : 2048,
+        'maxOutputTokens': useAccurateMode ? 6144 : 4096,
         'thinkingConfig': {
           'thinkingLevel': thinkingLevel,
-          'includeThoughts': true,
+          // The app shows no thought summaries; leaving them out saves
+          // their generation time.
+          'includeThoughts': false,
         },
         'responseMimeType': 'application/json',
-        'responseSchema': _analysisResponseSchema(),
+        'responseSchema': _analysisResponseSchema(leftovers: leftovers),
       },
     };
 
     // The key travels in a header, never in the URL: URLs end up in browser
     // history, proxies and logs.
     final url = '$_baseUrlBase/$modelName:streamGenerateContent?alt=sse';
-    // Streaming keeps the analysis panel responsive by delivering the model's
-    // short thought summaries before the final structured JSON. The timeout
-    // bounds each wait for the next chunk; a whole analysis with several
-    // photos often takes longer than one such wait.
+    // Streaming lets the analysis view show the components while the answer
+    // is written. The timeout bounds each wait for the next chunk; a whole
+    // analysis with several photos often takes longer than one such wait.
     final timeout = useAccurateMode
         ? const Duration(seconds: 45)
         : const Duration(seconds: 30);
@@ -494,24 +667,16 @@ class GeminiService {
     final sseBuffer = StringBuffer();
     final rawResponseBuffer = StringBuffer();
     var sawSse = false;
+    var namesSeen = 0;
 
-    Stream<ThoughtChunk> processSseEvent(String event) async* {
+    void processSseEvent(String event) {
       for (final line in event.split('\n')) {
         if (!line.startsWith('data: ')) continue;
         sawSse = true;
         final data = line.substring(6).trim();
         if (data.isEmpty || data == '[DONE]') continue;
         try {
-          final thoughtBuffer = StringBuffer();
-          _appendCandidateText(
-            jsonDecode(data),
-            answerBuffer,
-            thoughtOutput: thoughtBuffer,
-          );
-          final thought = _sanitizeVisibleThoughtText(
-            thoughtBuffer.toString(),
-          ).trim();
-          if (thought.isNotEmpty) yield ThoughtChunk('$thought\n');
+          _appendCandidateText(jsonDecode(data), answerBuffer);
         } catch (error) {
           AppLogger.debug('GeminiService', 'Failed to parse SSE chunk: $error');
         }
@@ -526,29 +691,21 @@ class GeminiService {
       sseBuffer
         ..clear()
         ..write(events.removeLast());
-      for (final event in events) {
-        yield* processSseEvent(event);
+      events.forEach(processSseEvent);
+      final names = _streamedItemNames(answerBuffer.toString());
+      if (names.length > namesSeen) {
+        namesSeen = names.length;
+        yield ComponentsSeen(names);
       }
     }
-    if (sseBuffer.isNotEmpty) {
-      yield* processSseEvent(sseBuffer.toString());
-    }
+    if (sseBuffer.isNotEmpty) processSseEvent(sseBuffer.toString());
 
     if (!sawSse && answerBuffer.isEmpty) {
       final rawResponse = rawResponseBuffer.toString().trim();
       if (rawResponse.isNotEmpty) {
         final decoded = jsonDecode(rawResponse);
-        final thoughtBuffer = StringBuffer();
         if (decoded is Map && decoded.containsKey('candidates')) {
-          _appendCandidateText(
-            decoded,
-            answerBuffer,
-            thoughtOutput: thoughtBuffer,
-          );
-          final thought = _sanitizeVisibleThoughtText(
-            thoughtBuffer.toString(),
-          ).trim();
-          if (thought.isNotEmpty) yield ThoughtChunk('$thought\n');
+          _appendCandidateText(decoded, answerBuffer);
         } else {
           answerBuffer.write(rawResponse);
         }
@@ -573,11 +730,26 @@ class GeminiService {
     yield AnalysisResult(parsed);
   }
 
-  void _appendCandidateText(
-    dynamic value,
-    StringBuffer output, {
-    StringBuffer? thoughtOutput,
-  }) {
+  /// Item names in a JSON answer that is still arriving: a name counts once
+  /// its closing quote is there.
+  static List<String> _streamedItemNames(String partialJson) => [
+    for (final match in RegExp(
+      r'"name"\s*:\s*"((?:[^"\\]|\\.)*)"',
+    ).allMatches(partialJson))
+      _unescapeJsonString(match.group(1)!),
+  ];
+
+  static String _unescapeJsonString(String raw) {
+    try {
+      return jsonDecode('"$raw"') as String;
+    } catch (_) {
+      return raw;
+    }
+  }
+
+  /// Appends the answer text of a response chunk. Thought parts are left
+  /// out: the app does not show them.
+  void _appendCandidateText(dynamic value, StringBuffer output) {
     if (value is! Map) return;
     final candidates = value['candidates'];
     if (candidates is! List) return;
@@ -589,14 +761,21 @@ class GeminiService {
         if (part is! Map) continue;
         final text = part['text']?.toString();
         if (text == null || text.isEmpty) continue;
-        if (part['thought'] == true) {
-          thoughtOutput?.write(text);
-        } else {
-          output.write(text);
-        }
+        if (part['thought'] != true) output.write(text);
       }
     }
   }
+
+  String _leftoverNote(int count) =>
+      'LEFTOVERS. The next $count photo(s), after this note, were taken after '
+      'the meal: they show what was left on the plate and was not eaten. They '
+      'are not another angle of the meal and do not count in the photo count. '
+      'List the items as served in the meal photos, with grams, grams_min and '
+      'grams_max for the served amount, as usual. For each item, left_grams '
+      'is how much of it is still on the plate in the leftover photos, 0 when '
+      'none is left. Do not subtract anything yourself: the app subtracts '
+      'left_grams from grams. Name the meal after what was eaten and say in '
+      'uncertainty_note that leftovers were subtracted.';
 
   String _analysisContextNote(int imageCount) {
     if (imageCount == 0) {
@@ -605,19 +784,11 @@ class GeminiService {
     return 'Photo count: $imageCount. Decide whether photos are the same meal from different angles or separate meals to sum; never double-count duplicate angles.';
   }
 
-  Map<String, dynamic> _analysisResponseSchema() => {
+  Map<String, dynamic> _analysisResponseSchema({bool leftovers = false}) => {
     'type': 'OBJECT',
     'properties': {
-      'uncertainty_note': {'type': 'STRING'},
       'meal_name': {'type': 'STRING'},
-      'calories': {'type': 'NUMBER'},
-      'protein': {'type': 'NUMBER'},
-      'carbs': {'type': 'NUMBER'},
-      'fats': {'type': 'NUMBER'},
-      'calories_per_100g': {'type': 'NUMBER'},
-      'protein_per_100g': {'type': 'NUMBER'},
-      'carbs_per_100g': {'type': 'NUMBER'},
-      'fats_per_100g': {'type': 'NUMBER'},
+      'uncertainty_note': {'type': 'STRING'},
       'detected_quantity': {'type': 'NUMBER'},
       'detected_unit': {
         'type': 'STRING',
@@ -630,42 +801,47 @@ class GeminiService {
           'type': 'OBJECT',
           'properties': {
             'name': {'type': 'STRING'},
-            'estimated_quantity': {'type': 'NUMBER'},
-            'unit': {'type': 'STRING'},
-            // Item nutrition is the total contribution of this component in
-            // the photographed portion, never a per-100-g value.
-            'calories': {'type': 'NUMBER'},
-            'protein': {'type': 'NUMBER'},
-            'carbs': {'type': 'NUMBER'},
-            'fats': {'type': 'NUMBER'},
-            'calories_min': {'type': 'NUMBER'},
-            'calories_max': {'type': 'NUMBER'},
+            // A key of the reference list in the prompt, or "other". Not an
+            // enum: Gemini rejects enums this long.
+            'ref': {'type': 'STRING'},
+            'grams': {'type': 'NUMBER'},
+            'grams_min': {'type': 'NUMBER'},
+            'grams_max': {'type': 'NUMBER'},
+            // With leftover photos: how much of the item is still on the
+            // plate. The app subtracts it, so the model never has to.
+            if (leftovers) 'left_grams': {'type': 'NUMBER'},
+            'kcal_per_100g': {'type': 'NUMBER'},
+            'protein_per_100g': {'type': 'NUMBER'},
+            'carbs_per_100g': {'type': 'NUMBER'},
+            'fats_per_100g': {'type': 'NUMBER'},
             'confidence': {'type': 'NUMBER'},
             'assumption': {'type': 'STRING'},
           },
           'required': [
             'name',
-            'estimated_quantity',
-            'unit',
-            'calories',
-            'protein',
-            'carbs',
-            'fats',
-            'calories_min',
-            'calories_max',
+            'ref',
+            'grams',
+            'grams_min',
+            'grams_max',
+            if (leftovers) 'left_grams',
+            'kcal_per_100g',
+            'protein_per_100g',
+            'carbs_per_100g',
+            'fats_per_100g',
             'confidence',
             'assumption',
           ],
         },
       },
+      // Only for a photo without food: then items is empty and these are 0.
+      'calories': {'type': 'NUMBER'},
+      'protein': {'type': 'NUMBER'},
+      'carbs': {'type': 'NUMBER'},
+      'fats': {'type': 'NUMBER'},
     },
     'required': [
-      'uncertainty_note',
       'meal_name',
-      'calories',
-      'protein',
-      'carbs',
-      'fats',
+      'uncertainty_note',
       'detected_quantity',
       'detected_unit',
       'confidence_score',
@@ -679,29 +855,108 @@ class GeminiService {
     return number.isFinite && number >= 0 ? number : null;
   }
 
-  List<Map<String, dynamic>> _normalizeItems(dynamic rawItems) {
+  /// Per-100-g values for an item: the USDA reference when the model named
+  /// one, else the model's own values with their kcal made to agree with
+  /// the macros (4/4/9 kcal per gram of protein/carbs/fat).
+  Map<String, double>? _itemDensity(Map raw) {
+    final reference = referenceFoods[raw['ref']?.toString()];
+    if (reference != null) {
+      return {
+        'kcal': reference.kcal,
+        'protein': reference.protein,
+        'carbs': reference.carbs,
+        'fats': reference.fats,
+      };
+    }
+    final protein = _finiteNonNegative(raw['protein_per_100g']);
+    final carbs = _finiteNonNegative(raw['carbs_per_100g']);
+    final fats = _finiteNonNegative(raw['fats_per_100g']);
+    final kcal = _finiteNonNegative(raw['kcal_per_100g']);
+    if (protein == null || carbs == null || fats == null || kcal == null) {
+      return null;
+    }
+    return {
+      'kcal': atwaterConsistentKcal(
+        kcal,
+        protein: protein,
+        carbs: carbs,
+        fats: fats,
+        liquid: RegExp(
+          r'beer|bier|wine|wein|cocktail|spritz|schnaps|liq',
+          caseSensitive: false,
+        ).hasMatch(raw['name']?.toString() ?? ''),
+      ),
+      'protein': protein,
+      'carbs': carbs,
+      'fats': fats,
+    };
+  }
+
+  /// With [subtractLeftovers], an item's grams are what was served and
+  /// left_grams what is still on the plate: the item becomes what was eaten,
+  /// and an item left completely is dropped.
+  List<Map<String, dynamic>> _normalizeItems(
+    dynamic rawItems, {
+    bool subtractLeftovers = false,
+  }) {
     if (rawItems is! List) return <Map<String, dynamic>>[];
 
     const macroKeys = ['calories', 'protein', 'carbs', 'fats'];
     final normalized = <Map<String, dynamic>>[];
     for (final raw in rawItems) {
       if (raw is! Map) continue;
-      final name = raw['name']?.toString().trim() ?? '';
+      final name = decodeHtmlEntities(raw['name']?.toString().trim() ?? '');
       if (name.isEmpty) continue;
       if (normalized.length >= 20) break;
 
       final item = <String, dynamic>{
         'name': name,
-        'estimated_quantity':
-            _finiteNonNegative(raw['estimated_quantity']) ?? 1.0,
-        'unit': raw['unit']?.toString().trim() ?? 'serving',
         'confidence': (_finiteNonNegative(raw['confidence']) ?? 0.5).clamp(
           0.0,
           1.0,
         ),
-        'assumption': raw['assumption']?.toString().trim() ?? '',
+        'assumption': decodeHtmlEntities(
+          raw['assumption']?.toString().trim() ?? '',
+        ),
       };
 
+      final served = _finiteNonNegative(raw['grams']);
+      final left = subtractLeftovers
+          ? (_finiteNonNegative(raw['left_grams']) ?? 0)
+          : 0.0;
+      if (served != null) {
+        final grams = served - left;
+        if (left > 0 && grams < 1) continue;
+        // Grams times per-100-g values: the app does the arithmetic, so
+        // every total matches its parts.
+        final density = _itemDensity(raw);
+        if (density == null) continue;
+        final low = math.max(
+          0.0,
+          (_finiteNonNegative(raw['grams_min']) ?? served) - left,
+        );
+        final high = (_finiteNonNegative(raw['grams_max']) ?? served) - left;
+        final ref = raw['ref']?.toString();
+        item
+          ..['grams'] = grams
+          ..['ref'] = referenceFoods.containsKey(ref) ? ref : null
+          ..['kcal_per_100g'] = density['kcal']
+          ..['protein_per_100g'] = density['protein']
+          ..['carbs_per_100g'] = density['carbs']
+          ..['fats_per_100g'] = density['fats']
+          ..['calories'] = density['kcal']! * grams / 100
+          ..['protein'] = density['protein']! * grams / 100
+          ..['carbs'] = density['carbs']! * grams / 100
+          ..['fats'] = density['fats']! * grams / 100
+          ..['calories_min'] =
+              density['kcal']! * (low < grams ? low : grams) / 100
+          ..['calories_max'] =
+              density['kcal']! * (high > grams ? high : grams) / 100;
+        normalized.add(item);
+        continue;
+      }
+
+      // Older answers (and retries of them) carry item totals instead.
       final parsedMacros = <String, double>{};
       for (final key in macroKeys) {
         final value = _finiteNonNegative(raw[key]);
@@ -789,15 +1044,35 @@ class GeminiService {
     }
   }
 
-  Map<String, dynamic> _normalizeAnalysisResult(Map<String, dynamic> result) {
+  Map<String, dynamic> _normalizeAnalysisResult(
+    Map<String, dynamic> result, {
+    bool subtractLeftovers = false,
+  }) {
     final normalized = Map<String, dynamic>.from(result);
     final detectedPortion = normalizeDetectedPortion(normalized);
     normalized['detected_unit'] = detectedPortion.unit;
     normalized['detected_quantity'] = detectedPortion.quantity;
 
-    final items = _normalizeItems(normalized['items']);
+    final items = _normalizeItems(
+      normalized['items'],
+      subtractLeftovers: subtractLeftovers,
+    );
     normalized['items'] = items;
-    _aggregateItemNutrition(normalized, items, detectedPortion);
+    var portion = detectedPortion;
+    if (portion.unit != portionUnitServing &&
+        items.isNotEmpty &&
+        items.every((item) => item['grams'] is num)) {
+      // Weighed mode: the amount is what the items add up to.
+      final total = items.fold<double>(
+        0,
+        (sum, item) => sum + (item['grams'] as num).toDouble(),
+      );
+      if (total > 0) {
+        portion = NormalizedPortion(unit: portion.unit, quantity: total);
+        normalized['detected_quantity'] = total;
+      }
+    }
+    _aggregateItemNutrition(normalized, items, portion);
 
     for (final key in const ['calories', 'protein', 'carbs', 'fats']) {
       final value = _finiteNonNegative(normalized[key]);
@@ -821,7 +1096,9 @@ class GeminiService {
       normalized['carbs'] = normalized['carbs_per_100g'];
       normalized['fats'] = normalized['fats_per_100g'];
     }
-    normalized['uncertainty_note'] ??= '';
+    for (final key in const ['meal_name', 'uncertainty_note']) {
+      normalized[key] = decodeHtmlEntities(normalized[key]?.toString() ?? '');
+    }
     final rawConfidence = _finiteNonNegative(normalized['confidence_score']);
     normalized['confidence_score'] = (rawConfidence ?? 0.5).clamp(0.0, 1.0);
     return normalized;
@@ -932,45 +1209,27 @@ class GeminiService {
     bool useGrams = false,
     bool allowEstimateVariation = false,
   }) {
-    final unitRules = useGrams
-        ? (language == 'de'
-              ? 'Verwende gram für feste Speisen und ml für Flüssigkeiten. Nährwerte calories/protein/carbs/fats sind pro 100 g bzw. 100 ml; detected_quantity ist die gesamte Menge.'
-              : 'Use gram for solids and ml for liquids. calories/protein/carbs/fats are per 100 g or 100 ml; detected_quantity is the total amount.')
-        : (language == 'de'
-              ? 'Verwende serving. Nährwerte calories/protein/carbs/fats sind pro eine Portion; detected_quantity ist die Portionszahl. Nur ein sichtbares Etikett darf gram/ml erzwingen.'
-              : 'Use serving. calories/protein/carbs/fats are per one serving; detected_quantity is the serving count. Only a visible label may force gram/ml.');
+    final outputLanguage = language == 'de' ? 'German' : 'English';
+    final unitRule = useGrams
+        ? 'detected_unit: gram for food, ml for a drink on its own. detected_quantity is the total amount.'
+        : 'detected_unit: serving. detected_quantity is the number of servings in the photo, usually 1. Only a visible label may force gram or ml.';
     final retryRule = allowEstimateVariation
-        ? (language == 'de'
-              ? 'Prüfe die vorherige Schätzung kritisch und korrigiere die wahrscheinlichste falsche Annahme.'
-              : 'Challenge the previous estimate and correct the most likely wrong assumption.')
-        : (language == 'de'
-              ? 'Bleibe bei stabilen, konservativen Schätzungen.'
-              : 'Keep estimates stable and conservative.');
-    if (language == 'de') {
-      return '''Analysiere die sichtbare Mahlzeit präzise. Antworte ausschließlich mit einem JSON-Objekt gemäß Schema; keine Markdown-Zäune und keine Denk- oder Verifikationsschritte.
+        ? '\nThe user asked for a new estimate, so the previous one (given below) looked wrong to them. Re-check each component, its grams and its hidden fat, and correct what is most likely wrong; do not just repeat it.'
+        : '';
+    return '''You estimate the nutrition of a meal for a calorie tracker. Answer only with one JSON object matching the schema.
 
-$unitRules
-$retryRule
-- Erkenne alle sichtbaren Komponenten einzeln, einschließlich Getränke, Toppings und Sauce/Dressing. Verstecktes Öl nur als Annahme aufnehmen, wenn Bild oder Nutzerhinweis dafür sprechen; sonst nur die Unsicherheit in der Spanne berücksichtigen. Unsichtbare Zutaten nicht als sicher behaupten; Unsicherheit in assumption/uncertainty_note markieren.
-- Mehrere Fotos derselben Mahlzeit aus anderen Winkeln nur einmal zählen. Verschiedene Mahlzeiten summieren.
-- Nutze Etikett und Nutzerhinweis vor visueller Schätzung. Verwende typische gekochte Lebensmittelwerte.
-- Schätze Portionen anhand Teller/Glas/Verpackung. Keine falsche Präzision: confidence_score zwischen 0 und 1.
-- items enthält jede wesentliche sichtbare Komponente einzeln. Die Makros jedes items sind der Gesamtbeitrag dieser Komponente in der fotografierten Menge, niemals pro 100 g. calories/protein/carbs/fats auf oberster Ebene sind die Summe der items, umgerechnet auf die gewählte Basis-Einheit.
-- Führe Öl, Butter, Dressing und Sauce nur dann als eigene items auf, wenn sie visuell oder durch den Nutzerhinweis gestützt sind; bei nicht sichtbaren Mengen nutze die Spanne statt eines scheinbar exakten Werts und schreibe die Annahme in assumption und uncertainty_note. Unsichtbare Zutaten nicht als sicher behaupten.
-- calories/protein/carbs/fats sind die Basiswerte gemäß Einheit. Runde kcal ganz und Makros auf 0.1.
-- meal_name auf Deutsch, uncertainty_note maximal 240 Zeichen.''';
-    }
-    return '''Analyze the visible meal precisely. Return only one JSON object matching the schema; no Markdown fences and no chain-of-thought or verification transcript.
+Method:
+1. Components: list every component on its own: each meat or fish, side, vegetable, sauce, dressing, topping, spread, drink, and the cooking fat. Several photos of the same plate from different angles show one meal; count it once. Genuinely different meals are summed.
+2. Grams: estimate the edible grams of each component as served. Use scale cues: dinner plate about 27 cm across, side plate 20 cm, bowl 15 cm, fork 19 cm, glass 250 ml, can 330 ml, hands, packaging. Judge height and density, not only the area seen from above: piled rice, meat and pasta weigh more than they look. A full plate of a main meal is usually 400 to 700 g. grams_min and grams_max give the plausible range.
+3. Nutrition per 100 g: set ref to the matching key from the reference list below when the component is that food (the app then uses USDA values for it); use "other" otherwise. Always also fill kcal/protein/carbs/fats_per_100g with values for the food as served.
+4. Hidden fat: reference foods are plain, without added fat. Anything roasted, pan-fried, sautéed, grilled, glazed or stir-fried was cooked with fat: add it as its own item with ref oil or butter, about 5 to 10 g per 100 g of roasted or sautéed vegetables or potatoes, and 4 to 8 g per 100 g of pan-fried meat or fish. Breaded or deep-fried foods: use a breaded or fried reference instead of extra oil. A salad that looks glossy, or has dressing on it, gets a dressing item (usually 20 to 40 g). Restaurant, canteen and takeaway food uses more fat than home cooking. Leave out cooking fat only for food that is clearly raw, steamed or boiled.
+5. Brands and chains: when packaging, a logo, a menu or the user note shows a branded product or a restaurant chain item, set ref to "other" and give that product's published per-100-g nutrition and weight (European version unless the note says otherwise); say so in assumption. The reference list is for generic foods only.
+6. A visible nutrition label or the user note beats a visual guess.
+7. Be unbiased: give the most likely amount, not a cautious low one. Calorie trackers tend to underestimate portions and fat.
+$unitRule$retryRule
 
-$unitRules
-$retryRule
-- Identify every visible component, including drinks, toppings, and sauces/dressings. Add hidden oil only when the image or user note supports it; otherwise express it through the uncertainty range. Do not state invisible ingredients as certain; mark uncertainty in assumption/uncertainty_note.
-- Count multiple photos from different angles only once. Sum genuinely different meals.
-- Prefer visible labels and user notes over visual guesses. Use typical cooked-food nutrition values.
-- Estimate portions using plates, glasses, packaging, and other scale cues. Avoid false precision: confidence_score is 0 to 1.
-- items contains each material visible component separately. Each item's macros are that component's total contribution in the photographed amount, never per 100 g. Top-level calories/protein/carbs/fats are the item sum converted to the selected base unit.
-- Represent oil, butter, dressing, and sauce as separate items only when visually or contextually supported. For hidden amounts, use calories_min/calories_max for a plausible low/high contribution and explain the assumption in assumption and uncertainty_note. Never claim invisible ingredients as certain.
-- calories/protein/carbs/fats are the base values for the selected unit. Round kcal to whole numbers and macros to 0.1.
-- meal_name in English, uncertainty_note maximum 240 characters.''';
+meal_name and item names in $outputLanguage. assumption: a few words on what is uncertain about that item, in $outputLanguage. uncertainty_note: the main uncertainty of the whole meal, at most 200 characters, in $outputLanguage. confidence_score and confidence are 0 to 1. If the photo shows no food or drink, return an empty items list and calories 0.
+
+Reference list (USDA, per 100 g as eaten): ${referenceFoods.keys.join(', ')}''';
   }
 }

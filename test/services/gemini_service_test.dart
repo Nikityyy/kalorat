@@ -248,8 +248,8 @@ void main() {
           final thinkingConfig =
               generationConfig['thinkingConfig'] as Map<String, dynamic>;
           expect(thinkingConfig['thinkingLevel'], 'medium');
-          expect(thinkingConfig['includeThoughts'], true);
-          expect(generationConfig['maxOutputTokens'], 3072);
+          expect(thinkingConfig['includeThoughts'], false);
+          expect(generationConfig['maxOutputTokens'], 6144);
         },
       );
 
@@ -301,10 +301,10 @@ void main() {
         final thinkingConfig =
             generationConfig['thinkingConfig'] as Map<String, dynamic>;
         expect(thinkingConfig['thinkingLevel'], 'low');
-        expect(generationConfig['maxOutputTokens'], 2048);
+        expect(generationConfig['maxOutputTokens'], 4096);
       });
 
-      test('structured output does not expose thought transcript', () async {
+      test('an answer in a json fence is parsed', () async {
         final testFile = File('${tempDir.path}/stream_test_image.jpg');
         await testFile.writeAsBytes(base64Decode(_dummyBase64Jpeg));
 
@@ -352,20 +352,16 @@ void main() {
         });
 
         final service = GeminiService(apiKey: 'test_key', client: client);
-        final thoughts = <String>[];
+        final events = await service.analyzeMealStream([
+          testFile.path,
+        ]).toList();
 
-        await for (final event in service.analyzeMealStream([testFile.path])) {
-          if (event is ThoughtChunk) {
-            thoughts.add(event.text);
-          }
-        }
-
-        final visibleThoughtText = thoughts.join();
-        expect(visibleThoughtText, isEmpty);
-        expect(streamRequestCount, 1);
+        expect((events.last as AnalysisResult).data['meal_name'], 'Test');
+        // Accurate Mode: three estimates in parallel.
+        expect(streamRequestCount, 3);
       });
 
-      test('structured output exposes thought summaries', () async {
+      test('thought parts never reach the answer', () async {
         final testFile = File('${tempDir.path}/stream_thought_image.jpg');
         await testFile.writeAsBytes(base64Decode(_dummyBase64Jpeg));
 
@@ -413,17 +409,14 @@ void main() {
         });
 
         final service = GeminiService(apiKey: 'test_key', client: client);
-        final thoughts = <String>[];
+        final events = await service.analyzeMealStream([
+          testFile.path,
+        ]).toList();
 
-        await for (final event in service.analyzeMealStream([testFile.path])) {
-          if (event is ThoughtChunk) {
-            thoughts.add(event.text);
-          }
-        }
-
-        final visibleThoughtText = thoughts.join();
-        expect(visibleThoughtText, contains('Ich erkenne Brot'));
-        expect(streamRequestCount, 1);
+        final data = (events.last as AnalysisResult).data;
+        expect(data['meal_name'], 'Test');
+        expect(data['calories'], 100);
+        expect(streamRequestCount, 3);
       });
 
       test('describes a meal in words without any photo', () async {
@@ -483,6 +476,326 @@ void main() {
         final texts = parts.map((part) => (part as Map)['text'] as String);
         expect(texts, contains('User note: two slices of toast with butter'));
         expect(texts.first, contains('No photo'));
+      });
+
+      Map<String, dynamic> gramsAnswer(List<Map<String, dynamic>> items) => {
+        'meal_name': 'H&auml;hnchen mit Reis',
+        'uncertainty_note': '',
+        'detected_quantity': 1,
+        'detected_unit': 'serving',
+        'confidence_score': 0.7,
+        'items': items,
+      };
+
+      Map<String, dynamic> item(
+        String name,
+        String ref,
+        num grams, {
+        num kcal = 0,
+        num protein = 0,
+        num carbs = 0,
+        num fats = 0,
+      }) => {
+        'name': name,
+        'ref': ref,
+        'grams': grams,
+        'grams_min': grams * 0.8,
+        'grams_max': grams * 1.2,
+        'kcal_per_100g': kcal,
+        'protein_per_100g': protein,
+        'carbs_per_100g': carbs,
+        'fats_per_100g': fats,
+        'confidence': 0.8,
+        'assumption': '',
+      };
+
+      test('items in grams use USDA values and add up', () async {
+        final testFile = File('${tempDir.path}/grams_test.jpg');
+        await testFile.writeAsBytes(base64Decode(_dummyBase64Jpeg));
+        final answer = gramsAnswer([
+          // The model's own numbers for a reference food are ignored.
+          item('Hähnchen', 'chicken_breast', 200, kcal: 100, protein: 10),
+          item('Öl', 'oil', 10, kcal: 884, fats: 100),
+          // No reference: kcal 300 disagrees with 4/4/9 (= 100), macros win.
+          item('Soße', 'other', 50, kcal: 300, carbs: 25),
+        ]);
+        final client = MockClient(
+          (request) async => http.StreamedResponse(
+            Stream.value(utf8.encode(_sseTextEvent(jsonEncode(answer)))),
+            200,
+          ),
+        );
+
+        final result = await GeminiService(
+          apiKey: 'grams_key',
+          client: client,
+        ).analyzeMeal([testFile.path], useAccurateMode: false);
+
+        // chicken 165 kcal/100 g * 2 + oil 88.4 + sauce 100 * 0.5
+        expect(result!['calories'], closeTo(330 + 88.4 + 50, 0.01));
+        expect(result['protein'], closeTo(62.04, 0.01));
+        expect(result['fats'], closeTo(7.14 + 10, 0.01));
+        expect(result['carbs'], closeTo(12.5, 0.01));
+        expect(result['meal_name'], 'Hähnchen mit Reis');
+        final items = result['items'] as List;
+        expect(items.first['grams'], 200);
+        expect(items.first['ref'], 'chicken_breast');
+        expect(items.last['ref'], isNull);
+        expect(result['calories_min'], closeTo((330 + 88.4 + 50) * 0.8, 0.01));
+      });
+
+      test('weighed mode takes the amount from the item grams', () async {
+        final testFile = File('${tempDir.path}/weighed_test.jpg');
+        await testFile.writeAsBytes(base64Decode(_dummyBase64Jpeg));
+        final answer =
+            gramsAnswer([
+                item('Reis', 'rice_white_cooked', 300),
+                item('Brokkoli', 'broccoli', 100),
+              ])
+              ..['detected_unit'] = 'gram'
+              ..['detected_quantity'] = 250;
+        final client = MockClient(
+          (request) async => http.StreamedResponse(
+            Stream.value(utf8.encode(_sseTextEvent(jsonEncode(answer)))),
+            200,
+          ),
+        );
+
+        final result = await GeminiService(
+          apiKey: 'weighed_key',
+          client: client,
+        ).analyzeMeal([testFile.path], useGrams: true, useAccurateMode: false);
+
+        expect(result!['detected_quantity'], 400);
+        // Per 100 g of the whole meal: (390 + 35) / 4
+        expect(result['calories'], closeTo(106.25, 0.01));
+      });
+
+      test('accurate mode keeps the median of three estimates', () async {
+        final testFile = File('${tempDir.path}/median_test.jpg');
+        await testFile.writeAsBytes(base64Decode(_dummyBase64Jpeg));
+        final grams = [100, 300, 200];
+        var call = 0;
+        final client = MockClient((request) async {
+          final answer = gramsAnswer([
+            item('Reis', 'rice_white_cooked', grams[call++]),
+          ]);
+          return http.StreamedResponse(
+            Stream.value(utf8.encode(_sseTextEvent(jsonEncode(answer)))),
+            200,
+          );
+        });
+
+        final estimates = <double>[];
+        Map<String, dynamic>? result;
+        await for (final event in GeminiService(
+          apiKey: 'median_key',
+          client: client,
+        ).analyzeMealStream([testFile.path])) {
+          if (event is EstimateReady) estimates.add(event.calories);
+          if (event is AnalysisResult) result = event.data;
+        }
+
+        expect(call, 3);
+        expect(estimates, unorderedEquals([130, 390, 260]));
+        expect(result!['calories'], closeTo(260, 0.01));
+      });
+
+      test('a rate limited Flash Lite hands over to Flash', () async {
+        final testFile = File('${tempDir.path}/fallback_test.jpg');
+        await testFile.writeAsBytes(base64Decode(_dummyBase64Jpeg));
+        final paths = <String>[];
+        final client = MockClient((request) async {
+          paths.add(request.url.path);
+          if (request.url.path.contains('lite')) {
+            return http.StreamedResponse(
+              Stream.value(utf8.encode('{"error": {"code": 429}}')),
+              429,
+            );
+          }
+          final answer = gramsAnswer([item('Reis', 'rice_white_cooked', 100)]);
+          return http.StreamedResponse(
+            Stream.value(utf8.encode(_sseTextEvent(jsonEncode(answer)))),
+            200,
+          );
+        });
+
+        final result = await GeminiService(
+          apiKey: 'fallback_key',
+          client: client,
+        ).analyzeMeal([testFile.path], useAccurateMode: false);
+
+        expect(result!['calories'], closeTo(130, 0.01));
+        expect(paths.first, contains('gemini-flash-lite-latest'));
+        expect(paths.last, contains('gemini-flash-latest'));
+      });
+
+      test(
+        'accurate mode calls Flash only when every estimate failed',
+        () async {
+          final testFile = File('${tempDir.path}/ensemble_fallback.jpg');
+          await testFile.writeAsBytes(base64Decode(_dummyBase64Jpeg));
+          Future<List<String>> run({required int liteFailures}) async {
+            final paths = <String>[];
+            var lite = 0;
+            final client = MockClient((request) async {
+              paths.add(request.url.path);
+              if (request.url.path.contains('lite') && lite++ < liteFailures) {
+                return http.StreamedResponse(
+                  Stream.value(utf8.encode('{"error": {"code": 429}}')),
+                  429,
+                );
+              }
+              final answer = gramsAnswer([
+                item('Reis', 'rice_white_cooked', 100),
+              ]);
+              return http.StreamedResponse(
+                Stream.value(utf8.encode(_sseTextEvent(jsonEncode(answer)))),
+                200,
+              );
+            });
+            final result = await GeminiService(
+              apiKey: 'ensemble_fallback_$liteFailures',
+              client: client,
+            ).analyzeMeal([testFile.path]);
+            expect(result!['calories'], closeTo(130, 0.01));
+            return paths;
+          }
+
+          final oneFailed = await run(liteFailures: 1);
+          expect(oneFailed.where((p) => !p.contains('lite')), isEmpty);
+
+          final allFailed = await run(liteFailures: 3);
+          expect(allFailed.where((p) => !p.contains('lite')), hasLength(1));
+        },
+      );
+
+      test('streams component names as the answer arrives', () async {
+        final testFile = File('${tempDir.path}/names_test.jpg');
+        await testFile.writeAsBytes(base64Decode(_dummyBase64Jpeg));
+        final json = jsonEncode(
+          gramsAnswer([
+            item('Reis "Basmati"', 'rice_white_cooked', 100),
+            item('Brokkoli', 'broccoli', 100),
+          ]),
+        );
+        final cut = json.indexOf('Brokkoli');
+        final client = MockClient(
+          (request) async => http.StreamedResponse(
+            Stream.fromIterable(
+              [
+                _sseTextEvent(json.substring(0, cut)),
+                _sseTextEvent(json.substring(cut)),
+              ].map(utf8.encode),
+            ),
+            200,
+          ),
+        );
+
+        final seen = <List<String>>[];
+        await for (final event in GeminiService(
+          apiKey: 'names_key',
+          client: client,
+        ).analyzeMealStream([testFile.path], useAccurateMode: false)) {
+          if (event is ComponentsSeen) seen.add(event.names);
+        }
+
+        expect(seen, [
+          ['Reis "Basmati"'],
+          ['Reis "Basmati"', 'Brokkoli'],
+        ]);
+      });
+
+      test('leftover photos follow the meal behind a note', () async {
+        final meal = File('${tempDir.path}/meal.jpg');
+        final rest = File('${tempDir.path}/rest.jpg');
+        await meal.writeAsBytes(base64Decode(_dummyBase64Jpeg));
+        await rest.writeAsBytes(base64Decode(_dummyBase64Jpeg));
+        List<dynamic>? parts;
+        final client = MockClient((request) async {
+          final body = jsonDecode(await request.finalize().bytesToString());
+          parts = body['contents'][0]['parts'] as List<dynamic>;
+          return http.StreamedResponse(
+            Stream.value(
+              utf8.encode(
+                _sseTextEvent(
+                  jsonEncode(
+                    gramsAnswer([item('Reis', 'rice_white_cooked', 100)]),
+                  ),
+                ),
+              ),
+            ),
+            200,
+          );
+        });
+
+        await GeminiService(apiKey: 'rest_key', client: client)
+            .analyzeMealStream(
+              [meal.path],
+              leftoverPaths: [rest.path],
+              useAccurateMode: false,
+            )
+            .toList();
+
+        final kinds = [
+          for (final part in parts!)
+            (part as Map).containsKey('inline_data') ||
+                    part.containsKey('inlineData')
+                ? 'image'
+                : (part['text'] as String).startsWith('LEFTOVERS')
+                ? 'leftover note'
+                : 'text',
+        ];
+        expect(kinds.take(3), ['image', 'leftover note', 'image']);
+      });
+
+      test('leftovers are subtracted item by item', () async {
+        final meal = File('${tempDir.path}/meal2.jpg');
+        final rest = File('${tempDir.path}/rest2.jpg');
+        await meal.writeAsBytes(base64Decode(_dummyBase64Jpeg));
+        await rest.writeAsBytes(base64Decode(_dummyBase64Jpeg));
+        Map<String, dynamic>? schema;
+        final client = MockClient((request) async {
+          final body = jsonDecode(await request.finalize().bytesToString());
+          schema = body['generationConfig']['responseSchema'];
+          return http.StreamedResponse(
+            Stream.value(
+              utf8.encode(
+                _sseTextEvent(
+                  jsonEncode(
+                    gramsAnswer([
+                      {
+                        ...item('Reis', 'rice_white_cooked', 200),
+                        'left_grams': 150,
+                      },
+                      {...item('Brokkoli', 'broccoli', 80), 'left_grams': 80},
+                    ]),
+                  ),
+                ),
+              ),
+            ),
+            200,
+          );
+        });
+
+        final events = await GeminiService(apiKey: 'rest2_key', client: client)
+            .analyzeMealStream(
+              [meal.path],
+              leftoverPaths: [rest.path],
+              useAccurateMode: false,
+            )
+            .toList();
+        final data = (events.last as AnalysisResult).data;
+        final items = data['items'] as List<dynamic>;
+
+        expect(
+          (schema!['properties']['items']['items']['required'] as List),
+          contains('left_grams'),
+        );
+        // The broccoli was left completely; 50 g of the rice was eaten.
+        expect(items.map((i) => i['name']), ['Reis']);
+        expect(items.single['grams'], 50);
+        expect(data['calories'], closeTo(65, 0.5));
       });
 
       test('a text-only request needs a description', () async {

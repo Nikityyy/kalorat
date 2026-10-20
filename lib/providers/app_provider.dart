@@ -656,6 +656,7 @@ class AppProvider extends ChangeNotifier with WidgetsBindingObserver {
       analysisNote: source.analysisNote,
       caloriesMin: source.caloriesMin,
       caloriesMax: source.caloriesMax,
+      components: source.components,
     );
     await saveMeal(copy);
     return copy;

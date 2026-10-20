@@ -687,12 +687,6 @@ class AppLocalizationsDe extends AppLocalizations {
       'Mahlzeiten, die vor dieser Uhrzeit gespeichert werden, zählen zum Vortag';
 
   @override
-  String get aiThinkingTitle => 'KI-Analyse';
-
-  @override
-  String get aiThinkingLabel => 'Denkt nach …';
-
-  @override
   String get analysisTimedOut =>
       'Gemini hat nicht rechtzeitig geantwortet. Bitte erneut versuchen.';
 
@@ -886,11 +880,129 @@ class AppLocalizationsDe extends AppLocalizations {
   String get retrySheetTitle => 'Analyse wiederholen';
 
   @override
-  String get retrySheetSubtitle =>
-      'Hinweis bearbeiten oder direkt neu analysieren';
+  String get retrySheetSubtitle => 'Notiz für die KI, optional';
 
   @override
   String get retrySheetHint => 'z. B. 2 Portionen, extra Sauce';
+
+  @override
+  String get retryLeftoversTitle => 'Reste abziehen';
+
+  @override
+  String get retryLeftoversHint =>
+      'Foto vom Rest auf dem Teller, er wird abgezogen.';
+
+  @override
+  String get retryLeftoversCamera => 'Rest fotografieren';
+
+  @override
+  String get retryLeftoversGallery => 'Aus Fotos';
+
+  @override
+  String retryLeftoversCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count Fotos vom Rest',
+      one: '1 Foto vom Rest',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get retryLeftoversCountHint =>
+      'Die Analyse zählt nur, was gegessen wurde.';
+
+  @override
+  String get retryLeftoversAddMore => 'Noch eins aufnehmen';
+
+  @override
+  String get retryLeftoverRemove => 'Foto entfernen';
+
+  @override
+  String get componentsTitle => 'Auf dem Teller';
+
+  @override
+  String get componentsTapToEdit => 'Tippen zum Ändern';
+
+  @override
+  String componentsTopShare(String first, String second, int percent) {
+    return '$first und $second bringen $percent % der Kalorien';
+  }
+
+  @override
+  String get componentEditHint => 'Menge ändern';
+
+  @override
+  String componentPer100(int kcal) {
+    return '$kcal kcal pro 100 g';
+  }
+
+  @override
+  String get componentSourceUsda => 'USDA';
+
+  @override
+  String get componentLess => 'Weniger';
+
+  @override
+  String get componentMore => 'Mehr';
+
+  @override
+  String componentMealNow(int kcal, int total) {
+    return '$kcal kcal · Mahlzeit jetzt $total kcal';
+  }
+
+  @override
+  String get componentRemove => 'Entfernen';
+
+  @override
+  String get componentApply => 'Übernehmen';
+
+  @override
+  String get analysisReadingPhoto => 'Foto wird gelesen';
+
+  @override
+  String get analysisReadingText => 'Beschreibung wird gelesen';
+
+  @override
+  String analysisParallel(int count) {
+    return '$count Schätzungen laufen parallel';
+  }
+
+  @override
+  String get analysisSingle => 'Eine schnelle Schätzung';
+
+  @override
+  String analysisComponentsFound(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count Teile erkannt',
+      one: '1 Teil erkannt',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get analysisAmounts => 'Mengen werden geschätzt';
+
+  @override
+  String analysisEstimateOf(int done, int total) {
+    return 'Schätzung $done von $total';
+  }
+
+  @override
+  String analysisSoFar(String values) {
+    return 'Bisher $values kcal';
+  }
+
+  @override
+  String analysisMedianOf(int count) {
+    return 'Median aus $count Schätzungen';
+  }
+
+  @override
+  String get analysisDone => 'Fertig geschätzt';
 
   @override
   String get retrySheetAction => 'Neu analysieren';

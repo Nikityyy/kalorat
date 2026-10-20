@@ -1394,18 +1394,6 @@ abstract class AppLocalizations {
   /// **'Mahlzeiten, die vor dieser Uhrzeit gespeichert werden, zählen zum Vortag'**
   String get dayStartsAtHint;
 
-  /// No description provided for @aiThinkingTitle.
-  ///
-  /// In de, this message translates to:
-  /// **'KI-Analyse'**
-  String get aiThinkingTitle;
-
-  /// No description provided for @aiThinkingLabel.
-  ///
-  /// In de, this message translates to:
-  /// **'Denkt nach …'**
-  String get aiThinkingLabel;
-
   /// No description provided for @analysisTimedOut.
   ///
   /// In de, this message translates to:
@@ -1745,7 +1733,7 @@ abstract class AppLocalizations {
   /// No description provided for @retrySheetSubtitle.
   ///
   /// In de, this message translates to:
-  /// **'Hinweis bearbeiten oder direkt neu analysieren'**
+  /// **'Notiz für die KI, optional'**
   String get retrySheetSubtitle;
 
   /// No description provided for @retrySheetHint.
@@ -1753,6 +1741,180 @@ abstract class AppLocalizations {
   /// In de, this message translates to:
   /// **'z. B. 2 Portionen, extra Sauce'**
   String get retrySheetHint;
+
+  /// No description provided for @retryLeftoversTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Reste abziehen'**
+  String get retryLeftoversTitle;
+
+  /// No description provided for @retryLeftoversHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Foto vom Rest auf dem Teller, er wird abgezogen.'**
+  String get retryLeftoversHint;
+
+  /// No description provided for @retryLeftoversCamera.
+  ///
+  /// In de, this message translates to:
+  /// **'Rest fotografieren'**
+  String get retryLeftoversCamera;
+
+  /// No description provided for @retryLeftoversGallery.
+  ///
+  /// In de, this message translates to:
+  /// **'Aus Fotos'**
+  String get retryLeftoversGallery;
+
+  /// No description provided for @retryLeftoversCount.
+  ///
+  /// In de, this message translates to:
+  /// **'{count, plural, =1{1 Foto vom Rest} other{{count} Fotos vom Rest}}'**
+  String retryLeftoversCount(int count);
+
+  /// No description provided for @retryLeftoversCountHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Die Analyse zählt nur, was gegessen wurde.'**
+  String get retryLeftoversCountHint;
+
+  /// No description provided for @retryLeftoversAddMore.
+  ///
+  /// In de, this message translates to:
+  /// **'Noch eins aufnehmen'**
+  String get retryLeftoversAddMore;
+
+  /// No description provided for @retryLeftoverRemove.
+  ///
+  /// In de, this message translates to:
+  /// **'Foto entfernen'**
+  String get retryLeftoverRemove;
+
+  /// No description provided for @componentsTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Auf dem Teller'**
+  String get componentsTitle;
+
+  /// No description provided for @componentsTapToEdit.
+  ///
+  /// In de, this message translates to:
+  /// **'Tippen zum Ändern'**
+  String get componentsTapToEdit;
+
+  /// No description provided for @componentsTopShare.
+  ///
+  /// In de, this message translates to:
+  /// **'{first} und {second} bringen {percent} % der Kalorien'**
+  String componentsTopShare(String first, String second, int percent);
+
+  /// No description provided for @componentEditHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Menge ändern'**
+  String get componentEditHint;
+
+  /// No description provided for @componentPer100.
+  ///
+  /// In de, this message translates to:
+  /// **'{kcal} kcal pro 100 g'**
+  String componentPer100(int kcal);
+
+  /// No description provided for @componentSourceUsda.
+  ///
+  /// In de, this message translates to:
+  /// **'USDA'**
+  String get componentSourceUsda;
+
+  /// No description provided for @componentLess.
+  ///
+  /// In de, this message translates to:
+  /// **'Weniger'**
+  String get componentLess;
+
+  /// No description provided for @componentMore.
+  ///
+  /// In de, this message translates to:
+  /// **'Mehr'**
+  String get componentMore;
+
+  /// No description provided for @componentMealNow.
+  ///
+  /// In de, this message translates to:
+  /// **'{kcal} kcal · Mahlzeit jetzt {total} kcal'**
+  String componentMealNow(int kcal, int total);
+
+  /// No description provided for @componentRemove.
+  ///
+  /// In de, this message translates to:
+  /// **'Entfernen'**
+  String get componentRemove;
+
+  /// No description provided for @componentApply.
+  ///
+  /// In de, this message translates to:
+  /// **'Übernehmen'**
+  String get componentApply;
+
+  /// No description provided for @analysisReadingPhoto.
+  ///
+  /// In de, this message translates to:
+  /// **'Foto wird gelesen'**
+  String get analysisReadingPhoto;
+
+  /// No description provided for @analysisReadingText.
+  ///
+  /// In de, this message translates to:
+  /// **'Beschreibung wird gelesen'**
+  String get analysisReadingText;
+
+  /// No description provided for @analysisParallel.
+  ///
+  /// In de, this message translates to:
+  /// **'{count} Schätzungen laufen parallel'**
+  String analysisParallel(int count);
+
+  /// No description provided for @analysisSingle.
+  ///
+  /// In de, this message translates to:
+  /// **'Eine schnelle Schätzung'**
+  String get analysisSingle;
+
+  /// No description provided for @analysisComponentsFound.
+  ///
+  /// In de, this message translates to:
+  /// **'{count, plural, =1{1 Teil erkannt} other{{count} Teile erkannt}}'**
+  String analysisComponentsFound(int count);
+
+  /// No description provided for @analysisAmounts.
+  ///
+  /// In de, this message translates to:
+  /// **'Mengen werden geschätzt'**
+  String get analysisAmounts;
+
+  /// No description provided for @analysisEstimateOf.
+  ///
+  /// In de, this message translates to:
+  /// **'Schätzung {done} von {total}'**
+  String analysisEstimateOf(int done, int total);
+
+  /// No description provided for @analysisSoFar.
+  ///
+  /// In de, this message translates to:
+  /// **'Bisher {values} kcal'**
+  String analysisSoFar(String values);
+
+  /// No description provided for @analysisMedianOf.
+  ///
+  /// In de, this message translates to:
+  /// **'Median aus {count} Schätzungen'**
+  String analysisMedianOf(int count);
+
+  /// No description provided for @analysisDone.
+  ///
+  /// In de, this message translates to:
+  /// **'Fertig geschätzt'**
+  String get analysisDone;
 
   /// No description provided for @retrySheetAction.
   ///

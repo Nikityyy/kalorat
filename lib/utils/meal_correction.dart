@@ -68,5 +68,13 @@ MealModel mealWithCalories(
         : meal.carbsPer100g,
     fatsPer100g: per100 && meal.fatsPer100g != null ? fats : meal.fatsPer100g,
     isCalorieOverride: true,
+    // The components follow: a serving gets more or less of each, a weighed
+    // amount keeps its weight and gets denser or lighter.
+    components: meal.components == null
+        ? null
+        : [
+            for (final c in meal.components!)
+              per100 ? c.withDensity(ratio) : c.withGrams(c.grams * ratio),
+          ],
   );
 }

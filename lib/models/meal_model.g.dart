@@ -47,6 +47,7 @@ class MealModelAdapter extends TypeAdapter<MealModel> {
       analysisNote: fields[28] as String?,
       caloriesMin: fields[29] as double?,
       caloriesMax: fields[30] as double?,
+      components: MealComponent.listFromMaps(fields[31]),
       updatedAt: fields[21] as DateTime?,
     );
   }
@@ -54,7 +55,7 @@ class MealModelAdapter extends TypeAdapter<MealModel> {
   @override
   void write(BinaryWriter writer, MealModel obj) {
     writer
-      ..writeByte(31)
+      ..writeByte(32)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -116,7 +117,9 @@ class MealModelAdapter extends TypeAdapter<MealModel> {
       ..writeByte(29)
       ..write(obj.caloriesMin)
       ..writeByte(30)
-      ..write(obj.caloriesMax);
+      ..write(obj.caloriesMax)
+      ..writeByte(31)
+      ..write(obj.components?.map((c) => c.toMap()).toList());
   }
 
   @override

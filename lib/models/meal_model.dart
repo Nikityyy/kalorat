@@ -1,5 +1,6 @@
 import 'package:hive/hive.dart';
 
+import 'meal_component.dart';
 import 'validation_exception.dart';
 
 part 'meal_model.g.dart';
@@ -128,6 +129,11 @@ class MealModel extends HiveObject {
   @HiveField(30)
   final double? caloriesMax;
 
+  /// What the analysis found on the plate, for one base portion. Null for
+  /// meals logged before components were kept, by barcode or by hand.
+  @HiveField(31)
+  final List<MealComponent>? components;
+
   MealModel({
     required this.id,
     required this.timestamp,
@@ -159,6 +165,7 @@ class MealModel extends HiveObject {
     this.analysisNote,
     this.caloriesMin,
     this.caloriesMax,
+    this.components,
     DateTime? updatedAt,
   }) : analysisStatus = analysisStatus ?? (isPending ? 'queued' : 'completed'),
        analysisStartedAt = analysisStartedAt?.toUtc(),
@@ -196,6 +203,7 @@ class MealModel extends HiveObject {
     Object? analysisNote = _copyWithUnset,
     Object? caloriesMin = _copyWithUnset,
     Object? caloriesMax = _copyWithUnset,
+    Object? components = _copyWithUnset,
     DateTime? updatedAt,
   }) {
     return MealModel(
@@ -257,6 +265,9 @@ class MealModel extends HiveObject {
       caloriesMax: identical(caloriesMax, _copyWithUnset)
           ? this.caloriesMax
           : caloriesMax as double?,
+      components: identical(components, _copyWithUnset)
+          ? this.components
+          : components as List<MealComponent>?,
       updatedAt: updatedAt?.toUtc() ?? this.updatedAt.toUtc(),
     );
   }
@@ -344,6 +355,7 @@ class MealModel extends HiveObject {
     'analysisNote': analysisNote,
     'caloriesMin': caloriesMin,
     'caloriesMax': caloriesMax,
+    'components': components?.map((c) => c.toMap()).toList(),
     'updatedAt': updatedAt.toUtc().toIso8601String(),
   };
 
@@ -386,6 +398,7 @@ class MealModel extends HiveObject {
     analysisNote: json['analysisNote']?.toString(),
     caloriesMin: (json['caloriesMin'] as num?)?.toDouble(),
     caloriesMax: (json['caloriesMax'] as num?)?.toDouble(),
+    components: MealComponent.listFromMaps(json['components']),
     updatedAt: json['updatedAt'] != null
         ? DateTime.tryParse(json['updatedAt'])?.toUtc()
         : null,

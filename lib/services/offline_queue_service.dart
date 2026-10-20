@@ -217,6 +217,7 @@ class OfflineQueueService {
         analysisNote: parsed.note,
         caloriesMin: parsed.caloriesMin,
         caloriesMax: parsed.caloriesMax,
+        components: parsed.components,
         isPending: false,
         analysisStatus: 'completed',
         analysisError: null,

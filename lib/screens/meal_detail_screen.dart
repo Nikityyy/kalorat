@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import '../services/barcode/food_product.dart';
 import '../services/photo_store.dart';
 import '../utils/haptics.dart';
+import '../utils/meal_components.dart';
 import '../utils/meal_correction.dart';
 import '../services/gemini_service.dart';
 import '../extensions/l10n_extension.dart';
@@ -17,11 +18,13 @@ import '../theme/app_theme.dart';
 import '../theme/app_typography.dart';
 import '../utils/nutrition_units.dart';
 import '../widgets/common/adaptive.dart';
+import 'home/analyzing_view.dart';
 import 'home/photo_viewer.dart';
+import 'meal_detail/components_section.dart';
 import 'meal_detail/retry_sheet.dart';
 import '../utils/analysis_parser.dart';
 import '../widgets/inputs/action_button.dart';
-import '../widgets/live_thought_panel.dart';
+import '../utils/analysis_tracker.dart';
 import '../widgets/app_toast.dart';
 import '../utils/analysis_error_message.dart';
 import '../utils/save_photo.dart';
@@ -54,7 +57,7 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
   bool _isAnalyzing = false;
   int _photoIndex = 0;
   final _photoPages = PageController();
-  final ThoughtBuffer _thought = ThoughtBuffer();
+  final AnalysisTracker _tracker = AnalysisTracker();
   String? _mealContext;
   ImageProvider? _analysisHeroImageProvider;
 
@@ -98,7 +101,7 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
 
   @override
   void dispose() {
-    _thought.dispose();
+    _tracker.dispose();
     _photoPages.dispose();
     super.dispose();
   }
@@ -238,7 +241,12 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
           ? _mealPhotoImageProvider(_meal.photoPaths.first)
           : null;
     });
-    _thought.clear();
+    final accurate = provider.user?.useAccurateMode ?? true;
+    _tracker.start(
+      estimates: accurate ? GeminiService.ensembleSize : 1,
+      hasPhoto: _meal.photoPaths.isNotEmpty,
+      description: submittedContext,
+    );
 
     Map<String, dynamic>? result;
 
@@ -249,19 +257,20 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
         _meal.photoPaths,
         useGrams: provider.user?.useGramsByDefault ?? false,
         mealContext: submittedContext,
-        useAccurateMode: provider.user?.useAccurateMode ?? true,
+        useAccurateMode: accurate,
         allowEstimateVariation: true,
         previousAnalysis: barcodeProduct == null
             ? _currentAnalysisSnapshot()
             : null,
+        leftoverPaths: request.leftoverPaths,
       );
 
       await for (final event in stream) {
         if (!mounted) break;
-        if (event is ThoughtChunk) {
-          _thought.append(event.text);
-        } else if (event is AnalysisResult) {
+        if (event is AnalysisResult) {
           result = event.data;
+        } else {
+          _tracker.handle(event);
         }
       }
 
@@ -279,6 +288,8 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
           return;
         }
 
+        await _tracker.finish(analysis);
+        if (!mounted) return;
         final parsed = parseAnalysisResult(analysis);
         setState(() {
           _meal = _meal.copyWith(
@@ -296,6 +307,7 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
             analysisNote: parsed.note,
             caloriesMin: parsed.caloriesMin,
             caloriesMax: parsed.caloriesMax,
+            components: parsed.components,
             vitamins: parsed.vitamins,
             minerals: parsed.minerals,
             portionUnit: parsed.unit,
@@ -333,7 +345,6 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
           _isAnalyzing = false;
           _analysisHeroImageProvider = null;
         });
-        _thought.clear();
       }
     }
   }
@@ -353,6 +364,15 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
       'protein_per_100g': _meal.proteinPer100g,
       'carbs_per_100g': _meal.carbsPer100g,
       'fats_per_100g': _meal.fatsPer100g,
+      if (_meal.components case final components?)
+        'items': [
+          for (final component in components)
+            {
+              'name': component.name,
+              'grams': component.grams * _portionMultiplier,
+              'kcal': component.calories * _portionMultiplier,
+            },
+        ],
     };
   }
 
@@ -444,6 +464,8 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
             ? newBase
             : _meal.caloriesPer100g,
         isCalorieOverride: true, // Force manual mode
+        // Typed totals no longer come from the components.
+        components: null,
       );
     });
   }
@@ -462,65 +484,6 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
     if (newValue != null && mounted) onSave(newValue);
   }
 
-  Widget _buildAnalyzingView() {
-    final l10n = context.l10n;
-    final screenHeight = MediaQuery.of(context).size.height;
-
-    return Stack(
-      children: [
-        if (_analysisHeroImageProvider != null)
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            height: screenHeight * 0.35,
-            child: Image(
-              image: _analysisHeroImageProvider!,
-              fit: BoxFit.cover,
-              gaplessPlayback: true,
-            ),
-          ),
-        Positioned(
-          top: screenHeight * 0.3,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          child: Container(
-            decoration: BoxDecoration(
-              color: AppColors.canvas,
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(AppTheme.sheetRadius),
-              ),
-              border: Border(top: BorderSide(color: AppColors.border)),
-            ),
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(24, 32, 24, 48),
-              child: Column(
-                children: [
-                  Text(
-                    l10n.analyzing,
-                    style: AppTypography.displayMedium.copyWith(fontSize: 32),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 32),
-                  ValueListenableBuilder<String>(
-                    valueListenable: _thought,
-                    builder: (context, thought, _) => LiveThoughtPanel(
-                      thoughtText: thought,
-                      titleLabel: l10n.aiThinkingTitle,
-                      thinkingLabel: l10n.aiThinkingLabel,
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
@@ -532,7 +495,10 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
     if (_isAnalyzing) {
       return Scaffold(
         backgroundColor: AppColors.canvas,
-        body: _buildAnalyzingView(),
+        body: AnalyzingView(
+          heroImage: _analysisHeroImageProvider,
+          tracker: _tracker,
+        ),
       );
     }
 
@@ -588,6 +554,14 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
         ],
         const SizedBox(height: 20),
         _buildMacroRows(),
+        if (_meal.components case final components?) ...[
+          const SizedBox(height: 32),
+          MealComponentsSection(
+            components: components,
+            multiplier: _portionMultiplier,
+            onEdit: _editComponent,
+          ),
+        ],
         if (_hasPer100Reference() || _canEditPer100Reference()) ...[
           const SizedBox(height: 20),
           _buildPer100Reference(),
@@ -1019,6 +993,32 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
     );
   }
 
+  Future<void> _editComponent(int index) async {
+    final components = _meal.components;
+    if (components == null || index >= components.length) return;
+    final edit = await showComponentSheet(
+      context,
+      component: components[index],
+      multiplier: _portionMultiplier,
+      mealCalories: _meal.calories * _portionMultiplier,
+      canRemove: components.length > 1,
+    );
+    if (edit == null || !mounted) return;
+    final grams = edit.grams;
+    final list = [...components];
+    if (grams == null) {
+      list.removeAt(index);
+    } else {
+      list[index] = list[index].withGrams(grams / _portionMultiplier);
+    }
+    setState(() {
+      final change = applyComponents(_meal, list, _portionMultiplier);
+      _meal = change.meal;
+      _portionMultiplier = change.multiplier;
+      _originalCalories = _meal.calories;
+    });
+  }
+
   /// One-tap correction: the calories become [kcal] and the macros follow.
   void _applyCalories(double kcal) {
     Haptics.tick();
@@ -1144,6 +1144,7 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
           caloriesPer100g: per100 && !_meal.isCalorieOverride
               ? calories
               : _meal.caloriesPer100g,
+          components: null,
         );
       });
     });
@@ -1198,6 +1199,7 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
     final protein = read(3);
     setState(() {
       _meal = _meal.copyWith(
+        components: null,
         caloriesPer100g: calories,
         proteinPer100g: protein,
         carbsPer100g: carbs,

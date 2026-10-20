@@ -676,12 +676,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'Meals logged before this time count towards the previous day';
 
   @override
-  String get aiThinkingTitle => 'AI reasoning';
-
-  @override
-  String get aiThinkingLabel => 'Thinking…';
-
-  @override
   String get analysisTimedOut =>
       'Gemini did not answer in time. Please try again.';
 
@@ -873,10 +867,129 @@ class AppLocalizationsEn extends AppLocalizations {
   String get retrySheetTitle => 'Analyze again';
 
   @override
-  String get retrySheetSubtitle => 'Edit the note or analyze again right away';
+  String get retrySheetSubtitle => 'Note for the AI, optional';
 
   @override
   String get retrySheetHint => 'e.g. 2 portions, extra sauce';
+
+  @override
+  String get retryLeftoversTitle => 'Subtract leftovers';
+
+  @override
+  String get retryLeftoversHint =>
+      'Photo of what is left on the plate; it gets subtracted.';
+
+  @override
+  String get retryLeftoversCamera => 'Photograph leftovers';
+
+  @override
+  String get retryLeftoversGallery => 'From photos';
+
+  @override
+  String retryLeftoversCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count leftover photos',
+      one: '1 leftover photo',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get retryLeftoversCountHint =>
+      'The analysis counts only what was eaten.';
+
+  @override
+  String get retryLeftoversAddMore => 'Take another';
+
+  @override
+  String get retryLeftoverRemove => 'Remove photo';
+
+  @override
+  String get componentsTitle => 'On the plate';
+
+  @override
+  String get componentsTapToEdit => 'Tap to change';
+
+  @override
+  String componentsTopShare(String first, String second, int percent) {
+    return '$first and $second bring $percent % of the calories';
+  }
+
+  @override
+  String get componentEditHint => 'Change amount';
+
+  @override
+  String componentPer100(int kcal) {
+    return '$kcal kcal per 100 g';
+  }
+
+  @override
+  String get componentSourceUsda => 'USDA';
+
+  @override
+  String get componentLess => 'Less';
+
+  @override
+  String get componentMore => 'More';
+
+  @override
+  String componentMealNow(int kcal, int total) {
+    return '$kcal kcal · meal now $total kcal';
+  }
+
+  @override
+  String get componentRemove => 'Remove';
+
+  @override
+  String get componentApply => 'Apply';
+
+  @override
+  String get analysisReadingPhoto => 'Reading the photo';
+
+  @override
+  String get analysisReadingText => 'Reading the description';
+
+  @override
+  String analysisParallel(int count) {
+    return '$count estimates running in parallel';
+  }
+
+  @override
+  String get analysisSingle => 'One quick estimate';
+
+  @override
+  String analysisComponentsFound(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count parts found',
+      one: '1 part found',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get analysisAmounts => 'Estimating amounts';
+
+  @override
+  String analysisEstimateOf(int done, int total) {
+    return 'Estimate $done of $total';
+  }
+
+  @override
+  String analysisSoFar(String values) {
+    return 'So far $values kcal';
+  }
+
+  @override
+  String analysisMedianOf(int count) {
+    return 'Median of $count estimates';
+  }
+
+  @override
+  String get analysisDone => 'Estimate ready';
 
   @override
   String get retrySheetAction => 'Analyze again';

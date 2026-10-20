@@ -22,6 +22,7 @@ import '../theme/app_theme.dart';
 import '../theme/app_typography.dart';
 import '../utils/analysis_error_message.dart';
 import '../utils/analysis_parser.dart';
+import '../utils/analysis_tracker.dart';
 import '../utils/save_photo.dart';
 import '../utils/platform_utils.dart';
 import '../utils/web_cameras.dart';
@@ -133,8 +134,8 @@ class _HomeScreenState extends State<HomeScreen>
   String? _photoBarcodeSource;
   int _photoScanGeneration = 0;
 
-  // Live thought summary text accumulated during streaming analysis
-  final ThoughtBuffer _thought = ThoughtBuffer();
+  // What the running analysis has found so far, for the analysing view.
+  final AnalysisTracker _tracker = AnalysisTracker();
   ImageProvider? _analysisHeroImageProvider;
 
   static const String _pendingPhotosBox = DatabaseService.pendingPhotosBoxName;
@@ -286,7 +287,7 @@ class _HomeScreenState extends State<HomeScreen>
     _logoTapTimer?.cancel();
     _photoScanGeneration++;
     _photoBarcode.dispose();
-    _thought.dispose();
+    _tracker.dispose();
     final controller = _cameraController;
     unawaited(
       _barcodeScanner.dispose().whenComplete(() => controller?.dispose()),
@@ -1092,7 +1093,12 @@ class _HomeScreenState extends State<HomeScreen>
             )
           : null;
     });
-    _thought.clear();
+    final accurate = provider.user?.useAccurateMode ?? true;
+    _tracker.start(
+      estimates: accurate ? GeminiService.ensembleSize : 1,
+      hasPhoto: _capturedPhotos.isNotEmpty,
+      description: mealContext,
+    );
     provider.setMealAnalysisActive(true);
     // The analysis covers the whole screen; the live preview underneath
     // would only cost frames.
@@ -1106,15 +1112,15 @@ class _HomeScreenState extends State<HomeScreen>
         _capturedPhotos,
         useGrams: provider.user?.useGramsByDefault ?? false,
         mealContext: mealContext,
-        useAccurateMode: provider.user?.useAccurateMode ?? true,
+        useAccurateMode: accurate,
       );
 
       await for (final event in stream) {
         if (!mounted) break;
-        if (event is ThoughtChunk) {
-          _thought.append(event.text);
-        } else if (event is AnalysisResult) {
+        if (event is AnalysisResult) {
           result = event.data;
+        } else {
+          _tracker.handle(event);
         }
       }
     } catch (e) {
@@ -1127,7 +1133,6 @@ class _HomeScreenState extends State<HomeScreen>
         });
         provider.setMealAnalysisActive(false);
         _showMessage(errorMsg, kind: AppToastKind.error);
-        _thought.clear();
         return;
       }
     }
@@ -1151,6 +1156,8 @@ class _HomeScreenState extends State<HomeScreen>
       }
 
       try {
+        // The number lands on the photo before the result opens.
+        await _tracker.finish(result);
         final parsed = parseAnalysisResult(result);
         final mealWithPortion = MealModel(
           id: mealId,
@@ -1170,6 +1177,7 @@ class _HomeScreenState extends State<HomeScreen>
           analysisNote: parsed.note,
           caloriesMin: parsed.caloriesMin,
           caloriesMax: parsed.caloriesMax,
+          components: parsed.components,
           vitamins: parsed.vitamins,
           minerals: parsed.minerals,
           portionMultiplier: parsed.multiplier,
@@ -1327,12 +1335,9 @@ class _HomeScreenState extends State<HomeScreen>
         Positioned.fill(child: _buildCamera()),
         if (_isAnalyzing)
           Positioned.fill(
-            child: ValueListenableBuilder<String>(
-              valueListenable: _thought,
-              builder: (context, thought, _) => AnalyzingView(
-                heroImage: _analysisHeroImageProvider,
-                thoughtText: thought,
-              ),
+            child: AnalyzingView(
+              heroImage: _analysisHeroImageProvider,
+              tracker: _tracker,
             ),
           )
         else if (_capturedPhotos.isEmpty && _showCameraHint)

@@ -1,3 +1,4 @@
+import '../models/meal_component.dart';
 import 'nutrition_units.dart';
 
 /// A Gemini analysis result read into plain values. Nutrition is the base
@@ -23,6 +24,9 @@ class ParsedAnalysis {
   final Map<String, double>? vitamins;
   final Map<String, double>? minerals;
 
+  /// The analysed components for one base portion; null without grams.
+  final List<MealComponent>? components;
+
   const ParsedAnalysis({
     required this.mealName,
     required this.unit,
@@ -42,6 +46,7 @@ class ParsedAnalysis {
     this.caloriesMax,
     this.vitamins,
     this.minerals,
+    this.components,
   });
 }
 
@@ -82,6 +87,10 @@ ParsedAnalysis parseAnalysisResult(Map<String, dynamic> result) {
     caloriesMax: number('calories_max'),
     vitamins: _doubleMap(result['vitamins']),
     minerals: _doubleMap(result['minerals']),
+    components: MealComponent.fromAnalysisItems(
+      result['items'],
+      multiplier: multiplier,
+    ),
   );
 }
 
@@ -91,4 +100,26 @@ Map<String, double>? _doubleMap(Object? value) {
     for (final entry in value.entries)
       entry.key.toString(): (entry.value as num?)?.toDouble() ?? 0,
   };
+}
+
+/// The calories of the whole analysed amount (base value times portion).
+double mealTotalCalories(Map<String, dynamic> result) {
+  final parsed = parseAnalysisResult(result);
+  return parsed.calories * parsed.multiplier;
+}
+
+/// The estimate in the middle by total calories. With two, the one the
+/// model was more confident about.
+Map<String, dynamic> medianEstimate(List<Map<String, dynamic>> results) {
+  assert(results.isNotEmpty);
+  if (results.length == 2) {
+    double confidence(Map<String, dynamic> r) =>
+        (r['confidence_score'] as num?)?.toDouble() ?? 0;
+    return confidence(results[1]) > confidence(results[0])
+        ? results[1]
+        : results[0];
+  }
+  final sorted = [...results]
+    ..sort((a, b) => mealTotalCalories(a).compareTo(mealTotalCalories(b)));
+  return sorted[sorted.length ~/ 2];
 }
