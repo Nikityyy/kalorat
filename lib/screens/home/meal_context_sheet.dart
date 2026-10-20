@@ -8,6 +8,7 @@ import '../../theme/app_theme.dart';
 import '../../theme/app_typography.dart';
 import '../../widgets/barcode_switch_tile.dart';
 import '../../widgets/common/adaptive.dart';
+import '../../widgets/common/warm_up.dart';
 
 /// What the user chose in the "Anything to add?" sheet.
 class MealContextResult {
@@ -41,6 +42,10 @@ Future<MealContextResult?> showMealContextSheet(
   isDismissible: true,
   builder: (_) => _MealContextSheet(initialText: initialText, barcode: barcode),
 );
+
+/// The sheet as [showMealContextSheet] shows it, for [WarmUp.run].
+Widget mealContextSheetWarmUp(BuildContext context) =>
+    const WarmUpSheet(child: _MealContextSheet());
 
 class _MealContextSheet extends StatefulWidget {
   final String? initialText;

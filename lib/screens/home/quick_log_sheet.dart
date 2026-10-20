@@ -5,6 +5,7 @@ import '../../theme/app_colors.dart';
 import '../../theme/app_theme.dart';
 import '../../theme/app_typography.dart';
 import '../../widgets/common/adaptive.dart';
+import '../../widgets/common/warm_up.dart';
 
 /// What the user chose in the quick log sheet.
 sealed class QuickLogResult {
@@ -35,6 +36,10 @@ Future<QuickLogResult?> showQuickLogSheet(
   isScrollControlled: true,
   builder: (_) => _QuickLogSheet(recent: recent),
 );
+
+/// The sheet as [showQuickLogSheet] shows it, for [WarmUp.run].
+Widget quickLogSheetWarmUp(BuildContext context) =>
+    const WarmUpSheet(child: _QuickLogSheet(recent: []));
 
 class _QuickLogSheet extends StatefulWidget {
   final List<MealModel> recent;
@@ -209,11 +214,7 @@ class _RecentMealRow extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 12),
-            Icon(
-              Icons.add_circle_outline,
-              size: 22,
-              color: AppColors.primary,
-            ),
+            Icon(Icons.add_circle_outline, size: 22, color: AppColors.primary),
           ],
         ),
       ),

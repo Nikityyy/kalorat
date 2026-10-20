@@ -356,7 +356,7 @@
   "retryLeftoverRemove": "Remove photo",
   "componentsTitle": "On the plate",
   "componentsTapToEdit": "Tap to change",
-  "componentsTopShare": "{first} and {second} bring {percent} % of the calories",
+  "componentsTopShare": "{first} and {second} bring {percent}% of the calories",
   "componentEditHint": "Change amount",
   "componentPer100": "{kcal} kcal per 100 g",
   "componentSourceUsda": "USDA",

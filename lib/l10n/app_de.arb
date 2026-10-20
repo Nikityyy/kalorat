@@ -375,7 +375,7 @@
   "@retryLeftoversCount": {"placeholders": {"count": {"type": "int"}}},
   "componentsTitle": "Auf dem Teller",
   "componentsTapToEdit": "Tippen zum Ändern",
-  "componentsTopShare": "{first} und {second} bringen {percent} % der Kalorien",
+  "componentsTopShare": "{first} und {second} bringen {percent} % der Kalorien",
   "componentEditHint": "Menge ändern",
   "componentPer100": "{kcal} kcal pro 100 g",
   "componentSourceUsda": "USDA",

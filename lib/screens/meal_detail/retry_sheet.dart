@@ -10,6 +10,7 @@ import '../../theme/app_typography.dart';
 import '../../utils/haptics.dart';
 import '../../widgets/barcode_switch_tile.dart';
 import '../../widgets/common/adaptive.dart';
+import '../../widgets/common/warm_up.dart';
 
 /// What the user asked for in the retry sheet.
 class RetryRequest {
@@ -51,6 +52,11 @@ Future<RetryRequest?> showRetrySheet(
     hasPhotos: hasPhotos,
   ),
 );
+
+/// The sheet as [showRetrySheet] shows it for a meal with photos, for
+/// [WarmUp.run].
+Widget retrySheetWarmUp(BuildContext context) =>
+    const WarmUpSheet(child: _RetrySheet(hasPhotos: true));
 
 class _RetrySheet extends StatefulWidget {
   final String? initialNote;

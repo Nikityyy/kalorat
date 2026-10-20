@@ -927,7 +927,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String componentsTopShare(String first, String second, int percent) {
-    return '$first und $second bringen $percent % der Kalorien';
+    return '$first und $second bringen $percent % der Kalorien';
   }
 
   @override

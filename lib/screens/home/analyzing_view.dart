@@ -7,6 +7,7 @@ import '../../extensions/l10n_extension.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_theme.dart';
 import '../../theme/app_typography.dart';
+import '../../services/gemini_service.dart' show ComponentsSeen, EstimateReady;
 import '../../utils/analysis_tracker.dart';
 
 /// Shown while a meal is analysed: the photo full screen, and over its lower
@@ -378,7 +379,7 @@ class _ComponentChips extends StatelessWidget {
                               ),
                             ),
                             TextSpan(
-                              text: ' ${l10n.grams}',
+                              text: ' ${l10n.grams}',
                               style: TextStyle(
                                 color: Colors.white.withValues(alpha: 0.78),
                               ),
@@ -494,4 +495,43 @@ class _ClimbPainter extends CustomPainter {
       old.pulse != pulse ||
       old.marks.length != marks.length ||
       old.accent != accent;
+}
+
+/// The view part way through an analysis, with chips and a first estimate,
+/// for the warm-up after the app starts (see `WarmUp`).
+Widget analyzingViewWarmUp(BuildContext context) => const _AnalyzingWarmUp();
+
+class _AnalyzingWarmUp extends StatefulWidget {
+  const _AnalyzingWarmUp();
+
+  @override
+  State<_AnalyzingWarmUp> createState() => _AnalyzingWarmUpState();
+}
+
+class _AnalyzingWarmUpState extends State<_AnalyzingWarmUp> {
+  final AnalysisTracker _tracker = AnalysisTracker()
+    ..start(estimates: 3, hasPhoto: true);
+  bool _fed = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_fed) return;
+    _fed = true;
+    // Never seen; any text in the chips' style will do.
+    final name = context.l10n.componentsTitle;
+    _tracker
+      ..handle(ComponentsSeen([name, name]))
+      ..handle(const EstimateReady(1, 3, 520));
+  }
+
+  @override
+  void dispose() {
+    _tracker.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) =>
+      AnalyzingView(heroImage: null, tracker: _tracker);
 }

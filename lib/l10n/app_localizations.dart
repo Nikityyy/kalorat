@@ -1805,7 +1805,7 @@ abstract class AppLocalizations {
   /// No description provided for @componentsTopShare.
   ///
   /// In de, this message translates to:
-  /// **'{first} und {second} bringen {percent} % der Kalorien'**
+  /// **'{first} und {second} bringen {percent} % der Kalorien'**
   String componentsTopShare(String first, String second, int percent);
 
   /// No description provided for @componentEditHint.

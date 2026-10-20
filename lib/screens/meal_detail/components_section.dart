@@ -8,10 +8,13 @@ import '../../theme/app_theme.dart';
 import '../../theme/app_typography.dart';
 import '../../utils/haptics.dart';
 import '../../widgets/common/mono_digits.dart';
+import '../../widgets/common/warm_up.dart';
 
-/// A narrow no-break space: between a number and its unit, so "180 g" stays
-/// on one line and the Mono face does not widen the gap.
-const _unitGap = ' ';
+/// A no-break space: between a number and its unit, so "180 g" stays on one
+/// line and the Mono face does not widen the gap. Not the narrow one
+/// (U+202F): the app's fonts lack it, and the browser then loads a fallback
+/// font for it.
+const _unitGap = ' ';
 
 /// "Auf dem Teller": what the meal is made of, one ruled row per component
 /// with its amount and calories as shown (portion included). A tap edits it.
@@ -160,7 +163,7 @@ class _ComponentRow extends StatelessWidget {
   }
 }
 
-/// A Mono number with its unit in Outfit after a narrow space.
+/// A Mono number with its unit in Outfit after a no-break space.
 class _NumberUnit extends StatelessWidget {
   final String value;
   final String unit;
@@ -219,6 +222,24 @@ Future<ComponentEdit?> showComponentSheet(
     multiplier: multiplier,
     mealCalories: mealCalories,
     canRemove: canRemove,
+  ),
+);
+
+/// The sheet as [showComponentSheet] shows it, for [WarmUp.run].
+Widget componentSheetWarmUp(BuildContext context) => WarmUpSheet(
+  child: _ComponentSheet(
+    component: MealComponent(
+      // Never seen; any text in the sheet's style will do.
+      name: context.l10n.componentsTitle,
+      grams: 180,
+      kcalPer100g: 130,
+      proteinPer100g: 2.7,
+      carbsPer100g: 28,
+      fatsPer100g: 0.3,
+    ),
+    multiplier: 1,
+    mealCalories: 520,
+    canRemove: true,
   ),
 );
 

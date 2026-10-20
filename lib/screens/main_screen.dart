@@ -10,6 +10,12 @@ import 'today_screen.dart';
 import '../widgets/floating_tab_bar.dart';
 import '../utils/haptics.dart';
 import '../widgets/app_toast.dart';
+import '../widgets/common/warm_up.dart';
+import 'home/analyzing_view.dart';
+import 'home/meal_context_sheet.dart';
+import 'home/quick_log_sheet.dart';
+import 'meal_detail/components_section.dart';
+import 'meal_detail/retry_sheet.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -37,6 +43,26 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
     _pageController = PageController(initialPage: _currentIndex);
     _cameraTabActive = ValueNotifier(_currentIndex == 1);
     _pageController.addListener(_followSwipe);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _warmUp());
+  }
+
+  // Off until the app has started: then the pages beside the shown one are
+  // built ahead, so the first swipe to them does not stall.
+  bool _buildNeighbours = false;
+
+  /// Once the app is up and at rest, draws the sheets and views that open on
+  /// a tap once, out of sight, and then builds the other tabs, so none of
+  /// them stalls the first time it opens. One per frame, with pauses, so the
+  /// start stays as fast as before.
+  Future<void> _warmUp() async {
+    await WarmUp.run([
+      mealContextSheetWarmUp,
+      analyzingViewWarmUp,
+      retrySheetWarmUp,
+      componentSheetWarmUp,
+      quickLogSheetWarmUp,
+    ]);
+    if (mounted) setState(() => _buildNeighbours = true);
   }
 
   /// While a finger drags the pages, the camera runs whenever any of it is
@@ -196,6 +222,7 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
                 valueListenable: _pagingLocked,
                 builder: (context, locked, _) => PageView(
                   controller: _pageController,
+                  allowImplicitScrolling: _buildNeighbours,
                   physics: locked ? const NeverScrollableScrollPhysics() : null,
                   onPageChanged: (index) {
                     // A tab tap already set the target page.

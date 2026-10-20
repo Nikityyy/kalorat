@@ -14,6 +14,7 @@ import 'services/widget_service.dart';
 import 'utils/haptics.dart';
 import 'utils/rebuild_all.dart';
 import 'widgets/common/browser_safe_area.dart';
+import 'widgets/common/warm_up.dart';
 import 'utils/splash_stub.dart'
     if (dart.library.js_interop) 'utils/splash_web.dart'
     as splash;
@@ -199,7 +200,7 @@ class _KaloratAppState extends State<KaloratApp> with WidgetsBindingObserver {
                         maxScaleFactor: maxTextScale,
                       ),
                     ),
-                    child: BrowserSafeArea(child: child!),
+                    child: WarmUpLayer(child: BrowserSafeArea(child: child!)),
                   ),
                 );
               },
