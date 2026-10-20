@@ -84,6 +84,8 @@ jobs:
         mkdir -p _site/app
         # Landing page → root
         cp landing/index.html _site/index.html
+        # Pages serves it for every missing path
+        cp landing/404.html _site/404.html
         # Flutter build → /app/
         cp -r build/web/* _site/app/
         # Merge Assets (from both root and landing)

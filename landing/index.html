@@ -1,1521 +1,328 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <!-- SEO -->
-    <title>Kalorat — The System. Because tracking Kalorien requires absolute clarity.</title>
-    <meta name="description"
-        content="Kalorat. Engineered by Nikita Berger. Precise, honest nutrition tracking. No noise. Just absolute clarity.">
-    <meta name="keywords"
-        content="kalorat, Nikita Berger, calorie tracker, nutrition tracking, meal logger, health companion, fluid precision">
-    <meta name="author" content="Nikita Berger">
-
-    <!-- Open Graph -->
-    <meta property="og:type" content="website">
-    <meta property="og:title" content="Kalorat — The System. Absolute Clarity.">
-    <meta property="og:description"
-        content="Precise, honest nutrition tracking. Engineered by Nikita Berger with fluid precision.">
-    <meta property="og:image" content="assets/kalorat-favicon-ios.webp">
-    <meta property="og:url" content="https://nikity.is-a.dev/kalorat/">
-
-    <!-- Twitter -->
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Kalorat — The System. Absolute Clarity.">
-    <meta name="twitter:description"
-        content="Precise, honest nutrition tracking. Engineered by Nikita Berger with fluid precision.">
-
-    <meta name="theme-color" content="#0F5838">
-
-    <!-- Favicon -->
-    <link rel="icon" type="image/webp" href="assets/kalorat-favicon-ios.webp">
-    <link rel="apple-touch-icon" href="assets/kalorat-favicon-ios.webp">
-
-    <!-- Fonts: Outfit (Brand Primary) + JetBrains Mono (Data) -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link
-        href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap"
-        rel="stylesheet">
-
-    <!-- Remix Icon -->
-    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
-
-    <style>
-        /* ============================================
-       KALORAT — Nikita Berger BRAND IDENTITY
-       ============================================ */
-
-        *,
-        *::before,
-        *::after {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        :root {
-            /* Nikita Berger — Kalorat Palette */
-            --styrian-forest: #0F5838;
-            --styrian-forest-rgb: 15, 88, 56;
-            --pure-white: #FFFFFF;
-            --off-white: #F9FAFB;
-            --subtle-ash: #E5E7EB;
-            --deep-space: #0A0A0A;
-            --rich-charcoal: #141414;
-            --text-primary: #0A0A0A;
-            --text-secondary: #4B5563;
-            --signal-red: #ED2939;
-
-            /* System */
-            --radius: 12px;
-            --radius-lg: 20px;
-            --radius-xl: 28px;
-            --border-width: 1px;
-        }
-
-        html {
-            scroll-behavior: smooth;
-        }
-
-        body {
-            font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
-            background-color: var(--pure-white);
-            color: var(--text-primary);
-            line-height: 1.6;
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
-            overflow-x: hidden;
-        }
-
-        /* Headings: Bold, -1px tracking */
-        h1,
-        h2,
-        h3,
-        h4 {
-            font-family: 'Outfit', sans-serif;
-            font-weight: 700;
-            letter-spacing: -1px;
-            line-height: 1.1;
-        }
-
-        .mono {
-            font-family: 'JetBrains Mono', monospace;
-        }
-
-        img {
-            max-width: 100%;
-            height: auto;
-            display: block;
-        }
-
-        a {
-            text-decoration: none;
-            color: inherit;
-        }
-
-        /* ============================================
-       NAV
-       ============================================ */
-        nav {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            z-index: 100;
-            padding: 0 2rem;
-            height: 64px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border-bottom: 1px solid var(--subtle-ash);
-        }
-
-        .nav-left {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-        }
-
-        .nav-logo-img {
-            height: 28px;
-            width: auto;
-        }
-
-        .nav-right {
-            display: flex;
-            align-items: center;
-            gap: 1.5rem;
-        }
-
-        .nav-links {
-            display: flex;
-            align-items: center;
-            gap: 2rem;
-            list-style: none;
-        }
-
-        .nav-links a {
-            font-size: 0.9rem;
-            font-weight: 500;
-            color: var(--text-secondary);
-            transition: color 0.2s;
-        }
-
-        .nav-links a:hover {
-            color: var(--styrian-forest);
-        }
-
-        .lang-toggle {
-            display: flex;
-            align-items: center;
-            gap: 0.25rem;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.8rem;
-            font-weight: 600;
-            color: var(--text-secondary);
-            background: rgba(var(--styrian-forest-rgb), 0.06);
-            padding: 0.25rem;
-            border-radius: 6px;
-            cursor: pointer;
-            border: 1px solid transparent;
-            transition: all 0.2s;
-        }
-
-        .lang-toggle:hover {
-            border-color: rgba(var(--styrian-forest-rgb), 0.2);
-        }
-
-        .lang-option {
-            padding: 0.25rem 0.5rem;
-            border-radius: 4px;
-            transition: all 0.2s;
-            opacity: 0.5;
-        }
-
-        .lang-option.active {
-            background: var(--pure-white);
-            color: var(--styrian-forest);
-            opacity: 1;
-        }
-
-        .nav-cta {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.5rem 1.25rem;
-            background: var(--styrian-forest);
-            color: var(--pure-white);
-            border-radius: 100px;
-            font-size: 0.875rem;
-            font-weight: 600;
-            border: 1px solid var(--styrian-forest);
-            cursor: pointer;
-            transition: all 0.2s;
-            white-space: nowrap;
-            line-height: 1;
-        }
-
-        .nav-cta:hover {
-            background: var(--pure-white);
-            color: var(--styrian-forest);
-            transform: translateY(-1px);
-        }
-
-        /* ============================================
-       HERO
-       ============================================ */
-        .hero {
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            padding: 8rem 2rem 4rem;
-            position: relative;
-            overflow: hidden;
-        }
-
-        /* Subtle radial glow */
-        .hero::before {
-            content: '';
-            position: absolute;
-            top: -200px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 900px;
-            height: 900px;
-            background: radial-gradient(circle, rgba(var(--styrian-forest-rgb), 0.04) 0%, transparent 65%);
-            pointer-events: none;
-        }
-
-        .hero h1 {
-            font-size: clamp(2.75rem, 7vw, 5rem);
-            font-weight: 800;
-            color: var(--text-primary);
-            letter-spacing: -2px;
-            max-width: 800px;
-            margin-bottom: 1.5rem;
-            opacity: 0;
-            animation: fadeInUp 0.6s ease-out 0.2s forwards;
-        }
-
-        .hero h1 .accent {
-            color: var(--styrian-forest);
-        }
-
-        .hero-sub {
-            font-size: clamp(1rem, 2vw, 1.2rem);
-            color: var(--text-secondary);
-            max-width: 500px;
-            margin-bottom: 2.5rem;
-            font-weight: 400;
-            opacity: 0;
-            animation: fadeInUp 0.6s ease-out 0.3s forwards;
-        }
-
-        .hero-badges {
-            display: flex;
-            justify-content: center;
-            gap: 1rem;
-            margin-bottom: 2.5rem;
-            opacity: 0;
-            animation: fadeInUp 0.6s ease-out 0.35s forwards;
-        }
-
-        .badge-opensource {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.35rem 0.85rem;
-            background: rgba(var(--styrian-forest-rgb), 0.06);
-            border: 1px solid rgba(var(--styrian-forest-rgb), 0.12);
-            border-radius: 100px;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.8rem;
-            font-weight: 600;
-            color: var(--styrian-forest);
-        }
-
-        .hero-buttons {
-            display: flex;
-            gap: 1rem;
-            flex-wrap: wrap;
-            justify-content: center;
-            margin-bottom: 4rem;
-            opacity: 0;
-            animation: fadeInUp 0.6s ease-out 0.4s forwards;
-            scroll-margin-top: 100px;
-        }
-
-        .btn-download {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.75rem;
-            padding: 0.85rem 1.75rem;
-            border-radius: var(--radius);
-            font-size: 0.95rem;
-            font-weight: 600;
-            font-family: 'Outfit', sans-serif;
-            cursor: pointer;
-            transition: all 0.2s;
-            border: 1px solid var(--subtle-ash);
-            line-height: 1.2;
-        }
-
-        .btn-android {
-            background: var(--styrian-forest);
-            color: var(--pure-white);
-            border-color: var(--styrian-forest);
-        }
-
-        .btn-android:hover {
-            background: var(--pure-white);
-            color: var(--styrian-forest);
-            transform: translateY(-2px);
-        }
-
-        .btn-ios {
-            background: var(--pure-white);
-            color: var(--text-primary);
-            border-color: var(--subtle-ash);
-        }
-
-        .btn-ios:hover {
-            border-color: var(--text-primary);
-            background: var(--off-white);
-            transform: translateY(-2px);
-        }
-
-        .btn-icon {
-            font-size: 1.4rem;
-            line-height: 1;
-            display: block;
-        }
-
-        /* Phone mockups in hero */
-        .hero-phones {
-            display: flex;
-            align-items: flex-end;
-            justify-content: center;
-            gap: 1.5rem;
-            max-width: 900px;
-            width: 100%;
-            opacity: 0;
-            animation: fadeInUp 0.8s ease-out 0.5s forwards;
-        }
-
-        .phone-mockup {
-            flex: 0 1 260px;
-            overflow: hidden;
-            transition: transform 0.3s;
-        }
-
-        .phone-mockup:hover {
-            transform: translateY(-8px);
-        }
-
-        .phone-mockup.center {
-            flex: 0 1 280px;
-        }
-
-        .phone-mockup img {
-            width: 100%;
-            aspect-ratio: 9/19.5;
-            object-fit: cover;
-        }
-
-        /* ============================================
-       SECTION BASE
-       ============================================ */
-        section {
-            padding: 7rem 2rem;
-        }
-
-        .section-container {
-            max-width: 1100px;
-            margin: 0 auto;
-        }
-
-        .section-eyebrow {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.75rem;
-            font-weight: 600;
-            color: var(--styrian-forest);
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            margin-bottom: 1rem;
-        }
-
-        .section-title {
-            font-size: clamp(2rem, 4vw, 3rem);
-            color: var(--text-primary);
-            letter-spacing: -1.5px;
-            margin-bottom: 1rem;
-        }
-
-        .section-desc {
-            font-size: 1.05rem;
-            color: var(--text-secondary);
-            max-width: 520px;
-        }
-
-        /* ============================================
-       FEATURE SHOWCASE
-       ============================================ */
-        .feature-row {
-            display: flex;
-            align-items: center;
-            gap: 4rem;
-            margin-bottom: 6rem;
-        }
-
-        .feature-row:last-child {
-            margin-bottom: 0;
-        }
-
-        .feature-row.reverse {
-            flex-direction: row-reverse;
-        }
-
-        .feature-content {
-            flex: 1;
-        }
-
-        .feature-visual {
-            flex: 1;
-            display: flex;
-            justify-content: center;
-        }
-
-        .feature-phone {
-            max-width: 280px;
-            overflow: hidden;
-        }
-
-        .feature-phone img {
-            width: 100%;
-            aspect-ratio: 9/19.5;
-            object-fit: cover;
-        }
-
-        .feature-tag {
-            display: inline-block;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.7rem;
-            font-weight: 600;
-            color: var(--styrian-forest);
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            padding: 0.35rem 0.85rem;
-            background: rgba(var(--styrian-forest-rgb), 0.06);
-            border: 1px solid rgba(var(--styrian-forest-rgb), 0.12);
-            border-radius: 100px;
-            margin-bottom: 1.25rem;
-        }
-
-        .feature-content h2 {
-            font-size: clamp(1.75rem, 3.5vw, 2.5rem);
-            margin-bottom: 1rem;
-        }
-
-        .feature-content p {
-            font-size: 1.05rem;
-            color: var(--text-secondary);
-            line-height: 1.7;
-            max-width: 440px;
-        }
-
-        .feature-list {
-            list-style: none;
-            margin-top: 1.5rem;
-            display: flex;
-            flex-direction: column;
-            gap: 0.75rem;
-        }
-
-        .feature-list li {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            font-size: 0.95rem;
-            font-weight: 500;
-            color: var(--text-primary);
-        }
-
-        .feature-list .check {
-            width: 20px;
-            height: 20px;
-            background: var(--styrian-forest);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-        }
-
-        .feature-list .check svg {
-            width: 12px;
-            height: 12px;
-        }
-
-        /* ============================================
-       PRINCIPLES GRID — Nikita Berger Core Values
-       ============================================ */
-        .principles-section {
-            background: var(--pure-white);
-            border-top: 1px solid var(--subtle-ash);
-            border-bottom: 1px solid var(--subtle-ash);
-        }
-
-        .principles-header {
-            text-align: center;
-            margin-bottom: 4rem;
-        }
-
-        .principles-header .section-desc {
-            margin: 0.5rem auto 0;
-        }
-
-        .principles-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 1px;
-            background: var(--subtle-ash);
-            border: 1px solid var(--subtle-ash);
-            border-radius: var(--radius-lg);
-            overflow: hidden;
-        }
-
-        .principle-card {
-            background: var(--pure-white);
-            padding: 2.25rem;
-            transition: background 0.2s;
-        }
-
-        .principle-card:hover {
-            background: var(--off-white);
-        }
-
-        .principle-card h3 {
-            font-size: 1rem;
-            font-weight: 700;
-            color: var(--styrian-forest);
-            margin-bottom: 0.15rem;
-            letter-spacing: -0.5px;
-        }
-
-        .principle-sub {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.7rem;
-            color: var(--text-secondary);
-            opacity: 0.7;
-            display: block;
-            margin-bottom: 0.75rem;
-        }
-
-        .principle-card p {
-            font-size: 0.88rem;
-            color: var(--text-secondary);
-            line-height: 1.6;
-        }
-
-        /* ============================================
-       iOS TUTORIAL MODAL
-       ============================================ */
-        .modal-overlay {
-            display: none;
-            position: fixed;
-            inset: 0;
-            z-index: 1000;
-            background: rgba(0, 0, 0, 0.6);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-            align-items: center;
-            justify-content: center;
-            padding: 2rem;
-            opacity: 0;
-            transition: opacity 0.25s;
-        }
-
-        .modal-overlay.active {
-            display: flex;
-            opacity: 1;
-        }
-
-        .modal {
-            background: var(--pure-white);
-            border-radius: var(--radius-xl);
-            max-width: 480px;
-            width: 100%;
-            max-height: 90vh;
-            overflow-y: auto;
-            border: 1px solid var(--subtle-ash);
-            position: relative;
-        }
-
-        .modal-close {
-            position: absolute;
-            top: 1rem;
-            right: 1rem;
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            border: 1px solid var(--subtle-ash);
-            background: var(--pure-white);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            color: var(--text-secondary);
-            font-size: 1.1rem;
-            transition: all 0.15s;
-            z-index: 10;
-        }
-
-        .modal-close:hover {
-            background: var(--off-white);
-            color: var(--text-primary);
-        }
-
-        .modal-header {
-            padding: 2.5rem 2.5rem 1.5rem;
-        }
-
-        .modal-header h2 {
-            font-size: 1.5rem;
-            margin-bottom: 0.5rem;
-        }
-
-        .modal-header p {
-            font-size: 0.95rem;
-            color: var(--text-secondary);
-        }
-
-        .tutorial-steps {
-            padding: 0 2.5rem 2.5rem;
-        }
-
-        .tutorial-step {
-            display: flex;
-            gap: 1rem;
-            padding: 1.25rem 0;
-            border-top: 1px solid var(--subtle-ash);
-            opacity: 0;
-            transform: translateY(10px);
-            animation: stepIn 0.4s ease-out forwards;
-        }
-
-        .tutorial-step:nth-child(1) {
-            animation-delay: 0.1s;
-        }
-
-        .tutorial-step:nth-child(2) {
-            animation-delay: 0.25s;
-        }
-
-        .tutorial-step:nth-child(3) {
-            animation-delay: 0.4s;
-        }
-
-        .tutorial-step:nth-child(4) {
-            animation-delay: 0.55s;
-        }
-
-        .step-number {
-            width: 32px;
-            height: 32px;
-            background: var(--styrian-forest);
-            color: var(--pure-white);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.8rem;
-            font-weight: 600;
-            flex-shrink: 0;
-            margin-top: 2px;
-        }
-
-        .step-content h4 {
-            font-size: 0.95rem;
-            font-weight: 600;
-            letter-spacing: -0.3px;
-            margin-bottom: 0.25rem;
-        }
-
-        .step-content p {
-            font-size: 0.85rem;
-            color: var(--text-secondary);
-            line-height: 1.5;
-        }
-
-        .step-visual {
-            margin-top: 0.75rem;
-            border-radius: var(--radius);
-            border: 1px solid var(--subtle-ash);
-            overflow: hidden;
-            background: var(--off-white);
-        }
-
-        .step-visual img {
-            width: 100%;
-            background: var(--off-white);
-        }
-
-        .modal-footer {
-            padding: 1.5rem 2.5rem;
-            border-top: 1px solid var(--subtle-ash);
-            text-align: center;
-        }
-
-        .btn-open-app {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.75rem 2rem;
-            background: var(--styrian-forest);
-            color: var(--pure-white);
-            border-radius: var(--radius);
-            font-family: 'Outfit', sans-serif;
-            font-size: 0.95rem;
-            font-weight: 600;
-            border: none;
-            cursor: pointer;
-            transition: all 0.2s;
-            width: 100%;
-            justify-content: center;
-        }
-
-        .btn-open-app:hover {
-            opacity: 0.9;
-        }
-
-        /* ============================================
-       CTA SECTION
-       ============================================ */
-        .cta-section {
-            padding: 7rem 2rem;
-        }
-
-        .cta-box {
-            max-width: 900px;
-            margin: 0 auto;
-            background: var(--deep-space);
-            border-radius: var(--radius-xl);
-            padding: 5rem 3rem;
-            text-align: center;
-            position: relative;
-            overflow: hidden;
-            border: 1px solid rgba(255, 255, 255, 0.06);
-        }
-
-        .cta-box::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            right: -20%;
-            width: 500px;
-            height: 500px;
-            background: radial-gradient(circle, rgba(var(--styrian-forest-rgb), 0.2) 0%, transparent 65%);
-            pointer-events: none;
-        }
-
-        .cta-box::after {
-            content: '';
-            position: absolute;
-            bottom: -50%;
-            left: -20%;
-            width: 400px;
-            height: 400px;
-            background: radial-gradient(circle, rgba(var(--styrian-forest-rgb), 0.08) 0%, transparent 65%);
-            pointer-events: none;
-        }
-
-        .cta-box .section-eyebrow {
-            color: var(--styrian-forest);
-        }
-
-        .cta-box h2 {
-            font-size: clamp(2rem, 4vw, 3rem);
-            color: var(--pure-white);
-            max-width: 600px;
-            margin: 0 auto 1rem;
-        }
-
-        .cta-box p {
-            color: rgba(255, 255, 255, 0.55);
-            font-size: 1.05rem;
-            max-width: 450px;
-            margin: 0 auto 2.5rem;
-        }
-
-        .cta-buttons {
-            display: flex;
-            gap: 1rem;
-            justify-content: center;
-            flex-wrap: wrap;
-            position: relative;
-            z-index: 1;
-        }
-
-        .btn-cta-android {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.75rem;
-            padding: 0.85rem 1.75rem;
-            background: var(--pure-white);
-            color: var(--text-primary);
-            border-radius: var(--radius);
-            font-family: 'Outfit', sans-serif;
-            font-size: 0.95rem;
-            font-weight: 600;
-            border: none;
-            cursor: pointer;
-            transition: all 0.2s;
-            line-height: 1.2;
-        }
-
-        .btn-cta-android:hover {
-            transform: translateY(-2px);
-            background: var(--off-white);
-        }
-
-        .btn-cta-ios {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.75rem;
-            padding: 0.85rem 1.75rem;
-            background: transparent;
-            color: var(--pure-white);
-            border-radius: var(--radius);
-            font-family: 'Outfit', sans-serif;
-            font-size: 0.95rem;
-            font-weight: 600;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            cursor: pointer;
-            transition: all 0.2s;
-            line-height: 1.2;
-        }
-
-        .btn-cta-ios:hover {
-            border-color: rgba(255, 255, 255, 0.8);
-            background: rgba(255, 255, 255, 0.1);
-            transform: translateY(-2px);
-        }
-
-        /* ============================================
-       FOOTER
-       ============================================ */
-        footer {
-            padding: 2.5rem 2rem;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            border-top: 1px solid var(--subtle-ash);
-            max-width: 1100px;
-            margin: 0 auto;
-        }
-
-        .footer-left {
-            font-size: 0.8rem;
-            color: var(--text-secondary);
-            opacity: 0.7;
-        }
-
-        .footer-left a {
-            color: var(--styrian-forest);
-            font-weight: 700;
-            opacity: 1;
-            text-decoration: underline;
-            text-decoration-thickness: 2px;
-            text-underline-offset: 2px;
-        }
-
-        .footer-left a:hover {
-            opacity: 0.8;
-        }
-
-        .footer-links {
-            display: flex;
-            gap: 1.5rem;
-            list-style: none;
-        }
-
-        .footer-links a {
-            font-size: 0.8rem;
-            color: var(--text-secondary);
-            opacity: 0.7;
-            transition: opacity 0.2s;
-        }
-
-        .footer-links a:hover {
-            opacity: 1;
-        }
-
-        /* ============================================
-       ANIMATIONS
-       ============================================ */
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(24px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        @keyframes stepIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        /* ============================================
-       RESPONSIVE
-       ============================================ */
-        @media (max-width: 900px) {
-
-            .feature-row,
-            .feature-row.reverse {
-                flex-direction: column;
-                gap: 2.5rem;
-                text-align: center;
-            }
-
-            .feature-content p,
-            .feature-content {
-                max-width: 100%;
-            }
-
-            .feature-list {
-                align-items: center;
-            }
-
-            .principles-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-        }
-
-        @media (max-width: 640px) {
-            nav {
-                padding: 0 1rem;
-            }
-
-            .nav-links {
-                display: none;
-            }
-
-            .nav-right {
-                gap: 0.75rem;
-            }
-
-            .nav-cta {
-                padding: 0.5rem 1rem;
-                font-size: 0.8rem;
-            }
-
-            .hero {
-                padding: 7rem 1.5rem 3rem;
-            }
-
-            .hero-phones {
-                gap: 0.75rem;
-            }
-
-            .phone-mockup {
-                flex: 0 1 160px;
-            }
-
-            .phone-mockup.center {
-                flex: 0 1 180px;
-            }
-
-            section {
-                padding: 4rem 1.5rem;
-            }
-
-            .principles-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .cta-box {
-                padding: 3rem 1.5rem;
-            }
-
-            footer {
-                flex-direction: column;
-                gap: 1rem;
-                text-align: center;
-            }
-        }
-    </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Kalorat: the calorie tracker that reads your plate</title>
+<meta name="description" content="Photograph a meal and Kalorat names every part of it, weighs it in grams and adds it to your day. Free, open source, no subscription. Android and iPhone.">
+<meta name="author" content="Nikita Berger">
+<meta name="theme-color" content="#0A0D0B">
+<link rel="canonical" href="https://nikity.is-a.dev/kalorat/">
+<link rel="alternate" hreflang="en" href="https://nikity.is-a.dev/kalorat/">
+<link rel="alternate" hreflang="de" href="https://nikity.is-a.dev/kalorat/">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://nikity.is-a.dev/kalorat/">
+<meta property="og:title" content="Kalorat: the calorie tracker that reads your plate">
+<meta property="og:description" content="One photo. Every part of the meal, in grams. Free and open source.">
+<meta property="og:image" content="https://nikity.is-a.dev/kalorat/assets/lp/og.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Kalorat: the calorie tracker that reads your plate">
+<meta name="twitter:description" content="One photo. Every part of the meal, in grams. Free and open source.">
+<meta name="twitter:image" content="https://nikity.is-a.dev/kalorat/assets/lp/og.jpg">
+<link rel="icon" href="assets/lp/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="assets/lp/icon-512.png" type="image/png" sizes="512x512">
+<link rel="apple-touch-icon" href="assets/lp/apple-touch-icon.png">
+<link rel="preload" href="assets/lp/fonts/Outfit-Bold.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="assets/lp/fonts/Outfit-Regular.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="assets/lp/img/poke-1280.webp" as="image" imagesrcset="assets/lp/img/poke-800.webp 800w, assets/lp/img/poke-1280.webp 1280w, assets/lp/img/poke-2400.webp 2400w" imagesizes="100vw" fetchpriority="high">
+<link rel="stylesheet" href="assets/lp/tokens.css">
+<link rel="stylesheet" href="assets/lp/site.css">
+<script>document.documentElement.classList.add('js');</script>
 </head>
-
 <body>
+<a class="skip" href="#main" data-i18n="skip">Skip to content</a>
 
-    <!-- ==================== NAV ==================== -->
-    <nav>
-        <div class="nav-left">
-            <img src="assets/kalorat-textlogo.webp" alt="Kalorat text logo in Styrian Forest Green"
-                class="nav-logo-img">
-        </div>
-        <div class="nav-right">
-            <ul class="nav-links">
-                <li><a href="#features" data-i18n="nav_features">Features</a></li>
-                <li><a href="#principles" data-i18n="nav_principles">Principles</a></li>
-            </ul>
-            <div class="lang-toggle" onclick="toggleLanguage()">
-                <span class="lang-option" id="lang-de">DE</span>
-                <span class="lang-option active" id="lang-en">EN</span>
-            </div>
-            <a href="#downloads" class="nav-cta" data-i18n="nav_download">Download App</a>
-        </div>
-    </nav>
-
-    <!-- ==================== HERO ==================== -->
-    <section class="hero">
-        <h1 data-i18n="hero_title">Track your nutrition <br><span class="accent">with absolute clarity.</span></h1>
-        <p class="hero-sub" data-i18n="hero_subtitle">Precise, honest nutrition tracking. Engineered by Nikita Berger. No
-            noise. Just the data that matters.</p>
-        <div class="hero-badges">
-            <span class="badge-opensource"><i class="ri-open-source-line"></i> <span data-i18n="badge_opensource">100%
-                    Open Source</span></span>
-        </div>
-        <div class="hero-buttons" id="downloads">
-            <a href="https://github.com/Nikityyy/kalorat/releases/latest/download/app-release.apk"
-                class="btn-download btn-android">
-                <i class="ri-android-fill btn-icon"></i>
-                <span data-i18n="btn_android">Download for Android</span>
-            </a>
-            <button class="btn-download btn-ios" onclick="openIOSTutorial()">
-                <i class="ri-apple-fill btn-icon"></i>
-                <span data-i18n="btn_ios">Install on iPhone</span>
-            </button>
-        </div>
-
-        <!-- Three phone mockups side by side -->
-        <div class="hero-phones">
-            <div class="phone-mockup">
-                <img src="assets/mockups/analyze.webp" alt="Kalorat app screenshot — meal logging view">
-            </div>
-            <div class="phone-mockup center">
-                <img src="assets/mockups/profile.webp" alt="Kalorat app screenshot — profile">
-            </div>
-            <div class="phone-mockup">
-                <img src="assets/mockups/history.webp" alt="Kalorat app screenshot — history">
-            </div>
-        </div>
-    </section>
-
-    <!-- ==================== FEATURES ==================== -->
-    <section id="features">
-        <div class="section-container">
-
-            <!-- Feature 1: Snap & Track -->
-            <div class="feature-row">
-                <div class="feature-content">
-                    <span class="feature-tag" data-i18n="feat1_tag">Snap & Track</span>
-                    <h2 data-i18n="feat1_title">Take a photo. <br>We handle the rest.</h2>
-                    <p data-i18n="feat1_desc">Point your camera at any meal and get instant calorie and nutrient
-                        information. No manual entry,
-                        no barcode scanning, no guesswork.</p>
-                    <ul class="feature-list">
-                        <li>
-                            <span class="check"><svg viewBox="0 0 12 12" fill="none" stroke="#fff" stroke-width="2">
-                                    <polyline points="2,6 5,9 10,3" />
-                                </svg></span>
-                            <span data-i18n="feat1_list1">AI-powered food recognition</span>
-                        </li>
-                        <li>
-                            <span class="check"><svg viewBox="0 0 12 12" fill="none" stroke="#fff" stroke-width="2">
-                                    <polyline points="2,6 5,9 10,3" />
-                                </svg></span>
-                            <span data-i18n="feat1_list2">Full macro breakdown in seconds</span>
-                        </li>
-                        <li>
-                            <span class="check"><svg viewBox="0 0 12 12" fill="none" stroke="#fff" stroke-width="2">
-                                    <polyline points="2,6 5,9 10,3" />
-                                </svg></span>
-                            <span data-i18n="feat1_list3">Works with any cuisine</span>
-                        </li>
-                    </ul>
-                </div>
-                <div class="feature-visual">
-                    <div class="feature-phone">
-                        <img src="assets/mockups/analyze.webp"
-                            alt="Kalorat app screenshot — camera view analyzing a plate of food with detected items and calorie overlay">
-                    </div>
-                </div>
-            </div>
-
-            <!-- Feature 2: Honest Insights -->
-            <div class="feature-row reverse">
-                <div class="feature-content">
-                    <span class="feature-tag" data-i18n="feat2_tag">Honest Insights</span>
-                    <h2 data-i18n="feat2_title">See the data. <br>Clearly.</h2>
-                    <p data-i18n="feat2_desc">No gamification tricks, no streaks to maintain. Just clear, honest data
-                        about your nutrition
-                        presented with absolute clarity.</p>
-                    <ul class="feature-list">
-                        <li>
-                            <span class="check"><svg viewBox="0 0 12 12" fill="none" stroke="#fff" stroke-width="2">
-                                    <polyline points="2,6 5,9 10,3" />
-                                </svg></span>
-                            <span data-i18n="feat2_list1">Weekly and monthly trend charts</span>
-                        </li>
-                        <li>
-                            <span class="check"><svg viewBox="0 0 12 12" fill="none" stroke="#fff" stroke-width="2">
-                                    <polyline points="2,6 5,9 10,3" />
-                                </svg></span>
-                            <span data-i18n="feat2_list2">Personalized daily summaries</span>
-                        </li>
-                        <li>
-                            <span class="check"><svg viewBox="0 0 12 12" fill="none" stroke="#fff" stroke-width="2">
-                                    <polyline points="2,6 5,9 10,3" />
-                                </svg></span>
-                            <span data-i18n="feat2_list3">Calorie and macro goals</span>
-                        </li>
-                    </ul>
-                </div>
-                <div class="feature-visual">
-                    <div class="feature-phone">
-                        <img src="assets/mockups/analysis.webp"
-                            alt="Kalorat app screenshot — statistics view with weekly calorie chart, macro progress bars, and daily average">
-                    </div>
-                </div>
-            </div>
-
-        </div>
-    </section>
-
-    <!-- ==================== PRINCIPLES ==================== -->
-    <section class="principles-section" id="principles">
-        <div class="section-container">
-            <div class="principles-header">
-                <p class="section-eyebrow" data-i18n="principles_eyebrow">Our Manifesto</p>
-                <h2 class="section-title" data-i18n="principles_title">Engineered on Fluid Precision</h2>
-                <p class="section-desc" data-i18n="principles_desc">Four core values that define every tool we build.
-                </p>
-            </div>
-            <div class="principles-grid">
-                <div class="principle-card">
-                    <h3 data-i18n="principle1_title">Absolute Clarity</h3>
-                    <span class="principle-sub">Klarheit</span>
-                    <p data-i18n="principle1_desc">If a user has to guess how an interface works, we have failed. We
-                        design for instant comprehension.</p>
-                </div>
-                <div class="principle-card">
-                    <h3 data-i18n="principle2_title">Uncompromising Precision</h3>
-                    <span class="principle-sub">Präzision</span>
-                    <p data-i18n="principle2_desc">From the mathematics of an algorithm to a 1px container border,
-                        everything is exactly where it is supposed to be.</p>
-                </div>
-                <div class="principle-card">
-                    <h3 data-i18n="principle3_title">Fluid Motion</h3>
-                    <span class="principle-sub">Bewegung</span>
-                    <p data-i18n="principle3_desc">A premium experience is felt. Our software glides and transitions
-                        with frictionless grace inside its structured grid.</p>
-                </div>
-                <div class="principle-card">
-                    <h3 data-i18n="principle4_title">Silent Confidence</h3>
-                    <span class="principle-sub">Stille</span>
-                    <p data-i18n="principle4_desc">Great software doesn't need to shout. We let our architecture, our
-                        speed, and our results speak for themselves.</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- ==================== CTA ==================== -->
-    <section class="cta-section">
-        <div class="cta-box">
-            <p class="section-eyebrow" data-i18n="cta_eyebrow">Start Now</p>
-            <h2 data-i18n="cta_title">The system is ready.</h2>
-            <p data-i18n="cta_desc">Download for Android or install from your browser. No account required.</p>
-            <div class="cta-buttons">
-                <a href="https://github.com/Nikityyy/kalorat/releases/latest/download/app-release.apk"
-                    class="btn-cta-android">
-                    <i class="ri-android-fill btn-icon"></i>
-                    <span data-i18n="btn_android">Download for Android</span>
-                </a>
-                <button class="btn-cta-ios" onclick="openIOSTutorial()">
-                    <i class="ri-apple-fill btn-icon"></i>
-                    <span data-i18n="btn_ios">Install on iPhone</span>
-                </button>
-            </div>
-        </div>
-    </section>
-
-    <!-- ==================== FOOTER ==================== -->
-    <footer>
-        <p class="footer-left"><span data-i18n="footer_text">2026 Kalorat by Nikita Berger. Engineered with fluid precision.
-                By</span> <a href="https://nikity.is-a.dev/" target="_blank">Nikita Berger</a>.</p>
-        <ul class="footer-links">
-            <li><a href="https://github.com/Nikityyy/kalorat" target="_blank">GitHub</a></li>
-        </ul>
-    </footer>
-
-    <!-- ==================== iOS TUTORIAL MODAL ==================== -->
-    <div class="modal-overlay" id="iosModal">
-        <div class="modal">
-            <button class="modal-close" onclick="closeIOSTutorial()">&times;</button>
-            <div class="modal-header">
-                <h2 data-i18n="modal_title">Install Kalorat on iPhone</h2>
-                <p data-i18n="modal_desc">Add the web app to your home screen in four steps. It works just like a native
-                    app.</p>
-            </div>
-            <div class="tutorial-steps">
-                <div class="tutorial-step">
-                    <span class="step-number">1</span>
-                    <div class="step-content">
-                        <h4 data-i18n="step1_title">Open in Safari</h4>
-                        <p data-i18n="step1_desc">Open the Kalorat web app in Safari. This only works in Safari, not
-                            Chrome or other browsers.
-                        </p>
-                        <div class="step-visual">
-                            <img src="assets/tutorial/first.webp"
-                                alt="Screenshot showing Safari browser navigating to nikity.is-a.dev/kalorat/app with the URL bar visible">
-                        </div>
-                    </div>
-                </div>
-                <div class="tutorial-step">
-                    <span class="step-number">2</span>
-                    <div class="step-content">
-                        <h4 data-i18n="step2_title">Tap the Share button</h4>
-                        <p data-i18n="step2_desc">Tap the share icon (square with an arrow pointing up) at the bottom of
-                            Safari.</p>
-                        <div class="step-visual">
-                            <img src="assets/tutorial/second.webp"
-                                alt="Screenshot highlighting the Safari share button (square with upward arrow) at the bottom toolbar">
-                        </div>
-                    </div>
-                </div>
-                <div class="tutorial-step">
-                    <span class="step-number">3</span>
-                    <div class="step-content">
-                        <h4 data-i18n="step3_title">Select "Add to Home Screen"</h4>
-                        <p data-i18n="step3_desc">Scroll down in the share sheet and tap "Add to Home Screen."</p>
-                        <div class="step-visual">
-                            <img src="assets/tutorial/third.webp"
-                                alt="Screenshot of Safari share sheet with 'Add to Home Screen' option highlighted with a plus icon">
-                        </div>
-                    </div>
-                </div>
-                <div class="tutorial-step">
-                    <span class="step-number">4</span>
-                    <div class="step-content">
-                        <h4 data-i18n="step4_title">Tap "Add"</h4>
-                        <p data-i18n="step4_desc">Confirm the name and tap Add. Kalorat will appear on your home screen
-                            as a standalone app.
-                        </p>
-                        <div class="step-visual">
-                            <img src="assets/tutorial/fourth.webp"
-                                alt="Screenshot of the 'Add to Home Screen' confirmation dialog showing Kalorat name and icon with 'Add' button highlighted">
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <a href="app/" class="btn-open-app" data-i18n="btn_open_app">Open Kalorat Web App</a>
-            </div>
-        </div>
+<header class="bar" id="bar">
+  <a class="bar-logo" href="#top" aria-label="Kalorat">
+    <svg viewBox="0 0 5898 956" aria-hidden="true"><use href="#logo"/></svg>
+  </a>
+  <nav class="bar-nav" aria-label="Sections" data-i18n-attr="aria-label:nav.label">
+    <a href="#day" data-i18n="nav.day">Your day</a>
+    <a href="#how" data-i18n="nav.how">How it reads</a>
+    <a href="#free" data-i18n="nav.free">Free</a>
+    <a href="https://github.com/Nikityyy/kalorat" data-i18n="nav.code">Source code</a>
+  </nav>
+  <div class="bar-end">
+    <div class="lang" role="group" aria-label="Language" data-i18n-attr="aria-label:lang.label">
+      <button type="button" data-lang="de" aria-pressed="false" lang="de">DE</button>
+      <button type="button" data-lang="en" aria-pressed="true" lang="en">EN</button>
     </div>
+    <a class="bar-get" href="#get"><span data-i18n="nav.get">Get the app</span></a>
+  </div>
+</header>
 
-    <script>
-        // ==================== I18N ====================
-        const translations = {
-            en: {
-                // Navigation
-                nav_features: "Features",
-                nav_principles: "Principles",
-                nav_download: "Download App",
+<main id="main">
 
-                // Hero
-                hero_title: "Track your nutrition <br><span class=\"accent\">with absolute clarity.</span>",
-                hero_subtitle: "Precise, honest nutrition tracking. Engineered by Nikita Berger. No noise. Just the data that matters.",
-                badge_opensource: "100% Open Source",
-                btn_android: "Download for Android",
-                btn_ios: "Install on iPhone",
+<!-- 1. The plate. The camera is dark, as in the app. -->
+<section class="hero night" id="top" aria-labelledby="hero-title">
+  <div class="hero-stage" id="stage">
+    <img class="hero-photo" id="hero-photo" src="assets/lp/img/poke-1280.webp"
+         srcset="assets/lp/img/poke-800.webp 800w, assets/lp/img/poke-1280.webp 1280w, assets/lp/img/poke-2400.webp 2400w"
+         sizes="100vw" width="2400" height="1807"
+         alt="A poke bowl seen from above: salmon, rice, avocado, cucumber and spicy mayonnaise under sesame, on a brass table"
+         data-i18n-attr="alt:plate.poke.alt">
+    <canvas class="hero-dots" id="dots" aria-hidden="true"></canvas>
+    <div class="finder" id="finder" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+    <ul class="parts" id="parts" aria-hidden="true"></ul>
+  </div>
+  <p class="touch-hint" id="touch-hint" aria-hidden="true" data-i18n="hero.touch">Press and drag to scan</p>
+  <p class="hello" id="hello" aria-hidden="true" data-i18n="hero.hello">Mahlzeit. In Austria that means meal, and hello at noon.</p>
 
-                // Features
-                feat1_tag: "Snap & Track",
-                feat1_title: "Take a photo. <br>We handle the rest.",
-                feat1_desc: "Point your camera at any meal and get instant calorie and nutrient information. No manual entry, no barcode scanning, no guesswork.",
-                feat1_list1: "AI-powered food recognition",
-                feat1_list2: "Full macro breakdown in seconds",
-                feat1_list3: "Works with any cuisine",
+  <div class="hero-copy">
+    <h1 class="kin" id="hero-title" data-i18n="hero.title">The calorie tracker that reads your plate</h1>
+    <p class="hero-lede" data-i18n="hero.lede">Take one photo. Kalorat names every part of the meal, weighs it in grams and adds it to your day. Free, open source, no subscription.</p>
+    <div class="hero-acts">
+      <a class="btn" id="cta-main" href="https://github.com/Nikityyy/kalorat/releases/latest/download/app-release.apk" data-android>
+        <span data-i18n="cta.android">Download for Android</span><small class="num">APK</small>
+      </a>
+      <a class="link" id="cta-alt" href="#get-iphone"><span data-i18n="cta.iphone">Install on iPhone</span></a>
+    </div>
+  </div>
 
-                feat2_tag: "Honest Insights",
-                feat2_title: "See the data. <br>Clearly.",
-                feat2_desc: "No gamification tricks, no streaks to maintain. Just clear, honest data about your nutrition presented with absolute clarity.",
-                feat2_list1: "Weekly and monthly trend charts",
-                feat2_list2: "Personalized daily summaries",
-                feat2_list3: "Calorie and macro goals",
+  <div class="aim" id="aim" aria-hidden="true"><i></i><i></i><i></i><i></i><b></b></div>
 
-                // Principles
-                principles_eyebrow: "Our Manifesto",
-                principles_title: "Engineered on Fluid Precision",
-                principles_desc: "Four core values that define every tool we build.",
-                principle1_title: "Absolute Clarity",
-                principle1_desc: "If a user has to guess how an interface works, we have failed. We design for instant comprehension.",
-                principle2_title: "Uncompromising Precision",
-                principle2_desc: "From the mathematics of an algorithm to a 1px container border, everything is exactly where it is supposed to be.",
-                principle3_title: "Fluid Motion",
-                principle3_desc: "A premium experience is felt. Our software glides and transitions with frictionless grace inside its structured grid.",
-                principle4_title: "Silent Confidence",
-                principle4_desc: "Great software doesn't need to shout. We let our architecture, our speed, and our results speak for themselves.",
+  <div class="readout" aria-live="polite">
+    <p class="readout-name" id="r-name">Poke Bowl with Salmon and Avocado</p>
+    <p class="readout-kcal num"><span id="r-kcal">833</span><span class="u">kcal</span></p>
+    <p class="readout-range num" id="r-range">80% sure · probably 589–1147 kcal</p>
+    <p class="readout-run num" id="r-run"></p>
+  </div>
 
-                // CTA
-                cta_eyebrow: "Start Now",
-                cta_title: "The system is ready.",
-                cta_desc: "Download for Android or install from your browser. No account required.",
+  <div class="plates" role="group" aria-label="Try another plate" data-i18n-attr="aria-label:plates.label">
+    <span class="plates-label" data-i18n="plates.title">Try another plate</span>
+    <button type="button" class="plate" data-plate="halloumi" aria-pressed="false">
+      <img src="assets/lp/img/halloumi-thumb.webp" width="300" height="400" alt="">
+      <span data-i18n="plate.halloumi.short">Breakfast</span>
+    </button>
+    <button type="button" class="plate" data-plate="poke" aria-pressed="true">
+      <img src="assets/lp/img/poke-thumb.webp" width="300" height="400" alt="">
+      <span data-i18n="plate.poke.short">Lunch</span>
+    </button>
+    <button type="button" class="plate" data-plate="tray" aria-pressed="false">
+      <img src="assets/lp/img/tray-thumb.webp" width="300" height="400" alt="">
+      <span data-i18n="plate.tray.short">Dinner</span>
+    </button>
+  </div>
+</section>
 
-                // Footer
-                footer_text: "2026 Kalorat by Nikita Berger. Engineered with fluid precision. By",
+<!-- 2. The same plate, taken apart: what the number is made of. -->
+<section class="apart night" id="apart" aria-labelledby="apart-title">
+  <div class="apart-pin">
+    <div class="apart-head">
+      <h2 class="apart-title kin" id="apart-title" data-i18n="apart.title">One meal, taken apart</h2>
+      <p class="apart-p"><span data-i18n="apart.p">Kalorat does not guess one number for the plate. It weighs every part on its own, then adds them up.</span> <span data-i18n="apart.med">Gemini estimates three times; Kalorat keeps the middle one.</span> <span id="a-top"></span></p>
+    </div>
+    <div class="apart-fig" id="apart-fig">
+      <div class="apart-scan">
+      <div class="apart-plate" aria-hidden="true"><img id="a-img" src="assets/lp/img/poke-800.webp" width="2400" height="1807" alt="" loading="lazy"><canvas class="apart-cv" id="a-cv"></canvas><ol class="apart-dots" id="a-dots"></ol></div>
+      <svg class="apart-lines" id="a-lines" aria-hidden="true"></svg>
+      <ol class="apart-list" id="a-list"></ol>
+      </div>
+      <p class="apart-total"><span data-i18n="apart.total">Together</span> <span class="num"><b id="a-sum">0</b> kcal</span></p>
+      <p class="apart-note num" id="a-note" aria-live="polite"><span class="apart-hint" id="a-hint"></span><span class="apart-sum" id="a-sumnote" data-i18n="apart.sum">Sum of Kalorat’s part estimates</span></p>
+      <p class="apart-hid" id="a-hid" hidden></p>
+    </div>
+  </div>
+</section>
 
-                // Modal
-                modal_title: "Install Kalorat on iPhone",
-                modal_desc: "Add the web app to your home screen in four steps. It works just like a native app.",
-                step1_title: "Open in Safari",
-                step1_desc: "Open the Kalorat web app in Safari. This only works in Safari, not Chrome or other browsers.",
-                step2_title: "Tap the Share button",
-                step2_desc: "Tap the share icon (square with an arrow pointing up) at the bottom of Safari.",
-                step3_title: "Select \"Add to Home Screen\"",
-                step3_desc: "Scroll down in the share sheet and tap \"Add to Home Screen.\"",
-                step4_title: "Tap \"Add\"",
-                step4_desc: "Confirm the name and tap Add. Kalorat will appear on your home screen as a standalone app.",
-                btn_open_app: "Open Kalorat Web App"
-            },
-            de: {
-                // Navigation
-                nav_features: "Funktionen",
-                nav_principles: "Prinzipien",
-                nav_download: "App Laden",
+<!-- The day's ridge is the horizon between the camera and the day. -->
+<div class="dusk night" aria-hidden="true"><svg class="horizon" viewBox="0 0 1440 220" preserveAspectRatio="none"><path id="horizon-path" d=""/><path id="horizon-line" d="" pathLength="1"/></svg></div>
 
-                // Hero
-                hero_title: "Tracke deine Ernährung <br><span class=\"accent\">mit absoluter Klarheit.</span>",
-                hero_subtitle: "Präzises, ehrliches Ernährungstracking. Entwickelt von Nikita Berger. Kein Lärm. Nur die Daten, die zählen.",
-                badge_opensource: "100% Open Source",
-                btn_android: "Für Android Laden",
-                btn_ios: "Auf iPhone installieren",
 
-                // Features
-                feat1_tag: "Foto & Fertig",
-                feat1_title: "Mach ein Foto. <br>Wir machen den Rest.",
-                feat1_desc: "Richte deine Kamera auf dein Essen und erhalte sofort Kalorien- und Nährstoffinfos. Keine manuelle Eingabe, kein Barcode-Scannen, kein Raten.",
-                feat1_list1: "KI-gestützte Essenserkennung",
-                feat1_list2: "Volle Makro-Analyse in Sekunden",
-                feat1_list3: "Funktioniert mit jeder Küche",
 
-                feat2_tag: "Ehrliche Einblicke",
-                feat2_title: "Sieh die Daten. <br>Ganz klar.",
-                feat2_desc: "Keine Gamification-Tricks, keine Streaks. Nur klare, ehrliche Daten über deine Ernährung, präsentiert mit absoluter Klarheit.",
-                feat2_list1: "Wochen- und Monatstrends",
-                feat2_list2: "Personalisierte Tagesübersichten",
-                feat2_list3: "Kalorien- und Makro-Ziele",
+<!-- 3. The day: a climb to your goal. -->
+<section class="day" id="day" aria-labelledby="day-title">
+  <div class="day-pin">
+    <div class="day-head">
+      <h2 id="day-title" data-i18n="day.title">Your day, as a climb</h2>
+      <p data-i18n="day.p">Each meal is a step up. The dashed line is your goal; the number says what is left. Kalorat sets the goal from your height, weight, age, activity and whether you want to lose, keep or gain.</p>
+    </div>
+    <div class="day-count">
+      <p class="day-left num"><span id="d-left">1001</span></p>
+      <p class="day-of" id="d-of">kcal left of 2482</p>
+      <p class="day-event" id="d-event" aria-hidden="true"></p>
+    </div>
+    <div class="ridge" id="ridge" role="img" aria-label="The day as a ridge: halloumi breakfast at 08:12, the poke bowl at 12:41, 1001 kcal left at 18:12.">
+      <svg id="ridge-svg"></svg>
+      <p class="ridge-hint" id="ridge-hint" aria-hidden="true" data-i18n="day.hint">Drag to walk through the day</p>
+    </div>
+  </div>
+</section>
 
-                // Principles
-                principles_eyebrow: "Unser Manifest",
-                principles_title: "Entwickelt mit Fluid Precision",
-                principles_desc: "Vier Kernwerte, die jedes unserer Werkzeuge definieren.",
-                principle1_title: "Absolute Klarheit",
-                principle1_desc: "Wenn ein Nutzer raten muss, wie eine Oberfläche funktioniert, haben wir versagt. Wir gestalten für sofortiges Verständnis.",
-                principle2_title: "Unnachgiebige Präzision",
-                principle2_desc: "Von der Mathematik eines Algorithmus bis zur 1px-Container-Grenze: Alles ist genau dort, wo es sein soll.",
-                principle3_title: "Fließende Bewegung",
-                principle3_desc: "Ein Premium-Erlebnis wird gespürt. Unsere Software gleitet und wechselt mit reibungsloser Anmut innerhalb ihres strukturierten Rasters.",
-                principle4_title: "Stille Zuversicht",
-                principle4_desc: "Großartige Software muss nicht schreien. Wir lassen unsere Architektur, unsere Geschwindigkeit und unsere Ergebnisse für sich sprechen.",
+<!-- 4. Three ways in. -->
+<section class="ways" id="ways" aria-labelledby="ways-title">
+  <h2 id="ways-title" class="ways-title" data-i18n="ways.title">Three ways in</h2>
+  <ol class="ways-list">
+    <li class="way">
+      <span class="way-art way-photo"><img src="assets/lp/img/tray-thumb.webp" width="300" height="400" alt="" loading="lazy"></span>
+      <h3 data-i18n="ways.photo.t">Photograph it</h3>
+      <p data-i18n="ways.photo.p">A plate, a tray, a bowl. Up to several photos, one meal.</p>
+    </li>
+    <li class="way">
+      <span class="way-art way-code" aria-hidden="true"><svg viewBox="0 0 95 64" id="barcode"><path d="M0 0h1.02v64h-1.02zM2 0h1.02v64h-1.02zM6 0h2.02v64h-2.02zM9 0h1.02v64h-1.02zM11 0h1.02v64h-1.02zM14 0h3.02v64h-3.02zM18 0h1.02v64h-1.02zM20 0h4.02v64h-4.02zM27 0h2.02v64h-2.02zM30 0h1.02v64h-1.02zM33 0h3.02v64h-3.02zM37 0h1.02v64h-1.02zM39 0h1.02v64h-1.02zM42 0h3.02v64h-3.02zM46 0h1.02v64h-1.02zM48 0h1.02v64h-1.02zM50 0h3.02v64h-3.02zM55 0h1.02v64h-1.02zM57 0h1.02v64h-1.02zM60 0h3.02v64h-3.02zM64 0h2.02v64h-2.02zM67 0h2.02v64h-2.02zM71 0h2.02v64h-2.02zM75 0h2.02v64h-2.02zM78 0h3.02v64h-3.02zM83 0h1.02v64h-1.02zM85 0h1.02v64h-1.02zM87 0h3.02v64h-3.02zM92 0h1.02v64h-1.02zM94 0h1.02v64h-1.02z"/></svg><span class="num">4 006040 052104</span></span>
+      <h3 data-i18n="ways.code.t">Scan the barcode</h3>
+      <p data-i18n="ways.code.p">Packaged food comes with its label values from Open Food Facts. No product found? Photograph the label instead.</p>
+    </li>
+    <li class="way">
+      <span class="way-art way-type" aria-hidden="true"><span class="typed" id="typed" data-i18n="ways.type.ex">2 eggs, a slice of toast with butter</span></span>
+      <h3 data-i18n="ways.type.t">Type it</h3>
+      <p data-i18n="ways.type.p">No photo? Write what you ate in your own words.</p>
+    </li>
+  </ol>
+</section>
 
-                // CTA
-                cta_eyebrow: "Jetzt starten",
-                cta_title: "Das System ist bereit.",
-                cta_desc: "Lade die App für Android oder installiere sie im Browser. Kein Account erforderlich.",
+<!-- 5. How it reads: the stages after the shutter, scrubbed. -->
+<section class="how night" id="how" aria-labelledby="how-title">
+  <div class="how-pin">
+    <div class="how-text">
+      <h2 class="how-title" id="how-title" data-i18n="how.title">What happens after the shutter</h2>
+      <ol class="steps" id="steps">
+        <li class="step is-on" data-step="0">
+          <h3 data-i18n="how.s1.t">Point it at the plate</h3>
+          <p data-i18n="how.s1.p">The frame finds the meal or a barcode. Several photos of one meal are fine: the side, the label, the half you already ate.</p>
+        </li>
+        <li class="step" data-step="1">
+          <h3 data-i18n="how.s2.t">Say what the camera can’t see</h3>
+          <p data-i18n="how.s2.p">“With salmon and cream cheese” goes along with the photo. A note is optional; it helps when the sauce hides what is under it.</p>
+        </li>
+        <li class="step" data-step="2">
+          <h3 data-i18n="how.s3.t">Three estimates, the middle one counts</h3>
+          <p data-i18n="how.s3.p">The photo goes to Gemini three times at once, so it takes about as long as once. Kalorat keeps the estimate in the middle: one odd guess can’t move your day.</p>
+        </li>
+        <li class="step" data-step="3">
+          <h3 data-i18n="how.s4.t">Every part, in grams</h3>
+          <p data-i18n="how.s4.p">You see how sure it is, the range it could be, and why. Too much? One tap for lower, one for higher, or change a single part.</p>
+        </li>
+      </ol>
+    </div>
+    <figure class="phone" id="how-phone">
+      <div class="phone-screen">
+        <img class="scr is-on" data-step="0" src="assets/lp/screens/en/camera.webp" width="786" height="1704" alt="Kalorat's camera with the poke bowl in the frame" data-i18n-attr="alt:how.a1" data-scr="camera" loading="lazy">
+        <img class="scr" data-step="1" src="assets/lp/screens/en/note.webp" width="786" height="1704" alt="The note sheet: Philadelphia poke bowl with salmon and cream cheese" data-i18n-attr="alt:how.a2" data-scr="note" loading="lazy">
+        <img class="scr" data-step="2" src="assets/lp/screens/en/analysing.webp" width="786" height="1704" alt="The analysis: the median of three estimates, 920 kcal, and each part in grams" data-i18n-attr="alt:how.a3" data-scr="analysing" loading="lazy">
+        <img class="scr" data-step="3" src="assets/lp/screens/en/result.webp" width="786" height="1704" alt="The result: kcal, how sure, lower and higher, and why" data-i18n-attr="alt:how.a4" data-scr="result" loading="lazy">
+        <div class="how-runs" aria-hidden="true"><b class="how-hold"></b><i></i><i></i><i></i></div>
+      </div>
+    </figure>
+    <div class="how-scrub" id="how-scrub" role="slider" tabindex="0" aria-label="What happens after the shutter" data-i18n-attr="aria-label:how.title" aria-valuemin="1" aria-valuemax="4" aria-valuenow="1" hidden>
+      <svg class="hs-line" viewBox="0 0 1000 48" preserveAspectRatio="none" aria-hidden="true">
+        <g class="hs-ghost">
+          <path d="M0 24H360"/><path d="M360 24C400 24 400 8 440 8H740"/><path d="M360 24H1000"/><path d="M360 24C400 24 400 40 440 40H770"/>
+        </g>
+        <clipPath id="hs-clip"><rect id="hs-cut" x="0" y="-8" width="0" height="64"/></clipPath>
+        <g class="hs-lit" clip-path="url(#hs-clip)">
+          <path d="M0 24H360"/><path class="hs-out" d="M360 24C400 24 400 8 440 8H740"/><path d="M360 24H1000"/><path class="hs-out" d="M360 24C400 24 400 40 440 40H770"/>
+        </g>
+      </svg>
+      <span class="hs-end hs-end-a" aria-hidden="true"></span><span class="hs-end hs-end-c" aria-hidden="true"></span>
+      <div class="hs-knob" id="hs-knob" aria-hidden="true"></div>
+      <ol class="hs-stages">
+        <li data-i18n="how.st1">Photo</li>
+        <li data-i18n="how.st2">Note</li>
+        <li data-i18n="how.st3">Three estimates at once</li>
+        <li data-i18n="how.st4">The middle one</li>
+      </ol>
+    </div>
+  </div>
+</section>
 
-                // Footer
-                footer_text: "2026 Kalorat by Nikita Berger. Entwickelt mit Fluid Precision. Von",
+<!-- 6. Progress. -->
+<section class="progress" id="progress" aria-labelledby="prog-title">
+  <div class="prog-head">
+    <h2 id="prog-title" data-i18n="prog.title">The week, the month, the scale</h2>
+    <p data-i18n="prog.p">Averages that count only the days you logged, a streak that forgives a missed day, and a weight line that shows the trend, not the noise.</p>
+  </div>
+  <div class="prog-grid">
+    <figure class="week">
+      <figcaption>
+        <span class="num big" id="p-avg">1914</span>
+        <span>kcal a day on average, October 14–20</span>
+      </figcaption>
+      <div class="bars" id="bars"></div>
+      <p class="legend"><span><i></i><span data-i18n="prog.under">at or under your goal</span></span> <span class="o"><i></i><span data-i18n="prog.over">over your goal</span></span></p>
+    </figure>
+    <figure class="weight">
+      <figcaption>
+        <span class="num big"><span id="p-kg">78<span class="roll-d dp">.</span>6</span> <small>kg</small></span>
+        <span id="p-trend">2.8 kg down since August 25</span>
+      </figcaption>
+      <svg class="wline" id="wline" role="img" aria-label="Weight from August to October, falling from 81.4 to 78.6 kg"></svg>
+    </figure>
+  </div>
+</section>
 
-                // Modal
-                modal_title: "Kalorat auf iPhone installieren",
-                modal_desc: "Füge die Web-App in vier Schritten zum Home-Screen hinzu. Funktioniert wie eine native App.",
-                step1_title: "In Safari öffnen",
-                step1_desc: "Öffne die Kalorat Web-App in Safari. Dies funktioniert nur in Safari, nicht in Chrome.",
-                step2_title: "Teilen-Button tippen",
-                step2_desc: "Tippe auf das Teilen-Symbol (Quadrat mit Pfeil nach oben) am unteren Rand.",
-                step3_title: "„Zum Home-Bildschirm“ wählen",
-                step3_desc: "Scrolle nach unten und wähle „Zum Home-Bildschirm“.",
-                step4_title: "„Hinzufügen“ tippen",
-                step4_desc: "Bestätige den Namen und tippe auf Hinzufügen. Kalorat erscheint als eigenständige App.",
-                btn_open_app: "Kalorat Web App Öffnen"
-            }
-        };
+<!-- 7. Free, and yours. -->
+<section class="free" id="free" aria-labelledby="free-title">
+  <div class="free-scan" id="free-scan">
+    <p class="free-zero num" aria-hidden="true" data-i18n="free.zero">€0</p>
+    <canvas class="free-cv" id="free-cv" aria-hidden="true"></canvas>
+    <p class="free-tag num" id="free-tag" aria-hidden="true"></p>
+    <p class="free-hint num" id="free-hint" aria-hidden="true" data-i18n="free.hint">Move over the €0 to read it.</p>
+  </div>
+  <h2 class="kin" id="free-title" data-i18n="free.title">Costs nothing. Stays yours.</h2>
+  <dl class="free-list">
+    <div><dt data-i18n="free.1.t">No subscription</dt><dd data-i18n="free.1.p">Your own free Gemini key from Google AI Studio. Set up in a minute.</dd></div>
+    <div><dt data-i18n="free.2.t">Your meals stay on your phone</dt><dd data-i18n="free.2.p">No account. Google sign-in only if you want a backup.</dd></div>
+    <div><dt data-i18n="free.3.t">Take everything with you</dt><dd data-i18n="free.3.p">Every meal and weight, as JSON or Markdown, whenever you like.</dd></div>
+    <div><dt data-i18n="free.4.t">Open source</dt><dd><span data-i18n="free.4.p">Every line is on GitHub.</span> <a href="https://github.com/Nikityyy/kalorat" data-i18n="free.4.a">github.com/Nikityyy/kalorat</a></dd></div>
+  </dl>
+</section>
 
-        let currentLang = 'en';
+<!-- 8. Get it. -->
+<section class="get" id="get" aria-labelledby="get-title">
+  <h2 id="get-title" data-i18n="get.title">Get Kalorat</h2>
+  <ul class="get-strip" aria-label="Four screens of the app" data-i18n-attr="aria-label:get.strip">
+    <li class="phone phone-s"><div class="phone-screen"><img src="assets/lp/screens/en/today.webp" width="786" height="1704" alt="Kalorat's Today screen with the ridge, the macros and the two meals" data-i18n-attr="alt:day.phone" data-scr="today" loading="lazy"></div></li>
+    <li class="phone phone-s"><div class="phone-screen"><img src="assets/lp/screens/en/camera.webp" width="786" height="1704" alt="Kalorat's camera with the poke bowl in the frame" data-i18n-attr="alt:how.a1" data-scr="camera" loading="lazy"></div></li>
+    <li class="phone phone-s"><div class="phone-screen"><img src="assets/lp/screens/en/result.webp" width="786" height="1704" alt="The result: kcal, how sure, lower and higher, and why" data-i18n-attr="alt:how.a4" data-scr="result" loading="lazy"></div></li>
+    <li class="phone phone-s"><div class="phone-screen"><img src="assets/lp/screens/en/progress.webp" width="786" height="1704" alt="Kalorat's Progress screen: the week's bars and the weight" data-i18n-attr="alt:prog.phone" data-scr="progress" loading="lazy"></div></li>
+  </ul>
+  <div class="get-grid">
+    <div class="get-col" id="get-android">
+      <h3 data-i18n="get.android.t">Android</h3>
+      <p data-i18n="get.android.p">Download the app file from the latest release and open it. Android asks once whether your browser may install apps.</p>
+      <a class="btn" href="https://github.com/Nikityyy/kalorat/releases/latest/download/app-release.apk"><span data-i18n="cta.android">Download for Android</span><small class="num">APK</small></a>
+      <p class="rel num" data-rel hidden></p>
+    </div>
+    <div class="get-col" id="get-iphone">
+      <h3 data-i18n="get.iphone.t">iPhone</h3>
+      <p data-i18n="get.iphone.p">Kalorat runs as a web app from your home screen, full screen, like any other app. In Safari:</p>
+      <ol class="ios">
+        <li><img src="assets/tutorial/first.webp" width="942" height="1412" alt="" loading="lazy"><span data-i18n="get.ios.1">Open the web app and tap ••• next to the address.</span></li>
+        <li><img src="assets/tutorial/second.webp" width="637" height="810" alt="" loading="lazy"><span data-i18n="get.ios.2">Tap Share.</span></li>
+        <li><img src="assets/tutorial/third.webp" width="942" height="1158" alt="" loading="lazy"><span data-i18n="get.ios.3">Tap Add to Home Screen.</span></li>
+        <li><img src="assets/tutorial/fourth.webp" width="942" height="802" alt="" loading="lazy"><span data-i18n="get.ios.4">Leave Open as Web App on and tap Add.</span></li>
+      </ol>
+      <a class="btn btn-line" href="app/"><span data-i18n="get.iphone.a">Open the web app</span></a>
+    </div>
+  </div>
+</section>
 
-        function setLanguage(lang) {
-            currentLang = lang;
-            localStorage.setItem('kalorat_lang', lang);
+</main>
 
-            // Update UI
-            document.querySelectorAll('[data-i18n]').forEach(el => {
-                const key = el.getAttribute('data-i18n');
-                if (translations[lang][key]) {
-                    el.innerHTML = translations[lang][key];
-                }
-            });
+<footer class="foot">
+  <svg class="foot-mark" viewBox="0 0 5898 956" role="img" aria-label="Kalorat"><use href="#logo"/></svg>
+  <div class="foot-row">
+    <p><span data-i18n="foot.by">Made by</span> <a href="https://nikity.is-a.dev/">Nikita Berger</a>. <a href="https://github.com/Nikityyy/kalorat" data-i18n="foot.code">Source code on GitHub</a>.</p>
+    <p class="foot-credits"><span data-i18n="foot.photos">Photos from Wikimedia Commons:</span>
+      <a href="https://commons.wikimedia.org/wiki/File:Philadelphia_Poke_Bowl_-_Happy_Maki_2026-09-08.jpg">Philadelphia Poke Bowl</a> <span data-i18n="foot.extended">(cropped and extended)</span>,
+      <a href="https://commons.wikimedia.org/wiki/File:Halloumi_breakfast_-_The_Bystander_Cafe_2024-01-01.jpg">Halloumi breakfast</a>,
+      <a href="https://commons.wikimedia.org/wiki/File:Fast_food_love.jpg">Fast food love</a>.
+      <span data-i18n="foot.numbers">The calories and grams shown for these photos are Kalorat’s own results; the day, the week and the weight are a demo.</span>
+    </p>
+  </div>
+</footer>
 
-            // Update Toggle State
-            document.getElementById('lang-en').classList.toggle('active', lang === 'en');
-            document.getElementById('lang-de').classList.toggle('active', lang === 'de');
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="logo" viewBox="0 0 5898 956"><g transform="translate(-147 -98)"><path class="logo-g" fill-rule="evenodd" d="M718.9 226.2C677.9 296.6 644.0 354.2 643.5 354.2C643.0 354.2 635.0 341.2 625.7 325.4C616.5 309.5 608.6 296.2 608.2 295.8C607.8 295.4 503.9 465.7 377.4 674.3L147.2 1053.5L372.6 1053.8C496.6 1053.9 699.4 1053.9 823.3 1053.8L1048.6 1053.5L952.5 888.5L856.4 723.5L707.8 723.0L559.2 722.5L670.9 530.9C732.3 425.6 783.2 338.4 784.0 337.1C785.5 334.9 793.8 349.1 995.0 694.4L1204.5 1054.0L1328.9 1054.0C1431.4 1054.0 1453.1 1053.8 1452.7 1052.7C1451.8 1050.3 950.8 190.5 949.5 189.2C948.5 188.1 943.5 196.0 922.9 231.4C903.8 264.1 897.2 274.6 896.4 273.7C895.8 273.0 872.7 233.6 845.0 186.0C817.3 138.4 794.4 99.2 794.1 98.8C793.8 98.4 759.9 155.8 718.9 226.2ZM3788.5 322.1C3696.4 327.7 3613.5 363.6 3552.4 424.5C3525.8 451.0 3506.9 477.4 3489.6 511.8C3461.1 568.7 3449.6 634.7 3456.1 705.0C3466.8 821.8 3535.4 922.3 3641.0 975.9C3695.4 1003.6 3744.4 1015.4 3809.1 1016.7C3839.7 1017.3 3857.3 1016.4 3881.5 1012.9C4021.7 992.8 4132.6 896.8 4168.4 764.6C4182.3 713.4 4184.2 650.1 4173.4 594.8C4158.2 516.3 4113.0 443.7 4049.4 395.3C4025.8 377.3 3992.2 358.6 3963.4 347.2C3912.0 327.0 3851.5 318.3 3788.5 322.1ZM1618.3 335.4C1616.6 336.2 1614.7 337.7 1614.1 338.9C1613.3 340.3 1613.0 436.4 1613.0 669.8L1613.0 998.7L1615.6 1001.4L1618.3 1004.0L1706.2 1004.0C1764.2 1004.0 1794.8 1003.7 1796.0 1003.0C1800.6 1000.5 1800.5 1006.4 1801.0 838.9L1801.5 680.4L1909.5 841.3C1968.9 929.8 2018.2 1002.6 2019.2 1003.1C2020.2 1003.6 2100.6 1004.0 2214.9 1004.0L2408.9 1004.0L2411.4 1001.8C2413.5 1000.0 2417.4 989.2 2431.1 948.5C2440.5 920.5 2448.8 896.0 2449.6 894.2L2450.9 891.0L2568.6 891.2L2686.3 891.5L2701.6 938.0C2710.1 963.6 2717.9 987.6 2719.1 991.4C2720.4 995.7 2722.3 999.4 2724.0 1001.2L2726.8 1004.0L2817.8 1004.0C2907.9 1004.0 2908.8 1004.0 2911.3 1002.0C2917.2 997.3 2925.2 1019.8 2793.5 669.9C2726.6 492.0 2670.8 344.2 2669.5 341.3C2667.5 336.9 2666.6 336.0 2663.3 335.0C2660.6 334.2 2633.3 334.0 2568.8 334.2L2478.0 334.5L2475.6 337.0C2473.7 338.8 2440.0 426.3 2351.5 658.9C2284.7 834.5 2229.6 978.8 2229.2 979.5C2228.4 981.0 1999.5 655.5 1999.6 653.0C1999.6 652.2 2049.8 583.7 2111.2 500.9C2172.5 418.1 2223.2 349.4 2223.9 348.3C2225.8 344.7 2225.2 341.2 2222.1 337.8L2219.2 334.5L2116.3 334.2C2048.3 334.0 2012.3 334.3 2010.0 334.9C2006.7 335.9 1998.9 346.8 1904.0 483.4L1801.5 630.8L1801.0 485.4L1800.5 340.0L1797.7 337.3L1795.0 334.5L1708.2 334.3C1636.1 334.1 1621.0 334.3 1618.3 335.4ZM2978.3 335.4C2976.6 336.2 2974.7 337.7 2974.1 338.9C2973.3 340.3 2973.0 436.3 2973.0 669.5L2973.0 998.2L2975.9 1001.1L2978.8 1004.0L3205.8 1004.0L3432.8 1004.0L3435.9 1001.4L3439.0 998.8L3439.0 924.5L3439.0 850.1L3436.6 847.3L3434.2 844.5L3297.6 844.2L3161.0 844.0L3161.0 592.5L3161.0 341.0L3158.1 337.8L3155.2 334.5L3068.3 334.3C2996.1 334.1 2981.0 334.3 2978.3 335.4ZM4263.3 335.5C4261.6 336.2 4259.7 337.7 4259.1 338.9C4257.4 341.9 4257.6 997.9 4259.3 1000.1C4260.0 1001.0 4261.5 1002.2 4262.7 1002.8C4265.6 1004.4 4438.2 1004.5 4441.1 1003.0C4446.2 1000.2 4446.0 1006.1 4446.0 866.5C4446.0 785.2 4446.4 737.0 4447.0 737.0C4448.3 737.0 4445.9 733.2 4535.0 873.0C4579.7 943.1 4617.2 1001.3 4618.4 1002.2C4620.4 1003.8 4627.2 1004.0 4719.1 1004.0L4817.7 1004.0L4820.4 1001.3C4822.8 999.0 4823.1 997.9 4822.8 994.0C4822.5 989.8 4815.3 979.3 4729.7 857.6C4678.7 785.1 4637.1 725.7 4637.2 725.5C4637.4 725.4 4643.1 723.4 4650.0 721.1C4675.1 712.6 4703.3 696.9 4722.5 680.9C4757.1 652.0 4778.3 615.6 4786.3 571.5C4789.2 555.1 4789.4 518.1 4786.7 501.6C4771.8 413.5 4699.2 350.2 4597.5 337.0C4578.1 334.5 4548.3 334.0 4411.0 334.1C4290.4 334.1 4266.0 334.3 4263.3 335.5ZM4543.5 471.5C4561.4 474.4 4573.0 480.0 4584.1 491.0C4597.0 503.8 4602.4 517.8 4602.4 538.5C4602.4 557.9 4597.2 572.4 4585.9 584.5C4578.3 592.6 4571.1 597.4 4560.9 601.1C4546.1 606.5 4540.1 607.0 4490.9 607.0L4446.0 607.0L4446.0 538.5L4446.0 470.0L4490.2 470.0C4524.3 470.0 4536.6 470.3 4543.5 471.5ZM3840.8 488.1C3907.9 495.3 3957.4 534.9 3977.9 597.7C3985.4 620.4 3988.3 640.2 3988.3 668.5C3988.3 726.9 3971.8 772.4 3938.5 805.5C3926.3 817.7 3914.2 826.5 3899.3 833.9C3851.8 857.6 3783.6 857.7 3735.8 834.0C3721.3 826.9 3709.9 818.8 3698.2 807.6C3681.4 791.4 3670.3 774.9 3661.5 753.0C3651.0 726.8 3646.7 702.7 3646.7 669.0C3646.6 639.4 3649.4 620.2 3657.1 596.5C3670.4 555.5 3697.2 523.6 3733.5 505.5C3752.5 496.0 3771.2 490.6 3793.0 488.1C3804.0 486.9 3829.6 486.8 3840.8 488.1ZM2604.0 641.2C2622.5 697.5 2637.5 743.8 2637.3 744.2C2637.1 744.7 2606.0 745.0 2568.3 745.0C2513.9 745.0 2499.9 744.7 2500.2 743.8C2500.5 743.1 2516.1 696.5 2535.0 640.3C2554.0 584.1 2569.6 538.3 2569.9 538.5C2570.1 538.8 2585.4 585.0 2604.0 641.2Z"/><path class="logo-r" fill-rule="evenodd" d="M5064.7 151.0C5063.1 152.3 5060.9 156.3 5058.9 161.3C5024.9 249.2 4813.0 807.9 4813.0 809.6C4813.0 810.9 4814.3 813.4 4815.9 815.2L4818.8 818.5L4906.9 818.8C5002.0 819.1 4999.2 819.2 5002.0 814.0C5002.6 812.9 5011.1 788.2 5020.9 759.2L5038.8 706.5L5156.8 706.2L5274.9 706.0L5292.5 759.7C5305.7 800.0 5310.8 814.1 5312.6 816.0L5315.0 818.5L5405.0 818.8C5484.1 819.0 5495.4 818.8 5498.0 817.5C5501.9 815.5 5503.3 812.7 5502.8 807.6C5502.5 804.3 5264.4 170.0 5258.0 155.3C5257.0 153.0 5255.3 150.7 5254.2 150.1C5252.7 149.3 5224.3 149.0 5159.7 149.0C5068.4 149.0 5067.2 149.0 5064.7 151.0ZM5457.9 151.9L5455.0 154.8L5455.0 227.9C5455.0 282.4 5455.3 301.6 5456.2 303.5C5458.8 309.2 5454.6 309.0 5558.9 309.0L5655.0 309.0L5655.2 561.0L5655.5 813.0L5658.3 815.7L5661.0 818.5L5749.5 818.5L5838.0 818.5L5840.7 815.7L5843.5 813.0L5843.8 561.0L5844.0 309.0L5940.6 309.0C6046.0 309.0 6041.4 309.3 6043.9 303.3C6044.7 301.2 6045.0 281.1 6044.8 227.2L6044.5 153.8L6041.7 151.4L6038.9 149.0L5749.9 149.0L5460.8 149.0L5457.9 151.9ZM5192.5 455.5C5210.9 511.5 5226.0 557.8 5226.0 558.2C5226.0 558.6 5195.2 559.0 5157.5 559.0C5119.2 559.0 5089.0 558.6 5089.0 558.1C5089.0 557.6 5104.5 511.2 5123.5 455.0C5142.5 398.8 5158.0 352.5 5158.1 352.1C5158.2 351.1 5157.6 349.2 5192.5 455.5Z"/></g></symbol>
+</svg>
 
-            // Update document language
-            document.documentElement.lang = lang;
-        }
-
-        function toggleLanguage() {
-            setLanguage(currentLang === 'en' ? 'de' : 'en');
-        }
-
-        function initLanguage() {
-            const savedLang = localStorage.getItem('kalorat_lang');
-            if (savedLang) {
-                setLanguage(savedLang);
-            } else {
-                // Auto-detect
-                const userLang = navigator.language || navigator.userLanguage;
-                if (userLang.startsWith('de')) {
-                    setLanguage('de');
-                } else {
-                    setLanguage('en');
-                }
-            }
-        }
-
-        // Initialize immediately
-        initLanguage();
-
-        // iOS Tutorial Modal
-        function openIOSTutorial() {
-            const modal = document.getElementById('iosModal');
-            modal.classList.add('active');
-            document.body.style.overflow = 'hidden';
-        }
-
-        function closeIOSTutorial() {
-            const modal = document.getElementById('iosModal');
-            modal.classList.remove('active');
-            document.body.style.overflow = '';
-        }
-
-        // Close on overlay click
-        document.getElementById('iosModal').addEventListener('click', function (e) {
-            if (e.target === this) closeIOSTutorial();
-        });
-
-        // Close on Escape
-        document.addEventListener('keydown', function (e) {
-            if (e.key === 'Escape') closeIOSTutorial();
-        });
-
-        // Reveal on scroll (features + principles)
-        const observerOptions = { threshold: 0.15, rootMargin: '0px 0px -50px 0px' };
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.style.opacity = '1';
-                    entry.target.style.transform = 'translateY(0)';
-                    observer.unobserve(entry.target);
-                }
-            });
-        }, observerOptions);
-
-        document.querySelectorAll('.feature-row').forEach(el => {
-            el.style.opacity = '0';
-            el.style.transition = 'opacity 0.6s ease-out, transform 0.6s ease-out';
-            observer.observe(el);
-        });
-    </script>
-
+<script src="assets/lp/vendor/lenis.min.js"></script>
+<script src="assets/lp/strings.js"></script>
+<script src="assets/lp/meals.js"></script>
+<script src="assets/lp/i18n.js"></script>
+<script src="assets/lp/site.js"></script>
 </body>
-
 </html>

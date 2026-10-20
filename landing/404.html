@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Kalorat: this plate is empty</title>
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#0A0D0B">
+<!-- Pages serves this file for any missing path, so the assets are found from
+     the site's root. The links are written after the base, or the browser
+     would first fetch them from the wrong folder. -->
+<script>document.write('<base href="' + (/^\/kalorat(\/|$)/.test(location.pathname) ? '/kalorat/' : '/') + '">'
+  + '<link rel="icon" href="assets/lp/favicon.svg" type="image/svg+xml">'
+  + '<link rel="preload" href="assets/lp/fonts/JetBrainsMono-SemiBold.woff2" as="font" type="font/woff2" crossorigin>'
+  + '<link rel="stylesheet" href="assets/lp/tokens.css"><link rel="stylesheet" href="assets/lp/site.css">');</script>
+<noscript><base href="/kalorat/"><link rel="icon" href="assets/lp/favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="assets/lp/tokens.css"><link rel="stylesheet" href="assets/lp/site.css"></noscript>
+<style>
+  html, body { background: var(--night); color: var(--night-ink); }
+  body { min-height: 100vh; min-height: 100svh; overflow-x: hidden; }
+  #c { position: fixed; top: 0; left: 0; width: 100%; height: 100%; touch-action: none; cursor: none; }
+  .nf { position: relative; z-index: 2; min-height: 100vh; min-height: 100svh; display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-rows: auto 1fr auto; gap: var(--s-5) var(--s-7); padding: 28px var(--gutter) var(--s-6); pointer-events: none; }
+  .nf a, .nf button { pointer-events: auto; }
+  .nf-logo { grid-column: 1 / -1; width: 132px; display: block; color: var(--night-ink); }
+  .nf-logo svg { width: 100%; height: auto; display: block; }
+  .nf-copy { grid-column: 1; grid-row: 3; align-self: end; max-width: 30rem; }
+  .nf h1 { font-size: clamp(2.25rem, 1.2rem + 3vw, 4rem); line-height: .98; letter-spacing: -.04em; }
+  .nf-hint { margin-top: var(--s-4); color: var(--night-ink-2); }
+  .nf-acts { margin-top: var(--s-5); display: flex; flex-wrap: wrap; gap: var(--s-3) var(--s-5); align-items: center; }
+  .nf-again { font: inherit; font-weight: 600; color: var(--night-ink); background: none; border: 0; padding: 14px 4px; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: .3em; cursor: pointer; }
+  .nf-read { grid-column: 2; grid-row: 3; align-self: end; text-align: right; }
+  .nf-k { font: 600 clamp(5rem, 13vw, 13rem)/.8 var(--mono); letter-spacing: -.04em; display: flex; align-items: baseline; justify-content: flex-end; gap: .1em; font-variant-numeric: tabular-nums; }
+  .nf-k small { font-size: max(.09em, 1rem); color: var(--night-ink-2); letter-spacing: 0; font-weight: 500; }
+  .nf-sub { font: 500 var(--t-meta) var(--mono); color: var(--night-ink-2); margin-top: var(--s-3); }
+  .nf-log { font: 500 var(--t-meta) var(--mono); color: var(--leaf); margin-top: var(--s-2); min-height: 1.5em; }
+  .nf.is-scan .nf-k { color: var(--leaf); }
+  /* The scanner that follows the pointer. */
+  .scope { position: fixed; z-index: 3; left: 0; top: 0; width: 84px; height: 84px; margin: -42px 0 0 -42px; pointer-events: none; opacity: 0; transition: opacity .25s, width .35s var(--ease), height .35s var(--ease), margin .35s var(--ease); }
+  .scope.is-on { opacity: 1; }
+  .scope.is-big { width: 120px; height: 120px; margin: -60px 0 0 -60px; }
+  .scope i { position: absolute; width: 18px; height: 18px; border: 2px solid var(--leaf); }
+  .scope i:nth-child(1) { left: 0; top: 0; border-width: 2px 0 0 2px; border-top-left-radius: 8px; }
+  .scope i:nth-child(2) { right: 0; top: 0; border-width: 2px 2px 0 0; border-top-right-radius: 8px; }
+  .scope i:nth-child(3) { left: 0; bottom: 0; border-width: 0 0 2px 2px; border-bottom-left-radius: 8px; }
+  .scope i:nth-child(4) { right: 0; bottom: 0; border-width: 0 2px 2px 0; border-bottom-right-radius: 8px; }
+  .scope b { position: absolute; left: calc(100% + 10px); top: 50%; transform: translate(0, -50%); white-space: nowrap; font: 600 var(--t-meta) var(--mono); color: var(--night); background: var(--leaf); border-radius: 6px; padding: 5px 8px; }
+  .scope.is-flip b { left: auto; right: calc(100% + 10px); }
+  @media (max-width: 760px) {
+    .nf { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto 1fr auto auto; padding-top: 20px; }
+    .nf-read { grid-column: 1; grid-row: 3; text-align: left; }
+    .nf-k { justify-content: flex-start; font-size: 5rem; }
+    .nf-copy { grid-row: 4; }
+  }
+  @media (hover: none) { #c { cursor: auto; } }
+  html:not(.js) #c, html:not(.js) .scope, html:not(.js) .nf-again { display: none; }
+  /* Without the script the figures are plain type, and the hint does not offer a scan. */
+  .nf-404 { grid-column: 1 / -1; grid-row: 2; align-self: center; justify-self: center; font: 600 clamp(7rem, 26vw, 22rem)/.8 var(--mono); letter-spacing: -.04em; color: var(--leaf); }
+  .js .nf-404 { display: none; }
+</style>
+<script>document.documentElement.classList.add('js');</script>
+</head>
+<body>
+<canvas id="c" aria-hidden="true"></canvas>
+<div class="scope" id="scope" aria-hidden="true"><i></i><i></i><i></i><i></i><b id="scope-t">0 kcal</b></div>
+<main class="nf" id="nf">
+  <a class="nf-logo" href="./" aria-label="Kalorat"><svg viewBox="0 0 5898 956" aria-hidden="true"><use href="#logo"/></svg></a>
+  <p class="nf-404" aria-hidden="true">404</p>
+  <div class="nf-read">
+    <p class="nf-k num"><span id="k">0</span><small>kcal</small></p>
+    <p class="nf-sub" data-t="sub">404 g of nothing · 100% sure</p>
+    <p class="nf-log" id="log" aria-live="polite"></p>
+  </div>
+  <div class="nf-copy">
+    <h1 data-t="title">This plate is empty.</h1>
+    <p class="nf-hint" data-t="hint">There is no page here.</p>
+    <div class="nf-acts">
+      <a class="btn" href="./" data-t="back">Back to the start</a>
+      <button class="nf-again" type="button" id="again" data-t="again">Scan again</button>
+    </div>
+  </div>
+</main>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="logo" viewBox="0 0 5898 956"><g transform="translate(-147 -98)"><path class="logo-g" fill-rule="evenodd" d="M718.9 226.2C677.9 296.6 644.0 354.2 643.5 354.2C643.0 354.2 635.0 341.2 625.7 325.4C616.5 309.5 608.6 296.2 608.2 295.8C607.8 295.4 503.9 465.7 377.4 674.3L147.2 1053.5L372.6 1053.8C496.6 1053.9 699.4 1053.9 823.3 1053.8L1048.6 1053.5L952.5 888.5L856.4 723.5L707.8 723.0L559.2 722.5L670.9 530.9C732.3 425.6 783.2 338.4 784.0 337.1C785.5 334.9 793.8 349.1 995.0 694.4L1204.5 1054.0L1328.9 1054.0C1431.4 1054.0 1453.1 1053.8 1452.7 1052.7C1451.8 1050.3 950.8 190.5 949.5 189.2C948.5 188.1 943.5 196.0 922.9 231.4C903.8 264.1 897.2 274.6 896.4 273.7C895.8 273.0 872.7 233.6 845.0 186.0C817.3 138.4 794.4 99.2 794.1 98.8C793.8 98.4 759.9 155.8 718.9 226.2ZM3788.5 322.1C3696.4 327.7 3613.5 363.6 3552.4 424.5C3525.8 451.0 3506.9 477.4 3489.6 511.8C3461.1 568.7 3449.6 634.7 3456.1 705.0C3466.8 821.8 3535.4 922.3 3641.0 975.9C3695.4 1003.6 3744.4 1015.4 3809.1 1016.7C3839.7 1017.3 3857.3 1016.4 3881.5 1012.9C4021.7 992.8 4132.6 896.8 4168.4 764.6C4182.3 713.4 4184.2 650.1 4173.4 594.8C4158.2 516.3 4113.0 443.7 4049.4 395.3C4025.8 377.3 3992.2 358.6 3963.4 347.2C3912.0 327.0 3851.5 318.3 3788.5 322.1ZM1618.3 335.4C1616.6 336.2 1614.7 337.7 1614.1 338.9C1613.3 340.3 1613.0 436.4 1613.0 669.8L1613.0 998.7L1615.6 1001.4L1618.3 1004.0L1706.2 1004.0C1764.2 1004.0 1794.8 1003.7 1796.0 1003.0C1800.6 1000.5 1800.5 1006.4 1801.0 838.9L1801.5 680.4L1909.5 841.3C1968.9 929.8 2018.2 1002.6 2019.2 1003.1C2020.2 1003.6 2100.6 1004.0 2214.9 1004.0L2408.9 1004.0L2411.4 1001.8C2413.5 1000.0 2417.4 989.2 2431.1 948.5C2440.5 920.5 2448.8 896.0 2449.6 894.2L2450.9 891.0L2568.6 891.2L2686.3 891.5L2701.6 938.0C2710.1 963.6 2717.9 987.6 2719.1 991.4C2720.4 995.7 2722.3 999.4 2724.0 1001.2L2726.8 1004.0L2817.8 1004.0C2907.9 1004.0 2908.8 1004.0 2911.3 1002.0C2917.2 997.3 2925.2 1019.8 2793.5 669.9C2726.6 492.0 2670.8 344.2 2669.5 341.3C2667.5 336.9 2666.6 336.0 2663.3 335.0C2660.6 334.2 2633.3 334.0 2568.8 334.2L2478.0 334.5L2475.6 337.0C2473.7 338.8 2440.0 426.3 2351.5 658.9C2284.7 834.5 2229.6 978.8 2229.2 979.5C2228.4 981.0 1999.5 655.5 1999.6 653.0C1999.6 652.2 2049.8 583.7 2111.2 500.9C2172.5 418.1 2223.2 349.4 2223.9 348.3C2225.8 344.7 2225.2 341.2 2222.1 337.8L2219.2 334.5L2116.3 334.2C2048.3 334.0 2012.3 334.3 2010.0 334.9C2006.7 335.9 1998.9 346.8 1904.0 483.4L1801.5 630.8L1801.0 485.4L1800.5 340.0L1797.7 337.3L1795.0 334.5L1708.2 334.3C1636.1 334.1 1621.0 334.3 1618.3 335.4ZM2978.3 335.4C2976.6 336.2 2974.7 337.7 2974.1 338.9C2973.3 340.3 2973.0 436.3 2973.0 669.5L2973.0 998.2L2975.9 1001.1L2978.8 1004.0L3205.8 1004.0L3432.8 1004.0L3435.9 1001.4L3439.0 998.8L3439.0 924.5L3439.0 850.1L3436.6 847.3L3434.2 844.5L3297.6 844.2L3161.0 844.0L3161.0 592.5L3161.0 341.0L3158.1 337.8L3155.2 334.5L3068.3 334.3C2996.1 334.1 2981.0 334.3 2978.3 335.4ZM4263.3 335.5C4261.6 336.2 4259.7 337.7 4259.1 338.9C4257.4 341.9 4257.6 997.9 4259.3 1000.1C4260.0 1001.0 4261.5 1002.2 4262.7 1002.8C4265.6 1004.4 4438.2 1004.5 4441.1 1003.0C4446.2 1000.2 4446.0 1006.1 4446.0 866.5C4446.0 785.2 4446.4 737.0 4447.0 737.0C4448.3 737.0 4445.9 733.2 4535.0 873.0C4579.7 943.1 4617.2 1001.3 4618.4 1002.2C4620.4 1003.8 4627.2 1004.0 4719.1 1004.0L4817.7 1004.0L4820.4 1001.3C4822.8 999.0 4823.1 997.9 4822.8 994.0C4822.5 989.8 4815.3 979.3 4729.7 857.6C4678.7 785.1 4637.1 725.7 4637.2 725.5C4637.4 725.4 4643.1 723.4 4650.0 721.1C4675.1 712.6 4703.3 696.9 4722.5 680.9C4757.1 652.0 4778.3 615.6 4786.3 571.5C4789.2 555.1 4789.4 518.1 4786.7 501.6C4771.8 413.5 4699.2 350.2 4597.5 337.0C4578.1 334.5 4548.3 334.0 4411.0 334.1C4290.4 334.1 4266.0 334.3 4263.3 335.5ZM4543.5 471.5C4561.4 474.4 4573.0 480.0 4584.1 491.0C4597.0 503.8 4602.4 517.8 4602.4 538.5C4602.4 557.9 4597.2 572.4 4585.9 584.5C4578.3 592.6 4571.1 597.4 4560.9 601.1C4546.1 606.5 4540.1 607.0 4490.9 607.0L4446.0 607.0L4446.0 538.5L4446.0 470.0L4490.2 470.0C4524.3 470.0 4536.6 470.3 4543.5 471.5ZM3840.8 488.1C3907.9 495.3 3957.4 534.9 3977.9 597.7C3985.4 620.4 3988.3 640.2 3988.3 668.5C3988.3 726.9 3971.8 772.4 3938.5 805.5C3926.3 817.7 3914.2 826.5 3899.3 833.9C3851.8 857.6 3783.6 857.7 3735.8 834.0C3721.3 826.9 3709.9 818.8 3698.2 807.6C3681.4 791.4 3670.3 774.9 3661.5 753.0C3651.0 726.8 3646.7 702.7 3646.7 669.0C3646.6 639.4 3649.4 620.2 3657.1 596.5C3670.4 555.5 3697.2 523.6 3733.5 505.5C3752.5 496.0 3771.2 490.6 3793.0 488.1C3804.0 486.9 3829.6 486.8 3840.8 488.1ZM2604.0 641.2C2622.5 697.5 2637.5 743.8 2637.3 744.2C2637.1 744.7 2606.0 745.0 2568.3 745.0C2513.9 745.0 2499.9 744.7 2500.2 743.8C2500.5 743.1 2516.1 696.5 2535.0 640.3C2554.0 584.1 2569.6 538.3 2569.9 538.5C2570.1 538.8 2585.4 585.0 2604.0 641.2Z"/><path class="logo-r" fill-rule="evenodd" d="M5064.7 151.0C5063.1 152.3 5060.9 156.3 5058.9 161.3C5024.9 249.2 4813.0 807.9 4813.0 809.6C4813.0 810.9 4814.3 813.4 4815.9 815.2L4818.8 818.5L4906.9 818.8C5002.0 819.1 4999.2 819.2 5002.0 814.0C5002.6 812.9 5011.1 788.2 5020.9 759.2L5038.8 706.5L5156.8 706.2L5274.9 706.0L5292.5 759.7C5305.7 800.0 5310.8 814.1 5312.6 816.0L5315.0 818.5L5405.0 818.8C5484.1 819.0 5495.4 818.8 5498.0 817.5C5501.9 815.5 5503.3 812.7 5502.8 807.6C5502.5 804.3 5264.4 170.0 5258.0 155.3C5257.0 153.0 5255.3 150.7 5254.2 150.1C5252.7 149.3 5224.3 149.0 5159.7 149.0C5068.4 149.0 5067.2 149.0 5064.7 151.0ZM5457.9 151.9L5455.0 154.8L5455.0 227.9C5455.0 282.4 5455.3 301.6 5456.2 303.5C5458.8 309.2 5454.6 309.0 5558.9 309.0L5655.0 309.0L5655.2 561.0L5655.5 813.0L5658.3 815.7L5661.0 818.5L5749.5 818.5L5838.0 818.5L5840.7 815.7L5843.5 813.0L5843.8 561.0L5844.0 309.0L5940.6 309.0C6046.0 309.0 6041.4 309.3 6043.9 303.3C6044.7 301.2 6045.0 281.1 6044.8 227.2L6044.5 153.8L6041.7 151.4L6038.9 149.0L5749.9 149.0L5460.8 149.0L5457.9 151.9ZM5192.5 455.5C5210.9 511.5 5226.0 557.8 5226.0 558.2C5226.0 558.6 5195.2 559.0 5157.5 559.0C5119.2 559.0 5089.0 558.6 5089.0 558.1C5089.0 557.6 5104.5 511.2 5123.5 455.0C5142.5 398.8 5158.0 352.5 5158.1 352.1C5158.2 351.1 5157.6 349.2 5192.5 455.5Z"/></g></symbol>
+</svg>
+<script>
+(function () {
+  'use strict';
+  var T = {
+    en: {
+      title: 'This plate is empty.', sub: '404 g of nothing · 100% sure', back: 'Back to the start', again: 'Scan again',
+      hint: 'There is no page here. Scan the table anyway: move over it, click to scan.',
+      hintTouch: 'There is no page here. Scan the table anyway: drag over it, tap to scan.',
+      onDigits: 'digits · 0 kcal', onTable: 'table · 0 kcal',
+      log: ['Scan 1: nothing found.', 'Scan 2: still nothing.', 'Scan 3: the table, honestly. 0 kcal.', 'Scan {n}: the food is on the start page.'],
+      doc: 'Kalorat: this plate is empty'
+    },
+    de: {
+      title: 'Dieser Teller ist leer.', sub: '404 g nichts · zu 100 % sicher', back: 'Zurück zur Startseite', again: 'Nochmal scannen',
+      hint: 'Hier gibt es keine Seite. Scann den Tisch trotzdem: drüberfahren, klicken zum Scannen.',
+      hintTouch: 'Hier gibt es keine Seite. Scann den Tisch trotzdem: drüberwischen, tippen zum Scannen.',
+      onDigits: 'Ziffern · 0 kcal', onTable: 'Tisch · 0 kcal',
+      log: ['Scan 1: nichts gefunden.', 'Scan 2: immer noch nichts.', 'Scan 3: ehrlich, nur der Tisch. 0 kcal.', 'Scan {n}: das Essen ist auf der Startseite.'],
+      doc: 'Kalorat: dieser Teller ist leer'
+    }
+  };
+  var l = null;
+  try { l = localStorage.getItem('kalorat_lang'); } catch (_) {}
+  if (l !== 'de' && l !== 'en') l = /^de/i.test(navigator.language || '') ? 'de' : 'en';
+  var S = T[l], touch = matchMedia('(hover: none)').matches;
+  document.documentElement.lang = l;
+  document.title = S.doc;
+  [].forEach.call(document.querySelectorAll('[data-t]'), function (n) { n.textContent = S[n.getAttribute('data-t')]; });
+  if (touch) document.querySelector('.nf-hint').textContent = S.hintTouch;
+
+  var nf = document.getElementById('nf'), kEl = document.getElementById('k'), logEl = document.getElementById('log');
+  var scope = document.getElementById('scope'), scopeT = document.getElementById('scope-t');
+  var c = document.getElementById('c'), x = c.getContext && c.getContext('2d');
+  var reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  // Two cores or two gigabytes: bigger dots, fewer of them.
+  var strong = (navigator.hardwareConcurrency || 4) > 2 && !(navigator.deviceMemory && navigator.deviceMemory <= 2);
+  var scans = 0, rolling = 0;
+  var W, H, dpr, cell, cols, rows, n, hx, hy, ox, oy, vx, vy, lv, dig, layer, sprites;
+  var px = -1e4, py = -1e4, tx = -1e4, ty = -1e4, ripples = [], raf = 0, ready = false;
+
+  // A scan: the shockwave reads the table, finds nothing, and the number
+  // stays where it is. Only the log counts.
+  function scan(sx, sy) {
+    scans++;
+    logEl.textContent = S.log[Math.min(scans, S.log.length) - 1].replace('{n}', scans);
+    if (reduce) return;
+    if (x) { ripples.push({ x: sx, y: sy, t: performance.now() }); wake(); }
+    nf.classList.add('is-scan');
+    var id = ++rolling;
+    setTimeout(function () { if (id === rolling) nf.classList.remove('is-scan'); }, 700);
+  }
+  document.getElementById('again').addEventListener('click', function () { scan(innerWidth / 2, innerHeight * .4); });
+  if (!x) return;
+
+  // The dots: the bare brass table from the poke bowl's photo, sampled, with
+  // "404" set in the brand's mono face, brighter, in leaf.
+  var img = new Image(); img.src = 'assets/lp/img/poke-1280.webp';
+
+  function sprite(r, col, a) {
+    var s = document.createElement('canvas'), d = Math.ceil((r * 2 + 2) * dpr);
+    s.width = s.height = d;
+    var g = s.getContext('2d');
+    g.fillStyle = col; g.globalAlpha = a; g.beginPath(); g.arc(d / 2, d / 2, r * dpr, 0, 6.2832); g.fill();
+    return s;
+  }
+  function build() {
+    W = innerWidth; H = innerHeight;
+    dpr = Math.min(devicePixelRatio || 1, strong ? 1.5 : 1);
+    cell = (W < 760 ? 9 : 11) + (strong ? 0 : 4);
+    c.width = Math.round(W * dpr); c.height = Math.round(H * dpr);
+    cols = Math.ceil(W / cell); rows = Math.ceil(H / cell); n = cols * rows;
+    hx = new Float32Array(n); hy = new Float32Array(n); ox = new Float32Array(n); oy = new Float32Array(n);
+    vx = new Float32Array(n); vy = new Float32Array(n); lv = new Uint8Array(n); dig = new Uint8Array(n);
+    // The table's light, from a bare patch right of the bowl, stretched over the grid as texture.
+    var o = document.createElement('canvas'); o.width = cols; o.height = rows;
+    var g = o.getContext('2d'), s = img.naturalWidth / 800;
+    var tp = null;
+    if (img.naturalWidth) { g.drawImage(img, 560 * s, 300 * s, 236 * s, 236 * s, 0, 0, cols, rows); try { tp = g.getImageData(0, 0, cols, rows).data; } catch (_) {} }
+    // The digits, as a mask on the same grid.
+    var m = document.createElement('canvas'); m.width = cols; m.height = rows;
+    var q = m.getContext('2d'), wide = W >= 760;
+    var size = rows * (wide ? .5 : .3);
+    q.fillStyle = '#fff'; q.textAlign = 'center'; q.textBaseline = 'middle';
+    q.font = '600 ' + size + 'px "JetBrains Mono", monospace';
+    // The three figures keep a cell of air on each side on any width.
+    var tw = q.measureText('404').width;
+    if (tw > cols - 4) { size *= (cols - 4) / tw; q.font = '600 ' + size + 'px "JetBrains Mono", monospace'; }
+    q.fillText('404', cols / 2, rows * (wide ? .4 : .34));
+    var mp = q.getImageData(0, 0, cols, rows).data;
+    for (var i = 0; i < n; i++) {
+      hx[i] = (i % cols) * cell + cell / 2; hy[i] = Math.floor(i / cols) * cell + cell / 2;
+      var v = tp ? (.2126 * tp[i * 4] + .7152 * tp[i * 4 + 1] + .0722 * tp[i * 4 + 2]) / 255 : .5;
+      dig[i] = mp[i * 4 + 3] > 110 ? 1 : 0;
+      lv[i] = dig[i] ? 7 : Math.max(0, Math.min(6, Math.round((v - .25) * 9)));
+    }
+    sprites = [];
+    for (var k = 0; k < 7; k++) sprites.push(sprite((.14 + k / 6 * .26) * cell, '#A8B3AD', .16 + k / 6 * .34));
+    sprites.push(sprite(.36 * cell, '#6BCB97', 1));
+    layer = document.createElement('canvas'); layer.width = c.width; layer.height = c.height;
+    var L = layer.getContext('2d');
+    L.fillStyle = '#0A0D0B'; L.fillRect(0, 0, layer.width, layer.height);
+    for (i = 0; i < n; i++) put(L, i, hx[i], hy[i]);
+    ready = true; draw(); wake();
+  }
+  function put(g, i, X, Y) {
+    var sp = sprites[lv[i]], h = sp.width / 2;
+    g.drawImage(sp, X * dpr - h, Y * dpr - h);
+  }
+  function moved(i) { return ox[i] > .4 || ox[i] < -.4 || oy[i] > .4 || oy[i] < -.4; }
+
+  // Each frame: the still matrix in one copy, then only the dots that moved,
+  // each lifted from its cell and drawn where the push has sent it.
+  function draw() {
+    x.drawImage(layer, 0, 0);
+    var e = cell * dpr, i;
+    x.fillStyle = '#0A0D0B';
+    for (i = 0; i < n; i++) if (moved(i)) x.fillRect(hx[i] * dpr - e / 2, hy[i] * dpr - e / 2, e, e);
+    for (i = 0; i < n; i++) if (moved(i)) put(x, i, hx[i] + ox[i], hy[i] + oy[i]);
+    var now = performance.now();
+    ripples.forEach(function (r) {
+      var a = (now - r.t) / 1100;
+      x.strokeStyle = 'rgba(107,203,151,' + Math.max(0, 1 - a).toFixed(3) + ')'; x.lineWidth = 1.5 * dpr;
+      x.beginPath(); x.arc(r.x * dpr, r.y * dpr, a * 900 * dpr, 0, 6.2832); x.stroke();
+    });
+  }
+  function step() {
+    raf = 0;
+    if (!ready) return;
+    px += (tx - px) * .35; py += (ty - py) * .35;
+    var R = W < 760 ? 90 : 130, now = performance.now(), live = false;
+    ripples = ripples.filter(function (r) { return now - r.t < 1100; });
+    for (var i = 0; i < n; i++) {
+      var ax = 0, ay = 0, X = hx[i] + ox[i], Y = hy[i] + oy[i];
+      var dx = X - px, dy = Y - py;
+      if (dx < R && dx > -R && dy < R && dy > -R) {
+        var d = Math.sqrt(dx * dx + dy * dy) || 1;
+        if (d < R) { var f = 1 - d / R; f = f * f * 3.2; ax += dx / d * f; ay += dy / d * f; }
+      }
+      for (var j = 0; j < ripples.length; j++) {
+        var rp = ripples[j], rx = X - rp.x, ry = Y - rp.y, rd = Math.sqrt(rx * rx + ry * ry) || 1, age = (now - rp.t) / 1100;
+        var band = rd - age * 900;
+        if (band < 26 && band > -26) { var gg = (1 - Math.abs(band) / 26) * 2.4 * (1 - age); ax += rx / rd * gg; ay += ry / rd * gg; }
+      }
+      if (ax === 0 && ay === 0 && ox[i] === 0 && oy[i] === 0 && vx[i] === 0 && vy[i] === 0) continue;
+      vx[i] = (vx[i] + ax - ox[i] * .08) * .8; vy[i] = (vy[i] + ay - oy[i] * .08) * .8;
+      ox[i] += vx[i]; oy[i] += vy[i];
+      if (Math.abs(ox[i]) < .05 && Math.abs(oy[i]) < .05 && Math.abs(vx[i]) < .05 && Math.abs(vy[i]) < .05) ox[i] = oy[i] = vx[i] = vy[i] = 0;
+      else live = true;
+    }
+    draw();
+    if (live || ripples.length || Math.abs(tx - px) > .5 || Math.abs(ty - py) > .5) wake();
+  }
+  function wake() { if (!raf && !reduce && !document.hidden) raf = requestAnimationFrame(step); }
+
+  // The pointer is the scanner; what is under it is read out, and it is 0 kcal.
+  function aim(e) {
+    tx = e.clientX; ty = e.clientY;
+    scope.style.transform = 'translate(' + tx + 'px,' + ty + 'px)';
+    var over = e.target.closest && e.target.closest('a, button, h1, p');
+    scope.classList.toggle('is-on', !over && (e.pointerType !== 'touch' || e.buttons > 0 || e.type === 'pointerdown'));
+    scope.classList.toggle('is-flip', tx > innerWidth - 220);
+    if (ready) {
+      var ci = Math.floor(tx / cell), ri = Math.floor(ty / cell);
+      var on = ci >= 0 && ci < cols && ri >= 0 && ri < rows && dig[ri * cols + ci];
+      scope.classList.toggle('is-big', !!on);
+      scopeT.textContent = on ? S.onDigits : S.onTable;
+    }
+    wake();
+  }
+  addEventListener('pointermove', aim);
+  addEventListener('pointerdown', function (e) { if (e.target !== c) return; aim(e); scan(e.clientX, e.clientY); });
+  addEventListener('pointerup', function (e) { if (e.pointerType === 'touch') { scope.classList.remove('is-on'); tx = ty = -1e4; wake(); } });
+  document.addEventListener('pointerleave', function () { scope.classList.remove('is-on'); tx = ty = -1e4; wake(); });
+  document.addEventListener('visibilitychange', wake);
+  var rt = 0;
+  addEventListener('resize', function () { clearTimeout(rt); rt = setTimeout(build, 150); });
+
+  function go() {
+    (document.fonts && document.fonts.load ? document.fonts.load('600 100px "JetBrains Mono"') : Promise.resolve()).catch(function () {}).then(build);
+  }
+  if (img.complete && img.naturalWidth) go(); else { img.onload = go; img.onerror = go; }
+})();
+</script>
+</body>
+</html>

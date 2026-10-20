@@ -1,0 +1,62 @@
+/* Kalorat landing: tokens. Every value on the page reads from here.
+   Brand: Outfit for words, JetBrains Mono for every number, Styrian Forest,
+   1px hard lines, radius 12, no soft shadows. */
+
+@font-face { font-family: "Outfit"; src: url("fonts/Outfit-Regular.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+@font-face { font-family: "Outfit"; src: url("fonts/Outfit-Medium.woff2") format("woff2"); font-weight: 500; font-display: swap; }
+@font-face { font-family: "Outfit"; src: url("fonts/Outfit-SemiBold.woff2") format("woff2"); font-weight: 600; font-display: swap; }
+@font-face { font-family: "Outfit"; src: url("fonts/Outfit-Bold.woff2") format("woff2"); font-weight: 700; font-display: swap; }
+@font-face { font-family: "Outfit"; src: url("fonts/Outfit-ExtraBold.woff2") format("woff2"); font-weight: 800; font-display: swap; }
+@font-face { font-family: "JetBrains Mono"; src: url("fonts/JetBrainsMono-Medium.woff2") format("woff2"); font-weight: 500; font-display: swap; }
+@font-face { font-family: "JetBrains Mono"; src: url("fonts/JetBrainsMono-SemiBold.woff2") format("woff2"); font-weight: 600; font-display: swap; }
+/* Metric-matched fallbacks (scripts/fallback.mjs), so the swap does not move the page. */
+@font-face { font-family: "Outfit Fallback"; src: local("Arial"), local("Liberation Sans"), local("Arimo"), local("Helvetica"); size-adjust: 98.8%; ascent-override: 101.2%; descent-override: 26.3%; line-gap-override: 0%; }
+
+:root {
+  color-scheme: light dark;
+  --font: "Outfit", "Outfit Fallback", system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, "Cascadia Mono", "Liberation Mono", monospace;
+
+  /* The camera: dark, as the app's camera tab. Fixed in both schemes. */
+  --night: #0A0D0B;          /* the dark of the app's camera, with the forest's green in it */
+  --night-2: #131915;
+  --night-ink: #F2F5F3;
+  --night-ink-2: #A8B3AD;    /* 8.4:1 on --night */
+  --night-rule: #27302B;
+  --leaf: #6BCB97;           /* Styrian Forest lifted for dark grounds: the scan, the found parts */
+
+  /* The day: white, as the app's Today tab. */
+  --day: #FFFFFF;
+  --day-2: #F4F7F5;          /* the app's secondary surface, a breath of green */
+  --ink: #0B1510;
+  --ink-2: #4B5751;          /* 7.3:1 on white */
+  --rule: #DCE3DF;
+  --forest: #0F5838;         /* the one accent: the action, the route, "now" */
+  --forest-ink: #FFFFFF;
+  --forest-tint: #E7F0EB;    /* the area under the ridge */
+  --red: #ED2939;            /* only in the logo's "AT" */
+  --focus: #0F5838;
+
+  --t-h2: clamp(2.5rem, 1rem + 4vw, 5rem);
+  --t-h3: 1.5rem;
+  --t-body: 1.125rem;
+  --t-small: 0.9375rem;
+  --t-meta: 0.8125rem;
+
+  --s-1: 4px; --s-2: 8px; --s-3: 12px; --s-4: 16px; --s-5: 24px; --s-6: 40px; --s-7: 64px; --s-8: 104px; --s-9: 168px;
+  --gutter: clamp(20px, 4vw, 56px);
+  --r-s: 8px; --r-m: 12px;
+  --ease: cubic-bezier(.16, 1, .3, 1);
+  --spring: linear(0, .42 9%, .84 21%, 1.02 33%, 1.05 41%, 1.01 55%, .99 70%, 1);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --day: #0A0A0A; --day-2: #141414; --ink: #F3F4F3; --ink-2: #A6ADA9; --rule: #27272A;
+    --forest: #3E9B6C; --forest-ink: #FFFFFF; --forest-tint: #12241A; --focus: #6BCB97;
+  }
+}
+:root[data-theme="dark"] {
+  --day: #0A0A0A; --day-2: #141414; --ink: #F3F4F3; --ink-2: #A6ADA9; --rule: #27272A;
+  --forest: #3E9B6C; --forest-ink: #FFFFFF; --forest-tint: #12241A; --focus: #6BCB97;
+}
