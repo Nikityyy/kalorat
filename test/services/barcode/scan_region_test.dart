@@ -117,4 +117,24 @@ void main() {
       );
     });
   });
+
+  group('lockHold', () {
+    Duration hold(int sinceMs) => lockHold(Duration(milliseconds: sinceMs));
+
+    test('a cached lookup keeps the lock for the whole minimum', () {
+      expect(hold(0), const Duration(milliseconds: 600));
+      expect(hold(20), const Duration(milliseconds: 580));
+    });
+
+    test('a lookup that took a while still gets the found beat', () {
+      expect(hold(250), const Duration(milliseconds: 350));
+      expect(hold(900), const Duration(milliseconds: 350));
+    });
+
+    test('the lock is never shown shorter than the minimum in all', () {
+      for (final ms in [0, 50, 200, 249, 250, 400]) {
+        expect(ms + hold(ms).inMilliseconds, greaterThanOrEqualTo(600));
+      }
+    });
+  });
 }

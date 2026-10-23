@@ -22,6 +22,7 @@ import 'home/analyzing_view.dart';
 import 'home/photo_viewer.dart';
 import 'meal_detail/components_section.dart';
 import 'meal_detail/retry_sheet.dart';
+import 'share/meal_share_screen.dart';
 import '../utils/analysis_parser.dart';
 import '../widgets/inputs/action_button.dart';
 import '../utils/analysis_tracker.dart';
@@ -178,6 +179,14 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
   }
 
   Object _photoHeroTag(int i) => 'meal-photo-${_meal.id}-$i';
+
+  /// Opens the picture of the meal for stories and messages.
+  Future<void> _shareMeal() => showMealShare(
+    context,
+    meal: _meal,
+    portionMultiplier: _portionMultiplier,
+    initialPhoto: _photoIndex,
+  );
 
   /// Saves the photo at [index], by default the one shown.
   Future<void> _saveToGallery([int? index]) async {
@@ -701,6 +710,15 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
                     ),
                   ),
                 const SizedBox(width: 8),
+                if (!_meal.isPending) ...[
+                  _GlassButton(
+                    icon: Icons.ios_share,
+                    tooltip: l10n.shareMeal,
+                    onPressed: _shareMeal,
+                    plain: photos.isEmpty,
+                  ),
+                  const SizedBox(width: 8),
+                ],
                 _buildMoreMenu(),
               ],
             ),

@@ -920,6 +920,48 @@ class AppLocalizationsDe extends AppLocalizations {
   String get retryLeftoverRemove => 'Foto entfernen';
 
   @override
+  String get leftoversNeedOnline =>
+      'Reste lassen sich nur abziehen, wenn die Analyse jetzt laufen kann. Entferne die Fotos vom Rest oder verbinde dich wieder.';
+
+  @override
+  String get leftoversQuestion => 'Alles aufgegessen?';
+
+  @override
+  String get leftoversNone => 'Ja, alles';
+
+  @override
+  String get leftoversSome => 'Nein, Rest übrig';
+
+  @override
+  String get shareMeal => 'Teilen';
+
+  @override
+  String get shareMealTitle => 'Mahlzeit teilen';
+
+  @override
+  String get shareStylePhoto => 'Foto';
+
+  @override
+  String get shareStyleLight => 'Hell';
+
+  @override
+  String get shareStyleDark => 'Dunkel';
+
+  @override
+  String get shareImageAction => 'Bild teilen';
+
+  @override
+  String get shareSaveAction => 'In Fotos sichern';
+
+  @override
+  String get shareFailed => 'Das Bild konnte nicht geteilt werden.';
+
+  @override
+  String sharePhotoNumber(int number) {
+    return 'Foto $number';
+  }
+
+  @override
   String get componentsTitle => 'Auf dem Teller';
 
   @override

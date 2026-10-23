@@ -1,14 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../extensions/l10n_extension.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_theme.dart';
 import '../../theme/app_typography.dart';
 import '../../utils/haptics.dart';
+import '../../widgets/common/segmented_tabs.dart';
 import '../../widgets/inputs/action_button.dart';
+import '../../widgets/leftovers_section.dart';
 
 /// The taken photos in a grid, with the choices to discard, add more or start
-/// the analysis.
+/// the analysis. Photos of what was left on the plate can be added below the
+/// grid ([onAddLeftover]); the analysis then counts only what was eaten.
 class PhotoReviewView extends StatelessWidget {
   /// Links a photo in the grid to the same photo in the full-screen viewer.
   static Object heroTag(String photo) => 'review-photo-$photo';
@@ -23,6 +27,18 @@ class PhotoReviewView extends StatelessWidget {
   final VoidCallback onAddPhoto;
   final VoidCallback onAnalyze;
 
+  /// "Finished it all?" Answering "no" asks for photos of the leftovers.
+  /// A null [onLeftoversChanged] leaves the question out (leftovers need the
+  /// analysis to run now).
+  final bool hasLeftovers;
+  final ValueChanged<bool>? onLeftoversChanged;
+  final List<LeftoverPhoto> leftovers;
+  final void Function(ImageSource source)? onAddLeftover;
+  final void Function(LeftoverPhoto leftover)? onRemoveLeftover;
+
+  /// False while the analysis would still be missing the leftover photos.
+  final bool canAnalyze;
+
   const PhotoReviewView({
     super.key,
     required this.photos,
@@ -34,11 +50,18 @@ class PhotoReviewView extends StatelessWidget {
     required this.onDiscard,
     required this.onAddPhoto,
     required this.onAnalyze,
+    this.hasLeftovers = false,
+    this.onLeftoversChanged,
+    this.leftovers = const [],
+    this.onAddLeftover,
+    this.onRemoveLeftover,
+    this.canAnalyze = true,
   });
 
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
+    final onLeftoversChanged = this.onLeftoversChanged;
 
     return Container(
       color: AppColors.surface,
@@ -63,12 +86,48 @@ class PhotoReviewView extends StatelessWidget {
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.fromLTRB(24, 4, 24, 16),
-              child: _ReorderableGrid(
-                photos: photos,
-                imageFor: imageFor,
-                onOpen: onOpen,
-                onRemove: onRemove,
-                onReorder: onReorder,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _ReorderableGrid(
+                    photos: photos,
+                    imageFor: imageFor,
+                    onOpen: onOpen,
+                    onRemove: onRemove,
+                    onReorder: onReorder,
+                  ),
+                  if (onLeftoversChanged != null) ...[
+                    const SizedBox(height: 28),
+                    Text(
+                      l10n.leftoversQuestion,
+                      style: AppTypography.body.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    SegmentedTabs(
+                      labels: [l10n.leftoversNone, l10n.leftoversSome],
+                      selected: hasLeftovers ? 1 : 0,
+                      onChanged: (i) => onLeftoversChanged(i == 1),
+                    ),
+                    AnimatedSize(
+                      duration: const Duration(milliseconds: 220),
+                      curve: Curves.easeOutCubic,
+                      alignment: Alignment.topCenter,
+                      child: hasLeftovers
+                          ? Padding(
+                              padding: const EdgeInsets.only(top: 16),
+                              child: LeftoversSection(
+                                showTitle: false,
+                                leftovers: leftovers,
+                                onAdd: onAddLeftover ?? (_) {},
+                                onRemove: onRemoveLeftover ?? (_) {},
+                              ),
+                            )
+                          : const SizedBox(width: double.infinity),
+                    ),
+                  ],
+                ],
               ),
             ),
           ),
@@ -131,10 +190,15 @@ class PhotoReviewView extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 16),
-                  ActionButton(
-                    text: l10n.startAnalysis,
-                    isLoading: isAnalyzing,
-                    onPressed: onAnalyze,
+                  // Dimmed until the leftovers have their photo.
+                  AnimatedOpacity(
+                    opacity: canAnalyze ? 1 : 0.4,
+                    duration: const Duration(milliseconds: 160),
+                    child: ActionButton(
+                      text: l10n.startAnalysis,
+                      isLoading: isAnalyzing,
+                      onPressed: canAnalyze ? onAnalyze : null,
+                    ),
                   ),
                 ],
               ),

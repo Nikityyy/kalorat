@@ -1790,6 +1790,84 @@ abstract class AppLocalizations {
   /// **'Foto entfernen'**
   String get retryLeftoverRemove;
 
+  /// No description provided for @leftoversNeedOnline.
+  ///
+  /// In de, this message translates to:
+  /// **'Reste lassen sich nur abziehen, wenn die Analyse jetzt laufen kann. Entferne die Fotos vom Rest oder verbinde dich wieder.'**
+  String get leftoversNeedOnline;
+
+  /// No description provided for @leftoversQuestion.
+  ///
+  /// In de, this message translates to:
+  /// **'Alles aufgegessen?'**
+  String get leftoversQuestion;
+
+  /// No description provided for @leftoversNone.
+  ///
+  /// In de, this message translates to:
+  /// **'Ja, alles'**
+  String get leftoversNone;
+
+  /// No description provided for @leftoversSome.
+  ///
+  /// In de, this message translates to:
+  /// **'Nein, Rest übrig'**
+  String get leftoversSome;
+
+  /// No description provided for @shareMeal.
+  ///
+  /// In de, this message translates to:
+  /// **'Teilen'**
+  String get shareMeal;
+
+  /// No description provided for @shareMealTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Mahlzeit teilen'**
+  String get shareMealTitle;
+
+  /// No description provided for @shareStylePhoto.
+  ///
+  /// In de, this message translates to:
+  /// **'Foto'**
+  String get shareStylePhoto;
+
+  /// No description provided for @shareStyleLight.
+  ///
+  /// In de, this message translates to:
+  /// **'Hell'**
+  String get shareStyleLight;
+
+  /// No description provided for @shareStyleDark.
+  ///
+  /// In de, this message translates to:
+  /// **'Dunkel'**
+  String get shareStyleDark;
+
+  /// No description provided for @shareImageAction.
+  ///
+  /// In de, this message translates to:
+  /// **'Bild teilen'**
+  String get shareImageAction;
+
+  /// No description provided for @shareSaveAction.
+  ///
+  /// In de, this message translates to:
+  /// **'In Fotos sichern'**
+  String get shareSaveAction;
+
+  /// No description provided for @shareFailed.
+  ///
+  /// In de, this message translates to:
+  /// **'Das Bild konnte nicht geteilt werden.'**
+  String get shareFailed;
+
+  /// No description provided for @sharePhotoNumber.
+  ///
+  /// In de, this message translates to:
+  /// **'Foto {number}'**
+  String sharePhotoNumber(int number);
+
   /// No description provided for @componentsTitle.
   ///
   /// In de, this message translates to:

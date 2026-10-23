@@ -294,10 +294,17 @@ class _LockStatus extends StatelessWidget {
         SizedBox.square(
           dimension: 18,
           child: lock.found
-              ? const Icon(
-                  Icons.check_circle_rounded,
-                  size: 18,
-                  color: MealGuideOverlay._lockColor,
+              ? TweenAnimationBuilder<double>(
+                  tween: Tween(begin: 0.3, end: 1),
+                  duration: const Duration(milliseconds: 320),
+                  curve: Curves.easeOutBack,
+                  builder: (context, scale, child) =>
+                      Transform.scale(scale: scale, child: child),
+                  child: const Icon(
+                    Icons.check_circle_rounded,
+                    size: 18,
+                    color: MealGuideOverlay._lockColor,
+                  ),
                 )
               : const CircularProgressIndicator(
                   strokeWidth: 2.2,

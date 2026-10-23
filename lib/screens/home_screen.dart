@@ -27,6 +27,7 @@ import '../utils/save_photo.dart';
 import '../utils/platform_utils.dart';
 import '../utils/web_cameras.dart';
 import '../widgets/common/adaptive.dart';
+import '../widgets/leftovers_section.dart';
 import '../widgets/widgets.dart';
 import 'home/analyzing_view.dart';
 import 'home/camera_controls.dart';
@@ -80,6 +81,13 @@ class _HomeScreenState extends State<HomeScreen>
   bool _isAnalyzing = false;
   bool _showCameraHint = !FirstUseHints.seen(FirstUseHint.camera);
   List<String> _capturedPhotos = [];
+
+  bool _canSubtractLeftovers = false;
+
+  /// "Finished it all?" answered with no: photos of what was left on the
+  /// plate follow, for the next analysis only.
+  bool _hasLeftovers = false;
+  final List<LeftoverPhoto> _leftovers = [];
   bool _isTakingMore = false;
   int _cameraPreviewKey = 0;
   BoxConstraints? _lastPreviewConstraints;
@@ -112,6 +120,7 @@ class _HomeScreenState extends State<HomeScreen>
   // again (see _coverPreview).
   Uint8List? _veil;
   bool _veilMirrored = false;
+  bool _veilFadeIn = false;
   bool _veilReveal = false;
   bool _quickCamerasFailed = false;
   Future<void> _previewSync = Future.value();
@@ -122,6 +131,7 @@ class _HomeScreenState extends State<HomeScreen>
 
   /// The code the guide has closed around while its product is looked up.
   GuideLock? _guideLock;
+  DateTime _guideLockSince = DateTime.fromMillisecondsSinceEpoch(0);
 
   /// After a failed lookup the user may photograph the nutrition label; the
   /// code that failed is then ignored, so it does not interrupt again.
@@ -202,13 +212,23 @@ class _HomeScreenState extends State<HomeScreen>
   /// Lays the last picture of the preview, softened, over it, until
   /// [_revealPreview] fades it into the live picture: while the other camera
   /// starts, or while the camera tab is away and comes back. Web only; the
-  /// snapshot takes a few milliseconds.
-  Future<void> _coverPreview() async {
+  /// snapshot takes a few milliseconds. With [fadeIn] the cover fades in
+  /// over the playing preview, and the caller waits
+  /// [CameraSwitchVeil.coverDuration] before the preview goes away.
+  Future<void> _coverPreview({bool fadeIn = false}) async {
     final bytes = await previewSnapshot();
     if (!mounted || bytes == null) return;
+    // Decoded before it shows, so it does not pop in; a slow decode does not
+    // hold the cover up.
+    await precacheImage(
+      MemoryImage(bytes),
+      context,
+    ).timeout(const Duration(milliseconds: 120)).catchError((Object _) {});
+    if (!mounted) return;
     setState(() {
       _veil = bytes;
       _veilMirrored = _frontCamera;
+      _veilFadeIn = fadeIn;
       _veilReveal = false;
     });
   }
@@ -677,13 +697,13 @@ class _HomeScreenState extends State<HomeScreen>
     var retry = false;
     final oldController = _cameraController;
     final nextIndex = ((_selectedCameraIndex ?? 0) + 1) % _cameras!.length;
-    await _coverPreview();
-    if (mounted) {
-      setState(() {
-        _isSwitchingCamera = true;
-        _isCameraInitialized = false;
-      });
+    if (mounted) setState(() => _isSwitchingCamera = true);
+    // The old preview keeps playing under the cover while it fades in.
+    await _coverPreview(fadeIn: true);
+    if (_veil != null) {
+      await Future<void>.delayed(CameraSwitchVeil.coverDuration);
     }
+    if (mounted) setState(() => _isCameraInitialized = false);
     try {
       if (_isTorchOn) await _setTorchMode(false);
       await _stopBarcodeScanner();
@@ -941,6 +961,8 @@ class _HomeScreenState extends State<HomeScreen>
       if (_capturedPhotos.isEmpty) {
         _isTakingMore = false;
         _mealContext = null;
+        _hasLeftovers = false;
+        _leftovers.clear();
       }
     });
 
@@ -986,6 +1008,16 @@ class _HomeScreenState extends State<HomeScreen>
     unawaited(_persistPhotos());
   }
 
+  Future<void> _addLeftover(ImageSource source) async {
+    final leftover = await pickLeftoverPhoto(source);
+    if (leftover == null ||
+        !mounted ||
+        _leftovers.length >= maxLeftoverPhotos) {
+      return;
+    }
+    setState(() => _leftovers.add(leftover));
+  }
+
   Future<void> _analyzeMeal({
     String? mealContext,
     bool background = false,
@@ -1005,6 +1037,13 @@ class _HomeScreenState extends State<HomeScreen>
     final isOnline = provider.isOnline;
     final apiKey = provider.apiKey;
     final language = provider.language;
+
+    // Leftover photos are not kept, so only an analysis that runs now can
+    // use them.
+    if (_leftovers.isNotEmpty && (background || !isOnline || apiKey.isEmpty)) {
+      _showMessage(l10n.leftoversNeedOnline);
+      return;
+    }
 
     final mealId = DateTime.now().millisecondsSinceEpoch.toString();
 
@@ -1113,6 +1152,7 @@ class _HomeScreenState extends State<HomeScreen>
         useGrams: provider.user?.useGramsByDefault ?? false,
         mealContext: mealContext,
         useAccurateMode: accurate,
+        leftoverPaths: [for (final leftover in _leftovers) leftover.path],
       );
 
       await for (final event in stream) {
@@ -1264,6 +1304,8 @@ class _HomeScreenState extends State<HomeScreen>
   Future<void> _resetCaptureState() async {
     setState(() {
       _capturedPhotos = [];
+      _hasLeftovers = false;
+      _leftovers.clear();
       _isTakingMore = false;
       _mealContext = null;
       _leaveLabelMode();
@@ -1307,6 +1349,8 @@ class _HomeScreenState extends State<HomeScreen>
     });
     final provider = context.watch<AppProvider>();
     final isOnline = provider.isOnline;
+    // Leftovers are subtracted by the analysis, which has to run now.
+    _canSubtractLeftovers = isOnline && provider.apiKey.isNotEmpty;
 
     return Scaffold(
       backgroundColor: Colors.black,
@@ -1372,6 +1416,20 @@ class _HomeScreenState extends State<HomeScreen>
               onDiscard: _clearPhotos,
               onAddPhoto: _switchToCameraMode,
               onAnalyze: _showContextAndAnalyze,
+              hasLeftovers: _hasLeftovers,
+              onLeftoversChanged: _canSubtractLeftovers
+                  ? (value) => setState(() {
+                      _hasLeftovers = value;
+                      if (!value) _leftovers.clear();
+                    })
+                  : null,
+              leftovers: _leftovers,
+              onAddLeftover: _addLeftover,
+              onRemoveLeftover: (leftover) =>
+                  setState(() => _leftovers.remove(leftover)),
+              // "Rest übrig" needs its photo before there is anything to
+              // subtract.
+              canAnalyze: !_hasLeftovers || _leftovers.isNotEmpty,
             ),
           ),
       ],
@@ -1548,6 +1606,7 @@ class _HomeScreenState extends State<HomeScreen>
               key: ObjectKey(veil),
               snapshot: veil,
               mirrored: _veilMirrored,
+              fadeIn: _veilFadeIn,
               reveal: _veilReveal,
               onDone: () {
                 if (mounted && identical(_veil, veil)) {
@@ -1682,6 +1741,7 @@ class _HomeScreenState extends State<HomeScreen>
     if (stillInView || _barcodeBusy || code == _labelModeCode) return;
     // The lookup goes out first; drawing the lock must not hold it up.
     unawaited(_lookUpBarcode(code, format));
+    _guideLockSince = now;
     setState(
       () => _guideLock = GuideLock(
         box: _lockBoxFor(barcode),
@@ -1775,7 +1835,19 @@ class _HomeScreenState extends State<HomeScreen>
               ),
             );
           }
-          await _openProduct(product!, code, frame, l10n);
+          Haptics.confirm();
+          // The photo is made while the lock is held.
+          final photo = _storeBarcodeFrame(frame);
+          // A found product stays locked on for a beat before it opens.
+          await Future<void>.delayed(
+            lockHold(DateTime.now().difference(_guideLockSince)),
+          );
+          if (!mounted || !_cameraTabIsActive || _capturedPhotos.isNotEmpty) {
+            final stored = await photo;
+            if (stored != null) await _deleteStoredPhotoIfDisposable(stored);
+            return;
+          }
+          await _openProduct(product!, code, photo, l10n);
         case ProductLookupStatus.noNutrition:
           _offerLabelPhoto(
             l10n.barcodeNoNutrition(product!.displayName),
@@ -1807,12 +1879,12 @@ class _HomeScreenState extends State<HomeScreen>
   Future<void> _openProduct(
     FoodProduct product,
     String code,
-    Future<Uint8List?> frame,
+    Future<String?> storedPhoto,
     AppLocalizations l10n,
   ) async {
     final provider = context.read<AppProvider>();
     final now = DateTime.now();
-    final photo = await _storeBarcodeFrame(frame);
+    final photo = await storedPhoto;
     if (!mounted) {
       if (photo != null) await _deleteStoredPhotoIfDisposable(photo);
       return;
@@ -1984,6 +2056,7 @@ class _HomeScreenState extends State<HomeScreen>
       context,
       initialText: _mealContext,
       barcode: _photoBarcode,
+      allowBackground: _leftovers.isEmpty,
     );
 
     final product = _photoBarcode.value;

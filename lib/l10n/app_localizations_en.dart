@@ -907,6 +907,48 @@ class AppLocalizationsEn extends AppLocalizations {
   String get retryLeftoverRemove => 'Remove photo';
 
   @override
+  String get leftoversNeedOnline =>
+      'Leftovers can only be subtracted when the analysis can run now. Remove the leftover photos or get back online.';
+
+  @override
+  String get leftoversQuestion => 'Finished it all?';
+
+  @override
+  String get leftoversNone => 'Yes, all';
+
+  @override
+  String get leftoversSome => 'No, some left';
+
+  @override
+  String get shareMeal => 'Share';
+
+  @override
+  String get shareMealTitle => 'Share meal';
+
+  @override
+  String get shareStylePhoto => 'Photo';
+
+  @override
+  String get shareStyleLight => 'Light';
+
+  @override
+  String get shareStyleDark => 'Dark';
+
+  @override
+  String get shareImageAction => 'Share image';
+
+  @override
+  String get shareSaveAction => 'Save to Photos';
+
+  @override
+  String get shareFailed => 'The image could not be shared.';
+
+  @override
+  String sharePhotoNumber(int number) {
+    return 'Photo $number';
+  }
+
+  @override
   String get componentsTitle => 'On the plate';
 
   @override

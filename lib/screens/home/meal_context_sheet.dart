@@ -31,16 +31,22 @@ class MealContextResult {
 /// Asks for an optional note before a meal is analysed. Returns null when the
 /// sheet is dismissed, which means no analysis. When [barcode] holds a
 /// product read from the photos (it may arrive while the sheet is open), a
-/// switch offers its values instead.
+/// switch offers its values instead. Without [allowBackground] there is no
+/// "in the background" (the analysis needs photos that are not kept).
 Future<MealContextResult?> showMealContextSheet(
   BuildContext context, {
   String? initialText,
   ValueListenable<FoodProduct?>? barcode,
+  bool allowBackground = true,
 }) => showModalBottomSheet<MealContextResult>(
   context: context,
   isScrollControlled: true,
   isDismissible: true,
-  builder: (_) => _MealContextSheet(initialText: initialText, barcode: barcode),
+  builder: (_) => _MealContextSheet(
+    initialText: initialText,
+    barcode: barcode,
+    allowBackground: allowBackground,
+  ),
 );
 
 /// The sheet as [showMealContextSheet] shows it, for [WarmUp.run].
@@ -50,8 +56,13 @@ Widget mealContextSheetWarmUp(BuildContext context) =>
 class _MealContextSheet extends StatefulWidget {
   final String? initialText;
   final ValueListenable<FoodProduct?>? barcode;
+  final bool allowBackground;
 
-  const _MealContextSheet({this.initialText, this.barcode});
+  const _MealContextSheet({
+    this.initialText,
+    this.barcode,
+    this.allowBackground = true,
+  });
 
   @override
   State<_MealContextSheet> createState() => _MealContextSheetState();
@@ -188,25 +199,27 @@ class _MealContextSheetState extends State<_MealContextSheet> {
                       ),
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () => _submit(background: true),
-                      style: OutlinedButton.styleFrom(
-                        side: BorderSide(color: AppColors.surface),
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(
-                            AppTheme.borderRadius,
+                  if (widget.allowBackground) ...[
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => _submit(background: true),
+                        style: OutlinedButton.styleFrom(
+                          side: BorderSide(color: AppColors.surface),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(
+                              AppTheme.borderRadius,
+                            ),
                           ),
                         ),
-                      ),
-                      child: Text(
-                        l10n.mealContextBackground,
-                        style: TextStyle(color: AppColors.text),
+                        child: Text(
+                          l10n.mealContextBackground,
+                          style: TextStyle(color: AppColors.text),
+                        ),
                       ),
                     ),
-                  ),
+                  ],
                 ],
               ),
               const SizedBox(height: 8),

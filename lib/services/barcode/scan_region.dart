@@ -80,3 +80,18 @@ Rect lockBox(Rect onScreen, Rect guide) {
   final limit = guide.inflate(12);
   return box.intersect(limit).isEmpty ? guide : box.intersect(limit);
 }
+
+/// How much longer the lock on a found product stays before it opens.
+/// A cached or quick lookup would otherwise flash the lock for a frame and
+/// open the product before it was seen. The lock is on screen at least
+/// [minLock] in all and its found state at least [foundBeat], so a lookup
+/// that took a while adds little or nothing. [sinceLock] is how long the
+/// lock has been shown.
+Duration lockHold(
+  Duration sinceLock, {
+  Duration minLock = const Duration(milliseconds: 600),
+  Duration foundBeat = const Duration(milliseconds: 350),
+}) {
+  final left = minLock - sinceLock;
+  return left > foundBeat ? left : foundBeat;
+}
