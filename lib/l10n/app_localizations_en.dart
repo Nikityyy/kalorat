@@ -911,6 +911,12 @@ class AppLocalizationsEn extends AppLocalizations {
       'Leftovers can only be subtracted when the analysis can run now. Remove the leftover photos or get back online.';
 
   @override
+  String get photoTimeTitle => 'Time from the photo';
+
+  @override
+  String get photoTimeOff => 'Now';
+
+  @override
   String get leftoversQuestion => 'Finished it all?';
 
   @override

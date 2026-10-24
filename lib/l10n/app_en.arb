@@ -355,6 +355,8 @@
   "retryLeftoversAddMore": "Take another",
   "retryLeftoverRemove": "Remove photo",
   "leftoversNeedOnline": "Leftovers can only be subtracted when the analysis can run now. Remove the leftover photos or get back online.",
+  "photoTimeTitle": "Time from the photo",
+  "photoTimeOff": "Now",
   "leftoversQuestion": "Finished it all?",
   "leftoversNone": "Yes, all",
   "leftoversSome": "No, some left",

@@ -15,7 +15,9 @@ import '../providers/app_provider.dart';
 import '../services/database_service.dart';
 import '../services/offline_queue_service.dart';
 import '../services/photo_store.dart';
+import '../services/photo_time_setting.dart';
 import '../utils/photo_downscale.dart';
+import '../utils/photo_time.dart';
 import '../services/gemini_service.dart';
 import '../services/hints/first_use_hints.dart';
 import '../theme/app_theme.dart';
@@ -81,6 +83,11 @@ class _HomeScreenState extends State<HomeScreen>
   bool _isAnalyzing = false;
   bool _showCameraHint = !FirstUseHints.seen(FirstUseHint.camera);
   List<String> _capturedPhotos = [];
+
+  /// When each gallery photo was taken, by its path in [_capturedPhotos].
+  /// Camera photos are taken now and have no entry.
+  final Map<String, DateTime> _photoTakenAt = {};
+  bool _usePhotoTime = PhotoTimeSetting.enabled;
 
   bool _canSubtractLeftovers = false;
 
@@ -150,6 +157,7 @@ class _HomeScreenState extends State<HomeScreen>
 
   static const String _pendingPhotosBox = DatabaseService.pendingPhotosBoxName;
   static const String _pendingPhotosKey = DatabaseService.pendingPhotosKey;
+  static const String _pendingPhotoTimesKey = 'pending_photo_times';
 
   bool get _cameraTabIsActive =>
       widget.activeListenable?.value ?? widget.isActive;
@@ -556,9 +564,17 @@ class _HomeScreenState extends State<HomeScreen>
     try {
       final box = await Hive.openBox<dynamic>(_pendingPhotosBox);
       final stored = box.get(_pendingPhotosKey);
+      final takenAt = box.get(_pendingPhotoTimesKey);
       if (stored is List && stored.isNotEmpty && mounted) {
         setState(() {
           _capturedPhotos = List<String>.from(stored);
+          if (takenAt is Map) {
+            for (final MapEntry(:key, :value) in takenAt.entries) {
+              if (key is String && value is int) {
+                _photoTakenAt[key] = DateTime.fromMillisecondsSinceEpoch(value);
+              }
+            }
+          }
         });
       }
     } catch (_) {
@@ -571,6 +587,11 @@ class _HomeScreenState extends State<HomeScreen>
     try {
       final box = await Hive.openBox<dynamic>(_pendingPhotosBox);
       await box.put(_pendingPhotosKey, List<String>.from(_capturedPhotos));
+      await box.put(_pendingPhotoTimesKey, {
+        for (final photo in _capturedPhotos)
+          if (_photoTakenAt[photo] case final taken?)
+            photo: taken.millisecondsSinceEpoch,
+      });
     } catch (_) {}
   }
 
@@ -579,6 +600,7 @@ class _HomeScreenState extends State<HomeScreen>
     try {
       final box = await Hive.openBox<dynamic>(_pendingPhotosBox);
       await box.delete(_pendingPhotosKey);
+      await box.delete(_pendingPhotoTimesKey);
     } catch (_) {}
   }
 
@@ -884,14 +906,38 @@ class _HomeScreenState extends State<HomeScreen>
     });
   }
 
+  /// When the first photo was taken, if it came from the gallery and that
+  /// was more than a few minutes ago; logging it for now is the same then.
+  DateTime? get _firstPhotoTakenAt {
+    if (_capturedPhotos.isEmpty) return null;
+    final taken = _photoTakenAt[_capturedPhotos.first];
+    if (taken == null) return null;
+    final apart = DateTime.now().difference(taken).abs();
+    return apart > const Duration(minutes: 15) ? taken : null;
+  }
+
+  /// The time the meal on the review screen is logged at.
+  DateTime _mealTime() =>
+      (_usePhotoTime ? _firstPhotoTakenAt : null) ?? DateTime.now();
+
+  void _setUsePhotoTime(bool value) {
+    Haptics.selection();
+    setState(() => _usePhotoTime = value);
+    unawaited(PhotoTimeSetting.setEnabled(value));
+  }
+
   Future<void> _pickFromGallery() async {
     final picker = ImagePicker();
-    final List<XFile> images = await picker.pickMultiImage(
-      imageQuality: 55,
-      maxWidth: 1280,
-      maxHeight: 1280,
-      requestFullMetadata: false,
-    );
+    // The browser's resize would drop when the photo was taken; on the web
+    // the originals are read and then downscaled below.
+    final List<XFile> images = PlatformUtils.isWeb
+        ? await picker.pickMultiImage(requestFullMetadata: false)
+        : await picker.pickMultiImage(
+            imageQuality: 55,
+            maxWidth: 1280,
+            maxHeight: 1280,
+            requestFullMetadata: false,
+          );
 
     if (images.isNotEmpty) {
       if (!mounted) return;
@@ -905,8 +951,13 @@ class _HomeScreenState extends State<HomeScreen>
       final stored = <String>[];
       if (PlatformUtils.isWeb) {
         for (final image in images) {
-          final bytes = await downscaleForStorage(await image.readAsBytes());
-          stored.add(await PhotoStore.instance.save(bytes));
+          final original = await image.readAsBytes();
+          final bytes = await downscaleForStorage(original);
+          final ref = await PhotoStore.instance.save(bytes);
+          stored.add(ref);
+          if (photoTakenAt(original) case final taken?) {
+            _photoTakenAt[ref] = taken;
+          }
         }
       } else {
         final appDir = await getApplicationDocumentsDirectory();
@@ -916,6 +967,10 @@ class _HomeScreenState extends State<HomeScreen>
           final savedPath = '${appDir.path}/$fileName';
           await File(image.path).copy(savedPath);
           stored.add(savedPath);
+          // The picker's resize keeps the camera's metadata.
+          if (photoTakenAt(await image.readAsBytes()) case final taken?) {
+            _photoTakenAt[savedPath] = taken;
+          }
         }
       }
       _capturedPhotos.addAll(stored);
@@ -1046,6 +1101,7 @@ class _HomeScreenState extends State<HomeScreen>
     }
 
     final mealId = DateTime.now().millisecondsSinceEpoch.toString();
+    final loggedAt = _mealTime();
 
     // Persist the job before foreground inference too. If the PWA is closed,
     // the next startup can reclaim and analyze it instead of losing the meal.
@@ -1055,7 +1111,7 @@ class _HomeScreenState extends State<HomeScreen>
       await provider.saveMeal(
         MealModel(
           id: mealId,
-          timestamp: DateTime.now(),
+          timestamp: loggedAt,
           photoPaths: List.from(_capturedPhotos),
           isPending: true,
           analysisStatus: 'queued',
@@ -1068,7 +1124,7 @@ class _HomeScreenState extends State<HomeScreen>
       // Save as pending
       final meal = MealModel(
         id: mealId,
-        timestamp: DateTime.now(),
+        timestamp: loggedAt,
         photoPaths: List.from(_capturedPhotos),
         isPending: true,
         mealContext: mealContext,
@@ -1077,6 +1133,7 @@ class _HomeScreenState extends State<HomeScreen>
 
       setState(() {
         _capturedPhotos = [];
+        _photoTakenAt.clear();
         _mealContext = null;
       });
       await _clearPersistedPhotos();
@@ -1104,6 +1161,7 @@ class _HomeScreenState extends State<HomeScreen>
       await _runForegroundAnalysis(
         provider: provider,
         mealId: mealId,
+        loggedAt: loggedAt,
         mealContext: mealContext,
         apiKey: apiKey,
         language: language,
@@ -1118,6 +1176,7 @@ class _HomeScreenState extends State<HomeScreen>
   Future<void> _runForegroundAnalysis({
     required AppProvider provider,
     required String mealId,
+    required DateTime loggedAt,
     required String? mealContext,
     required String apiKey,
     required String language,
@@ -1201,7 +1260,7 @@ class _HomeScreenState extends State<HomeScreen>
         final parsed = parseAnalysisResult(result);
         final mealWithPortion = MealModel(
           id: mealId,
-          timestamp: DateTime.now(),
+          timestamp: loggedAt,
           photoPaths: List.from(_capturedPhotos),
           mealContext: mealContext,
           mealName: parsed.mealName,
@@ -1304,6 +1363,7 @@ class _HomeScreenState extends State<HomeScreen>
   Future<void> _resetCaptureState() async {
     setState(() {
       _capturedPhotos = [];
+      _photoTakenAt.clear();
       _hasLeftovers = false;
       _leftovers.clear();
       _isTakingMore = false;
@@ -1430,6 +1490,9 @@ class _HomeScreenState extends State<HomeScreen>
               // "Rest übrig" needs its photo before there is anything to
               // subtract.
               canAnalyze: !_hasLeftovers || _leftovers.isNotEmpty,
+              photoTakenAt: _firstPhotoTakenAt,
+              usePhotoTime: _usePhotoTime,
+              onUsePhotoTimeChanged: _setUsePhotoTime,
             ),
           ),
       ],
@@ -1988,10 +2051,9 @@ class _HomeScreenState extends State<HomeScreen>
   /// Discarding it returns to the photos.
   Future<void> _openPhotoProduct(FoodProduct product) async {
     final provider = context.read<AppProvider>();
-    final now = DateTime.now();
     final meal = product.toMeal(
-      id: now.millisecondsSinceEpoch.toString(),
-      timestamp: now,
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      timestamp: _mealTime(),
       note: context.l10n.barcodeSourceNote(product.code),
       // The photo with the code shows the product; it comes first.
       photoPaths: [

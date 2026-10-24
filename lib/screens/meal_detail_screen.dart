@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart' show DateFormat;
 import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
 import 'package:provider/provider.dart';
 
@@ -8,6 +7,7 @@ import '../services/photo_store.dart';
 import '../utils/haptics.dart';
 import '../utils/meal_components.dart';
 import '../utils/meal_correction.dart';
+import '../utils/meal_time_label.dart';
 import '../services/gemini_service.dart';
 import '../extensions/l10n_extension.dart';
 import '../extensions/validation_l10n.dart';
@@ -853,16 +853,7 @@ class _MealDetailScreenState extends State<MealDetailScreen> {
   Widget _buildTimeChip() {
     final l10n = context.l10n;
     final language = Localizations.localeOf(context).languageCode;
-    final t = _meal.timestamp;
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final day = DateTime(t.year, t.month, t.day);
-    final clock = DateFormat.Hm(language).format(t);
-    final label = day == today
-        ? l10n.todayAt(clock)
-        : day == today.subtract(const Duration(days: 1))
-        ? l10n.yesterdayAt(clock)
-        : '${DateFormat.yMMMd(language).format(t)}, $clock';
+    final label = mealTimeLabel(l10n, language, _meal.timestamp);
     return Semantics(
       button: true,
       child: GestureDetector(

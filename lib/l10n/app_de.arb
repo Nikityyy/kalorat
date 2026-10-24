@@ -373,6 +373,8 @@
   "retryLeftoversAddMore": "Noch eins aufnehmen",
   "retryLeftoverRemove": "Foto entfernen",
   "leftoversNeedOnline": "Reste lassen sich nur abziehen, wenn die Analyse jetzt laufen kann. Entferne die Fotos vom Rest oder verbinde dich wieder.",
+  "photoTimeTitle": "Zeit vom Foto",
+  "photoTimeOff": "Jetzt",
   "leftoversQuestion": "Alles aufgegessen?",
   "leftoversNone": "Ja, alles",
   "leftoversSome": "Nein, Rest übrig",

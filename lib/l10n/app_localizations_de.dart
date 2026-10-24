@@ -924,6 +924,12 @@ class AppLocalizationsDe extends AppLocalizations {
       'Reste lassen sich nur abziehen, wenn die Analyse jetzt laufen kann. Entferne die Fotos vom Rest oder verbinde dich wieder.';
 
   @override
+  String get photoTimeTitle => 'Zeit vom Foto';
+
+  @override
+  String get photoTimeOff => 'Jetzt';
+
+  @override
   String get leftoversQuestion => 'Alles aufgegessen?';
 
   @override

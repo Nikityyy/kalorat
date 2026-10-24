@@ -9,6 +9,7 @@ import '../../utils/haptics.dart';
 import '../../widgets/common/segmented_tabs.dart';
 import '../../widgets/inputs/action_button.dart';
 import '../../widgets/leftovers_section.dart';
+import '../../widgets/photo_time_tile.dart';
 
 /// The taken photos in a grid, with the choices to discard, add more or start
 /// the analysis. Photos of what was left on the plate can be added below the
@@ -39,6 +40,12 @@ class PhotoReviewView extends StatelessWidget {
   /// False while the analysis would still be missing the leftover photos.
   final bool canAnalyze;
 
+  /// When the first photo was taken, if it came from the gallery and says
+  /// so; null leaves the choice out and the meal is logged for now.
+  final DateTime? photoTakenAt;
+  final bool usePhotoTime;
+  final ValueChanged<bool>? onUsePhotoTimeChanged;
+
   const PhotoReviewView({
     super.key,
     required this.photos,
@@ -56,12 +63,17 @@ class PhotoReviewView extends StatelessWidget {
     this.onAddLeftover,
     this.onRemoveLeftover,
     this.canAnalyze = true,
+    this.photoTakenAt,
+    this.usePhotoTime = true,
+    this.onUsePhotoTimeChanged,
   });
 
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final onLeftoversChanged = this.onLeftoversChanged;
+    final photoTakenAt = this.photoTakenAt;
+    final onUsePhotoTimeChanged = this.onUsePhotoTimeChanged;
 
     return Container(
       color: AppColors.surface,
@@ -96,6 +108,15 @@ class PhotoReviewView extends StatelessWidget {
                     onRemove: onRemove,
                     onReorder: onReorder,
                   ),
+                  if (photoTakenAt != null &&
+                      onUsePhotoTimeChanged != null) ...[
+                    const SizedBox(height: 16),
+                    PhotoTimeTile(
+                      takenAt: photoTakenAt,
+                      value: usePhotoTime,
+                      onChanged: onUsePhotoTimeChanged,
+                    ),
+                  ],
                   if (onLeftoversChanged != null) ...[
                     const SizedBox(height: 28),
                     Text(

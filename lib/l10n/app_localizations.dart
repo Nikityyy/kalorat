@@ -1796,6 +1796,18 @@ abstract class AppLocalizations {
   /// **'Reste lassen sich nur abziehen, wenn die Analyse jetzt laufen kann. Entferne die Fotos vom Rest oder verbinde dich wieder.'**
   String get leftoversNeedOnline;
 
+  /// No description provided for @photoTimeTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Zeit vom Foto'**
+  String get photoTimeTitle;
+
+  /// No description provided for @photoTimeOff.
+  ///
+  /// In de, this message translates to:
+  /// **'Jetzt'**
+  String get photoTimeOff;
+
   /// No description provided for @leftoversQuestion.
   ///
   /// In de, this message translates to:
