@@ -1,0 +1,352 @@
+{
+ "breakfast.en": {
+  "name": "Acai Smoothie Bowl with Toppings",
+  "kcal": 680.4499999999999,
+  "protein": 19.022,
+  "carbs": 90.38950000000001,
+  "fats": 30.662499999999998,
+  "sure": 0.85,
+  "estimates": [
+   559.4499999999999,
+   680.4499999999999,
+   706.8000000000001
+  ],
+  "lo": 473.45,
+  "hi": 936.35,
+  "note": "Exact composition and density of the acai base and hidden quantities under toppings are estimated.",
+  "parts": [
+   {
+    "n": "Acai smoothie base",
+    "g": 200.0,
+    "k": 170.0
+   },
+   {
+    "n": "Granola",
+    "g": 40.0,
+    "k": 195.6
+   },
+   {
+    "n": "Peanut butter",
+    "g": 30.0,
+    "k": 179.4
+   },
+   {
+    "n": "Banana",
+    "g": 60.0,
+    "k": 53.4
+   },
+   {
+    "n": "Blueberries",
+    "g": 25.0,
+    "k": 14.25
+   },
+   {
+    "n": "Raspberries",
+    "g": 20.0,
+    "k": 6.4
+   },
+   {
+    "n": "Strawberries",
+    "g": 40.0,
+    "k": 12.8
+   },
+   {
+    "n": "Chia seeds",
+    "g": 10.0,
+    "k": 48.6
+   }
+  ]
+ },
+ "breakfast.de": {
+  "name": "Açaí Bowl mit Früchten, Granola und Erdnussbutter",
+  "kcal": 538.5,
+  "protein": 14.608000000000002,
+  "carbs": 73.02850000000001,
+  "fats": 24.033,
+  "sure": 0.9,
+  "estimates": [
+   608.0000000000001,
+   538.5,
+   538.1
+  ],
+  "lo": 349.20000000000005,
+  "hi": 755.1,
+  "note": "Die genaue Menge der Erdnussbutter und der Açaí-Basis ist schwer auf den Gramm genau zu bestimmen.",
+  "parts": [
+   {
+    "n": "Açaí-Basis",
+    "g": 180.0,
+    "k": 126.0
+   },
+   {
+    "n": "Granola",
+    "g": 35.0,
+    "k": 171.15
+   },
+   {
+    "n": "Bananenscheiben",
+    "g": 50.0,
+    "k": 44.5
+   },
+   {
+    "n": "Erdbeeren und Himbeeren",
+    "g": 45.0,
+    "k": 14.4
+   },
+   {
+    "n": "Blaubeeren",
+    "g": 25.0,
+    "k": 14.25
+   },
+   {
+    "n": "Erdnussbutter",
+    "g": 20.0,
+    "k": 119.6
+   },
+   {
+    "n": "Chiasamen",
+    "g": 10.0,
+    "k": 48.6
+   }
+  ]
+ },
+ "lunch.en": {
+  "name": "Salmon and Tempeh Poke Bowl",
+  "kcal": 658.3000000000001,
+  "protein": 38.778,
+  "carbs": 62.179,
+  "fats": 28.372,
+  "sure": 0.85,
+  "estimates": [
+   642.5,
+   658.3000000000001,
+   677.6
+  ],
+  "lo": 474.62,
+  "hi": 903.5,
+  "note": "Exact weights of individual toppings and dressings are visually estimated.",
+  "parts": [
+   {
+    "n": "Salmon",
+    "g": 100.0,
+    "k": 206.0
+   },
+   {
+    "n": "White rice",
+    "g": 150.0,
+    "k": 195.0
+   },
+   {
+    "n": "Tempeh",
+    "g": 40.0,
+    "k": 57.6
+   },
+   {
+    "n": "Edamame",
+    "g": 50.0,
+    "k": 63.5
+   },
+   {
+    "n": "Seaweed salad",
+    "g": 40.0,
+    "k": 28.0
+   },
+   {
+    "n": "Avocado",
+    "g": 40.0,
+    "k": 64.0
+   },
+   {
+    "n": "Oil for cooking tempeh",
+    "g": 5.0,
+    "k": 44.2
+   }
+  ]
+ },
+ "lunch.de": {
+  "name": "Poke Bowl mit Lachs und Tempeh",
+  "kcal": 677.8000000000001,
+  "protein": 39.361999999999995,
+  "carbs": 64.719,
+  "fats": 29.402,
+  "sure": 0.85,
+  "estimates": [
+   720.5,
+   674.6,
+   677.8000000000001
+  ],
+  "lo": 497.37,
+  "hi": 913.4,
+  "note": "Genaue Grammangaben von Reis und Lachs geschätzt anhand der Schüsselgröße.",
+  "parts": [
+   {
+    "n": "Lachs",
+    "g": 100.0,
+    "k": 206.0
+   },
+   {
+    "n": "Reis",
+    "g": 150.0,
+    "k": 195.0
+   },
+   {
+    "n": "Edamame",
+    "g": 50.0,
+    "k": 63.5
+   },
+   {
+    "n": "Tempeh",
+    "g": 40.0,
+    "k": 57.6
+   },
+   {
+    "n": "Seetangsalat",
+    "g": 40.0,
+    "k": 40.0
+   },
+   {
+    "n": "Avocado",
+    "g": 40.0,
+    "k": 64.0
+   },
+   {
+    "n": "Kohl",
+    "g": 30.0,
+    "k": 7.5
+   },
+   {
+    "n": "Öl",
+    "g": 5.0,
+    "k": 44.2
+   }
+  ]
+ },
+ "dinner.en": {
+  "name": "Tofu and Vegetable Salad Bowl",
+  "kcal": 424.2,
+  "protein": 29.231000000000005,
+  "carbs": 29.703,
+  "fats": 24.157999999999998,
+  "sure": 0.9,
+  "estimates": [
+   424.2,
+   426.4
+  ],
+  "lo": 291.95,
+  "hi": 601.8,
+  "note": "Exact weights and cooking oil amounts are visually estimated.",
+  "parts": [
+   {
+    "n": "Pan-fried tofu",
+    "g": 100.0,
+    "k": 144.0
+   },
+   {
+    "n": "Cooking oil",
+    "g": 10.0,
+    "k": 88.4
+   },
+   {
+    "n": "Boiled eggs",
+    "g": 40.0,
+    "k": 62.0
+   },
+   {
+    "n": "Edamame",
+    "g": 40.0,
+    "k": 50.8
+   },
+   {
+    "n": "Corn",
+    "g": 50.0,
+    "k": 48.0
+   },
+   {
+    "n": "Tomatoes",
+    "g": 50.0,
+    "k": 9.0
+   },
+   {
+    "n": "Red cabbage",
+    "g": 40.0,
+    "k": 10.0
+   },
+   {
+    "n": "Cucumber",
+    "g": 40.0,
+    "k": 6.0
+   },
+   {
+    "n": "Lettuce and greens",
+    "g": 40.0,
+    "k": 6.0
+   }
+  ]
+ },
+ "dinner.de": {
+  "name": "Veggie Poke Bowl mit Tofu",
+  "kcal": 439.15000000000003,
+  "protein": 31.502000000000002,
+  "carbs": 30.578500000000002,
+  "fats": 24.781499999999994,
+  "sure": 0.85,
+  "estimates": [
+   439.15000000000003
+  ],
+  "lo": 304.4,
+  "hi": 599.7,
+  "note": "Genaue Grammzahlen der einzelnen Gemüsesorten und des Öls sind geschätzt.",
+  "parts": [
+   {
+    "n": "Gebratener Tofu",
+    "g": 120.0,
+    "k": 172.8
+   },
+   {
+    "n": "Öl zum Braten",
+    "g": 10.0,
+    "k": 88.4
+   },
+   {
+    "n": "Salatblätter",
+    "g": 50.0,
+    "k": 7.5
+   },
+   {
+    "n": "Tomaten",
+    "g": 40.0,
+    "k": 7.2
+   },
+   {
+    "n": "Mais",
+    "g": 45.0,
+    "k": 43.2
+   },
+   {
+    "n": "Rotkohl",
+    "g": 40.0,
+    "k": 10.0
+   },
+   {
+    "n": "Gurke",
+    "g": 45.0,
+    "k": 6.75
+   },
+   {
+    "n": "Edamame",
+    "g": 40.0,
+    "k": 50.8
+   },
+   {
+    "n": "Gekochte Eier",
+    "g": 30.0,
+    "k": 46.5
+   },
+   {
+    "n": "Frühlingszwiebeln",
+    "g": 15.0,
+    "k": 6.0
+   }
+  ]
+ }
+}

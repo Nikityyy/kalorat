@@ -1,0 +1,259 @@
+{
+ "breakfast.en": [
+  {
+   "n": "Acai smoothie base",
+   "x": 0.525,
+   "y": 630
+  },
+  {
+   "n": "Granola",
+   "x": 0.505,
+   "y": 305
+  },
+  {
+   "n": "Peanut butter",
+   "x": 0.468,
+   "y": 395
+  },
+  {
+   "n": "Banana",
+   "x": 0.465,
+   "y": 501
+  },
+  {
+   "n": "Blueberries",
+   "x": 0.463,
+   "y": 427
+  },
+  {
+   "n": "Raspberries",
+   "x": 0.385,
+   "y": 313
+  },
+  {
+   "n": "Strawberries",
+   "x": 0.38,
+   "y": 622
+  },
+  {
+   "n": "Chia seeds",
+   "x": 0.37,
+   "y": 516
+  }
+ ],
+ "breakfast.de": [
+  {
+   "n": "Açaí-Basis",
+   "x": 0.53,
+   "y": 0.655
+  },
+  {
+   "n": "Granola",
+   "x": 0.515,
+   "y": 0.301
+  },
+  {
+   "n": "Bananenscheiben",
+   "x": 0.56,
+   "y": 0.497
+  },
+  {
+   "n": "Erdbeeren und Himbeeren",
+   "x": 0.415,
+   "y": 0.63
+  },
+  {
+   "n": "Blaubeeren",
+   "x": 0.506,
+   "y": 0.438
+  },
+  {
+   "n": "Erdnussbutter",
+   "x": 0.457,
+   "y": 0.397
+  },
+  {
+   "n": "Chiasamen",
+   "x": 0.35,
+   "y": 0.523
+  }
+ ],
+ "lunch.en": [
+  {
+   "n": "Salmon",
+   "x": 0.35,
+   "y": 55
+  },
+  {
+   "n": "White rice",
+   "x": 0.12,
+   "y": 0.52
+  },
+  {
+   "n": "Tempeh",
+   "x": 0.14,
+   "y": 0.17
+  },
+  {
+   "n": "Edamame",
+   "x": 0.23,
+   "y": 0.86
+  },
+  {
+   "n": "Seaweed salad",
+   "x": 0.28,
+   "y": 0.23
+  },
+  {
+   "n": "Avocado",
+   "x": 0.03,
+   "y": 0.89
+  },
+  {
+   "n": "Oil for cooking tempeh",
+   "x": null,
+   "y": null
+  }
+ ],
+ "lunch.de": [
+  {
+   "n": "Lachs",
+   "x": 0.35,
+   "y": 0.54
+  },
+  {
+   "n": "Reis",
+   "x": 0.13,
+   "y": 0.5
+  },
+  {
+   "n": "Edamame",
+   "x": 0.23,
+   "y": 0.85
+  },
+  {
+   "n": "Tempeh",
+   "x": 0.13,
+   "y": 0.17
+  },
+  {
+   "n": "Seetangsalat",
+   "x": 0.28,
+   "y": 0.23
+  },
+  {
+   "n": "Avocado",
+   "x": 0.04,
+   "y": 0.89
+  },
+  {
+   "n": "Kohl",
+   "x": 0.03,
+   "y": 0.32
+  },
+  {
+   "n": "Öl",
+   "x": null,
+   "y": null
+  }
+ ],
+ "dinner.en": [
+  {
+   "n": "Pan-fried tofu",
+   "x": 0.5,
+   "y": 0.48
+  },
+  {
+   "n": "Cooking oil",
+   "x": null,
+   "y": null
+  },
+  {
+   "n": "Boiled eggs",
+   "x": 0.33,
+   "y": 0.35
+  },
+  {
+   "n": "Edamame",
+   "x": 0.47,
+   "y": 0.25
+  },
+  {
+   "n": "Corn",
+   "x": 0.69,
+   "y": 0.44
+  },
+  {
+   "n": "Tomatoes",
+   "x": 0.24,
+   "y": 0.58
+  },
+  {
+   "n": "Red cabbage",
+   "x": 0.42,
+   "y": 0.72
+  },
+  {
+   "n": "Cucumber",
+   "x": 0.69,
+   "y": 0.65
+  },
+  {
+   "n": "Lettuce and greens",
+   "x": 0.58,
+   "y": 0.22
+  }
+ ],
+ "dinner.de": [
+  {
+   "n": "Gebratener Tofu",
+   "x": 0.505,
+   "y": 482
+  },
+  {
+   "n": "Öl zum Braten",
+   "x": null,
+   "y": null
+  },
+  {
+   "n": "Salatblätter",
+   "x": 586,
+   "y": 242
+  },
+  {
+   "n": "Tomaten",
+   "x": 0.237,
+   "y": 558
+  },
+  {
+   "n": "Mais",
+   "x": 0.697,
+   "y": 0.437
+  },
+  {
+   "n": "Rotkohl",
+   "x": 0.411,
+   "y": 0.728
+  },
+  {
+   "n": "Gurke",
+   "x": 0.679,
+   "y": 0.665
+  },
+  {
+   "n": "Edamame",
+   "x": 0.461,
+   "y": 0.246
+  },
+  {
+   "n": "Gekochte Eier",
+   "x": 0.356,
+   "y": 0.309
+  },
+  {
+   "n": "Frühlingszwiebeln",
+   "x": 0.344,
+   "y": 0.537
+  }
+ ]
+}

@@ -6,10 +6,8 @@
 <title>Kalorat: the calorie tracker that reads your plate</title>
 <meta name="description" content="Photograph a meal and Kalorat names every part of it, weighs it in grams and adds it to your day. Free, open source, no subscription. Android and iPhone.">
 <meta name="author" content="Nikita Berger">
-<meta name="theme-color" content="#0A0D0B">
+<meta name="theme-color" content="#E7EAE7">
 <link rel="canonical" href="https://nikity.is-a.dev/kalorat/">
-<link rel="alternate" hreflang="en" href="https://nikity.is-a.dev/kalorat/">
-<link rel="alternate" hreflang="de" href="https://nikity.is-a.dev/kalorat/">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://nikity.is-a.dev/kalorat/">
 <meta property="og:title" content="Kalorat: the calorie tracker that reads your plate">
@@ -24,23 +22,20 @@
 <link rel="icon" href="assets/lp/favicon.svg" type="image/svg+xml">
 <link rel="icon" href="assets/lp/icon-512.png" type="image/png" sizes="512x512">
 <link rel="apple-touch-icon" href="assets/lp/apple-touch-icon.png">
-<link rel="preload" href="assets/lp/fonts/Outfit-Bold.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="preload" href="assets/lp/fonts/Outfit-Regular.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="preload" href="assets/lp/img/poke-1280.webp" as="image" imagesrcset="assets/lp/img/poke-800.webp 800w, assets/lp/img/poke-1280.webp 1280w, assets/lp/img/poke-2400.webp 2400w" imagesizes="100vw" fetchpriority="high">
+<link rel="preload" href="assets/lp/fonts/archivo.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" as="image" type="image/avif" href="assets/lp/img/lunch-1600.avif" imagesrcset="assets/lp/img/lunch-960.avif 960w, assets/lp/img/lunch-1600.avif 1600w, assets/lp/img/lunch-2400.avif 2400w" imagesizes="160vw" fetchpriority="high">
 <link rel="stylesheet" href="assets/lp/tokens.css">
 <link rel="stylesheet" href="assets/lp/site.css">
-<script>document.documentElement.classList.add('js');</script>
+<script>(function(d){d.classList.add('js');if(!matchMedia('(prefers-reduced-motion: reduce)').matches){d.classList.add('intro');setTimeout(function(){d.classList.add('go')},3500)}})(document.documentElement);</script>
 </head>
 <body>
 <a class="skip" href="#main" data-i18n="skip">Skip to content</a>
 
 <header class="bar" id="bar">
-  <a class="bar-logo" href="#top" aria-label="Kalorat">
-    <svg viewBox="0 0 5898 956" aria-hidden="true"><use href="#logo"/></svg>
-  </a>
+  <a class="bar-logo" href="#top" aria-label="Kalorat"><svg viewBox="0 0 5898 956" aria-hidden="true"><use href="#logo"/></svg></a>
   <nav class="bar-nav" aria-label="Sections" data-i18n-attr="aria-label:nav.label">
+    <a href="#parts" data-i18n="nav.parts">How it reads</a>
     <a href="#day" data-i18n="nav.day">Your day</a>
-    <a href="#how" data-i18n="nav.how">How it reads</a>
     <a href="#free" data-i18n="nav.free">Free</a>
     <a href="https://github.com/Nikityyy/kalorat" data-i18n="nav.code">Source code</a>
   </nav>
@@ -49,253 +44,172 @@
       <button type="button" data-lang="de" aria-pressed="false" lang="de">DE</button>
       <button type="button" data-lang="en" aria-pressed="true" lang="en">EN</button>
     </div>
-    <a class="bar-get" href="#get"><span data-i18n="nav.get">Get the app</span></a>
+    <a class="bar-get" href="#get" data-i18n="nav.get">Get the app</a>
   </div>
 </header>
 
 <main id="main">
 
-<!-- 1. The plate. The camera is dark, as in the app. -->
-<section class="hero night" id="top" aria-labelledby="hero-title">
-  <div class="hero-stage" id="stage">
-    <img class="hero-photo" id="hero-photo" src="assets/lp/img/poke-1280.webp"
-         srcset="assets/lp/img/poke-800.webp 800w, assets/lp/img/poke-1280.webp 1280w, assets/lp/img/poke-2400.webp 2400w"
-         sizes="100vw" width="2400" height="1807"
-         alt="A poke bowl seen from above: salmon, rice, avocado, cucumber and spicy mayonnaise under sesame, on a brass table"
-         data-i18n-attr="alt:plate.poke.alt">
-    <canvas class="hero-dots" id="dots" aria-hidden="true"></canvas>
-    <div class="finder" id="finder" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
-    <ul class="parts" id="parts" aria-hidden="true"></ul>
-  </div>
-  <p class="touch-hint" id="touch-hint" aria-hidden="true" data-i18n="hero.touch">Press and drag to scan</p>
-  <p class="hello" id="hello" aria-hidden="true" data-i18n="hero.hello">Mahlzeit. In Austria that means meal, and hello at noon.</p>
-
-  <div class="hero-copy">
-    <h1 class="kin" id="hero-title" data-i18n="hero.title">The calorie tracker that reads your plate</h1>
-    <p class="hero-lede" data-i18n="hero.lede">Take one photo. Kalorat names every part of the meal, weighs it in grams and adds it to your day. Free, open source, no subscription.</p>
-    <div class="hero-acts">
-      <a class="btn" id="cta-main" href="https://github.com/Nikityyy/kalorat/releases/latest/download/app-release.apk" data-android>
-        <span data-i18n="cta.android">Download for Android</span><small class="num">APK</small>
-      </a>
-      <a class="link" id="cta-alt" href="#get-iphone"><span data-i18n="cta.iphone">Install on iPhone</span></a>
-    </div>
-  </div>
-
-  <div class="aim" id="aim" aria-hidden="true"><i></i><i></i><i></i><i></i><b></b></div>
-
-  <div class="readout" aria-live="polite">
-    <p class="readout-name" id="r-name">Poke Bowl with Salmon and Avocado</p>
-    <p class="readout-kcal num"><span id="r-kcal">833</span><span class="u">kcal</span></p>
-    <p class="readout-range num" id="r-range">80% sure · probably 589–1147 kcal</p>
-    <p class="readout-run num" id="r-run"></p>
-  </div>
-
-  <div class="plates" role="group" aria-label="Try another plate" data-i18n-attr="aria-label:plates.label">
-    <span class="plates-label" data-i18n="plates.title">Try another plate</span>
-    <button type="button" class="plate" data-plate="halloumi" aria-pressed="false">
-      <img src="assets/lp/img/halloumi-thumb.webp" width="300" height="400" alt="">
-      <span data-i18n="plate.halloumi.short">Breakfast</span>
-    </button>
-    <button type="button" class="plate" data-plate="poke" aria-pressed="true">
-      <img src="assets/lp/img/poke-thumb.webp" width="300" height="400" alt="">
-      <span data-i18n="plate.poke.short">Lunch</span>
-    </button>
-    <button type="button" class="plate" data-plate="tray" aria-pressed="false">
-      <img src="assets/lp/img/tray-thumb.webp" width="300" height="400" alt="">
-      <span data-i18n="plate.tray.short">Dinner</span>
-    </button>
-  </div>
-</section>
-
-<!-- 2. The same plate, taken apart: what the number is made of. -->
-<section class="apart night" id="apart" aria-labelledby="apart-title">
-  <div class="apart-pin">
-    <div class="apart-head">
-      <h2 class="apart-title kin" id="apart-title" data-i18n="apart.title">One meal, taken apart</h2>
-      <p class="apart-p"><span data-i18n="apart.p">Kalorat does not guess one number for the plate. It weighs every part on its own, then adds them up.</span> <span data-i18n="apart.med">Gemini estimates three times; Kalorat keeps the middle one.</span> <span id="a-top"></span></p>
-    </div>
-    <div class="apart-fig" id="apart-fig">
-      <div class="apart-scan">
-      <div class="apart-plate" aria-hidden="true"><img id="a-img" src="assets/lp/img/poke-800.webp" width="2400" height="1807" alt="" loading="lazy"><canvas class="apart-cv" id="a-cv"></canvas><ol class="apart-dots" id="a-dots"></ol></div>
-      <svg class="apart-lines" id="a-lines" aria-hidden="true"></svg>
-      <ol class="apart-list" id="a-list"></ol>
+<!-- 1 + 2. The plate, and every part of it. The map stays while the words scroll. -->
+<div class="read" id="top">
+  <div class="read-map">
+    <div class="map" id="map" data-meal="lunch" style="--ground:#B8C8D1">
+      <div class="plate" id="plate">
+        <picture>
+          <source type="image/avif" srcset="assets/lp/img/lunch-960.avif 960w, assets/lp/img/lunch-1600.avif 1600w, assets/lp/img/lunch-2400.avif 2400w" sizes="160vw">
+          <img id="plate-img" src="assets/lp/img/lunch-1600.webp" srcset="assets/lp/img/lunch-960.webp 960w, assets/lp/img/lunch-1600.webp 1600w, assets/lp/img/lunch-2400.webp 2400w" sizes="160vw" width="3000" height="2000" alt="A salmon and tempeh poke bowl from above, on grey stone: salmon, rice, edamame, seaweed salad, tempeh and avocado" data-i18n-attr="alt:meal.lunch.alt" fetchpriority="high">
+        </picture>
+        <svg class="topo" id="topo" viewBox="0 0 1000 667" preserveAspectRatio="none" aria-hidden="true"></svg>
       </div>
-      <p class="apart-total"><span data-i18n="apart.total">Together</span> <span class="num"><b id="a-sum">0</b> kcal</span></p>
-      <p class="apart-note num" id="a-note" aria-live="polite"><span class="apart-hint" id="a-hint"></span><span class="apart-sum" id="a-sumnote" data-i18n="apart.sum">Sum of Kalorat’s part estimates</span></p>
-      <p class="apart-hid" id="a-hid" hidden></p>
+      <ol class="spots" id="spots" aria-hidden="true"></ol>
+      <div class="reticle" id="reticle" aria-hidden="true"><i class="rx"></i><i class="ry"></i><i class="rc"></i><span class="rt" id="rt"></span></div>
     </div>
+
+    <aside class="legend" id="legend" aria-label="Kalorat's reading of this plate" data-i18n-attr="aria-label:legend.label">
+      <div class="legend-read" aria-live="polite">
+        <p class="legend-name" id="r-name">Salmon and Tempeh Poke Bowl</p>
+        <p class="legend-kcal"><span class="n" id="r-kcal">658</span> <span class="u">kcal</span></p>
+        <p class="legend-range" id="r-range">85% sure · probably 475–904 kcal</p>
+      </div>
+      <div class="meals" role="group" aria-label="Choose a meal" data-i18n-attr="aria-label:meals.label">
+        <button type="button" class="meal" data-meal="breakfast" aria-pressed="false"><img src="assets/lp/img/breakfast-thumb.webp" width="240" height="240" alt=""><span data-i18n="meal.breakfast">Breakfast</span></button>
+        <button type="button" class="meal" data-meal="lunch" aria-pressed="true"><img src="assets/lp/img/lunch-thumb.webp" width="240" height="240" alt=""><span data-i18n="meal.lunch">Lunch</span></button>
+        <button type="button" class="meal" data-meal="dinner" aria-pressed="false"><img src="assets/lp/img/dinner-thumb.webp" width="240" height="240" alt=""><span data-i18n="meal.dinner">Dinner</span></button>
+      </div>
+    </aside>
   </div>
-</section>
 
-<!-- The day's ridge is the horizon between the camera and the day. -->
-<div class="dusk night" aria-hidden="true"><svg class="horizon" viewBox="0 0 1440 220" preserveAspectRatio="none"><path id="horizon-path" d=""/><path id="horizon-line" d="" pathLength="1"/></svg></div>
+  <div class="read-text">
+    <section class="hero" aria-labelledby="hero-title">
+      <h1 id="hero-title" class="display split" data-i18n="hero.title">The calorie tracker that reads your plate</h1>
+      <p class="lede" data-i18n="hero.lede">Take one photo. Kalorat names every part of the meal, weighs it in grams and adds it to your day. Free, open source, no subscription.</p>
+      <div class="acts">
+        <a class="btn" href="https://github.com/Nikityyy/kalorat/releases/latest/download/app-release.apk"><svg class="droid" viewBox="0 0 24 24" aria-hidden="true"><path fill-rule="evenodd" d="M3 19a9 9 0 0 1 18 0ZM7.4 14.6a1.2 1.2 0 1 0 2.4 0a1.2 1.2 0 1 0-2.4 0ZM14.2 14.6a1.2 1.2 0 1 0 2.4 0a1.2 1.2 0 1 0-2.4 0Z"/><path d="M7.6 10.6 5.6 7.4M16.4 10.6l2-3.2"/></svg><span data-i18n="cta.android">Download for Android</span></a>
+        <a class="link" href="#get-iphone" data-i18n="cta.iphone">Install on iPhone</a>
+      </div>
+      <p class="hero-note" data-i18n="hero.note">Point at a part of the plate, or pick another meal.</p>
+    </section>
 
+    <section class="parts" id="parts" aria-labelledby="parts-title">
+      <h2 id="parts-title" class="split" data-i18n="parts.title">Every part, weighed on its own</h2>
+      <p class="parts-p" data-i18n="parts.p">Kalorat does not guess one number for the plate. It finds each part, estimates its grams and looks up what a gram of it is worth. Then it adds them up.</p>
+      <ol class="rows" id="rows"></ol>
+      <p class="rows-sum"><span data-i18n="parts.sum">Together</span> <span class="num"><b id="rows-kcal">658</b> kcal</span></p>
+      <p class="rows-hid" id="rows-hid"></p>
 
+      <div class="est" id="est">
+        <h3 data-i18n="est.title">Three estimates, the middle one counts</h3>
+        <p data-i18n="est.p">The photo goes to Gemini three times at once, so it takes about as long as once. Kalorat keeps the estimate in the middle: one odd guess can’t move your day.</p>
+        <div class="scale" id="scale" role="img" aria-label="Three estimates of this plate and the range it could be in"></div>
+      </div>
+    </section>
+  </div>
+</div>
 
-<!-- 3. The day: a climb to your goal. -->
+<!-- 3. The day as a climb. -->
 <section class="day" id="day" aria-labelledby="day-title">
+  <div class="day-track" id="day-track">
   <div class="day-pin">
     <div class="day-head">
-      <h2 id="day-title" data-i18n="day.title">Your day, as a climb</h2>
-      <p data-i18n="day.p">Each meal is a step up. The dashed line is your goal; the number says what is left. Kalorat sets the goal from your height, weight, age, activity and whether you want to lose, keep or gain.</p>
+      <h2 id="day-title" class="split" data-i18n="day.title">Your day, as a climb</h2>
+      <p data-i18n="day.p">Each meal is a step up the trail. The dashed line is your goal; the number says how much is left. Kalorat sets the goal from your height, weight, age, activity and whether you want to lose, keep or gain.</p>
     </div>
-    <div class="day-count">
-      <p class="day-left num"><span id="d-left">1001</span></p>
-      <p class="day-of" id="d-of">kcal left of 2482</p>
-      <p class="day-event" id="d-event" aria-hidden="true"></p>
+    <div class="day-left" aria-live="off"><span class="num" id="d-left">720</span><span class="day-of" id="d-of">kcal left of 2482</span></div>
+    <figure class="climb" id="climb">
+      <svg id="climb-svg" role="img" aria-label="The day as a climb: breakfast at 08:12, lunch at 12:41, dinner at 19:05, 720 kcal left of 2482." data-i18n-attr="aria-label:day.alt"></svg>
+      <figcaption class="climb-hint" id="climb-hint" data-i18n="day.hint">Scroll to walk through the day</figcaption>
+    </figure>
+  </div>
+  </div>
+  <div class="trend">
+    <div class="trend-col">
+      <p class="trend-big"><span class="num" id="t-avg">1943</span> <span class="u">kcal</span></p>
+      <p class="trend-cap" id="t-avg-cap" data-i18n="trend.avg">a day on average, October 14–20, counting only the days you logged</p>
+      <div class="bars" id="bars" aria-hidden="true"></div>
     </div>
-    <div class="ridge" id="ridge" role="img" aria-label="The day as a ridge: halloumi breakfast at 08:12, the poke bowl at 12:41, 1001 kcal left at 18:12.">
-      <svg id="ridge-svg"></svg>
-      <p class="ridge-hint" id="ridge-hint" aria-hidden="true" data-i18n="day.hint">Drag to walk through the day</p>
+    <div class="trend-col">
+      <p class="trend-big"><span class="num" id="t-kg">78.6</span> <span class="u">kg</span></p>
+      <p class="trend-cap" id="t-kg-cap" data-i18n="trend.kg">2.9 kg down since August 26; the line shows the trend, not the noise</p>
+      <svg class="wline" id="wline" aria-hidden="true"></svg>
     </div>
   </div>
 </section>
 
-<!-- 4. Three ways in. -->
-<section class="ways" id="ways" aria-labelledby="ways-title">
-  <h2 id="ways-title" class="ways-title" data-i18n="ways.title">Three ways in</h2>
-  <ol class="ways-list">
-    <li class="way">
-      <span class="way-art way-photo"><img src="assets/lp/img/tray-thumb.webp" width="300" height="400" alt="" loading="lazy"></span>
-      <h3 data-i18n="ways.photo.t">Photograph it</h3>
-      <p data-i18n="ways.photo.p">A plate, a tray, a bowl. Up to several photos, one meal.</p>
-    </li>
-    <li class="way">
-      <span class="way-art way-code" aria-hidden="true"><svg viewBox="0 0 95 64" id="barcode"><path d="M0 0h1.02v64h-1.02zM2 0h1.02v64h-1.02zM6 0h2.02v64h-2.02zM9 0h1.02v64h-1.02zM11 0h1.02v64h-1.02zM14 0h3.02v64h-3.02zM18 0h1.02v64h-1.02zM20 0h4.02v64h-4.02zM27 0h2.02v64h-2.02zM30 0h1.02v64h-1.02zM33 0h3.02v64h-3.02zM37 0h1.02v64h-1.02zM39 0h1.02v64h-1.02zM42 0h3.02v64h-3.02zM46 0h1.02v64h-1.02zM48 0h1.02v64h-1.02zM50 0h3.02v64h-3.02zM55 0h1.02v64h-1.02zM57 0h1.02v64h-1.02zM60 0h3.02v64h-3.02zM64 0h2.02v64h-2.02zM67 0h2.02v64h-2.02zM71 0h2.02v64h-2.02zM75 0h2.02v64h-2.02zM78 0h3.02v64h-3.02zM83 0h1.02v64h-1.02zM85 0h1.02v64h-1.02zM87 0h3.02v64h-3.02zM92 0h1.02v64h-1.02zM94 0h1.02v64h-1.02z"/></svg><span class="num">4 006040 052104</span></span>
-      <h3 data-i18n="ways.code.t">Scan the barcode</h3>
-      <p data-i18n="ways.code.p">Packaged food comes with its label values from Open Food Facts. No product found? Photograph the label instead.</p>
-    </li>
-    <li class="way">
-      <span class="way-art way-type" aria-hidden="true"><span class="typed" id="typed" data-i18n="ways.type.ex">2 eggs, a slice of toast with butter</span></span>
-      <h3 data-i18n="ways.type.t">Type it</h3>
-      <p data-i18n="ways.type.p">No photo? Write what you ate in your own words.</p>
-    </li>
-  </ol>
-</section>
-
-<!-- 5. How it reads: the stages after the shutter, scrubbed. -->
-<section class="how night" id="how" aria-labelledby="how-title">
-  <div class="how-pin">
+<!-- 4. After the shutter. Dark, as the app's camera. -->
+<section class="how" id="how" aria-labelledby="how-title">
+  <svg class="how-edge" viewBox="0 0 1440 64" preserveAspectRatio="none" aria-hidden="true"><path d="M0 40C180 34 300 18 470 22S760 48 940 40 1250 14 1440 24"/></svg>
+  <span class="how-edge-h" aria-hidden="true">2000</span>
+  <h2 id="how-title" class="split" data-i18n="how.title">What happens after the shutter</h2>
+  <div class="how-pin" id="how-pin">
+   <div class="how-stage">
     <div class="how-text">
-      <h2 class="how-title" id="how-title" data-i18n="how.title">What happens after the shutter</h2>
       <ol class="steps" id="steps">
-        <li class="step is-on" data-step="0">
-          <h3 data-i18n="how.s1.t">Point it at the plate</h3>
-          <p data-i18n="how.s1.p">The frame finds the meal or a barcode. Several photos of one meal are fine: the side, the label, the half you already ate.</p>
-        </li>
-        <li class="step" data-step="1">
-          <h3 data-i18n="how.s2.t">Say what the camera can’t see</h3>
-          <p data-i18n="how.s2.p">“With salmon and cream cheese” goes along with the photo. A note is optional; it helps when the sauce hides what is under it.</p>
-        </li>
-        <li class="step" data-step="2">
-          <h3 data-i18n="how.s3.t">Three estimates, the middle one counts</h3>
-          <p data-i18n="how.s3.p">The photo goes to Gemini three times at once, so it takes about as long as once. Kalorat keeps the estimate in the middle: one odd guess can’t move your day.</p>
-        </li>
-        <li class="step" data-step="3">
-          <h3 data-i18n="how.s4.t">Every part, in grams</h3>
-          <p data-i18n="how.s4.p">You see how sure it is, the range it could be, and why. Too much? One tap for lower, one for higher, or change a single part.</p>
-        </li>
+        <li class="step is-on" data-step="0"><span class="step-n num" aria-hidden="true">1</span><div><h3 data-i18n="how.s1.t">Point it at the plate</h3><div class="step-body"><div><p data-i18n="how.s1.p">The frame finds the meal or a barcode. Several photos of one meal are fine: the side, the label, the half you already ate.</p><span class="mini"><img class="step-scr" src="assets/lp/screens/en/camera.webp" width="590" height="1278" alt="" data-scr="camera" loading="lazy"></span></div></div></div></li>
+        <li class="step" data-step="1"><span class="step-n num" aria-hidden="true">2</span><div><h3 data-i18n="how.s2.t">Say what the camera can’t see</h3><div class="step-body"><div><p data-i18n="how.s2.p">“Tofu fried in a tablespoon of oil” goes along with the photo. A note is optional; it covers what the camera can’t see, like the oil in the pan.</p><span class="mini"><img class="step-scr" src="assets/lp/screens/en/note.webp" width="590" height="1278" alt="" data-scr="note" loading="lazy"></span></div></div></div></li>
+        <li class="step" data-step="2"><span class="step-n num" aria-hidden="true">3</span><div><h3 data-i18n="how.s3.t">Three estimates at once</h3><div class="step-body"><div><p data-i18n="how.s3.p">The parts appear as Gemini names them, and the first of three estimates lands within seconds. All three run side by side, so three take no longer than one.</p><span class="mini"><img class="step-scr" src="assets/lp/screens/en/analysing.webp" width="590" height="1278" alt="" data-scr="analysing" loading="lazy"></span></div></div></div></li>
+        <li class="step" data-step="3"><span class="step-n num" aria-hidden="true">4</span><div><h3 data-i18n="how.s4.t">Every part, in grams</h3><div class="step-body"><div><p data-i18n="how.s4.p">You see how sure it is, the range it could be, and why. Too much? One tap for lower, one for higher, or change a single part.</p><span class="mini"><img class="step-scr" src="assets/lp/screens/en/result.webp" width="590" height="1278" alt="" data-scr="result" loading="lazy"></span></div></div></div></li>
       </ol>
     </div>
-    <figure class="phone" id="how-phone">
+    <figure class="phone" id="phone">
       <div class="phone-screen">
-        <img class="scr is-on" data-step="0" src="assets/lp/screens/en/camera.webp" width="786" height="1704" alt="Kalorat's camera with the poke bowl in the frame" data-i18n-attr="alt:how.a1" data-scr="camera" loading="lazy">
-        <img class="scr" data-step="1" src="assets/lp/screens/en/note.webp" width="786" height="1704" alt="The note sheet: Philadelphia poke bowl with salmon and cream cheese" data-i18n-attr="alt:how.a2" data-scr="note" loading="lazy">
-        <img class="scr" data-step="2" src="assets/lp/screens/en/analysing.webp" width="786" height="1704" alt="The analysis: the median of three estimates, 920 kcal, and each part in grams" data-i18n-attr="alt:how.a3" data-scr="analysing" loading="lazy">
-        <img class="scr" data-step="3" src="assets/lp/screens/en/result.webp" width="786" height="1704" alt="The result: kcal, how sure, lower and higher, and why" data-i18n-attr="alt:how.a4" data-scr="result" loading="lazy">
-        <div class="how-runs" aria-hidden="true"><b class="how-hold"></b><i></i><i></i><i></i></div>
+        <img class="scr is-on" data-step="0" src="assets/lp/screens/en/camera.webp" width="590" height="1278" alt="Kalorat’s camera with a tofu bowl in the frame" data-i18n-attr="alt:how.a1" data-scr="camera" loading="lazy">
+        <img class="scr" data-step="1" src="assets/lp/screens/en/note.webp" width="590" height="1278" alt="The note sheet: tofu fried in a tablespoon of oil" data-i18n-attr="alt:how.a2" data-scr="note" loading="lazy">
+        <img class="scr" data-step="2" src="assets/lp/screens/en/analysing.webp" width="590" height="1278" alt="Estimate 1 of 3: so far 432 kcal, and the parts named so far" data-i18n-attr="alt:how.a3" data-scr="analysing" loading="lazy">
+        <img class="scr" data-step="3" src="assets/lp/screens/en/result.webp" width="590" height="1278" alt="The result: kcal, how sure, lower and higher, and why" data-i18n-attr="alt:how.a4" data-scr="result" loading="lazy">
       </div>
+      <img class="phone-frame" src="assets/lp/screens/iphone.webp" width="710" height="1399" alt="" loading="lazy">
     </figure>
-    <div class="how-scrub" id="how-scrub" role="slider" tabindex="0" aria-label="What happens after the shutter" data-i18n-attr="aria-label:how.title" aria-valuemin="1" aria-valuemax="4" aria-valuenow="1" hidden>
-      <svg class="hs-line" viewBox="0 0 1000 48" preserveAspectRatio="none" aria-hidden="true">
-        <g class="hs-ghost">
-          <path d="M0 24H360"/><path d="M360 24C400 24 400 8 440 8H740"/><path d="M360 24H1000"/><path d="M360 24C400 24 400 40 440 40H770"/>
-        </g>
-        <clipPath id="hs-clip"><rect id="hs-cut" x="0" y="-8" width="0" height="64"/></clipPath>
-        <g class="hs-lit" clip-path="url(#hs-clip)">
-          <path d="M0 24H360"/><path class="hs-out" d="M360 24C400 24 400 8 440 8H740"/><path d="M360 24H1000"/><path class="hs-out" d="M360 24C400 24 400 40 440 40H770"/>
-        </g>
-      </svg>
-      <span class="hs-end hs-end-a" aria-hidden="true"></span><span class="hs-end hs-end-c" aria-hidden="true"></span>
-      <div class="hs-knob" id="hs-knob" aria-hidden="true"></div>
-      <ol class="hs-stages">
-        <li data-i18n="how.st1">Photo</li>
-        <li data-i18n="how.st2">Note</li>
-        <li data-i18n="how.st3">Three estimates at once</li>
-        <li data-i18n="how.st4">The middle one</li>
-      </ol>
-    </div>
+   </div>
+  </div>
+
+  <div class="ways" aria-labelledby="ways-title">
+    <h3 id="ways-title" class="ways-title split" data-i18n="ways.title">No plate to photograph?</h3>
+    <ul class="ways-list">
+      <li><img class="way-shot" src="assets/lp/screens/en/way-photo.webp" width="560" height="988" alt="Kalorat’s camera with a bowl in the frame" data-i18n-attr="alt:ways.photo.a" data-scr="way-photo" loading="lazy"><h4 data-i18n="ways.photo.t">Photograph it</h4><p data-i18n="ways.photo.p">A plate, a tray, a bowl. Several photos, one meal.</p></li>
+      <li><img class="way-shot" src="assets/lp/screens/en/way-code.webp" width="560" height="988" alt="A scanned barcode: alpro Soya Natur, 255 kcal, values from Open Food Facts" data-i18n-attr="alt:ways.code.a" data-scr="way-code" loading="lazy"><h4 data-i18n="ways.code.t">Scan the barcode</h4><p data-i18n="ways.code.p">Packaged food comes with its label values from Open Food Facts. Not found? Photograph the label.</p></li>
+      <li><img class="way-shot" src="assets/lp/screens/en/way-type.webp" width="560" height="988" alt="Typed: “2 eggs, a slice of toast with butter”, read as 380 kcal with lower, now and higher" data-i18n-attr="alt:ways.type.a" data-scr="way-type" loading="lazy"><h4 data-i18n="ways.type.t">Type it</h4><p data-i18n="ways.type.p">Write what you ate in your own words: “2 eggs, a slice of toast with butter”.</p></li>
+    </ul>
   </div>
 </section>
 
-<!-- 6. Progress. -->
-<section class="progress" id="progress" aria-labelledby="prog-title">
-  <div class="prog-head">
-    <h2 id="prog-title" data-i18n="prog.title">The week, the month, the scale</h2>
-    <p data-i18n="prog.p">Averages that count only the days you logged, a streak that forgives a missed day, and a weight line that shows the trend, not the noise.</p>
-  </div>
-  <div class="prog-grid">
-    <figure class="week">
-      <figcaption>
-        <span class="num big" id="p-avg">1914</span>
-        <span>kcal a day on average, October 14–20</span>
-      </figcaption>
-      <div class="bars" id="bars"></div>
-      <p class="legend"><span><i></i><span data-i18n="prog.under">at or under your goal</span></span> <span class="o"><i></i><span data-i18n="prog.over">over your goal</span></span></p>
-    </figure>
-    <figure class="weight">
-      <figcaption>
-        <span class="num big"><span id="p-kg">78<span class="roll-d dp">.</span>6</span> <small>kg</small></span>
-        <span id="p-trend">2.8 kg down since August 25</span>
-      </figcaption>
-      <svg class="wline" id="wline" role="img" aria-label="Weight from August to October, falling from 81.4 to 78.6 kg"></svg>
-    </figure>
-  </div>
-</section>
-
-<!-- 7. Free, and yours. -->
+<!-- 5. What it costs. -->
 <section class="free" id="free" aria-labelledby="free-title">
-  <div class="free-scan" id="free-scan">
-    <p class="free-zero num" aria-hidden="true" data-i18n="free.zero">€0</p>
-    <canvas class="free-cv" id="free-cv" aria-hidden="true"></canvas>
-    <p class="free-tag num" id="free-tag" aria-hidden="true"></p>
-    <p class="free-hint num" id="free-hint" aria-hidden="true" data-i18n="free.hint">Move over the €0 to read it.</p>
+  <div class="free-zero-w"><p class="free-zero" id="free-zero" aria-hidden="true"><span data-i18n="free.zero">€0</span></p></div>
+  <div class="free-body">
+    <h2 id="free-title" class="split" data-i18n="free.title">Costs nothing. Stays yours.</h2>
+    <dl class="free-list">
+      <div><dt data-i18n="free.1.t">No subscription</dt><dd data-i18n="free.1.p">Your own free Gemini key from Google AI Studio. Set up in a minute.</dd></div>
+      <div><dt data-i18n="free.2.t">Your meals stay on your phone</dt><dd data-i18n="free.2.p">No account. Google sign-in only if you want a backup.</dd></div>
+      <div><dt data-i18n="free.3.t">Take everything with you</dt><dd data-i18n="free.3.p">Every meal and weight, as JSON or Markdown, whenever you like.</dd></div>
+      <div><dt data-i18n="free.4.t">Open source</dt><dd><span data-i18n="free.4.p">Every line is on GitHub.</span> <a href="https://github.com/Nikityyy/kalorat">github.com/Nikityyy/kalorat</a></dd></div>
+    </dl>
   </div>
-  <h2 class="kin" id="free-title" data-i18n="free.title">Costs nothing. Stays yours.</h2>
-  <dl class="free-list">
-    <div><dt data-i18n="free.1.t">No subscription</dt><dd data-i18n="free.1.p">Your own free Gemini key from Google AI Studio. Set up in a minute.</dd></div>
-    <div><dt data-i18n="free.2.t">Your meals stay on your phone</dt><dd data-i18n="free.2.p">No account. Google sign-in only if you want a backup.</dd></div>
-    <div><dt data-i18n="free.3.t">Take everything with you</dt><dd data-i18n="free.3.p">Every meal and weight, as JSON or Markdown, whenever you like.</dd></div>
-    <div><dt data-i18n="free.4.t">Open source</dt><dd><span data-i18n="free.4.p">Every line is on GitHub.</span> <a href="https://github.com/Nikityyy/kalorat" data-i18n="free.4.a">github.com/Nikityyy/kalorat</a></dd></div>
-  </dl>
 </section>
 
-<!-- 8. Get it. -->
+<!-- 6. Get it. -->
 <section class="get" id="get" aria-labelledby="get-title">
-  <h2 id="get-title" data-i18n="get.title">Get Kalorat</h2>
-  <ul class="get-strip" aria-label="Four screens of the app" data-i18n-attr="aria-label:get.strip">
-    <li class="phone phone-s"><div class="phone-screen"><img src="assets/lp/screens/en/today.webp" width="786" height="1704" alt="Kalorat's Today screen with the ridge, the macros and the two meals" data-i18n-attr="alt:day.phone" data-scr="today" loading="lazy"></div></li>
-    <li class="phone phone-s"><div class="phone-screen"><img src="assets/lp/screens/en/camera.webp" width="786" height="1704" alt="Kalorat's camera with the poke bowl in the frame" data-i18n-attr="alt:how.a1" data-scr="camera" loading="lazy"></div></li>
-    <li class="phone phone-s"><div class="phone-screen"><img src="assets/lp/screens/en/result.webp" width="786" height="1704" alt="The result: kcal, how sure, lower and higher, and why" data-i18n-attr="alt:how.a4" data-scr="result" loading="lazy"></div></li>
-    <li class="phone phone-s"><div class="phone-screen"><img src="assets/lp/screens/en/progress.webp" width="786" height="1704" alt="Kalorat's Progress screen: the week's bars and the weight" data-i18n-attr="alt:prog.phone" data-scr="progress" loading="lazy"></div></li>
-  </ul>
+  <h2 id="get-title" class="split" data-i18n="get.title">Get Kalorat</h2>
   <div class="get-grid">
     <div class="get-col" id="get-android">
       <h3 data-i18n="get.android.t">Android</h3>
       <p data-i18n="get.android.p">Download the app file from the latest release and open it. Android asks once whether your browser may install apps.</p>
-      <a class="btn" href="https://github.com/Nikityyy/kalorat/releases/latest/download/app-release.apk"><span data-i18n="cta.android">Download for Android</span><small class="num">APK</small></a>
-      <p class="rel num" data-rel hidden></p>
+      <a class="btn" href="https://github.com/Nikityyy/kalorat/releases/latest/download/app-release.apk"><svg class="droid" viewBox="0 0 24 24" aria-hidden="true"><path fill-rule="evenodd" d="M3 19a9 9 0 0 1 18 0ZM7.4 14.6a1.2 1.2 0 1 0 2.4 0a1.2 1.2 0 1 0-2.4 0ZM14.2 14.6a1.2 1.2 0 1 0 2.4 0a1.2 1.2 0 1 0-2.4 0Z"/><path d="M7.6 10.6 5.6 7.4M16.4 10.6l2-3.2"/></svg><span data-i18n="cta.android">Download for Android</span></a>
+      <p class="rel" data-rel hidden></p>
+      <figure class="qr">
+        <svg viewBox="-2 -2 33 33" role="img" aria-label="QR code for nikity.is-a.dev/kalorat" data-i18n-attr="aria-label:get.qr.alt"><path stroke="#111513" d="M0 0.5h7m1 0h2m3 0h2m7 0h7m-29 1h1m5 0h1m2 0h1m2 0h3m2 0h1m1 0h1m2 0h1m5 0h1m-29 1h1m1 0h3m1 0h1m2 0h1m2 0h1m2 0h1m1 0h1m2 0h1m1 0h1m1 0h3m1 0h1m-29 1h1m1 0h3m1 0h1m1 0h3m4 0h1m6 0h1m1 0h3m1 0h1m-29 1h1m1 0h3m1 0h1m1 0h1m3 0h1m1 0h5m3 0h1m1 0h3m1 0h1m-29 1h1m5 0h1m1 0h5m3 0h2m1 0h2m1 0h1m5 0h1m-29 1h7m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h7m-21 1h2m1 0h1m1 0h1m1 0h1m1 0h2m1 0h1m-21 1h1m3 0h1m1 0h4m3 0h1m3 0h1m1 0h7m2 0h1m-29 1h1m1 0h1m1 0h1m2 0h2m1 0h1m2 0h6m2 0h8m-28 1h3m2 0h4m1 0h2m2 0h1m6 0h1m5 0h1m-28 1h1m2 0h1m2 0h3m4 0h1m2 0h9m1 0h2m-28 1h2m2 0h3m2 0h1m2 0h2m2 0h1m2 0h2m5 0h1m-28 1h3m2 0h1m2 0h2m1 0h2m2 0h2m1 0h1m1 0h9m-29 1h1m2 0h4m4 0h1m1 0h3m1 0h1m2 0h2m2 0h3m1 0h1m-29 1h1m1 0h3m2 0h3m3 0h1m2 0h3m3 0h3m2 0h2m-29 1h1m1 0h2m2 0h1m1 0h1m2 0h1m1 0h1m3 0h1m1 0h2m6 0h1m-28 1h1m2 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h3m1 0h2m3 0h4m1 0h2m-27 1h1m1 0h5m1 0h2m3 0h1m1 0h2m1 0h1m5 0h1m1 0h1m-27 1h1m1 0h2m1 0h4m3 0h1m2 0h1m2 0h2m1 0h2m2 0h2m-29 1h3m1 0h3m1 0h1m1 0h1m1 0h4m1 0h1m2 0h6m2 0h1m-21 1h2m2 0h1m2 0h1m1 0h4m3 0h1m3 0h1m-29 1h7m1 0h4m1 0h4m1 0h3m1 0h1m1 0h3m1 0h1m-29 1h1m5 0h1m4 0h3m1 0h1m1 0h2m1 0h1m3 0h1m2 0h2m-29 1h1m1 0h3m1 0h1m1 0h2m1 0h3m2 0h2m1 0h7m1 0h1m-28 1h1m1 0h3m1 0h1m4 0h1m1 0h4m4 0h1m6 0h1m-29 1h1m1 0h3m1 0h1m4 0h2m2 0h1m5 0h1m3 0h4m-29 1h1m5 0h1m4 0h1m1 0h5m1 0h3m1 0h3m1 0h2m-29 1h7m1 0h1m1 0h5m2 0h1m2 0h2m1 0h1m1 0h1m1 0h1"/></svg>
+        <figcaption data-i18n="get.qr">On a computer? Scan this with your phone camera to open this page there.</figcaption>
+      </figure>
     </div>
     <div class="get-col" id="get-iphone">
       <h3 data-i18n="get.iphone.t">iPhone</h3>
       <p data-i18n="get.iphone.p">Kalorat runs as a web app from your home screen, full screen, like any other app. In Safari:</p>
       <ol class="ios">
-        <li><img src="assets/tutorial/first.webp" width="942" height="1412" alt="" loading="lazy"><span data-i18n="get.ios.1">Open the web app and tap ••• next to the address.</span></li>
-        <li><img src="assets/tutorial/second.webp" width="637" height="810" alt="" loading="lazy"><span data-i18n="get.ios.2">Tap Share.</span></li>
-        <li><img src="assets/tutorial/third.webp" width="942" height="1158" alt="" loading="lazy"><span data-i18n="get.ios.3">Tap Add to Home Screen.</span></li>
-        <li><img src="assets/tutorial/fourth.webp" width="942" height="802" alt="" loading="lazy"><span data-i18n="get.ios.4">Leave Open as Web App on and tap Add.</span></li>
+        <li><img src="assets/tutorial/first.webp" width="640" height="800" alt="" loading="lazy"><span class="num">1</span><span data-i18n="get.ios.1">Open the web app and tap ••• next to the address.</span></li>
+        <li><img src="assets/tutorial/second.webp" width="640" height="800" alt="" loading="lazy"><span class="num">2</span><span data-i18n="get.ios.2">Tap Share.</span></li>
+        <li><img src="assets/tutorial/third.webp" width="640" height="800" alt="" loading="lazy"><span class="num">3</span><span data-i18n="get.ios.3">Tap Add to Home Screen.</span></li>
+        <li><img src="assets/tutorial/fourth.webp" width="640" height="800" alt="" loading="lazy"><span class="num">4</span><span data-i18n="get.ios.4">Leave Open as Web App on and tap Add.</span></li>
       </ol>
-      <a class="btn btn-line" href="app/"><span data-i18n="get.iphone.a">Open the web app</span></a>
+      <a class="btn btn-line" href="app/" data-i18n="get.iphone.a">Open the web app</a>
     </div>
   </div>
 </section>
@@ -303,14 +217,17 @@
 </main>
 
 <footer class="foot">
+  <svg class="foot-topo" id="foot-topo" aria-hidden="true" preserveAspectRatio="xMidYMid slice"></svg>
+  <div class="foot-mark-w" id="foot-mark">
   <svg class="foot-mark" viewBox="0 0 5898 956" role="img" aria-label="Kalorat"><use href="#logo"/></svg>
+  </div>
   <div class="foot-row">
     <p><span data-i18n="foot.by">Made by</span> <a href="https://nikity.is-a.dev/">Nikita Berger</a>. <a href="https://github.com/Nikityyy/kalorat" data-i18n="foot.code">Source code on GitHub</a>.</p>
-    <p class="foot-credits"><span data-i18n="foot.photos">Photos from Wikimedia Commons:</span>
-      <a href="https://commons.wikimedia.org/wiki/File:Philadelphia_Poke_Bowl_-_Happy_Maki_2026-09-08.jpg">Philadelphia Poke Bowl</a> <span data-i18n="foot.extended">(cropped and extended)</span>,
-      <a href="https://commons.wikimedia.org/wiki/File:Halloumi_breakfast_-_The_Bystander_Cafe_2024-01-01.jpg">Halloumi breakfast</a>,
-      <a href="https://commons.wikimedia.org/wiki/File:Fast_food_love.jpg">Fast food love</a>.
-      <span data-i18n="foot.numbers">The calories and grams shown for these photos are Kalorat’s own results; the day, the week and the weight are a demo.</span>
+    <p class="foot-credits"><span data-i18n="foot.photos">Photos on Unsplash by</span>
+      <a href="https://unsplash.com/photos/a-bowl-of-cereal-with-milk-and-fruit-NI8MeJiAN3I">Eiliv Aceron</a>,
+      <a href="https://unsplash.com/photos/cooked-food-phEaeqe555M">Louis Hansel</a>,
+      <a href="https://unsplash.com/photos/vegetable-and-meat-on-bowl-kcA-c3f_3FE">Anh Nguyen</a>.
+      <span data-i18n="foot.numbers">The names, grams and calories for these photos are Kalorat’s own results, one run in each language; the day, the week and the weight are a demo.</span>
     </p>
   </div>
 </footer>
