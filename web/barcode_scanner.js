@@ -354,7 +354,55 @@
     } catch (_) {}
   }
 
+  // How bright the picture is behind a part of the view (0 to 1, -1 when there
+  // is no picture): the part is given as fractions of the view, which the
+  // video covers. A few dozen pixels are read from a tiny canvas.
+  var lumaCanvas = null;
+  function luma(left, top, right, bottom, viewAspect) {
+    var video = findVideo();
+    if (!video || !(viewAspect > 0)) return -1;
+    var fa = video.videoWidth / video.videoHeight;
+    var shownW = viewAspect > fa ? viewAspect : fa;
+    var shownH = shownW / fa;
+    var l = (viewAspect - shownW) / 2;
+    var t = (1 - shownH) / 2;
+    function clamp(v) {
+      return Math.max(0, Math.min(1, v));
+    }
+    var x0 = clamp((left * viewAspect - l) / shownW);
+    var x1 = clamp((right * viewAspect - l) / shownW);
+    var y0 = clamp((top - t) / shownH);
+    var y1 = clamp((bottom - t) / shownH);
+    if (x1 <= x0 || y1 <= y0) return -1;
+    try {
+      if (!lumaCanvas) {
+        lumaCanvas = document.createElement('canvas');
+        lumaCanvas.width = 16;
+        lumaCanvas.height = 4;
+      }
+      var ctx = lumaCanvas.getContext('2d', { willReadFrequently: true });
+      ctx.drawImage(
+        video,
+        x0 * video.videoWidth,
+        y0 * video.videoHeight,
+        (x1 - x0) * video.videoWidth,
+        (y1 - y0) * video.videoHeight,
+        0,
+        0,
+        16,
+        4
+      );
+      var d = ctx.getImageData(0, 0, 16, 4).data;
+      var sum = 0;
+      for (var i = 0; i < d.length; i += 4) sum += 0.2126 * d[i] + 0.7152 * d[i + 1] + 0.0722 * d[i + 2];
+      return sum / (d.length / 4) / 255;
+    } catch (_) {
+      return -1;
+    }
+  }
+
   window.kaloratBarcode = {
+    luma: luma,
     prewarm: function () {
       ensureWorker();
     },

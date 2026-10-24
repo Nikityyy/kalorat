@@ -45,7 +45,6 @@ h3 { font-size: var(--t-h3); font-weight: 700; line-height: 1.2; letter-spacing:
 .bar.on-night .lang button[aria-pressed="true"] { background: var(--night-ink); color: var(--night); }
 .bar.on-night .bar-get { background: var(--leaf); color: var(--ink); }
 .bar.on-night :focus-visible { outline-color: var(--leaf); }
-.bar.is-hidden { transform: translateY(calc(-100% - 20px)); }
 .bar-logo { display: block; width: 118px; color: var(--ink); flex: none; }
 .bar-logo svg { width: 100%; height: auto; }
 .logo-g { fill: currentColor; }
@@ -92,6 +91,8 @@ h3 { font-size: var(--t-h3); font-weight: 700; line-height: 1.2; letter-spacing:
   @keyframes topo-draw { to { stroke-dashoffset: 0; } }
 }
 .plate.is-leaving { opacity: 0; transition: opacity .35s var(--ease); }
+/* Still fetching the plate that was asked for: the old one dims a little. */
+.map.is-fetching .plate { opacity: .72; }
 .plate { transition: opacity .5s var(--ease); }
 /* While one plate gives way to the next, its summits and its reading go with it. */
 .spots, .legend-read { transition: opacity .3s var(--ease); }
@@ -243,6 +244,17 @@ h3 { font-size: var(--t-h3); font-weight: 700; line-height: 1.2; letter-spacing:
 .range .pk-h { font: 600 13px var(--font); fill: var(--ink-2); stroke: var(--ground); stroke-width: 4px; paint-order: stroke; stroke-linejoin: round; font-variant-numeric: tabular-nums; }
 .range .pk-h.is-over { fill: var(--ink); font-weight: 800; }
 .range text { font: 500 13px var(--font); fill: var(--ink-2); }
+/* Dragged over, the week and the weight read out the day under the pointer. */
+.bars, .wline { touch-action: pan-y; cursor: crosshair; }
+.peak .pk, .peak .pk-over { transition: opacity .25s var(--ease); }
+.range.is-reading .peak:not(.is-hot) .pk, .range.is-reading .peak:not(.is-hot) .pk-over { opacity: .28; }
+.range.is-reading .peak:not(.is-hot) .pk-h { opacity: .5; }
+.range .peak.is-hot .pk-h { fill: var(--ink); font-weight: 800; }
+.w-rule { stroke: var(--ink); stroke-width: 1; stroke-dasharray: 2 4; opacity: 0; transition: opacity .2s var(--ease); }
+.w-hot { fill: var(--ink); stroke: var(--ground); stroke-width: 3; opacity: 0; transition: opacity .2s var(--ease); }
+.wline.is-reading .w-rule, .wline.is-reading .w-hot { opacity: 1; }
+.wline.is-reading .wd { opacity: .7; }
+.trend-big .num { font-variant-numeric: tabular-nums; }
 .range-goal { stroke: var(--ink); stroke-width: 1; stroke-dasharray: 3 5; }
 .range-base { stroke: var(--rule); stroke-width: 1; }
 .wline { margin-top: 32px; width: 100%; height: 132px; overflow: visible; }
@@ -291,6 +303,10 @@ h3 { font-size: var(--t-h3); font-weight: 700; line-height: 1.2; letter-spacing:
 .ways-list { margin-top: 40px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 48px clamp(24px, 4vw, 64px); }
 .way-shot { display: block; width: 100%; max-width: 400px; height: auto; aspect-ratio: 560 / 988; border-radius: 20px; box-shadow: 0 0 0 1px var(--night-rule); margin-bottom: 22px; }
 .ways h4 { font-size: var(--t-h3l); font-weight: 750; font-stretch: 112%; letter-spacing: -.025em; line-height: 1.05; }
+@media (hover: hover) and (pointer: fine) {
+  .way-shot { transition: transform .5s var(--ease); }
+  .ways li:hover .way-shot { transform: translateY(-8px); }
+}
 .ways p { margin-top: 8px; color: var(--night-ink-2); max-width: 32ch; }
 
 /* ---------- 5: free ---------- */
@@ -299,6 +315,13 @@ h3 { font-size: var(--t-h3); font-weight: 700; line-height: 1.2; letter-spacing:
 .free-zero { position: sticky; top: 120px; font-size: clamp(8rem, 2rem + 19vw, 24rem); font-weight: 900; font-stretch: var(--fz, 125%); line-height: .8; letter-spacing: -.06em; color: var(--ink); white-space: nowrap; }
 .free-zero::before { content: ""; position: absolute; z-index: -1; left: 50%; top: 45%; width: 160%; aspect-ratio: 4 / 3; transform: translate(-50%, -50%); background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 600'%3E%3Cg fill='none' stroke='%23111513' stroke-width='1.2'%3E%3Cpath d='M448 300L449 303L449 306L450 309L449 312L447 315L445 318L442 320L438 322L434 323L430 324L426 325L422 326L418 327L415 327L411 328L408 329L404 330L400 331L396 332L392 332L387 332L383 331L379 330L375 329L372 327L369 326L365 324L362 321L360 319L357 317L355 314L353 312L352 309L352 306L352 303L353 300L354 297L356 295L358 292L360 290L361 288L363 285L364 283L366 280L367 278L369 275L371 272L374 270L378 268L382 267L387 266L391 266L396 266L400 267L404 267L408 268L412 270L416 271L419 272L423 273L426 274L430 276L433 278L435 280L438 282L440 284L441 287L443 289L444 292L445 295L447 297L448 300Z' stroke-opacity='.08'/%3E%3Cpath d='M498 300L497 306L497 312L495 317L493 323L490 329L486 334L481 339L475 343L468 346L460 349L452 351L444 352L437 353L429 355L422 356L415 358L408 360L400 362L392 364L383 365L374 366L365 366L356 364L348 361L341 358L335 353L329 348L325 343L322 337L319 332L316 327L314 321L311 316L310 311L308 305L308 300L308 295L310 289L312 284L315 279L318 274L322 269L325 265L329 260L333 255L338 250L343 245L349 240L356 236L364 233L373 231L382 230L391 231L400 233L408 235L416 238L423 241L430 244L436 247L443 250L450 252L457 254L464 257L471 260L478 263L483 267L488 272L492 277L495 283L497 288L498 294L498 300Z' stroke-opacity='.08'/%3E%3Cpath d='M551 300L548 309L543 317L537 325L532 333L526 340L520 347L513 354L506 360L498 367L489 372L479 377L469 381L458 384L446 387L435 389L424 391L412 393L400 395L388 396L375 398L361 399L347 398L334 396L321 393L310 387L300 381L293 373L288 364L284 355L282 346L280 338L278 330L276 323L273 315L270 308L266 300L264 292L262 283L262 275L264 266L267 258L273 250L280 243L288 236L296 230L306 224L316 218L326 213L337 208L349 204L361 201L374 200L387 200L400 201L412 203L424 207L435 212L445 216L454 221L464 225L473 229L484 232L495 236L506 239L518 244L528 250L538 256L546 264L551 273L553 282L554 291L551 300Z' stroke-opacity='.08'/%3E%3Cpath d='M605 300L598 312L590 323L580 333L569 342L559 350L550 359L541 367L533 376L525 385L516 394L506 403L494 411L481 418L466 424L450 428L434 431L417 432L400 432L383 432L366 431L349 429L332 426L316 423L300 418L285 412L272 404L261 395L252 384L246 373L242 362L239 351L237 340L235 330L233 320L229 310L225 300L220 289L216 278L213 266L212 254L215 241L220 230L230 219L242 210L256 202L271 196L288 191L304 187L320 184L336 181L352 178L368 176L384 175L400 174L416 175L432 176L448 179L462 184L476 189L490 194L503 200L516 206L529 212L543 218L557 225L571 233L584 242L594 252L602 263L607 275L608 288L605 300Z' stroke-opacity='.16'/%3E%3Cpath d='M649 300L644 315L636 328L625 341L612 352L599 363L586 373L574 383L563 393L553 404L542 415L531 428L519 440L504 451L486 461L467 469L445 474L423 476L400 475L378 471L357 466L337 459L318 452L301 445L284 437L267 429L251 421L236 412L222 401L210 390L201 378L193 366L187 353L183 340L180 326L177 313L174 300L171 286L168 272L166 257L166 242L168 226L174 211L185 197L199 185L217 175L237 168L259 163L281 160L303 159L324 158L344 157L363 156L381 154L400 152L419 149L439 148L460 147L481 149L501 152L521 157L539 165L556 173L572 183L586 194L599 205L612 217L623 229L634 242L642 256L648 270L650 285L649 300Z' stroke-opacity='.08'/%3E%3Cpath d='M679 300L678 317L675 333L668 349L659 364L647 378L634 392L619 404L605 417L590 429L575 442L560 455L543 468L524 481L504 494L480 503L455 511L428 514L400 513L373 509L348 501L325 491L304 480L285 468L267 456L250 445L233 435L216 425L198 416L179 405L162 394L146 381L132 366L121 351L114 334L110 317L109 300L110 283L113 266L117 249L123 231L130 215L140 198L152 182L168 168L187 155L209 145L233 137L258 133L284 130L309 129L333 129L356 129L378 128L400 126L423 123L447 120L472 117L499 115L526 116L552 120L577 128L600 138L619 151L634 166L646 183L655 200L662 217L668 234L672 250L676 267L678 283L679 300Z' stroke-opacity='.08'/%3E%3Cpath d='M703 300L705 318L707 337L707 356L704 375L699 395L689 413L675 431L659 448L639 462L617 476L594 488L570 500L545 511L518 521L490 529L461 536L431 540L400 541L369 538L340 531L313 522L288 509L266 496L246 481L228 468L209 455L190 443L170 431L147 420L124 408L101 395L79 379L61 362L48 342L40 321L38 300L43 279L52 258L64 239L79 221L96 204L113 187L131 172L149 157L169 143L190 130L213 118L237 108L264 101L291 96L318 92L346 91L373 89L400 88L427 87L456 86L485 85L515 84L547 86L579 90L609 97L637 108L660 123L679 141L692 161L700 182L704 204L704 225L704 245L703 264L703 282L703 300Z' stroke-opacity='.08'/%3E%3Cpath d='M738 300L739 320L742 341L745 363L747 386L746 410L741 434L731 458L714 479L692 498L664 514L633 527L600 536L566 543L532 548L499 551L466 553L433 555L400 555L367 554L335 551L303 545L273 537L245 526L219 514L194 500L172 485L150 470L128 455L105 440L81 425L57 409L33 391L12 371L-6 349L-17 325L-22 300L-18 275L-7 251L11 229L33 209L58 191L83 176L108 161L132 147L154 133L176 118L198 103L220 89L245 74L273 62L302 52L334 44L367 40L400 39L434 39L467 42L500 46L533 51L566 58L599 66L630 76L660 89L687 105L710 123L727 144L739 167L746 190L747 214L746 237L743 259L740 280L738 300Z' stroke-opacity='.16'/%3E%3Cpath d='M797 300L796 324L794 347L794 372L793 397L791 424L785 451L775 478L758 504L735 528L705 547L669 562L630 571L589 576L548 577L509 576L471 573L435 570L400 567L366 566L331 564L296 563L261 560L225 556L189 548L156 537L124 524L96 507L70 488L47 468L25 447L6 425L-12 402L-29 378L-43 353L-53 327L-58 300L-56 273L-48 246L-32 221L-10 198L16 178L45 161L74 145L103 131L130 116L155 102L179 85L203 68L228 49L256 31L287 14L322 0L360 -10L400 -14L440 -14L480 -8L518 1L553 14L586 29L617 45L646 61L674 78L700 96L725 115L747 135L766 156L781 179L791 203L797 228L799 252L799 276L797 300Z' stroke-opacity='.08'/%3E%3C/g%3E%3C/svg%3E") center / contain no-repeat; pointer-events: none; }
 .free-zero-w { isolation: isolate; }
+/* The basin drawn by the script replaces the still one. */
+.free-zero.has-basin::before { display: none; }
+.basin-wrap { position: absolute; z-index: -1; left: 50%; top: 45%; width: 160%; aspect-ratio: 4 / 3; transform: translate(-50%, -50%); pointer-events: none; }
+.basin { display: block; width: 100%; height: 100%; max-width: none; overflow: visible; fill: none; stroke: var(--ink); stroke-width: 1.2; }
+/* The spot height under the pointer, as on the plate's map. */
+.basin-flag { position: absolute; left: 0; top: 0; display: flex; align-items: center; gap: 7px; translate: -7px -50%; opacity: 0; padding: 3px 7px 4px 5px; border-radius: 3px; background: rgba(231, 234, 231, .92); font: 700 .9375rem/1 var(--font); font-stretch: 112%; letter-spacing: -.01em; color: var(--ink); white-space: nowrap; }
+.basin-flag::before { content: ""; border: 6px solid transparent; border-top: 0; border-bottom: 11px solid var(--ink); }
 .free-body { align-self: start; padding-top: 12px; }
 .free-list { margin-top: 48px; }
 .free-list div { padding: 26px 0 30px; border-top: 1px solid var(--rule); }
@@ -328,8 +351,12 @@ h3 { font-size: var(--t-h3); font-weight: 700; line-height: 1.2; letter-spacing:
 .foot { position: relative; overflow: hidden; background: var(--ink); color: #E9ECEA; padding: var(--s-8) var(--gutter) 48px; }
 .foot-topo { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
 .foot-topo path { fill: none; stroke: #fff; stroke-opacity: .09; stroke-width: 1; vector-effect: non-scaling-stroke; }
-.foot-mark-w { position: relative; overflow: clip; padding-top: 4%; }
-.foot-mark { width: min(100%, 1100px); height: auto; color: #fff; }
+.foot-mark-w { position: relative; overflow: clip; padding-top: 4%; display: grid; justify-items: start; }
+.foot-mark { grid-area: 1 / 1; width: min(100%, 1100px); height: auto; color: #fff; }
+/* Under the pointer the contours and the wordmark light up (leaf). */
+.foot-topo.is-lit, .foot-mark.is-lit { opacity: var(--lit, 0); transition: opacity .45s var(--ease); -webkit-mask-image: radial-gradient(circle 230px at var(--mx, -999px) var(--my, -999px), #000 0%, transparent 100%); mask-image: radial-gradient(circle 230px at var(--mx, -999px) var(--my, -999px), #000 0%, transparent 100%); }
+.foot-topo.is-lit path { stroke: var(--leaf); stroke-opacity: .6; }
+.foot-mark.is-lit { color: var(--leaf); pointer-events: none; }
 .foot-row { position: relative; margin-top: 56px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 40px; font-size: var(--t-small); color: #B9C1BC; }
 .foot a { color: #fff; text-underline-offset: .22em; text-decoration-thickness: 1px; transition: text-decoration-thickness .2s, text-underline-offset .2s; }
 .foot a:hover { text-decoration-thickness: 2px; text-underline-offset: .32em; }
@@ -337,6 +364,7 @@ h3 { font-size: var(--t-h3); font-weight: 700; line-height: 1.2; letter-spacing:
 @media (prefers-reduced-motion: no-preference) {
   .js .foot-mark { transform: translateY(105%); transition: transform 1.4s var(--ease); }
   .js .foot-mark-w.is-in .foot-mark { transform: none; }
+  .js .foot-mark.is-lit { transition: transform 1.4s var(--ease), opacity .45s var(--ease); }
 }
 
 /* Split type: each word rises out of its own mask, a line at a time. */

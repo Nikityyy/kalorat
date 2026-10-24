@@ -1679,7 +1679,8 @@ class _HomeScreenState extends State<HomeScreen>
             ),
           ),
 
-        if (showControls) CameraLogo(onTap: _onLogoTap),
+        if (showControls)
+          CameraLogo(onTap: _onLogoTap, backdrop: _barcodeScanner.backdrop),
 
         if (showControls)
           CameraSwitchButton(
@@ -1745,6 +1746,13 @@ class _HomeScreenState extends State<HomeScreen>
           if (_shouldScanBarcodes && controller != null) {
             final view = _lastPreviewConstraints?.biggest;
             if (mounted && view != null && view.isFinite) {
+              _barcodeScanner.setBackdrop(
+                CameraLogo.backdropRegion(
+                  view,
+                  MediaQuery.paddingOf(context).top,
+                ),
+                view.width / view.height,
+              );
               _barcodeScanner.setRegion(
                 _guideRect(),
                 view,

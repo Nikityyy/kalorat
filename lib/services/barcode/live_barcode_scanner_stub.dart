@@ -1,7 +1,7 @@
-import 'dart:typed_data';
 import 'dart:ui' show Rect, Size;
 
 import 'package:camera/camera.dart';
+import 'package:flutter/foundation.dart';
 
 import 'live_barcode_scanner.dart';
 
@@ -16,6 +16,12 @@ class _NoBarcodeScanner implements LiveBarcodeScanner {
     CameraController controller,
     BarcodeCallback onCode,
   ) async {}
+
+  @override
+  ValueListenable<double?> get backdrop => ValueNotifier<double?>(null);
+
+  @override
+  void setBackdrop(Rect region, double viewAspect) {}
 
   @override
   void setRegion(Rect? guide, Size view, {bool mirrored = false}) {}

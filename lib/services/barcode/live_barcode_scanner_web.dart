@@ -1,8 +1,9 @@
+import 'dart:async';
 import 'dart:js_interop';
-import 'dart:typed_data';
 import 'dart:ui' show Rect, Size;
 
 import 'package:camera/camera.dart';
+import 'package:flutter/foundation.dart';
 
 import 'live_barcode_scanner.dart';
 
@@ -16,6 +17,13 @@ extension type _BarcodeApi(JSObject _) implements JSObject {
   external void start(JSFunction onCode);
   external JSPromise<JSUint8Array?> takeFrame();
   external JSPromise<_StillResult?> decodeImage(JSUint8Array bytes);
+  external double luma(
+    double left,
+    double top,
+    double right,
+    double bottom,
+    double viewAspect,
+  );
   external void stop();
   external void setRegion([
     double left,
@@ -44,6 +52,38 @@ Rect? _bounds(List<double>? box) {
 class _WebBarcodeScanner implements LiveBarcodeScanner {
   bool _running = false;
 
+  final ValueNotifier<double?> _backdrop = ValueNotifier<double?>(null);
+  Rect? _backdropRegion;
+  double _backdropAspect = 0;
+  Timer? _backdropTimer;
+
+  @override
+  ValueListenable<double?> get backdrop => _backdrop;
+
+  @override
+  void setBackdrop(Rect region, double viewAspect) {
+    _backdropRegion = region;
+    _backdropAspect = viewAspect;
+  }
+
+  void _measureBackdrop() {
+    final region = _backdropRegion;
+    final api = _api;
+    if (!_running || region == null || api == null) return;
+    try {
+      final value = api.luma(
+        region.left,
+        region.top,
+        region.right,
+        region.bottom,
+        _backdropAspect,
+      );
+      _backdrop.value = value < 0 ? null : value;
+    } catch (_) {
+      _backdrop.value = null;
+    }
+  }
+
   @override
   void prewarm() => _api?.prewarm();
 
@@ -55,6 +95,11 @@ class _WebBarcodeScanner implements LiveBarcodeScanner {
     final api = _api;
     if (api == null || _running) return;
     _running = true;
+    _backdropTimer?.cancel();
+    _backdropTimer = Timer.periodic(
+      const Duration(milliseconds: 250),
+      (_) => _measureBackdrop(),
+    );
     api.start(
       ((
             JSString code,
@@ -136,6 +181,8 @@ class _WebBarcodeScanner implements LiveBarcodeScanner {
   Future<void> stop() async {
     if (!_running) return;
     _running = false;
+    _backdropTimer?.cancel();
+    _backdrop.value = null;
     _api?.stop();
   }
 

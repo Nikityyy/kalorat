@@ -1,42 +1,106 @@
+import 'package:flutter/foundation.dart' show ValueListenable;
 import 'package:flutter/material.dart';
 import '../../extensions/l10n_extension.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_theme.dart';
 import '../../theme/app_typography.dart';
+import '../../utils/frame_luma.dart';
 import '../../utils/haptics.dart';
 
 /// The text logo at the top of the camera. Five quick taps show camera layout
 /// measurements; a long press would drift into the tab swipe, so it is taps.
-class CameraLogo extends StatelessWidget {
+///
+/// It is white over a dark picture and black over a bright one, following
+/// [backdrop] (how bright the picture is behind it, null when unknown, which
+/// keeps it white).
+class CameraLogo extends StatefulWidget {
   final VoidCallback onTap;
+  final ValueListenable<double?>? backdrop;
 
-  const CameraLogo({super.key, required this.onTap});
+  const CameraLogo({super.key, required this.onTap, this.backdrop});
+
+  /// The part of the preview the logo sits over, as fractions of the preview
+  /// ([view] is its size, [top] the safe-area inset): the letters, not the
+  /// empty space beside them.
+  static Rect backdropRegion(Size view, double top) => Rect.fromLTRB(
+    .5 - 72 / view.width,
+    (top + 16 + 13) / view.height,
+    .5 + 72 / view.width,
+    (top + 16 + 39) / view.height,
+  );
+
+  @override
+  State<CameraLogo> createState() => _CameraLogoState();
+}
+
+class _CameraLogoState extends State<CameraLogo> {
+  final _tone = BackdropTone();
+  bool _dark = false;
+
+  @override
+  void initState() {
+    super.initState();
+    widget.backdrop?.addListener(_read);
+  }
+
+  @override
+  void didUpdateWidget(CameraLogo old) {
+    super.didUpdateWidget(old);
+    if (old.backdrop != widget.backdrop) {
+      old.backdrop?.removeListener(_read);
+      widget.backdrop?.addListener(_read);
+    }
+  }
+
+  @override
+  void dispose() {
+    widget.backdrop?.removeListener(_read);
+    super.dispose();
+  }
+
+  void _read() {
+    final luma = widget.backdrop?.value;
+    if (luma == null) {
+      // No picture to judge: back to the plain white logo.
+      _tone.reset();
+      if (_dark) setState(() => _dark = false);
+      return;
+    }
+    final dark = _tone.update(luma);
+    if (dark != _dark) setState(() => _dark = dark);
+  }
 
   @override
   Widget build(BuildContext context) {
+    final color = _dark ? const Color(0xFF111513) : Colors.white;
     return Positioned(
       top: MediaQuery.of(context).padding.top + 16,
       left: 80,
       right: 80,
       child: GestureDetector(
         behavior: HitTestBehavior.translucent,
-        onTap: onTap,
+        onTap: widget.onTap,
         child: SizedBox(
           height: 52,
           child: Center(
-            child: Image.asset(
-              'assets/kalorat-textlogo.webp',
-              color: Colors.white,
-              colorBlendMode: BlendMode.srcIn,
-              height: 26,
-              fit: BoxFit.contain,
-              semanticLabel: context.l10n.appTitle,
-              errorBuilder: (context, error, stackTrace) => Text(
-                context.l10n.appTitle,
-                style: AppTypography.secondary.copyWith(
-                  color: Colors.white,
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
+            child: TweenAnimationBuilder<Color?>(
+              tween: ColorTween(end: color),
+              duration: const Duration(milliseconds: 320),
+              curve: Curves.easeOutCubic,
+              builder: (context, tint, _) => Image.asset(
+                'assets/kalorat-textlogo.webp',
+                color: tint,
+                colorBlendMode: BlendMode.srcIn,
+                height: 26,
+                fit: BoxFit.contain,
+                semanticLabel: context.l10n.appTitle,
+                errorBuilder: (context, error, stackTrace) => Text(
+                  context.l10n.appTitle,
+                  style: AppTypography.secondary.copyWith(
+                    color: tint,
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ),

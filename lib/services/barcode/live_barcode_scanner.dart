@@ -2,6 +2,7 @@ import 'dart:typed_data';
 import 'dart:ui' show Rect, Size;
 
 import 'package:camera/camera.dart';
+import 'package:flutter/foundation.dart' show ValueListenable;
 
 import 'live_barcode_scanner_stub.dart'
     if (dart.library.js_interop) 'live_barcode_scanner_web.dart'
@@ -51,6 +52,15 @@ abstract class LiveBarcodeScanner {
   /// (like `BoxFit.cover`), when the scanner can crop; null reads the whole
   /// frame. [mirrored] for a front camera.
   void setRegion(Rect? guide, Size view, {bool mirrored = false});
+
+  /// How bright the camera picture is behind the [setBackdrop] region, 0 to 1,
+  /// a few times a second while scanning; null when not known. It lets the
+  /// logo over the preview turn dark over a bright picture.
+  ValueListenable<double?> get backdrop;
+
+  /// The part of the preview to measure for [backdrop]: [region] as fractions
+  /// of the view, whose width / height is [viewAspect].
+  void setBackdrop(Rect region, double viewAspect);
 
   /// A JPEG of the frame the last code was read from, upright, or null.
   /// Call it from the [BarcodeCallback]: stopping the scanner drops the

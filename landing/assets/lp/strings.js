@@ -17,6 +17,10 @@ window.KALORAT_STRINGS = {
     'day.of': 'kcal left of {goal} at {now}',
     'day.alt': 'The day as a climb: breakfast at {a}, lunch at {b}, dinner at {c}; {left} kcal left of {goal}.',
     'trend.bar': '{day}: {kcal} kcal',
+    'trend.over': '{day}: {n} kcal over your goal',
+    'trend.under': '{day}: {n} kcal under your goal',
+    'trend.w': '{date}, as you weighed in',
+    'free.flag': '€0 a month',
     'get.rel': '{v} · {mb} MB · {d}'
   },
   de: {
@@ -69,6 +73,10 @@ window.KALORAT_STRINGS = {
     'trend.avg': 'am Tag im Schnitt, 14.–20. Oktober, nur Tage mit Einträgen gezählt',
     'trend.kg': '2,9 kg weniger seit 26. August; die Linie zeigt den Trend, nicht das Rauschen',
     'trend.bar': '{day}: {kcal} kcal',
+    'trend.over': '{day}: {n} kcal über deinem Ziel',
+    'trend.under': '{day}: {n} kcal unter deinem Ziel',
+    'trend.w': '{date}, so hast du dich gewogen',
+    'free.flag': '0 € im Monat',
 
     'how.title': 'Was nach dem Auslösen passiert',
     'how.s1.t': 'Auf den Teller halten',

@@ -74,15 +74,10 @@
     if (target.id) history.replaceState(null, '', id);
   });
 
-  // ---------- the bar steps aside while you read, and comes back ----------
-  var bar = $('#bar'), lastY = scrollY, darks = $$('.how, .foot');
+  // ---------- the bar stays; over the dark sections it turns night ----------
+  var bar = $('#bar'), darks = $$('.how, .foot');
   var tone = function () { bar.classList.toggle('on-night', darks.some(function (d) { var r = d.getBoundingClientRect(); return r.top < 44 && r.bottom > 44; })); };
   addEventListener('scroll', frame(tone), { passive: true });
-  addEventListener('scroll', frame(function () {
-    var y = scrollY, down = y > lastY;
-    bar.classList.toggle('is-hidden', down && y > 700 && !bar.contains(document.activeElement));
-    lastY = y;
-  }), { passive: true });
 
   // ---------- the map ----------
   var map = $('#map'), plate = $('#plate'), img = $('#plate-img'), source = $('#plate picture source'), topo = $('#topo'), spots = $('#spots');
@@ -284,25 +279,51 @@
     img.width = MEALS[m].w; img.height = MEALS[m].h;
   }
 
-  var switching = false;
-  function choose(m) {
-    if (m === current || switching) return;
-    switching = true;
-    $$('.meal').forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.meal === m)); });
-    plate.classList.add('is-leaving'); map.classList.add('is-switching'); $('#legend').classList.add('is-switching');
-    hotLock = -1; setHot(-1);
-    setTimeout(function () {
-      current = m;
-      map.style.setProperty('--ground', MEALS[m].ground);
-      setPhoto(m);
-      var done = function () {
-        buildSpots(); place(); drawTopo(true); rows(); scale(); readout(true);
-        requestAnimationFrame(function () { plate.classList.remove('is-leaving'); map.classList.remove('is-switching'); $('#legend').classList.remove('is-switching'); switching = false; });
-      };
-      (img.decode ? img.decode() : Promise.resolve()).then(done, done);
-    }, reduce.matches ? 0 : 320);
+  // Each plate, fetched and decoded under the same names the page will use
+  // (the AVIF one, where the browser takes it), so a switch never meets a hole.
+  var ready = {};
+  function warm(m) {
+    if (ready[m]) return ready[m];
+    var pic = document.createElement('picture'), src = document.createElement('source'), im = new Image();
+    src.type = 'image/avif'; src.sizes = img.sizes; src.srcset = srcset(m, 'avif');
+    im.sizes = img.sizes; im.srcset = srcset(m, 'webp');
+    pic.appendChild(src); pic.appendChild(im);
+    return (ready[m] = (im.decode ? im.decode() : Promise.resolve()).catch(function () {}));
   }
-  $$('.meal').forEach(function (b) { b.addEventListener('click', function () { choose(b.dataset.meal); }); });
+  var switching = false, wanted = null;
+  var mark = function (m) { $$('.meal').forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.meal === m)); }); };
+  function choose(m) {
+    // A click during a switch is not lost: the last one wins when this one lands.
+    if (switching) { wanted = m; mark(m); return; }
+    if (m === current) return;
+    switching = true; wanted = null; mark(m);
+    // The old plate stays until the new one is ready (never longer than 2.5 s).
+    map.classList.add('is-fetching');
+    Promise.race([warm(m), new Promise(function (r) { setTimeout(r, 2500); })]).then(function () {
+      map.classList.remove('is-fetching');
+      plate.classList.add('is-leaving'); map.classList.add('is-switching'); $('#legend').classList.add('is-switching');
+      hotLock = -1; setHot(-1);
+      setTimeout(function () {
+        current = m;
+        map.style.setProperty('--ground', MEALS[m].ground);
+        setPhoto(m);
+        var done = function () {
+          buildSpots(); place(); drawTopo(true); rows(); scale(); readout(true);
+          requestAnimationFrame(function () {
+            plate.classList.remove('is-leaving'); map.classList.remove('is-switching'); $('#legend').classList.remove('is-switching');
+            switching = false;
+            var w = wanted; wanted = null;
+            if (w && w !== current) choose(w); else mark(current);
+          });
+        };
+        (img.decode ? img.decode() : Promise.resolve()).then(done, done);
+      }, reduce.matches ? 0 : 320);
+    });
+  }
+  $$('.meal').forEach(function (b) {
+    b.addEventListener('click', function () { choose(b.dataset.meal); });
+    ['pointerenter', 'focus', 'touchstart'].forEach(function (ev) { b.addEventListener(ev, function () { warm(b.dataset.meal); }, { passive: true }); });
+  });
 
   // ---------- every part ----------
   function rows() {
@@ -490,7 +511,7 @@
     var Yk = function (k) { return base - k / max * (base - 24); }, slot = BW / 7;
     var rs = svgEl('svg', { viewBox: '0 0 ' + BW + ' ' + BH, class: 'range' }, bars);
     svgEl('rect', { x: 0, y: 0, width: BW, height: Yk(DAY.goal) }, svgEl('clipPath', { id: 'pk-cut' }, rs));
-    var start = new Date(DAY.weekStart + 'T12:00:00'), wd = new Intl.DateTimeFormat(lang(), { weekday: 'short' });
+    var start = new Date(DAY.weekStart + 'T12:00:00'), wd = new Intl.DateTimeFormat(lang(), { weekday: 'short' }), days = [], peaks = [];
     svgEl('line', { class: 'range-goal', x1: 0, x2: BW, y1: Yk(DAY.goal), y2: Yk(DAY.goal) }, rs);
     DAY.week.forEach(function (k, i) {
       var d = new Date(start); d.setDate(d.getDate() + i);
@@ -505,10 +526,12 @@
       var sh = svgEl('text', { class: 'pk-h' + (k > DAY.goal ? ' is-over' : ''), x: cx, y: ly, 'text-anchor': 'middle' }, g);
       sh.textContent = k > DAY.goal ? '+' + (k - DAY.goal) : k;
       var tt = svgEl('title', {}, g); tt.textContent = fill(T('trend.bar'), { day: wd.format(d), kcal: k });
+      days.push(d); peaks.push(g);
     });
     svgEl('line', { class: 'range-base', x1: 0, x2: BW, y1: base, y2: base }, rs);
     var avg = Math.round(DAY.week.reduce(function (a, b) { return a + b; }, 0) / DAY.week.length);
-    $('#t-avg').textContent = avg;
+    $('#t-avg').textContent = avg; $('#t-avg').dataset.v = avg;
+    scrub.week = { svg: rs, peaks: peaks, days: days, avg: avg, long: new Intl.DateTimeFormat(lang(), { weekday: 'long', day: 'numeric', month: 'long' }) };
     // Weight: the dots are the days you stepped on the scale, the line the trend.
     var svg = $('#wline'), W = svg.clientWidth || 500, H = 132; svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H); svg.textContent = '';
     var w = DAY.weights, t0 = Date.parse(w[0][0]), t1 = Date.parse(w[w.length - 1][0]), lo = 78.2, hi = 81.9;
@@ -518,6 +541,10 @@
     svgEl('path', { class: 'wl', pathLength: 1, d: 'M' + sm.map(function (p) { return p[0].toFixed(1) + ' ' + p[1].toFixed(1); }).join('L') }, svg);
     var end = sm[sm.length - 1];
     svgEl('circle', { class: 'wend', cx: end[0], cy: end[1], r: 6 }, svg);
+    var rule = svgEl('line', { class: 'w-rule', x1: 0, x2: 0, y1: 4, y2: H - 22 }, svg), hot = svgEl('circle', { class: 'w-hot', cx: 0, cy: 0, r: 5.5 }, svg);
+    scrub.kg = { svg: svg, W: W, rule: rule, dot: hot, end: parseFloat($('#t-kg').dataset.base || $('#t-kg').textContent), date: new Intl.DateTimeFormat(lang(), { day: 'numeric', month: 'long' }),
+      pts: w.map(function (p) { return { x: X(p[0]), y: Y(p[1]), v: p[1], t: new Date(p[0] + 'T12:00:00') }; }) };
+    $('#t-kg').dataset.base = scrub.kg.end;
     var mf = new Intl.DateTimeFormat(lang(), { month: 'short' });
     ['2026-09-01', '2026-10-01'].forEach(function (d) { var t = svgEl('text', { x: X(d), y: H - 2 }, svg); t.textContent = mf.format(new Date(d + 'T12:00:00')); });
   }
@@ -549,12 +576,140 @@
     zero.style.setProperty('--fz', (62 + 63 * ease(p)).toFixed(1) + '%');
   }), { passive: true });
 
+  // ---------- the terrain answers the pointer ----------
+  // €0 sits in a basin of contour lines. A pointer (or a finger) raises a summit
+  // in it: the lines gather toward it and a spot height names it. Left alone,
+  // the basin slowly breathes.
+  var basin = (function () {
+    var VB = { w: 800, h: 600 }, N = 9, K = 110, S = 150;
+    var wrap = el('div', 'basin-wrap', zero), zeroW = zero.parentNode;
+    var svg = svgEl('svg', { class: 'basin', viewBox: '0 0 ' + VB.w + ' ' + VB.h, 'aria-hidden': 'true' }, wrap);
+    var rings = [];
+    for (var i = 0; i < N; i++) {
+      var r = 52 + i * 43, a = .035 + i * .004, pts = [];
+      for (var k = 0; k < K; k++) {
+        var th = k / K * Math.PI * 2, f = 1 + a * Math.sin(2 * th + i * 1.3) + .03 * Math.sin(3 * th + i * .7) + .018 * Math.sin(5 * th + i * 2.1);
+        pts.push([400 + r * f * Math.cos(th), 300 + r * .74 * f * Math.sin(th)]);
+      }
+      var idx = i % 4 === 3;
+      rings.push({ pts: pts, base: idx ? .16 : .08, el: svgEl('path', { class: 'ring' }, svg) });
+    }
+    var flag = el('span', 'basin-flag', wrap);
+    var cur = { x: 400, y: 300 }, tgt = { x: 400, y: 300 }, live = .3, liveT = .3, shown = 0, active = false, on = false, raf = 0, t0 = performance.now(), touchOff = 0;
+    function draw() {
+      rings.forEach(function (R) {
+        var d = '';
+        for (var k = 0; k < K; k++) {
+          var p = R.pts[k], dx = cur.x - p[0], dy = cur.y - p[1], m = live * .62 * Math.exp(-(dx * dx + dy * dy) / (2 * S * S));
+          d += (k ? 'L' : 'M') + (p[0] + dx * m).toFixed(1) + ' ' + (p[1] + dy * m).toFixed(1);
+        }
+        R.el.setAttribute('d', d + 'Z');
+        R.el.style.strokeOpacity = (R.base * (1 + live * 1.8)).toFixed(3);
+      });
+      flag.style.left = (cur.x / VB.w * 100).toFixed(2) + '%'; flag.style.top = (cur.y / VB.h * 100).toFixed(2) + '%';
+      flag.style.opacity = shown.toFixed(2);
+    }
+    function loop(now) {
+      raf = on ? requestAnimationFrame(loop) : 0;
+      if (!active) { var t = (now - t0) / 1000; tgt.x = 400 + Math.sin(t * .45) * 170; tgt.y = 300 + Math.sin(t * .31 + 1) * 80; }
+      cur.x += (tgt.x - cur.x) * .12; cur.y += (tgt.y - cur.y) * .12;
+      live += (liveT - live) * .08; shown += ((active ? 1 : 0) - shown) * .12;
+      draw();
+    }
+    function label() { flag.textContent = T('free.flag'); }
+    function aim(e) { var r = svg.getBoundingClientRect(); tgt.x = (e.clientX - r.left) / r.width * VB.w; tgt.y = (e.clientY - r.top) / r.height * VB.h; }
+    if (reduce.matches) { live = 0; draw(); flag.style.opacity = 0; }
+    else {
+      zeroW.addEventListener('pointermove', function (e) { clearTimeout(touchOff); active = true; liveT = 1; aim(e); });
+      zeroW.addEventListener('pointerdown', function (e) { clearTimeout(touchOff); active = true; liveT = 1; aim(e); });
+      zeroW.addEventListener('pointerleave', function (e) { if (e.pointerType === 'mouse') { active = false; liveT = .3; } });
+      var release = function (e) { if (e.pointerType === 'mouse') return; touchOff = setTimeout(function () { active = false; liveT = .3; }, 1400); };
+      zeroW.addEventListener('pointerup', release); zeroW.addEventListener('pointercancel', release);
+      if ('IntersectionObserver' in window) new IntersectionObserver(function (es) {
+        on = es[0].isIntersecting; if (on && !raf) raf = requestAnimationFrame(loop);
+      }).observe(freeSec);
+      else { on = true; raf = requestAnimationFrame(loop); }
+      draw();
+    }
+    zero.classList.add('has-basin');
+    label();
+    return { label: label };
+  })();
+
+  // The footer's contours and wordmark light up where the pointer is.
+  var foot = $('.foot'), markW = $('#foot-mark'), litMark = null, footOff = 0;
+  (function () {
+    var mark = $('.foot-mark', markW);
+    litMark = mark.cloneNode(true); litMark.removeAttribute('role'); litMark.removeAttribute('aria-label'); litMark.setAttribute('aria-hidden', 'true'); litMark.classList.add('is-lit');
+    markW.appendChild(litMark);
+    if (reduce.matches) return;
+    var at = function (e) {
+      clearTimeout(footOff);
+      var f = foot.getBoundingClientRect(), m = markW.getBoundingClientRect();
+      foot.style.setProperty('--mx', (e.clientX - f.left).toFixed(0) + 'px'); foot.style.setProperty('--my', (e.clientY - f.top).toFixed(0) + 'px');
+      markW.style.setProperty('--mx', (e.clientX - m.left).toFixed(0) + 'px'); markW.style.setProperty('--my', (e.clientY - m.top).toFixed(0) + 'px');
+      foot.style.setProperty('--lit', 1);
+    };
+    var off = function (e) { if (e && e.pointerType && e.pointerType !== 'mouse') footOff = setTimeout(function () { foot.style.setProperty('--lit', 0); }, 1400); else foot.style.setProperty('--lit', 0); };
+    foot.addEventListener('pointermove', at); foot.addEventListener('pointerdown', at);
+    foot.addEventListener('pointerleave', off); foot.addEventListener('pointerup', off); foot.addEventListener('pointercancel', off);
+  })();
+
+  // The week and the weight can be scrubbed: the big number follows the pointer
+  // (or a finger dragged sideways) to that day, and goes back when it leaves.
+  function tween(el, to, dec) {
+    cancelAnimationFrame(el._raf);
+    var from = parseFloat(el.dataset.v == null ? el.textContent : el.dataset.v), show = function (v) { el.textContent = dec ? v.toFixed(dec) : String(Math.round(v)); };
+    el.dataset.v = to;
+    if (reduce.matches || isNaN(from) || from === to) { show(to); return; }
+    var t0 = performance.now();
+    (function step(now) { var t = clamp((now - t0) / 380, 0, 1); show(from + (to - from) * ease(t)); if (t < 1) el._raf = requestAnimationFrame(step); })(t0);
+  }
+  var scrub = { week: null, kg: null };
+  function scrubWeek(e) {
+    var w = scrub.week; if (!w) return;
+    var r = w.svg.getBoundingClientRect(), i = clamp(Math.floor((e.clientX - r.left) / r.width * 7), 0, 6), k = DAY.week[i], diff = k - DAY.goal;
+    w.peaks.forEach(function (g, j) { g.classList.toggle('is-hot', j === i); });
+    w.svg.classList.add('is-reading');
+    tween($('#t-avg'), k);
+    $('#t-avg-cap').textContent = fill(T(diff > 0 ? 'trend.over' : 'trend.under'), { day: w.long.format(w.days[i]), n: Math.abs(diff) });
+  }
+  function unscrubWeek() {
+    var w = scrub.week; if (!w) return;
+    w.peaks.forEach(function (g) { g.classList.remove('is-hot'); }); w.svg.classList.remove('is-reading');
+    tween($('#t-avg'), w.avg); $('#t-avg-cap').textContent = T('trend.avg');
+  }
+  function scrubKg(e) {
+    var w = scrub.kg; if (!w) return;
+    var r = w.svg.getBoundingClientRect(), x = (e.clientX - r.left) / r.width * w.W, best = 0;
+    w.pts.forEach(function (p, i) { if (Math.abs(p.x - x) < Math.abs(w.pts[best].x - x)) best = i; });
+    var p = w.pts[best];
+    w.rule.setAttribute('x1', p.x); w.rule.setAttribute('x2', p.x); w.dot.setAttribute('cx', p.x); w.dot.setAttribute('cy', p.y);
+    w.svg.classList.add('is-reading');
+    tween($('#t-kg'), p.v, 1);
+    $('#t-kg-cap').textContent = fill(T('trend.w'), { date: w.date.format(p.t) });
+  }
+  function unscrubKg() {
+    var w = scrub.kg; if (!w) return;
+    w.svg.classList.remove('is-reading');
+    tween($('#t-kg'), w.end, 1); $('#t-kg-cap').textContent = T('trend.kg');
+  }
+  [['#bars', scrubWeek, unscrubWeek], ['#wline', scrubKg, unscrubKg]].forEach(function (c) {
+    var host = $(c[0]);
+    host.addEventListener('pointermove', c[1]); host.addEventListener('pointerdown', c[1]);
+    ['pointerleave', 'pointerup', 'pointercancel'].forEach(function (ev) { host.addEventListener(ev, c[2]); });
+  });
+
   // The footer: the lunch plate's terrain, quietly, under the wordmark.
   function footTopo() {
     var svg = $('#foot-topo'), m = MEALS.lunch, mp = m.en.map;
     svg.setAttribute('viewBox', '0 0 1000 ' + m.vh);
     svg.textContent = '';
     mp.paths.forEach(function (p) { svgEl('path', { d: p[2] }, svg); });
+    // A second, brighter copy shows only under the pointer.
+    var old = $('#foot-topo-lit'); if (old) old.remove();
+    var litTopo = svg.cloneNode(true); litTopo.id = 'foot-topo-lit'; litTopo.classList.add('is-lit');
+    svg.parentNode.insertBefore(litTopo, svg.nextSibling);
   }
 
   // Buttons lean toward the pointer a little.
@@ -621,14 +776,12 @@
       setTimeout(function () { root.classList.remove('intro', 'go'); map.style.removeProperty('--t0'); }, 3400);
     } else $('.hero h1').classList.add('is-in');
     // The other two plates, ready before anyone asks for them.
-    setTimeout(function () {
-      ['breakfast', 'dinner'].forEach(function (m) { var i = new Image(); i.sizes = img.sizes; i.srcset = srcset(m, 'webp'); });
-    }, 2500);
+    setTimeout(function () { warm('breakfast').then(function () { warm('dinner'); }); }, 1200);
   }
   Promise.all([img.decode ? img.decode().catch(function () {}) : 0, document.fonts ? document.fonts.ready : 0]).then(start, start);
   setTimeout(start, 2500);
   var resized = frame(function () { $$('.split').forEach(fit); if (!started) return; place(); drawTopo(false); drawClimb(); drawTrend(); });
   addEventListener('resize', resized);
   narrow.addEventListener && narrow.addEventListener('change', resized);
-  document.addEventListener('kalorat:lang', function () { $$('.split').forEach(split); if (!started) return; hotLock = -1; all(false); img.alt = T('meal.' + current + '.alt'); });
+  document.addEventListener('kalorat:lang', function () { $$('.split').forEach(split); if (!started) return; basin.label(); hotLock = -1; all(false); img.alt = T('meal.' + current + '.alt'); });
 })();

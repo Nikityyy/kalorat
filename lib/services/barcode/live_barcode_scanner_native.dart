@@ -6,6 +6,7 @@ import 'package:camera/camera.dart';
 import 'package:flutter/foundation.dart';
 import 'package:google_mlkit_barcode_scanning/google_mlkit_barcode_scanning.dart';
 
+import '../../utils/frame_luma.dart';
 import 'frame_jpeg.dart';
 import 'live_barcode_scanner.dart';
 
@@ -59,8 +60,46 @@ class _MlKitBarcodeScanner implements LiveBarcodeScanner {
     }
   }
 
+  final ValueNotifier<double?> _backdrop = ValueNotifier<double?>(null);
+  Rect? _backdropRegion;
+  double _backdropAspect = 0;
+  DateTime _lastBackdrop = DateTime.fromMillisecondsSinceEpoch(0);
+
+  @override
+  ValueListenable<double?> get backdrop => _backdrop;
+
+  @override
+  void setBackdrop(Rect region, double viewAspect) {
+    _backdropRegion = region;
+    _backdropAspect = viewAspect;
+  }
+
+  /// Measured on its own beat, whether or not a decode is running.
+  void _measureBackdrop(CameraImage image, DateTime now) {
+    final region = _backdropRegion;
+    if (region == null ||
+        image.planes.length != 1 ||
+        now.difference(_lastBackdrop).inMilliseconds < 250) {
+      return;
+    }
+    _lastBackdrop = now;
+    final bgra = Platform.isIOS;
+    final plane = image.planes.first;
+    _backdrop.value = frameLuma(
+      bytes: plane.bytes,
+      width: image.width,
+      height: image.height,
+      bytesPerRow: plane.bytesPerRow,
+      bgra: bgra,
+      rotation: _uprightRotation(image),
+      region: region,
+      viewAspect: _backdropAspect,
+    );
+  }
+
   void _onFrame(CameraImage image) {
     final now = DateTime.now();
+    _measureBackdrop(image, now);
     if (_busy || now.difference(_lastFrame) < _minInterval) return;
     final input = _inputImage(image);
     if (input == null) return;
@@ -223,6 +262,7 @@ class _MlKitBarcodeScanner implements LiveBarcodeScanner {
     _controller = null;
     _onCode = null;
     _hitFrame = null;
+    _backdrop.value = null;
     if (controller == null) return;
     try {
       if (controller.value.isInitialized &&
@@ -239,5 +279,6 @@ class _MlKitBarcodeScanner implements LiveBarcodeScanner {
     await stop();
     await _scanner?.close();
     _scanner = null;
+    _backdrop.dispose();
   }
 }
