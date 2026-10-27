@@ -22,6 +22,7 @@
 // { text, format, box, aspect } or null.
 // .takeFrame() resolves to a JPEG (Uint8Array) of the camera picture in which
 // the last code was read, or null.
+// .hold(true) stops the preview on that picture; .hold(false) plays it again.
 (function () {
   'use strict';
   var MAX_EDGE = 960;
@@ -189,9 +190,9 @@
   // Copies the preview as it is right now, a frame or two after the one the
   // worker read, before Dart hears of the code. A code held in view is
   // copied again only every second.
-  function keepHitFrame(text) {
+  function keepHitFrame(text, force) {
     var now = Date.now();
-    if (text === hitText && hitCanvas && now - hitAt < 1000) return;
+    if (!force && text === hitText && hitCanvas && now - hitAt < 1000) return;
     var video = findVideo();
     if (!video) return;
     try {
@@ -208,6 +209,26 @@
       hitAt = now;
     } catch (_) {
       hitText = null;
+    }
+  }
+
+  // Stops the preview on the picture it shows, or lets it play again. The
+  // picture is copied again first: the copy kept for a code seen a moment
+  // ago can show it elsewhere. Copy and pause run in one task, so the held
+  // picture is the one takeFrame returns and the code is found in it exactly.
+  var held = null;
+  function hold(on) {
+    if (on) {
+      var video = findVideo();
+      if (hitText) keepHitFrame(hitText, true);
+      if (video && !video.paused) {
+        video.pause();
+        held = video;
+      }
+    } else if (held) {
+      var v = held;
+      held = null;
+      if (v.isConnected && v.paused) v.play().catch(function () {});
     }
   }
 
@@ -421,9 +442,13 @@
           : null;
     },
     takeFrame: takeFrame,
+    hold: hold,
     decodeImage: decodeImage,
     stop: function () {
       running = false;
+      // The camera is paused or stopped with the scanner; it plays again
+      // through the camera, not from here.
+      held = null;
       onCode = null;
       hitText = null;
       if (timer) clearTimeout(timer);

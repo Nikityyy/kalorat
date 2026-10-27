@@ -100,4 +100,32 @@ void main() {
       expect(ids, isEmpty);
     });
   });
+
+  group('times from the cloud', () {
+    test('a meal time comes back as the clock time it was sent as', () {
+      // Sent as "2026-10-25T21:36:00.000"; a column with zones answers in UTC.
+      for (final answer in [
+        '2026-10-25T21:36:00',
+        '2026-10-25T21:36:00+00:00',
+        '2026-10-25T21:36:00Z',
+      ]) {
+        final t = wallClock(DateTime.parse(answer));
+        expect(t.isUtc, isFalse, reason: answer);
+        expect([t.day, t.hour, t.minute], [25, 21, 36], reason: answer);
+      }
+    });
+
+    test('a moment is UTC with or without a zone in the answer', () {
+      final sent = DateTime.utc(2026, 10, 25, 20, 36);
+      for (final answer in [
+        '2026-10-25T20:36:00',
+        '2026-10-25T20:36:00+00:00',
+        sent.toIso8601String(),
+      ]) {
+        expect(tryParseInstant(answer), sent, reason: answer);
+      }
+      expect(tryParseInstant(null), isNull);
+      expect(tryParseInstant('not a date'), isNull);
+    });
+  });
 }

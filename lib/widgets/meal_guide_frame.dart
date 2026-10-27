@@ -171,8 +171,8 @@ class MealGuideOverlay extends StatelessWidget {
             clipBehavior: Clip.none,
             alignment: Alignment.topCenter,
             children: [
-              // The corners follow the code while it moves and spring back
-              // to the guide when it is gone.
+              // The corners close around the code on the held preview and
+              // spring back to the guide when it is gone.
               TweenAnimationBuilder<double>(
                 tween: Tween(end: lock == null ? 0 : 1),
                 duration: const Duration(milliseconds: 220),

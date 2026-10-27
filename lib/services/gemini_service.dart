@@ -3,12 +3,12 @@ import 'dart:convert';
 import 'dart:math' as math;
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
-import 'package:image/image.dart' as img;
 import '../utils/analysis_parser.dart';
 import '../utils/app_logger.dart';
 import '../utils/nutrition_units.dart';
 import '../utils/photo_downscale.dart';
 import 'gemini_stream_client.dart';
+import 'image_prepare.dart';
 import 'nutrition_reference.dart';
 import 'photo_store.dart';
 
@@ -16,38 +16,6 @@ import 'photo_store.dart';
 /// and small items such as a glaze or a drizzle of oil; a 1536 px JPEG is
 /// still only a few hundred KB.
 const int _analysisMaxDimension = 1536;
-
-/// Decode, resize and recompress an image off the UI isolate.
-Map<String, String> _prepareImageInIsolate(Map<String, dynamic> input) {
-  final bytes = Uint8List.fromList((input['bytes'] as List).cast<int>());
-  final decoded = img.decodeImage(bytes);
-  final sourceMimeType = input['mimeType']?.toString() ?? 'image/jpeg';
-  if (decoded == null) {
-    return {'data': base64Encode(bytes), 'mimeType': sourceMimeType};
-  }
-
-  final maxDimension = input['maxDimension'] as int;
-  final longest = decoded.width > decoded.height
-      ? decoded.width
-      : decoded.height;
-  final resized = longest > maxDimension
-      ? img.copyResize(
-          decoded,
-          width: decoded.width >= decoded.height
-              ? maxDimension
-              : (decoded.width * maxDimension / decoded.height).round(),
-          height: decoded.height > decoded.width
-              ? maxDimension
-              : (decoded.height * maxDimension / decoded.width).round(),
-          interpolation: img.Interpolation.average,
-        )
-      : decoded;
-
-  return {
-    'data': base64Encode(img.encodeJpg(resized, quality: 82)),
-    'mimeType': 'image/jpeg',
-  };
-}
 
 String _mimeTypeForPath(String path) {
   final lower = path.toLowerCase();
@@ -548,7 +516,7 @@ class GeminiService {
           final prepared = browserJpeg != null
               ? {'data': base64Encode(browserJpeg), 'mimeType': 'image/jpeg'}
               : await compute<Map<String, dynamic>, Map<String, String>>(
-                  _prepareImageInIsolate,
+                  prepareImageInIsolate,
                   {
                     'bytes': bytes,
                     'maxDimension': _analysisMaxDimension,

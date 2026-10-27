@@ -212,6 +212,17 @@ class AppLocalizationsDe extends AppLocalizations {
   String get weightReminders => 'Gewichts-Erinnerungen';
 
   @override
+  String get appBadge => 'Zähler am App-Symbol';
+
+  @override
+  String get appBadgeHint =>
+      'Zeigt, wie viele Mahlzeiten noch auf ihre Analyse warten.';
+
+  @override
+  String get appBadgeDenied =>
+      'Erlaube Mitteilungen für Kalorat in den Einstellungen deines Geräts, dann zeigt das App-Symbol den Zähler.';
+
+  @override
   String get grantPermission => 'Berechtigung erteilen';
 
   @override
@@ -569,7 +580,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get rateLimitMeals =>
-      'Maximum erreicht. Limit von 15 Mahlzeiten pro Tag.';
+      'Heute sind schon 15 Mahlzeiten erfasst, das Tageslimit. Fasse kleine Snacks zu einer Mahlzeit zusammen.';
 
   @override
   String get rateLimitPhotos =>
@@ -580,9 +591,6 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get privacyPolicy => 'Datenschutzerklärung';
-
-  @override
-  String get featureOnlyInApp => 'Nur in der App';
 
   @override
   String get activityLevel => 'Aktivitätslevel';
@@ -668,7 +676,11 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get mealSavedBackground =>
-      'Gespeichert. Die Analyse läuft weiter, sobald Kalorat geöffnet und online ist.';
+      'Gespeichert. Die Analyse startet, sobald du online bist.';
+
+  @override
+  String get mealAnalysingBackground =>
+      'Wird analysiert. Das Ergebnis erscheint gleich unter Heute.';
 
   @override
   String get saveToGallery => 'Foto speichern';
@@ -815,6 +827,24 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get quickLogHint =>
       'Beschreibe, was du gegessen hast, z. B. zwei Scheiben Toast mit Butter';
+
+  @override
+  String get offSearch => 'In Open Food Facts suchen';
+
+  @override
+  String get offSearchResults => 'Open Food Facts';
+
+  @override
+  String get offSearchNone =>
+      'Keine Produkte mit Nährwerten gefunden. Versuch es mit Marke und Produktname.';
+
+  @override
+  String get offSearchFailed => 'Die Suche hat nicht geklappt. Bist du online?';
+
+  @override
+  String offPer100Ml(int kcal) {
+    return '$kcal kcal pro 100 ml';
+  }
 
   @override
   String get quickLogRecent => 'Nochmal essen';
@@ -1071,6 +1101,28 @@ class AppLocalizationsDe extends AppLocalizations {
   String get backupShareText => 'Kalorat-Backup';
 
   @override
+  String get backupFailed =>
+      'Das Backup konnte nicht erstellt werden. Versuch es noch einmal.';
+
+  @override
+  String get backupReminderTitle => 'Zeit für ein Backup';
+
+  @override
+  String get backupReminderNever =>
+      'Deine Mahlzeiten liegen nur auf diesem Gerät und wurden noch nie gesichert. Ein Backup ist eine Datei, die du in Dateien oder iCloud ablegen kannst.';
+
+  @override
+  String backupReminderLast(int days) {
+    return 'Deine Mahlzeiten liegen nur auf diesem Gerät. Letztes Backup vor $days Tagen.';
+  }
+
+  @override
+  String get backupReminderAction => 'Jetzt sichern';
+
+  @override
+  String get backupReminderLater => 'Später';
+
+  @override
   String get reportShareText => 'Kalorat-Markdown-Bericht';
 
   @override
@@ -1261,6 +1313,11 @@ class AppLocalizationsDe extends AppLocalizations {
       one: '1 Mahlzeit',
     );
     return '$_temp0';
+  }
+
+  @override
+  String mealsCountOfLimit(int count, int limit) {
+    return '$count von $limit Mahlzeiten';
   }
 
   @override

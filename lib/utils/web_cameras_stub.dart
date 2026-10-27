@@ -15,3 +15,12 @@ Future<Uint8List?> previewSnapshot() async => null;
 Future<void> previewNextFrame({
   Duration timeout = const Duration(milliseconds: 1500),
 }) async {}
+
+/// Native previews are mirrored for the front camera only.
+bool? previewMirrored() => null;
+
+/// Native builds switch the torch through the camera plugin: null tells
+/// the camera screen to use it.
+bool? previewTorchAvailable() => null;
+
+Future<bool?> setPreviewTorch(bool on) async => null;

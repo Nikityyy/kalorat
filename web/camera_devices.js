@@ -227,3 +227,90 @@ window.kaloratPreviewNextFrame = function (timeoutMs) {
     })();
   });
 };
+
+// Whether the camera plugin shows the preview mirrored, or null without a
+// preview. It mirrors every camera its track does not report as facing
+// back, a laptop's webcam too, not only the front camera.
+window.kaloratPreviewMirrored = function () {
+  var video = kaloratPreviewVideo(false);
+  return video ? video.style.transform.indexOf('scaleX(-1)') !== -1 : null;
+};
+
+// A JPEG of the frame the playing preview shows now, at most [maxDimension]
+// px on its longest side, or null. The camera plugin's takePicture encodes
+// the whole camera frame, which then had to be decoded and encoded again at
+// the stored size; this encodes once, at that size. [mirrored] flips it as
+// the preview shows it, like the plugin's own pictures.
+window.kaloratCapturePreview = function (maxDimension, quality, mirrored) {
+  var video = kaloratPreviewVideo(true);
+  if (!video) return Promise.resolve(null);
+  try {
+    var scale = Math.min(1, maxDimension / Math.max(video.videoWidth, video.videoHeight));
+    var canvas = document.createElement('canvas');
+    canvas.width = Math.round(video.videoWidth * scale);
+    canvas.height = Math.round(video.videoHeight * scale);
+    var ctx = canvas.getContext('2d', { alpha: false });
+    if (mirrored) {
+      ctx.translate(canvas.width, 0);
+      ctx.scale(-1, 1);
+    }
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    return new Promise(function (resolve) {
+      canvas.toBlob(resolve, 'image/jpeg', quality);
+    }).then(function (blob) {
+      return blob ? blob.arrayBuffer().then(function (b) { return new Uint8Array(b); }) : null;
+    }).catch(function () {
+      return null;
+    });
+  } catch (_) {
+    return Promise.resolve(null);
+  }
+};
+
+// The torch of the playing preview's camera. The camera plugin reads the
+// torch capability as a list ([true, false]); Safari reports a boolean, so
+// the plugin turned it down on every iPhone. Both forms are read here.
+function kaloratPreviewTrack() {
+  var video = kaloratPreviewVideo(false);
+  var stream = video && video.srcObject;
+  var tracks = stream && stream.getVideoTracks ? stream.getVideoTracks() : [];
+  return tracks.length ? tracks[0] : null;
+}
+
+// Whether the preview's camera has a torch; null without a preview.
+window.kaloratTorchAvailable = function () {
+  var track = kaloratPreviewTrack();
+  if (!track) return null;
+  try {
+    var torch = track.getCapabilities ? track.getCapabilities().torch : undefined;
+    return torch === true || (Array.isArray(torch) && torch.indexOf(true) !== -1);
+  } catch (_) {
+    return false;
+  }
+};
+
+// Turns the torch on or off; resolves to whether the camera reports it so
+// afterwards.
+window.kaloratSetTorch = function (on) {
+  var track = kaloratPreviewTrack();
+  if (!track || !track.applyConstraints) return Promise.resolve(false);
+  function confirmed() {
+    try {
+      var settings = track.getSettings ? track.getSettings() : {};
+      // A browser that does not report the torch in its settings is
+      // trusted once the constraint was accepted.
+      return settings.torch === undefined || settings.torch === on;
+    } catch (_) {
+      return true;
+    }
+  }
+  function apply(constraints) {
+    return track.applyConstraints(constraints).then(confirmed, function () {
+      return false;
+    });
+  }
+  // The advanced form first, as the spec has it; then the plain one.
+  return apply({ advanced: [{ torch: on }] }).then(function (ok) {
+    return ok || apply({ torch: on });
+  });
+};

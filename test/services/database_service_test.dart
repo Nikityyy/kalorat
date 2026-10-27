@@ -133,6 +133,49 @@ void main() {
     expect(mealsByRangeOn18th.map((m) => m.id), contains('late_night'));
   });
 
+  // The day summer time ends has 25 hours; in a time zone with summer time
+  // (e.g. TZ=Europe/Berlin) stepping 24 hours from its midnight stayed on it
+  // and listed its meals twice. Elsewhere this covers the plain case.
+  test('lists each meal once on the day summer time ends', () async {
+    for (final hour in [0, 4]) {
+      await database.setDayStartHour(hour);
+      await database.saveMeal(
+        MealModel(
+          id: 'beer',
+          timestamp: DateTime(2026, 10, 25, 21, 36),
+          photoPaths: const [],
+          mealName: 'Beer',
+          calories: 194,
+        ),
+      );
+      await database.saveMeal(
+        MealModel(
+          id: 'late',
+          timestamp: DateTime(2026, 10, 25, 23, 30),
+          photoPaths: const [],
+          mealName: 'Late snack',
+          calories: 100,
+        ),
+      );
+
+      final day = database.getMealsByDateRange(
+        DateTime(2026, 10, 25, hour),
+        DateTime(2026, 10, 26, hour),
+      );
+      expect(day.map((m) => m.id), ['late', 'beer'], reason: 'day start $hour');
+
+      final week = database.getMealsByDateRange(
+        DateTime(2026, 10, 20, hour),
+        DateTime(2026, 10, 27, hour),
+      );
+      expect(
+        week.map((m) => m.id),
+        ['late', 'beer'],
+        reason: 'day start $hour',
+      );
+    }
+  });
+
   test('onboarding steps saved before the redesign map to the same screen', () {
     int migrate(int step, bool web) =>
         DatabaseService.migrateLegacyOnboardingStep(step, isWeb: web);

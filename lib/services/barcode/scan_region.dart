@@ -58,8 +58,10 @@ bool codeInGuide({
 
 /// The box drawn around a code found at [onScreen]: a 1D code's bounds can
 /// be its scan line only, so the box gets at least the shape of a barcode,
-/// a little room around it, and never leaves [guide] by much.
-Rect lockBox(Rect onScreen, Rect guide) {
+/// a little room around it, and never leaves [limit] (the preview) by much.
+/// The preview holds still on the code, so a code reaching past the guide
+/// gets its whole box; cut to the guide it covered half the code.
+Rect lockBox(Rect onScreen, Rect limit) {
   final long = math.max(onScreen.width, onScreen.height);
   final minShort = long * 0.7;
   var box = onScreen;
@@ -77,8 +79,8 @@ Rect lockBox(Rect onScreen, Rect guide) {
     );
   }
   box = box.inflate(math.max(10, long * 0.08));
-  final limit = guide.inflate(12);
-  return box.intersect(limit).isEmpty ? guide : box.intersect(limit);
+  final bounds = limit.inflate(12);
+  return box.intersect(bounds).isEmpty ? limit : box.intersect(bounds);
 }
 
 /// How much longer the lock on a found product stays before it opens.

@@ -168,6 +168,7 @@ class _ProgressScreenState extends State<ProgressScreen>
                 padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
                 child: SegmentedTabs(
                   labels: [l10n.week, l10n.month, l10n.year],
+                  semanticContext: l10n.calories,
                   selected: _period.index,
                   onChanged: (i) => setState(() {
                     _period = _Period.values[i];

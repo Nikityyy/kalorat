@@ -117,6 +117,73 @@ function corners(result) {
   return p ? [p.topLeft, p.topRight, p.bottomRight, p.bottomLeft] : null;
 }
 
+// zxing gives a 1D code as the line it was read along, which can lie
+// anywhere on the bars, so a box drawn around that line floated above or
+// below the code. Steps away from the line on both sides while the
+// brightness along it still matches (the same bars) and returns the corners
+// of the bars found. Codes already given with a height are left alone.
+function fitBars(points, image) {
+  if (!points) return points;
+  var mid = function (a, b) { return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }; };
+  var start = mid(points[0], points[3]);
+  var end = mid(points[1], points[2]);
+  var dx = end.x - start.x;
+  var dy = end.y - start.y;
+  var length = Math.hypot(dx, dy);
+  var height = Math.hypot(points[3].x - points[0].x, points[3].y - points[0].y);
+  if (length < 20 || height > length * 0.15) return points;
+  var nx = -dy / length;
+  var ny = dx / length;
+  var SAMPLES = 96;
+  var data = image.data;
+  function profile(offset) {
+    var out = new Float32Array(SAMPLES);
+    var mean = 0;
+    for (var i = 0; i < SAMPLES; i++) {
+      var t = i / (SAMPLES - 1);
+      var x = Math.round(start.x + dx * t + nx * offset);
+      var y = Math.round(start.y + dy * t + ny * offset);
+      if (x < 0 || y < 0 || x >= image.width || y >= image.height) return null;
+      var k = (y * image.width + x) * 4;
+      out[i] = data[k] * 0.299 + data[k + 1] * 0.587 + data[k + 2] * 0.114;
+      mean += out[i];
+    }
+    mean /= SAMPLES;
+    var norm = 0;
+    for (var j = 0; j < SAMPLES; j++) {
+      out[j] -= mean;
+      norm += out[j] * out[j];
+    }
+    norm = Math.sqrt(norm);
+    if (norm < 1e-3) return null;
+    for (var m = 0; m < SAMPLES; m++) out[m] /= norm;
+    return out;
+  }
+  var base = profile(0);
+  if (!base) return points;
+  function reach(sign) {
+    var limit = Math.round(length * 0.8);
+    var last = 0;
+    for (var d = 1; d <= limit; d++) {
+      var p = profile(sign * d);
+      if (!p) break;
+      var corr = 0;
+      for (var i = 0; i < SAMPLES; i++) corr += p[i] * base[i];
+      if (corr < 0.6) break;
+      last = d;
+    }
+    return last;
+  }
+  var up = reach(-1);
+  var down = reach(1);
+  return [
+    { x: start.x - nx * up, y: start.y - ny * up },
+    { x: end.x - nx * up, y: end.y - ny * up },
+    { x: end.x + nx * down, y: end.y + ny * down },
+    { x: start.x + nx * down, y: start.y + ny * down },
+  ];
+}
+
 function box(points, image) {
   if (!points) return null;
   var xs = points.map(function (p) { return p.x; });
@@ -164,7 +231,7 @@ async function handle(msg) {
     id: msg.id,
     text: found ? found.text : null,
     format: found ? found.format : null,
-    box: found && image ? box(points, image) : null,
+    box: found && image ? box(fitBars(points, image), image) : null,
     aspect: image ? image.width / image.height : 0,
     ms: Math.round(performance.now() - started),
   });

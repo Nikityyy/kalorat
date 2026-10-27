@@ -22,6 +22,15 @@ external JSPromise<JSUint8Array?> _snapshot();
 @JS('kaloratPreviewNextFrame')
 external JSPromise<JSAny?> _nextFrame(int timeoutMs);
 
+@JS('kaloratPreviewMirrored')
+external bool? _mirrored();
+
+@JS('kaloratTorchAvailable')
+external bool? _torchAvailable();
+
+@JS('kaloratSetTorch')
+external JSPromise<JSBoolean> _setTorch(bool on);
+
 /// The back and front camera, found without the plugin's
 /// `availableCameras()`, which opens every camera of the device one after
 /// the other. Null when they cannot be found this way; then the plugin's
@@ -84,4 +93,34 @@ Future<void> previewNextFrame({
   try {
     await _nextFrame(timeout.inMilliseconds).toDart;
   } catch (_) {}
+}
+
+/// Whether the preview shows the camera mirrored, or null when there is no
+/// preview.
+bool? previewMirrored() {
+  try {
+    return _mirrored();
+  } catch (_) {
+    return null;
+  }
+}
+
+/// Whether the preview's camera has a torch, or null when there is no
+/// preview. The camera plugin's own check turned down every iPhone.
+bool? previewTorchAvailable() {
+  try {
+    return _torchAvailable();
+  } catch (_) {
+    return null;
+  }
+}
+
+/// Turns the preview camera's torch on or off; whether the camera then
+/// reports it so.
+Future<bool?> setPreviewTorch(bool on) async {
+  try {
+    return (await _setTorch(on).toDart).toDart;
+  } catch (_) {
+    return false;
+  }
 }

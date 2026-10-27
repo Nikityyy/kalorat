@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
@@ -9,7 +10,8 @@ import '../theme/app_typography.dart';
 enum AppToastKind { info, success, error }
 
 /// A short message that never blocks: it floats at the top, covers no
-/// controls (pass [top] to keep it clear of a screen's own top buttons),
+/// controls (pass [top] to keep it clear of a screen's own top buttons, or
+/// [bottom] on a screen whose content starts at the very top),
 /// disappears by itself, and goes away on a tap or an upward swipe. Only one
 /// is shown at a time. It lives in the root overlay, so it survives navigation.
 class AppToast {
@@ -26,18 +28,21 @@ class AppToast {
     String? actionLabel,
     VoidCallback? onAction,
     double? top,
+    double? bottom,
   }) {
     final overlay = Overlay.maybeOf(context, rootOverlay: true);
     if (overlay == null || message.trim().isEmpty) return;
     dismiss();
 
     final topOffset = top ?? MediaQuery.paddingOf(context).top + 12;
+    final fromBottom = top == null ? bottom : null;
     late final OverlayEntry entry;
     entry = OverlayEntry(
       builder: (_) => _ToastView(
         message: message,
         kind: kind,
         top: topOffset,
+        bottom: fromBottom,
         actionLabel: actionLabel,
         onAction: onAction,
         onDismiss: () => _remove(entry),
@@ -45,6 +50,16 @@ class AppToast {
     );
     _entry = entry;
     overlay.insert(entry);
+    // VoiceOver reads a live region when its text changes, not when it
+    // appears with its text, so the message is announced instead.
+    final view = View.maybeOf(context);
+    if (view != null) {
+      SemanticsService.sendAnnouncement(
+        view,
+        actionLabel == null ? message : '$message. $actionLabel',
+        Directionality.maybeOf(context) ?? TextDirection.ltr,
+      );
+    }
     _timer = Timer(
       duration ??
           (actionLabel == null
@@ -73,6 +88,10 @@ class _ToastView extends StatefulWidget {
   final String message;
   final AppToastKind kind;
   final double top;
+
+  /// Set: the toast sits this far above the bottom instead, for screens
+  /// whose content starts at the very top.
+  final double? bottom;
   final String? actionLabel;
   final VoidCallback? onAction;
   final VoidCallback onDismiss;
@@ -81,6 +100,7 @@ class _ToastView extends StatefulWidget {
     required this.message,
     required this.kind,
     required this.top,
+    required this.bottom,
     required this.actionLabel,
     required this.onAction,
     required this.onDismiss,
@@ -184,21 +204,26 @@ class _ToastViewState extends State<_ToastView>
       ),
     );
 
+    final atBottom = widget.bottom != null;
     toast = GestureDetector(
       onTap: widget.onDismiss,
+      // Swiped away towards the edge it sits at.
       onVerticalDragEnd: (details) {
-        if ((details.primaryVelocity ?? 0) < 0) widget.onDismiss();
+        final velocity = details.primaryVelocity ?? 0;
+        if (atBottom ? velocity > 0 : velocity < 0) widget.onDismiss();
       },
       child: toast,
     );
-    toast = Semantics(liveRegion: true, container: true, child: toast);
+    // Announced when shown (see AppToast.show); a live region on top would
+    // be read twice where screen readers do read it.
+    toast = Semantics(container: true, child: toast);
     toast = reduceMotion
         ? toast
         : FadeTransition(
             opacity: curved,
             child: SlideTransition(
               position: Tween<Offset>(
-                begin: const Offset(0, -0.4),
+                begin: Offset(0, atBottom ? 0.4 : -0.4),
                 end: Offset.zero,
               ).animate(curved),
               child: toast,
@@ -206,7 +231,8 @@ class _ToastViewState extends State<_ToastView>
           );
 
     return Positioned(
-      top: widget.top,
+      top: atBottom ? null : widget.top,
+      bottom: widget.bottom,
       left: 16,
       right: 16,
       child: Align(

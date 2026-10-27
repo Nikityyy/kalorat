@@ -304,6 +304,8 @@ class CameraBottomBar extends StatelessWidget {
               child: Semantics(
                 button: true,
                 label: l10n.gallery,
+                // The button's own caption would be read a second time.
+                excludeSemantics: true,
                 child: GestureDetector(
                   onTap: () {
                     Haptics.tick();
@@ -361,6 +363,7 @@ class CameraBottomBar extends StatelessWidget {
                 child: Semantics(
                   button: true,
                   label: l10n.quickLogTitle,
+                  excludeSemantics: true,
                   child: GestureDetector(
                     onTap: () {
                       Haptics.tick();

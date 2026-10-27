@@ -210,6 +210,17 @@ class AppLocalizationsEn extends AppLocalizations {
   String get weightReminders => 'Weight reminders';
 
   @override
+  String get appBadge => 'Count on the app icon';
+
+  @override
+  String get appBadgeHint =>
+      'Shows how many meals are still waiting for their analysis.';
+
+  @override
+  String get appBadgeDenied =>
+      'Allow notifications for Kalorat in your device settings, then the app icon shows the count.';
+
+  @override
   String get grantPermission => 'Grant permission';
 
   @override
@@ -561,7 +572,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get error => 'Error';
 
   @override
-  String get rateLimitMeals => 'Maximum reached. 15 meals per day limit.';
+  String get rateLimitMeals =>
+      '15 meals are logged today, the daily limit. Combine small snacks into one meal.';
 
   @override
   String get rateLimitPhotos => 'Maximum reached. 5 photos per meal limit.';
@@ -571,9 +583,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get privacyPolicy => 'Privacy Policy';
-
-  @override
-  String get featureOnlyInApp => 'Only in app';
 
   @override
   String get activityLevel => 'Activity level';
@@ -657,7 +666,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get mealSavedBackground =>
-      'Meal saved. Analysis will continue when Kalorat is open and online.';
+      'Saved. The analysis starts as soon as you are online.';
+
+  @override
+  String get mealAnalysingBackground =>
+      'Analysing. The result shows up under Today in a moment.';
 
   @override
   String get saveToGallery => 'Save photo';
@@ -803,6 +816,24 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get quickLogHint =>
       'Describe what you ate, e.g. two slices of toast with butter';
+
+  @override
+  String get offSearch => 'Search Open Food Facts';
+
+  @override
+  String get offSearchResults => 'Open Food Facts';
+
+  @override
+  String get offSearchNone =>
+      'No products with nutrition found. Try brand and product name.';
+
+  @override
+  String get offSearchFailed => 'The search did not work. Are you online?';
+
+  @override
+  String offPer100Ml(int kcal) {
+    return '$kcal kcal per 100 ml';
+  }
 
   @override
   String get quickLogRecent => 'Eat it again';
@@ -1058,6 +1089,28 @@ class AppLocalizationsEn extends AppLocalizations {
   String get backupShareText => 'Kalorat backup';
 
   @override
+  String get backupFailed =>
+      'The backup could not be created. Please try again.';
+
+  @override
+  String get backupReminderTitle => 'Time for a backup';
+
+  @override
+  String get backupReminderNever =>
+      'Your meals are only on this device and have never been backed up. A backup is a file you can keep in Files or iCloud.';
+
+  @override
+  String backupReminderLast(int days) {
+    return 'Your meals are only on this device. Last backup $days days ago.';
+  }
+
+  @override
+  String get backupReminderAction => 'Back up now';
+
+  @override
+  String get backupReminderLater => 'Later';
+
+  @override
   String get reportShareText => 'Kalorat Markdown report';
 
   @override
@@ -1245,6 +1298,11 @@ class AppLocalizationsEn extends AppLocalizations {
       one: '1 meal',
     );
     return '$_temp0';
+  }
+
+  @override
+  String mealsCountOfLimit(int count, int limit) {
+    return '$count of $limit meals';
   }
 
   @override

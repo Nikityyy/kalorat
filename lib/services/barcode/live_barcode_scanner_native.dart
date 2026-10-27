@@ -230,6 +230,10 @@ class _MlKitBarcodeScanner implements LiveBarcodeScanner {
     }
   }
 
+  /// The native preview keeps playing.
+  @override
+  void holdPreview(bool hold) {}
+
   @override
   Future<ScannedBarcode?> decodeImage(XFile image) async {
     try {

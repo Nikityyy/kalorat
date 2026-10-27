@@ -175,4 +175,86 @@ void main() {
       expect(calls, 2);
     },
   );
+
+  group('search', () {
+    // A Search-a-licious answer: flat hits, brands as tags.
+    final hits = jsonEncode({
+      'hits': [
+        {
+          'code': '3017620422003',
+          'product_name': 'Nutella',
+          'product_name_de': 'Nutella Nuss-Nougat-Creme',
+          'brands': ['en:ferrero'],
+          'quantity': '400 g',
+          'nutriments': {
+            'energy-kcal_100g': 539,
+            'proteins_100g': 6.3,
+            'carbohydrates_100g': 57.5,
+            'fat_100g': 30.9,
+          },
+        },
+        {
+          'code': '4000000000001',
+          'product_name': 'Nutella ohne Werte',
+          'brands': 'Ferrero',
+        },
+        {'product_name': 'Ohne Code'},
+      ],
+      'count': 3,
+      'page': 1,
+      'page_size': 20,
+      'page_count': 1,
+      'took': 12,
+      'timed_out': false,
+      'is_count_exact': true,
+    });
+
+    test(
+      'asks the search service once and keeps products with nutrition',
+      () async {
+        final requests = <Uri>[];
+        final cache = _MemoryCache();
+        final service = ProductLookupService(
+          cache: cache,
+          client: MockClient((request) async {
+            requests.add(request.url);
+            return http.Response(hits, 200);
+          }),
+        );
+
+        final found = await service.search(' nutella ', language: 'de');
+
+        expect(requests.single.host, 'search.openfoodfacts.org');
+        expect(requests.single.path, '/search');
+        expect(requests.single.queryParameters['q'], 'nutella');
+        expect(requests.single.queryParameters['langs'], 'de,en');
+        expect(found!.map((p) => p.name), ['Nutella Nuss-Nougat-Creme']);
+        expect(found.single.brand, 'Ferrero');
+        expect(found.single.caloriesPer100, 539);
+        // Picked from the results, it opens like a scanned product, offline too.
+        expect(cache.values.keys, ['3017620422003']);
+
+        // The same search again is answered from memory.
+        await service.search('Nutella', language: 'de');
+        expect(requests, hasLength(1));
+      },
+    );
+
+    test('a failed search is null, a too short one empty', () async {
+      final service = ProductLookupService(
+        cache: _MemoryCache(),
+        client: MockClient((_) async => http.Response('busy', 503)),
+      );
+
+      expect(await service.search('nutella'), isNull);
+      expect(await service.search('n'), isEmpty);
+    });
+
+    test('brand tags read as names', () {
+      expect(ProductLookupService.searchBrand(['en:dr-oetker']), 'Dr Oetker');
+      expect(ProductLookupService.searchBrand('Ferrero'), 'Ferrero');
+      expect(ProductLookupService.searchBrand(const []), isNull);
+      expect(ProductLookupService.searchBrand(null), isNull);
+    });
+  });
 }

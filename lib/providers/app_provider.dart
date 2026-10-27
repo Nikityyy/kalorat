@@ -5,9 +5,12 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/models.dart';
+import '../services/app_badge_setting.dart';
+import '../services/backup_reminder.dart';
 import '../services/services.dart';
 import '../services/theme_preference.dart';
 import '../utils/app_logger.dart';
+import '../utils/app_status.dart';
 import '../utils/insights.dart';
 import '../utils/platform_utils.dart';
 
@@ -155,6 +158,7 @@ class AppProvider extends ChangeNotifier with WidgetsBindingObserver {
     // Mark as initialized immediately after local DB load so the UI shows
     // without waiting for the network. Cloud sync runs in the background.
     _isInitialized = true;
+    _syncAppBadge();
     notifyListeners();
     unawaited(_migratePhotoStorage());
 
@@ -273,7 +277,54 @@ class AppProvider extends ChangeNotifier with WidgetsBindingObserver {
   void setMealAnalysisActive(bool active) {
     if (_isMealAnalysisActive == active) return;
     _isMealAnalysisActive = active;
+    _syncScreenAwake();
     notifyListeners();
+  }
+
+  /// The screen stays on while a meal is analysed: a locked phone suspends
+  /// the web app and with it the analysis.
+  void _syncScreenAwake() =>
+      keepScreenOn(_isMealAnalysisActive || _isProcessingQueue);
+
+  /// Whether the app icon shows how many meals wait for their analysis.
+  bool get appBadgeEnabled =>
+      AppBadgeSetting.enabled && badgePermission() == BadgePermission.granted;
+
+  /// Whether this browser can show a count on the app icon at all.
+  bool get appBadgeSupported =>
+      badgePermission() != BadgePermission.unsupported;
+
+  /// Turns the count on the app icon on or off; asks for the notification
+  /// permission Safari needs for it first. Call it from a tap. Returns the
+  /// permission, so a refusal can be explained.
+  Future<BadgePermission> setAppBadgeEnabled(bool enabled) async {
+    var permission = badgePermission();
+    if (enabled && permission == BadgePermission.notAsked) {
+      permission = await requestBadgePermission();
+    }
+    await AppBadgeSetting.setEnabled(
+      enabled && permission == BadgePermission.granted,
+    );
+    _badgeShown = null;
+    _syncAppBadge();
+    notifyListeners();
+    return permission;
+  }
+
+  int? _badgeShown;
+
+  void _syncAppBadge() {
+    if (!PlatformUtils.isWeb) return;
+    try {
+      final count = appBadgeEnabled
+          ? _databaseService.getPendingMeals().length
+          : 0;
+      if (count == _badgeShown) return;
+      _badgeShown = count;
+      setAppBadge(count);
+    } catch (e) {
+      AppLogger.error('AppProvider', 'Failed to update the app badge', e);
+    }
   }
 
   Future<void> saveUser(UserModel user) async {
@@ -480,6 +531,7 @@ class AppProvider extends ChangeNotifier with WidgetsBindingObserver {
     if (_isProcessingQueue || apiKey.isEmpty) return;
 
     _isProcessingQueue = true;
+    _syncScreenAwake();
     notifyListeners();
 
     try {
@@ -511,6 +563,7 @@ class AppProvider extends ChangeNotifier with WidgetsBindingObserver {
       );
     } finally {
       _isProcessingQueue = false;
+      _syncScreenAwake();
       _invalidateStatsCache();
       notifyListeners();
     }
@@ -568,18 +621,22 @@ class AppProvider extends ChangeNotifier with WidgetsBindingObserver {
   List<MealModel> getMealsByDateRange(DateTime start, DateTime end) =>
       _databaseService.getMealsByDateRange(start, end);
 
+  /// Meals a day can hold; Today shows the count against it once it gets
+  /// close.
+  static const maxMealsPerDay = 15;
+
   Future<void> saveMeal(MealModel meal) async {
     // RATE LIMIT: Max 5 photos per meal
     if (meal.photoPaths.length > 5) {
       throw ValidationException(ValidationIssue.photoLimit);
     }
 
-    // RATE LIMIT: Max 15 meals per day
+    // RATE LIMIT: Max [maxMealsPerDay] meals per day
     // Only check if it's a NEW meal (not an update to an existing one)
     final existingMeal = _databaseService.hasMeal(meal.id);
     if (!existingMeal) {
       final todayMeals = _databaseService.getMealsByDate(DateTime.now());
-      if (todayMeals.length >= 15) {
+      if (todayMeals.length >= maxMealsPerDay) {
         throw ValidationException(ValidationIssue.mealLimit);
       }
     }
@@ -628,13 +685,13 @@ class AppProvider extends ChangeNotifier with WidgetsBindingObserver {
     return result;
   }
 
-  /// Logs [source] again as a new meal eaten now. Photos stay with the
-  /// original: a photo shared by two meals would vanish with either one.
+  /// Logs [source] again as a new meal eaten now, with its photos: a
+  /// stored photo is only deleted once no meal uses it any more.
   Future<MealModel> repeatMeal(MealModel source) async {
     final copy = MealModel(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       timestamp: DateTime.now(),
-      photoPaths: const [],
+      photoPaths: List.of(source.photoPaths),
       mealName: source.mealName,
       calories: source.calories,
       protein: source.protein,
@@ -671,6 +728,7 @@ class AppProvider extends ChangeNotifier with WidgetsBindingObserver {
   /// Clears all cached stats - called when meals are modified
   void _invalidateStatsCache() {
     _statsCacheVersion++;
+    _syncAppBadge();
 
     // Sync to native home widgets. The web has none, and the streak walks
     // every meal.
@@ -737,7 +795,60 @@ class AppProvider extends ChangeNotifier with WidgetsBindingObserver {
   }
 
   // Export/Import
-  Future<String?> exportData() => _exportImportService.exportData();
+  /// Exports all data as a backup file. Anything but a cancelled share
+  /// sheet counts as a backup for the reminder on Today.
+  Future<String?> exportData() async {
+    final result = await _exportImportService.exportData();
+    if (result != null && result != 'web_cancelled') {
+      await BackupReminder.markBackedUp();
+      notifyListeners();
+    }
+    return result;
+  }
+
+  Object? _backupDueKey;
+  bool _backupDue = false;
+
+  /// Whether Today reminds to back up: only while the meals exist on this
+  /// device alone (no cloud account), see [backupDue].
+  bool get backupReminderDue {
+    final user = _user;
+    if (user == null || !user.isGuest) return false;
+    final now = DateTime.now();
+    final key = (
+      _statsCacheVersion,
+      BackupReminder.lastBackup,
+      BackupReminder.snoozedUntil,
+      DateTime(now.year, now.month, now.day, now.hour),
+    );
+    if (key == _backupDueKey) return _backupDue;
+    _backupDueKey = key;
+    // The oldest meal, and the last change to any meal: a meal logged now
+    // can carry an earlier time (a gallery photo).
+    DateTime? firstMeal;
+    DateTime? lastChange;
+    for (final meal in _databaseService.getAllMeals()) {
+      if (firstMeal == null || meal.timestamp.isBefore(firstMeal)) {
+        firstMeal = meal.timestamp;
+      }
+      final changed = meal.updatedAt.toLocal();
+      if (lastChange == null || changed.isAfter(lastChange)) {
+        lastChange = changed;
+      }
+    }
+    return _backupDue = backupDue(
+      now: now,
+      lastBackup: BackupReminder.lastBackup,
+      snoozedUntil: BackupReminder.snoozedUntil,
+      firstMeal: firstMeal,
+      lastMeal: lastChange,
+    );
+  }
+
+  Future<void> snoozeBackupReminder() async {
+    await BackupReminder.snooze();
+    notifyListeners();
+  }
 
   Future<String?> exportMarkdownReport(dynamic l10n) =>
       _exportImportService.exportMarkdownReport(l10n);

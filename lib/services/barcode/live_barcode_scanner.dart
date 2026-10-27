@@ -67,6 +67,10 @@ abstract class LiveBarcodeScanner {
   /// frame.
   Future<Uint8List?> takeFrame();
 
+  /// Stops the preview on the picture [takeFrame] returns, or lets it play
+  /// again. Call it with true from the [BarcodeCallback].
+  void holdPreview(bool hold);
+
   /// Reads the first retail code in a photo; null when there is none.
   Future<ScannedBarcode?> decodeImage(XFile image);
 

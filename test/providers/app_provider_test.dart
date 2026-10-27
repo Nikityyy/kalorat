@@ -133,7 +133,7 @@ void main() {
       expect(provider.recentDistinctMeals(limit: 3), hasLength(3));
     });
 
-    test('repeatMeal logs a copy now, without the photos', () async {
+    test('repeatMeal logs a copy now, with the photos', () async {
       final database = _MemoryDatabase();
       final source = logged('a', 'Oatmeal', 1);
       database.meals['a'] = source;
@@ -150,7 +150,7 @@ void main() {
       expect(copy.portionUnit, 'gram');
       expect(copy.quantityPerUnit, 100);
       expect(copy.mealContext, 'with rice');
-      expect(copy.photoPaths, isEmpty);
+      expect(copy.photoPaths, ['kphoto:1']);
       expect(copy.isPending, isFalse);
       expect(copy.timestamp.isAfter(source.timestamp), isTrue);
       expect(source.photoPaths, ['kphoto:1']);

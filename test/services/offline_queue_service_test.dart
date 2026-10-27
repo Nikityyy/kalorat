@@ -117,4 +117,36 @@ void main() {
     await queue.processQueue('key', 'en');
     expect(database.meal?.mealName, 'Soup');
   });
+
+  test('a meal deleted while it is analysed stays deleted', () async {
+    final database = _QueueDatabase()
+      ..meal = MealModel(
+        id: 'deleted',
+        timestamp: DateTime(2026, 7, 10),
+        photoPaths: const ['photo'],
+        isPending: true,
+      );
+    final gemini = _MockGeminiService();
+    when(
+      () => gemini.analyzeMealStream(
+        any(),
+        useGrams: any(named: 'useGrams'),
+        useAccurateMode: any(named: 'useAccurateMode'),
+        mealContext: any(named: 'mealContext'),
+      ),
+    ).thenAnswer((_) async* {
+      // The user swipes the meal away while the answer is written.
+      database.meal = null;
+      yield const AnalysisResult({'meal_name': 'Soup', 'calories': 120});
+    });
+    var processed = 0;
+    await OfflineQueueService(
+      database,
+      onlineCheck: () async => true,
+      geminiFactory: (_, _) => gemini,
+    ).processQueue('key', 'en', onMealProcessed: (_) async => processed++);
+
+    expect(database.meal, isNull);
+    expect(processed, 0);
+  });
 }

@@ -235,7 +235,7 @@ class _HomeScreenState extends State<HomeScreen>
     if (!mounted) return;
     setState(() {
       _veil = bytes;
-      _veilMirrored = _frontCamera;
+      _veilMirrored = _previewMirrored;
       _veilFadeIn = fadeIn;
       _veilReveal = false;
     });
@@ -457,10 +457,17 @@ class _HomeScreenState extends State<HomeScreen>
       _currentZoomLevel = 1.0;
     }
 
-    try {
-      await controller.setFlashMode(FlashMode.off);
-    } catch (e) {
-      canUseTorch = false;
+    if (PlatformUtils.isWeb) {
+      // The plugin's torch check fails on every iPhone; the preview's
+      // camera is asked once it plays.
+      canUseTorch = previewTorchAvailable() ?? false;
+      unawaited(_checkWebTorch());
+    } else {
+      try {
+        await controller.setFlashMode(FlashMode.off);
+      } catch (e) {
+        canUseTorch = false;
+      }
     }
 
     if (mounted) {
@@ -619,13 +626,16 @@ class _HomeScreenState extends State<HomeScreen>
     setState(() => _isCapturing = true);
 
     try {
-      final XFile photo = await _cameraController!.takePicture();
-
       String storedPhoto;
       if (PlatformUtils.isWeb) {
-        final bytes = await downscaleForStorage(await photo.readAsBytes());
+        final bytes =
+            await capturePreviewForStorage(mirrored: _previewMirrored) ??
+            await downscaleForStorage(
+              await (await _cameraController!.takePicture()).readAsBytes(),
+            );
         storedPhoto = await PhotoStore.instance.save(bytes);
       } else {
+        final XFile photo = await _cameraController!.takePicture();
         final appDir = await getApplicationDocumentsDirectory();
         final fileName =
             'meal_${DateTime.now().millisecondsSinceEpoch}_${_capturedPhotos.length}.jpg';
@@ -684,6 +694,14 @@ class _HomeScreenState extends State<HomeScreen>
     showCameraDiagnosticsDialog(context, lines);
   }
 
+  /// Whether the camera that now plays has a torch, once it shows a frame.
+  Future<void> _checkWebTorch() async {
+    await previewNextFrame();
+    final available = previewTorchAvailable();
+    if (!mounted || available == null || available == _canUseTorch) return;
+    setState(() => _canUseTorch = available);
+  }
+
   Future<void> _setTorchMode(bool enabled) async {
     final controller = _cameraController;
     if (controller == null ||
@@ -693,7 +711,15 @@ class _HomeScreenState extends State<HomeScreen>
     }
 
     try {
-      await controller.setFlashMode(enabled ? FlashMode.torch : FlashMode.off);
+      // Null where the plugin switches it (native builds).
+      final switched = await setPreviewTorch(enabled);
+      if (switched == null) {
+        await controller.setFlashMode(
+          enabled ? FlashMode.torch : FlashMode.off,
+        );
+      } else if (!switched) {
+        throw StateError('Torch not switched');
+      }
       if (mounted) {
         setState(() => _isTorchOn = enabled);
       }
@@ -701,7 +727,9 @@ class _HomeScreenState extends State<HomeScreen>
       if (mounted) {
         setState(() {
           _isTorchOn = false;
-          _canUseTorch = false;
+          // A torch that would not go on is shown as unavailable; one that
+          // would not go off (the camera stopped) stays usable.
+          if (enabled) _canUseTorch = false;
         });
       }
     }
@@ -1140,10 +1168,16 @@ class _HomeScreenState extends State<HomeScreen>
 
       if (mounted) {
         if (background) {
-          _showMessage(l10n.mealSavedBackground, kind: AppToastKind.success);
-          if (isOnline && apiKey.isNotEmpty) {
-            provider.processOfflineQueue();
-          }
+          // Online, the analysis runs right away; it does not wait for the
+          // app to be opened again.
+          final analysesNow = isOnline && apiKey.isNotEmpty;
+          _showMessage(
+            analysesNow
+                ? l10n.mealAnalysingBackground
+                : l10n.mealSavedBackground,
+            kind: AppToastKind.success,
+          );
+          if (analysesNow) provider.processOfflineQueue();
         } else {
           final message = !isOnline
               ? l10n.offlineMessage
@@ -1756,7 +1790,7 @@ class _HomeScreenState extends State<HomeScreen>
               _barcodeScanner.setRegion(
                 _guideRect(),
                 view,
-                mirrored: _frontCamera,
+                mirrored: _previewMirrored,
               );
             }
             if (identical(controller, _barcodeController)) return;
@@ -1784,17 +1818,6 @@ class _HomeScreenState extends State<HomeScreen>
   void _onBarcode(ScannedBarcode barcode) {
     if (!_shouldScanBarcodes || !_barcodeInGuide(barcode)) return;
     final code = barcode.code;
-    // The box follows the code while its product is looked up.
-    final lock = _guideLock;
-    if (lock != null && lock.code == code && !lock.found) {
-      setState(
-        () => _guideLock = GuideLock(
-          box: _lockBoxFor(barcode),
-          title: lock.title,
-          code: code,
-        ),
-      );
-    }
     final format = barcode.format;
     final valid = format == 'UPCE'
         ? expandUpcE(code) != null
@@ -1810,6 +1833,10 @@ class _HomeScreenState extends State<HomeScreen>
     _lastBarcode = code;
     _lastBarcodeSeen = now;
     if (stillInView || _barcodeBusy || code == _labelModeCode) return;
+    // The preview stops on the picture the code was read in, so the corners
+    // close on the code there instead of chasing it in the live picture.
+    // It must happen now, in the scanner's callback: see holdPreview.
+    _barcodeScanner.holdPreview(true);
     // The lookup goes out first; drawing the lock must not hold it up.
     unawaited(_lookUpBarcode(code, format));
     _guideLockSince = now;
@@ -1822,7 +1849,12 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
-  bool get _frontCamera =>
+  /// Whether the preview shows the camera mirrored. The web plugin mirrors
+  /// every camera whose track does not say it faces back (a laptop's webcam
+  /// too), so there the preview itself is asked; a code's box landed on the
+  /// wrong side of a mirrored preview.
+  bool get _previewMirrored =>
+      previewMirrored() ??
       _cameraController?.description.lensDirection == CameraLensDirection.front;
 
   Rect? _guideRect() {
@@ -1843,7 +1875,7 @@ class _HomeScreenState extends State<HomeScreen>
       frameAspect: barcode.frameAspect,
       view: view,
       guide: guide,
-      mirrored: _frontCamera,
+      mirrored: _previewMirrored,
     );
   }
 
@@ -1858,7 +1890,7 @@ class _HomeScreenState extends State<HomeScreen>
             bounds: bounds,
             frameAspect: barcode.frameAspect,
             view: view,
-            mirrored: _frontCamera,
+            mirrored: _previewMirrored,
           );
     if (onScreen == null) {
       return Rect.fromCenter(
@@ -1867,7 +1899,7 @@ class _HomeScreenState extends State<HomeScreen>
         height: guide.height * 0.45,
       );
     }
-    return lockBox(onScreen, guide);
+    return lockBox(onScreen, Offset.zero & view!);
   }
 
   Future<void> _lookUpBarcode(String code, String format) async {
@@ -1876,6 +1908,7 @@ class _HomeScreenState extends State<HomeScreen>
     // The picture the code was read in becomes the meal photo; it is made
     // while the product is looked up.
     final frame = _barcodeScanner.takeFrame();
+    unawaited(_lockOnHeldFrame(frame, code));
     final l10n = context.l10n;
     final language = context.read<AppProvider>().language;
     var opened = false;
@@ -1932,6 +1965,7 @@ class _HomeScreenState extends State<HomeScreen>
       }
     } finally {
       if (mounted) setState(() => _guideLock = null);
+      _barcodeScanner.holdPreview(false);
       if (opened) {
         // Back from the product without saving it: the same code, still in
         // front of the camera, opens it again after a short pause instead of
@@ -1945,6 +1979,33 @@ class _HomeScreenState extends State<HomeScreen>
       }
       _barcodeBusy = false;
     }
+  }
+
+  /// Closes the corners on [code] where the held preview shows it. The
+  /// held picture ([frame]) is a frame or two after the one the code was
+  /// read in, so the code is found in it again; following the code in the
+  /// live preview instead made the corners trail behind a moving package.
+  Future<void> _lockOnHeldFrame(Future<Uint8List?> frame, String code) async {
+    final bytes = await frame;
+    if (bytes == null || !mounted || _guideLock?.code != code) return;
+    final found = await _barcodeScanner.decodeImage(XFile.fromData(bytes));
+    final lock = _guideLock;
+    if (!mounted ||
+        found == null ||
+        found.code != code ||
+        found.bounds == null ||
+        lock == null ||
+        lock.code != code) {
+      return;
+    }
+    setState(
+      () => _guideLock = GuideLock(
+        box: _lockBoxFor(found),
+        title: lock.title,
+        code: code,
+        found: lock.found,
+      ),
+    );
   }
 
   Future<void> _openProduct(
@@ -2089,9 +2150,11 @@ class _HomeScreenState extends State<HomeScreen>
   /// of meals eaten before.
   Future<void> _showQuickLog() async {
     final provider = context.read<AppProvider>();
+    final language = provider.language;
     final result = await showQuickLogSheet(
       context,
       recent: provider.recentDistinctMeals(),
+      search: (query) => _productLookup.search(query, language: language),
     );
     if (result == null || !mounted) return;
     switch (result) {
@@ -2099,6 +2162,14 @@ class _HomeScreenState extends State<HomeScreen>
         await _logAgain(meal);
       case QuickLogDescribe(:final text):
         await _analyzeMeal(mealContext: text);
+      case QuickLogProduct(:final product):
+        // Opens like a scanned product, without a photo.
+        await _openProduct(
+          product,
+          product.code,
+          Future.value(null),
+          context.l10n,
+        );
     }
   }
 

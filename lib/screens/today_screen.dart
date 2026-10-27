@@ -2,16 +2,19 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import '../extensions/l10n_extension.dart';
 import '../models/models.dart';
 import '../providers/app_provider.dart';
+import '../services/backup_reminder.dart';
 import '../services/hints/first_use_hints.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 import '../theme/app_typography.dart';
+import '../utils/backup_export.dart';
 import '../utils/haptics.dart';
 import '../widgets/common/adaptive.dart';
 import '../widgets/app_toast.dart';
@@ -136,10 +139,10 @@ class _TodayScreenState extends State<TodayScreen>
   DateTime get _shownDay => _day ?? _logicalToday();
 
   List<MealModel> _mealsOf(AppProvider provider, DateTime day) {
-    final start = DateTime(day.year, day.month, day.day, _offset);
+    // Calendar days: the day summer time ends has 25 hours.
     return provider.getMealsByDateRange(
-      start,
-      start.add(const Duration(days: 1)),
+      DateTime(day.year, day.month, day.day, _offset),
+      DateTime(day.year, day.month, day.day + 1, _offset),
     )..sort(compareMealsNewestFirst);
   }
 
@@ -169,7 +172,8 @@ class _TodayScreenState extends State<TodayScreen>
 
   void _step(int days) {
     Haptics.selection();
-    final next = _shownDay.add(Duration(days: days));
+    final day = _shownDay;
+    final next = DateTime(day.year, day.month, day.day + days);
     if (next.isAfter(_logicalToday())) return;
     setState(() => _day = _isToday(next) ? null : next);
   }
@@ -213,16 +217,20 @@ class _TodayScreenState extends State<TodayScreen>
         provider.deleteMeal(meal.id);
       });
     });
-    AppToast.show(
-      context,
-      context.l10n.mealDeleted,
-      actionLabel: context.l10n.quickLogUndo,
-      duration: window,
-      onAction: () {
-        _deleting.remove(meal.id)?.cancel();
-        if (mounted) setState(() {});
-      },
+    // The row itself offers the undo (see _UndoRow), so nothing covers
+    // the day; screen readers hear it.
+    final l10n = context.l10n;
+    SemanticsService.sendAnnouncement(
+      View.of(context),
+      '${l10n.mealDeleted}. ${l10n.quickLogUndo}',
+      Directionality.of(context),
     );
+  }
+
+  void _undoDelete(MealModel meal) {
+    Haptics.tick();
+    _deleting.remove(meal.id)?.cancel();
+    setState(() {});
   }
 
   /// Hold a meal for its actions, in a menu where the finger is.
@@ -277,6 +285,10 @@ class _TodayScreenState extends State<TodayScreen>
     );
   }
 
+  /// Toasts sit above the tab bar here: at the top they covered the day's
+  /// numbers. The page's bottom padding already holds the tab bar.
+  double get _toastBottom => MediaQuery.paddingOf(context).bottom + 12;
+
   Future<void> _eatAgain(MealModel source) async {
     Haptics.tick();
     final provider = context.read<AppProvider>();
@@ -288,6 +300,7 @@ class _TodayScreenState extends State<TodayScreen>
       context,
       l10n.quickLogLogged(copy.mealName),
       actionLabel: l10n.quickLogUndo,
+      bottom: _toastBottom,
       onAction: () => provider.deleteMeal(copy.id),
     );
   }
@@ -301,9 +314,29 @@ class _TodayScreenState extends State<TodayScreen>
         provider.hasMeals;
   }
 
+  /// Meals that exist only on this device: a backup file now and then is
+  /// all that survives a lost phone or a deleted Home Screen app.
+  Widget _backupReminder(AppProvider provider) {
+    final l10n = context.l10n;
+    final last = BackupReminder.lastBackup;
+    return FirstUseCard(
+      icon: Icons.save_alt,
+      title: l10n.backupReminderTitle,
+      body: last == null
+          ? l10n.backupReminderNever
+          : l10n.backupReminderLast(DateTime.now().difference(last).inDays),
+      dismissLabel: l10n.backupReminderLater,
+      onDismiss: provider.snoozeBackupReminder,
+      actionLabel: l10n.backupReminderAction,
+      onAction: () => exportBackup(context),
+    );
+  }
+
   void _dismissBackupHint() {
     setState(() => _backupHintDismissed = true);
     FirstUseHints.markSeen(FirstUseHint.backup);
+    // The reminder does not follow right behind the hint.
+    unawaited(context.read<AppProvider>().snoozeBackupReminder());
   }
 
   @override
@@ -315,10 +348,10 @@ class _TodayScreenState extends State<TodayScreen>
     final language = provider.language;
     final day = _shownDay;
     final isToday = _day == null;
-    final meals = _mealsOf(
-      provider,
-      day,
-    ).where((m) => !_deleting.containsKey(m.id)).toList();
+    // The list keeps a meal being deleted as its undo row; everything
+    // else already leaves it out.
+    final rows = _mealsOf(provider, day);
+    final meals = rows.where((m) => !_deleting.containsKey(m.id)).toList();
     final logged = meals.where((m) => !m.isPending).toList();
     final syncPending = provider.mealIdsPendingSync();
 
@@ -443,7 +476,7 @@ class _TodayScreenState extends State<TodayScreen>
                 SliverToBoxAdapter(
                   child: _MacroLine(meals: logged, user: user),
                 ),
-              if (meals.isEmpty)
+              if (rows.isEmpty)
                 SliverToBoxAdapter(
                   child: _EmptyDay(
                     isToday: isToday,
@@ -459,7 +492,14 @@ class _TodayScreenState extends State<TodayScreen>
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(20, 28, 20, 4),
                     child: Text(
-                      l10n.mealsCount(meals.length),
+                      // Close to the daily limit, the count says so before
+                      // the next meal is turned down.
+                      isToday && meals.length >= AppProvider.maxMealsPerDay - 5
+                          ? l10n.mealsCountOfLimit(
+                              meals.length,
+                              AppProvider.maxMealsPerDay,
+                            )
+                          : l10n.mealsCount(meals.length),
                       style: AppTypography.secondary.copyWith(
                         fontWeight: FontWeight.w500,
                       ),
@@ -469,9 +509,15 @@ class _TodayScreenState extends State<TodayScreen>
                 SliverPadding(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   sliver: SliverList.builder(
-                    itemCount: meals.length,
+                    itemCount: rows.length,
                     itemBuilder: (context, i) {
-                      final meal = meals[i];
+                      final meal = rows[i];
+                      if (_deleting.containsKey(meal.id)) {
+                        return _UndoRow(
+                          key: ValueKey('undo-${meal.id}'),
+                          onUndo: () => _undoDelete(meal),
+                        );
+                      }
                       final failed =
                           meal.isPending && meal.analysisStatus == 'failed';
                       return Dismissible(
@@ -506,7 +552,7 @@ class _TodayScreenState extends State<TodayScreen>
                           meal,
                           MealRow(
                             meal: meal,
-                            showDivider: i < meals.length - 1,
+                            showDivider: i < rows.length - 1,
                             syncPending: syncPending.contains(meal.id),
                             analysisWorkerActive:
                                 provider.isProcessingQueue &&
@@ -550,6 +596,13 @@ class _TodayScreenState extends State<TodayScreen>
                     ),
                   ),
                 ),
+              if (!_showBackupHint(provider) && provider.backupReminderDue)
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
+                    child: _backupReminder(provider),
+                  ),
+                ),
               // Room for the floating tab bar.
               const SliverToBoxAdapter(child: SizedBox(height: 120)),
             ],
@@ -568,7 +621,8 @@ class _TodayScreenState extends State<TodayScreen>
     final l10n = context.l10n;
     final date = DateFormat.MMMMd(language).format(day);
     if (isToday) return l10n.todayWithDate(date);
-    if (day == _logicalToday().subtract(const Duration(days: 1))) {
+    final today = _logicalToday();
+    if (day == DateTime(today.year, today.month, today.day - 1)) {
       return l10n.yesterdayWithDate(date);
     }
     return DateFormat.MMMMEEEEd(language).format(day);
@@ -959,6 +1013,43 @@ class _EatAgainRow extends StatelessWidget {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// Stands in for a meal that was just deleted, while it can still come
+/// back: the undo sits where the meal was instead of over the day.
+class _UndoRow extends StatelessWidget {
+  final VoidCallback onUndo;
+
+  const _UndoRow({super.key, required this.onUndo});
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    return ConstrainedBox(
+      constraints: const BoxConstraints(minHeight: 72),
+      child: Row(
+        children: [
+          Icon(
+            Icons.delete_outline,
+            size: 22,
+            color: AppColors.text.withValues(alpha: 0.5),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(l10n.mealDeleted, style: AppTypography.secondary),
+          ),
+          TextButton(
+            onPressed: onUndo,
+            style: TextButton.styleFrom(foregroundColor: AppColors.primary),
+            child: Text(
+              l10n.quickLogUndo,
+              style: const TextStyle(fontWeight: FontWeight.w700),
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -10,8 +10,34 @@ external JSPromise<JSUint8Array> _downscaleJpeg(
   double quality,
 );
 
+@JS('kaloratCapturePreview')
+external JSPromise<JSUint8Array?> _capturePreview(
+  int maxDimension,
+  double quality,
+  bool mirrored,
+);
+
 /// Longest side of stored web photos. Analysis uses at most 1536 px.
 const _maxDimension = 1600;
+const _storageQuality = 0.85;
+
+/// The frame the camera preview shows now, as a photo the size it is stored
+/// at; null when there is no playing preview. The camera plugin's
+/// takePicture encodes the full camera frame, which [downscaleForStorage]
+/// then decoded and encoded again while the shutter spun. [mirrored] when
+/// the preview is mirrored, as the plugin's pictures are.
+Future<Uint8List?> capturePreviewForStorage({required bool mirrored}) async {
+  try {
+    return (await _capturePreview(
+      _maxDimension,
+      _storageQuality,
+      mirrored,
+    ).toDart)?.toDart;
+  } catch (e) {
+    AppLogger.warning('PhotoDownscale', 'Preview capture failed: $e');
+    return null;
+  }
+}
 
 /// Re-encodes a photo with the browser's decoder (fast, applies EXIF rotation,
 /// drops metadata). Falls back to the original bytes if the browser can't
@@ -21,7 +47,7 @@ Future<Uint8List> downscaleForStorage(Uint8List bytes) async {
     final result = (await _downscaleJpeg(
       bytes.toJS,
       _maxDimension,
-      0.85,
+      _storageQuality,
     ).toDart).toDart;
     return result.isNotEmpty && result.length < bytes.length ? result : bytes;
   } catch (e) {

@@ -16,6 +16,7 @@ extension type _BarcodeApi(JSObject _) implements JSObject {
   external void prewarm();
   external void start(JSFunction onCode);
   external JSPromise<JSUint8Array?> takeFrame();
+  external void hold(bool on);
   external JSPromise<_StillResult?> decodeImage(JSUint8Array bytes);
   external double luma(
     double left,
@@ -156,6 +157,13 @@ class _WebBarcodeScanner implements LiveBarcodeScanner {
     } catch (_) {
       return null;
     }
+  }
+
+  @override
+  void holdPreview(bool hold) {
+    try {
+      _api?.hold(hold);
+    } catch (_) {}
   }
 
   @override

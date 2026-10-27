@@ -494,6 +494,24 @@ abstract class AppLocalizations {
   /// **'Gewichts-Erinnerungen'**
   String get weightReminders;
 
+  /// No description provided for @appBadge.
+  ///
+  /// In de, this message translates to:
+  /// **'Zähler am App-Symbol'**
+  String get appBadge;
+
+  /// No description provided for @appBadgeHint.
+  ///
+  /// In de, this message translates to:
+  /// **'Zeigt, wie viele Mahlzeiten noch auf ihre Analyse warten.'**
+  String get appBadgeHint;
+
+  /// No description provided for @appBadgeDenied.
+  ///
+  /// In de, this message translates to:
+  /// **'Erlaube Mitteilungen für Kalorat in den Einstellungen deines Geräts, dann zeigt das App-Symbol den Zähler.'**
+  String get appBadgeDenied;
+
   /// No description provided for @grantPermission.
   ///
   /// In de, this message translates to:
@@ -1175,7 +1193,7 @@ abstract class AppLocalizations {
   /// No description provided for @rateLimitMeals.
   ///
   /// In de, this message translates to:
-  /// **'Maximum erreicht. Limit von 15 Mahlzeiten pro Tag.'**
+  /// **'Heute sind schon 15 Mahlzeiten erfasst, das Tageslimit. Fasse kleine Snacks zu einer Mahlzeit zusammen.'**
   String get rateLimitMeals;
 
   /// No description provided for @rateLimitPhotos.
@@ -1195,12 +1213,6 @@ abstract class AppLocalizations {
   /// In de, this message translates to:
   /// **'Datenschutzerklärung'**
   String get privacyPolicy;
-
-  /// No description provided for @featureOnlyInApp.
-  ///
-  /// In de, this message translates to:
-  /// **'Nur in der App'**
-  String get featureOnlyInApp;
 
   /// No description provided for @activityLevel.
   ///
@@ -1361,8 +1373,14 @@ abstract class AppLocalizations {
   /// No description provided for @mealSavedBackground.
   ///
   /// In de, this message translates to:
-  /// **'Gespeichert. Die Analyse läuft weiter, sobald Kalorat geöffnet und online ist.'**
+  /// **'Gespeichert. Die Analyse startet, sobald du online bist.'**
   String get mealSavedBackground;
+
+  /// No description provided for @mealAnalysingBackground.
+  ///
+  /// In de, this message translates to:
+  /// **'Wird analysiert. Das Ergebnis erscheint gleich unter Heute.'**
+  String get mealAnalysingBackground;
 
   /// No description provided for @saveToGallery.
   ///
@@ -1627,6 +1645,36 @@ abstract class AppLocalizations {
   /// In de, this message translates to:
   /// **'Beschreibe, was du gegessen hast, z. B. zwei Scheiben Toast mit Butter'**
   String get quickLogHint;
+
+  /// No description provided for @offSearch.
+  ///
+  /// In de, this message translates to:
+  /// **'In Open Food Facts suchen'**
+  String get offSearch;
+
+  /// No description provided for @offSearchResults.
+  ///
+  /// In de, this message translates to:
+  /// **'Open Food Facts'**
+  String get offSearchResults;
+
+  /// No description provided for @offSearchNone.
+  ///
+  /// In de, this message translates to:
+  /// **'Keine Produkte mit Nährwerten gefunden. Versuch es mit Marke und Produktname.'**
+  String get offSearchNone;
+
+  /// No description provided for @offSearchFailed.
+  ///
+  /// In de, this message translates to:
+  /// **'Die Suche hat nicht geklappt. Bist du online?'**
+  String get offSearchFailed;
+
+  /// No description provided for @offPer100Ml.
+  ///
+  /// In de, this message translates to:
+  /// **'{kcal} kcal pro 100 ml'**
+  String offPer100Ml(int kcal);
 
   /// No description provided for @quickLogRecent.
   ///
@@ -2042,6 +2090,42 @@ abstract class AppLocalizations {
   /// **'Kalorat-Backup'**
   String get backupShareText;
 
+  /// No description provided for @backupFailed.
+  ///
+  /// In de, this message translates to:
+  /// **'Das Backup konnte nicht erstellt werden. Versuch es noch einmal.'**
+  String get backupFailed;
+
+  /// No description provided for @backupReminderTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Zeit für ein Backup'**
+  String get backupReminderTitle;
+
+  /// No description provided for @backupReminderNever.
+  ///
+  /// In de, this message translates to:
+  /// **'Deine Mahlzeiten liegen nur auf diesem Gerät und wurden noch nie gesichert. Ein Backup ist eine Datei, die du in Dateien oder iCloud ablegen kannst.'**
+  String get backupReminderNever;
+
+  /// No description provided for @backupReminderLast.
+  ///
+  /// In de, this message translates to:
+  /// **'Deine Mahlzeiten liegen nur auf diesem Gerät. Letztes Backup vor {days} Tagen.'**
+  String backupReminderLast(int days);
+
+  /// No description provided for @backupReminderAction.
+  ///
+  /// In de, this message translates to:
+  /// **'Jetzt sichern'**
+  String get backupReminderAction;
+
+  /// No description provided for @backupReminderLater.
+  ///
+  /// In de, this message translates to:
+  /// **'Später'**
+  String get backupReminderLater;
+
   /// No description provided for @reportShareText.
   ///
   /// In de, this message translates to:
@@ -2341,6 +2425,12 @@ abstract class AppLocalizations {
   /// In de, this message translates to:
   /// **'{count, plural, =1{1 Mahlzeit} other{{count} Mahlzeiten}}'**
   String mealsCount(int count);
+
+  /// Today's meal count once it nears the daily limit
+  ///
+  /// In de, this message translates to:
+  /// **'{count} von {limit} Mahlzeiten'**
+  String mealsCountOfLimit(int count, int limit);
 
   /// No description provided for @pastDayEmpty.
   ///

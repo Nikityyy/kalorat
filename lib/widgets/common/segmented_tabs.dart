@@ -11,11 +11,16 @@ class SegmentedTabs extends StatelessWidget {
   final int selected;
   final ValueChanged<int> onChanged;
 
+  /// What the options choose, read before each one by screen readers: two
+  /// controls with the same options on one screen sound alike otherwise.
+  final String? semanticContext;
+
   const SegmentedTabs({
     super.key,
     required this.labels,
     required this.selected,
     required this.onChanged,
+    this.semanticContext,
   });
 
   @override
@@ -56,6 +61,10 @@ class SegmentedTabs extends StatelessWidget {
                       child: Semantics(
                         button: true,
                         selected: i == selected,
+                        label: semanticContext == null
+                            ? null
+                            : '$semanticContext, ${labels[i]}',
+                        excludeSemantics: semanticContext != null,
                         child: GestureDetector(
                           behavior: HitTestBehavior.opaque,
                           onTap: () {

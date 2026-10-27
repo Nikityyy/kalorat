@@ -34,6 +34,19 @@ window.kaloratCameraDiagnostics = function () {
       `  track ${st.width}x${st.height} fps ${st.frameRate} facing ${st.facingMode}` +
         ` state ${track ? track.readyState : '-'} transform ${cs.transform}`
     );
+    if (track) {
+      let caps = {};
+      try {
+        caps = track.getCapabilities ? track.getCapabilities() : {};
+      } catch (_) {}
+      const supported = navigator.mediaDevices.getSupportedConstraints
+        ? navigator.mediaDevices.getSupportedConstraints().torch
+        : undefined;
+      lines.push(
+        `  torch supported ${supported} capability ${JSON.stringify(caps.torch)}` +
+          ` on ${st.torch} label ${track.label}`
+      );
+    }
     let el = v.parentElement;
     for (let depth = 0; el && el !== document.body && depth < 8; depth++, el = el.parentElement) {
       const c = getComputedStyle(el);
