@@ -198,6 +198,10 @@ class OfflineQueueService {
       }
       final multiplier = parsed.multiplier;
 
+      // Deleted while it was analysed: saving the result would bring it
+      // back.
+      if (_databaseService.getMealById(mealId) == null) return false;
+
       final updatedMeal = meal.copyWith(
         mealName: parsed.mealName,
         calories: parsed.calories * multiplier,

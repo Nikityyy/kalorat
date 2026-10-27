@@ -109,6 +109,7 @@ class _WeightChartState extends State<WeightChart> {
         ],
         SegmentedTabs(
           labels: [l10n.week, l10n.month, l10n.year],
+          semanticContext: l10n.weight,
           selected: _range.index,
           onChanged: (i) => setState(() => _range = _WeightRange.values[i]),
         ),

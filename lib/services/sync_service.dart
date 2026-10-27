@@ -9,6 +9,48 @@ import 'database_service.dart';
 bool shouldReplaceVersion(DateTime candidate, DateTime current) =>
     candidate.toUtc().isAfter(current.toUtc());
 
+/// A clock time as it was written: a meal's time or a weight's day. They go
+/// up without a zone; a column that keeps zones takes that for UTC and
+/// answers with "+00:00", which made it a UTC time that showed shifted by
+/// the zone's offset after the next start. Either way the written clock
+/// time comes back.
+DateTime wallClock(DateTime t) {
+  if (!t.isUtc) return t;
+  return DateTime(
+    t.year,
+    t.month,
+    t.day,
+    t.hour,
+    t.minute,
+    t.second,
+    t.millisecond,
+    t.microsecond,
+  );
+}
+
+DateTime? _tryWallClock(String value) {
+  final t = DateTime.tryParse(value);
+  return t == null ? null : wallClock(t);
+}
+
+/// A moment (updated_at, deleted_at), sent in UTC. Read without a zone, it
+/// is still UTC, so versions compare the same whatever the column keeps.
+DateTime? tryParseInstant(Object? value) {
+  if (value is! String) return null;
+  final t = DateTime.tryParse(value);
+  if (t == null || t.isUtc) return t;
+  return DateTime.utc(
+    t.year,
+    t.month,
+    t.day,
+    t.hour,
+    t.minute,
+    t.second,
+    t.millisecond,
+    t.microsecond,
+  );
+}
+
 /// Picks the cloud rows worth downloading in full: those missing locally or
 /// newer than the local copy. [cloudIndex] holds only `id` and `updated_at`
 /// (plus whatever [localUpdatedAt] needs to find the local copy), so unchanged
@@ -20,9 +62,7 @@ List<String> idsNeedingDownload(
   final ids = <String>[];
   for (final row in cloudIndex) {
     final local = localUpdatedAt(row);
-    final cloud = row['updated_at'] is String
-        ? DateTime.tryParse(row['updated_at'] as String)
-        : null;
+    final cloud = tryParseInstant(row['updated_at']);
     if (local == null || cloud == null || shouldReplaceVersion(cloud, local)) {
       ids.add(row['id'] as String);
     }
@@ -138,7 +178,7 @@ class SyncService {
         currentUser = UserModel(
           name: profileData['name'] ?? '',
           birthdate: profileData['birthdate'] != null
-              ? (DateTime.tryParse(profileData['birthdate']) ??
+              ? (_tryWallClock(profileData['birthdate']) ??
                     DateTime(2000, 1, 1))
               : DateTime(2000, 1, 1),
           height: (profileData['height'] as num?)?.toDouble() ?? 170.0,
@@ -165,14 +205,14 @@ class SyncService {
         final cloudGoal = profileData['goal'] as int?;
         final cloudGender = profileData['gender'] as int?;
         final cloudBirthdate = profileData['birthdate'] != null
-            ? DateTime.tryParse(profileData['birthdate'])
+            ? _tryWallClock(profileData['birthdate'])
             : null;
         final cloudPhoto = profileData['photo_url'] as String?;
         final cloudActivityLevel = (profileData['activity_level'] as num?)
             ?.toInt();
-        final cloudProfileUpdatedAt = profileData['updated_at'] is String
-            ? DateTime.tryParse(profileData['updated_at'] as String)
-            : null;
+        final cloudProfileUpdatedAt = tryParseInstant(
+          profileData['updated_at'],
+        );
         final useCloudActivityLevel = shouldUseCloudActivityLevel(
           localUserIsGuest: currentUser.isGuest,
           localLastSyncTimestamp: currentUser.lastSyncTimestamp,
@@ -300,7 +340,7 @@ class SyncService {
       'goal': user.goalIndex,
       'gender': user.genderIndex,
       'day_start_hour': user.dayStartHour,
-      'updated_at': DateTime.now().toIso8601String(),
+      'updated_at': DateTime.now().toUtc().toIso8601String(),
       'photo_url': user.photoUrl,
       'activity_level': user.activityLevelIndex,
       'use_accurate_mode': user.useAccurateMode,
@@ -323,7 +363,7 @@ class SyncService {
   MealModel _mealFromSupabase(Map<String, dynamic> data) {
     return MealModel(
       id: data['id'],
-      timestamp: DateTime.parse(data['timestamp']),
+      timestamp: wallClock(DateTime.parse(data['timestamp'])),
       photoPaths: [], // Photos are local-only
       mealName: data['meal_name'] ?? '',
       calories: (data['calories'] as num?)?.toDouble() ?? 0,
@@ -348,21 +388,17 @@ class SyncService {
       carbsPer100g: (data['carbs_per_100g'] as num?)?.toDouble(),
       fatsPer100g: (data['fats_per_100g'] as num?)?.toDouble(),
       mealContext: data['meal_context'] as String?,
-      updatedAt: data['updated_at'] != null
-          ? DateTime.parse(data['updated_at']).toUtc()
-          : null,
+      updatedAt: tryParseInstant(data['updated_at']),
     );
   }
 
   WeightModel _weightFromSupabase(Map<String, dynamic> data) {
     return WeightModel(
-      date: DateTime.parse(data['date']),
+      date: wallClock(DateTime.parse(data['date'])),
       weight: (data['weight'] as num).toDouble(),
       note: data['note'] as String?,
       isPending: false, // Content from cloud is by definition synced
-      updatedAt: data['updated_at'] != null
-          ? DateTime.parse(data['updated_at']).toUtc()
-          : null,
+      updatedAt: tryParseInstant(data['updated_at']),
     );
   }
 
@@ -506,7 +542,7 @@ class SyncService {
       'user_id': userId,
       'entity_type': entityType,
       'entity_id': entityId,
-      'deleted_at': DateTime.now().toIso8601String(),
+      'deleted_at': DateTime.now().toUtc().toIso8601String(),
     });
     if (entityType == 'meal') {
       await _client
@@ -592,7 +628,8 @@ class SyncService {
     for (final row in rows) {
       final type = row['entity_type'];
       final id = row['entity_id'] as String;
-      final deletedAt = DateTime.parse(row['deleted_at']);
+      final deletedAt = tryParseInstant(row['deleted_at']);
+      if (deletedAt == null) continue;
       if (type == 'meal') {
         final local = _db.getMealById(id);
         if (local != null && shouldReplaceVersion(deletedAt, local.updatedAt)) {
@@ -625,7 +662,7 @@ class SyncService {
     if (tombstone != null &&
         !shouldReplaceVersion(
           localUpdatedAt,
-          DateTime.parse(tombstone['deleted_at']).toUtc(),
+          tryParseInstant(tombstone['deleted_at'])!,
         )) {
       return false;
     }
@@ -640,7 +677,7 @@ class SyncService {
     return remote == null ||
         shouldReplaceVersion(
           localUpdatedAt,
-          DateTime.parse(remote['updated_at']).toUtc(),
+          tryParseInstant(remote['updated_at'])!,
         );
   }
 }

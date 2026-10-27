@@ -1,3 +1,5 @@
+import '../utils/app_status.dart';
+import '../utils/backup_export.dart';
 import '../utils/app_version.dart';
 import '../utils/platform_utils.dart';
 import '../utils/haptics.dart';
@@ -155,8 +157,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
             const SizedBox(height: 24),
 
             // 3. Notifications
-            _buildNotificationsSection(provider, user, l10n),
-            const SizedBox(height: 24),
+            if (!PlatformUtils.isWeb || provider.appBadgeSupported) ...[
+              _buildNotificationsSection(provider, user, l10n),
+              const SizedBox(height: 24),
+            ],
 
             // 4. Integrations (API Key + Health)
             _buildIntegrationsSection(provider, user, l10n),
@@ -282,28 +286,31 @@ class _SettingsScreenState extends State<SettingsScreen> {
     AppLocalizations l10n,
   ) {
     return _buildSection(l10n.notifications, [
+      // The web has no reminders; only what works there is listed.
       if (PlatformUtils.isWeb) ...[
-        // Web: Show disabled options with "Only in app" badge
-        Opacity(
-          opacity: 0.5,
-          child: ListTile(
-            title: Text(
-              l10n.mealReminders,
-              style: TextStyle(color: AppColors.text),
+        if (provider.appBadgeSupported)
+          SwitchListTile(
+            title: Text(l10n.appBadge, style: TextStyle(color: AppColors.text)),
+            subtitle: Text(
+              l10n.appBadgeHint,
+              style: TextStyle(
+                fontSize: 12,
+                color: AppColors.text.withValues(alpha: 0.6),
+              ),
             ),
-            trailing: _buildOnlyInAppBadge(l10n),
+            value: provider.appBadgeEnabled,
+            activeThumbColor: AppColors.primary,
+            onChanged: (v) async {
+              final permission = await provider.setAppBadgeEnabled(v);
+              if (v && permission != BadgePermission.granted && mounted) {
+                AppToast.show(
+                  context,
+                  l10n.appBadgeDenied,
+                  kind: AppToastKind.error,
+                );
+              }
+            },
           ),
-        ),
-        Opacity(
-          opacity: 0.5,
-          child: ListTile(
-            title: Text(
-              l10n.weightReminders,
-              style: TextStyle(color: AppColors.text),
-            ),
-            trailing: _buildOnlyInAppBadge(l10n),
-          ),
-        ),
       ] else ...[
         // Mobile: Functional switches with permission check
         SwitchListTile(
@@ -384,28 +391,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
         ),
       ),
-      _divider,
-
-      // 2. Health Integration
-      if (PlatformUtils.isWeb) ...[
-        Opacity(
-          opacity: 0.5,
-          child: ListTile(
-            leading: Icon(
-              Icons.favorite_border,
-              color: AppColors.text.withValues(alpha: 0.5),
-            ),
-            title: Text(
-              l10n.syncWith(PlatformUtils.healthAppName),
-              style: TextStyle(
-                fontWeight: FontWeight.w600,
-                color: AppColors.text.withValues(alpha: 0.7),
-              ),
-            ),
-            trailing: _buildOnlyInAppBadge(l10n),
-          ),
-        ),
-      ] else ...[
+      // 2. Health Integration: only the installed app reaches Health.
+      if (!PlatformUtils.isWeb) ...[
+        _divider,
         SwitchListTile(
           title: Text(
             l10n.syncWith(PlatformUtils.healthAppName),
@@ -474,25 +462,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ],
       ],
     ]);
-  }
-
-  Widget _buildOnlyInAppBadge(AppLocalizations l10n) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: AppColors.surface.withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(AppTheme.borderRadius / 2),
-        border: Border.all(color: AppColors.text.withValues(alpha: 0.2)),
-      ),
-      child: Text(
-        l10n.featureOnlyInApp,
-        style: TextStyle(
-          fontSize: 11,
-          color: AppColors.text.withValues(alpha: 0.6),
-          fontWeight: FontWeight.w500,
-        ),
-      ),
-    );
   }
 
   Widget _buildActivityLevelSelector(AppProvider provider, UserModel user) {
@@ -954,26 +923,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ListTile(
         leading: Icon(Icons.upload, color: AppColors.primary),
         title: Text(l10n.exportData, style: TextStyle(color: AppColors.text)),
-        onTap: () async {
-          final path = await provider.exportData();
-          if (path != null && mounted) {
-            if (path.startsWith('web_')) {
-              // Web: the browser share sheet or download took the file. Only
-              // a plain download needs a confirmation.
-              if (path == 'web_downloaded') {
-                AppToast.show(
-                  context,
-                  l10n.downloadStarted,
-                  kind: AppToastKind.info,
-                );
-              }
-            } else {
-              await SharePlus.instance.share(
-                ShareParams(files: [XFile(path)], text: l10n.backupShareText),
-              );
-            }
-          }
-        },
+        onTap: () => exportBackup(context),
       ),
       ListTile(
         leading: Icon(Icons.description_outlined, color: AppColors.primary),

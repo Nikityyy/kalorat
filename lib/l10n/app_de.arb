@@ -73,6 +73,9 @@
   "notifications": "Benachrichtigungen",
   "mealReminders": "Mahlzeit-Erinnerungen",
   "weightReminders": "Gewichts-Erinnerungen",
+  "appBadge": "Zähler am App-Symbol",
+  "appBadgeHint": "Zeigt, wie viele Mahlzeiten noch auf ihre Analyse warten.",
+  "appBadgeDenied": "Erlaube Mitteilungen für Kalorat in den Einstellungen deines Geräts, dann zeigt das App-Symbol den Zähler.",
   "grantPermission": "Berechtigung erteilen",
   "startOnboarding": "Onboarding starten",
   "deleteWeight": "Gewicht löschen?",
@@ -210,11 +213,10 @@
   "logOutConfirm": "Möchtest du dich wirklich abmelden?",
   "loggedOut": "Erfolgreich abgemeldet",
   "error": "Fehler",
-  "rateLimitMeals": "Maximum erreicht. Limit von 15 Mahlzeiten pro Tag.",
+  "rateLimitMeals": "Heute sind schon 15 Mahlzeiten erfasst, das Tageslimit. Fasse kleine Snacks zu einer Mahlzeit zusammen.",
   "rateLimitPhotos": "Maximum erreicht. Limit von 5 Fotos pro Mahlzeit.",
   "legal": "Rechtliches",
   "privacyPolicy": "Datenschutzerklärung",
-  "featureOnlyInApp": "Nur in der App",
   "activityLevel": "Aktivitätslevel",
   "sedentary": "Sitzend",
   "lightlyActive": "Leicht aktiv",
@@ -241,7 +243,8 @@
   "mealContextSkip": "Ohne Hinweis",
   "mealContextAnalyze": "Analysieren",
   "mealContextBackground": "Im Hintergrund",
-  "mealSavedBackground": "Gespeichert. Die Analyse läuft weiter, sobald Kalorat geöffnet und online ist.",
+  "mealSavedBackground": "Gespeichert. Die Analyse startet, sobald du online bist.",
+  "mealAnalysingBackground": "Wird analysiert. Das Ergebnis erscheint gleich unter Heute.",
   "saveToGallery": "Foto speichern",
   "saveToGallerySuccess": "Foto in Galerie gespeichert",
   "saveToGalleryError": "Foto konnte nicht gespeichert werden.",
@@ -317,6 +320,12 @@
   "gallery": "Galerie",
   "quickLogTitle": "Schnell erfassen",
   "quickLogHint": "Beschreibe, was du gegessen hast, z. B. zwei Scheiben Toast mit Butter",
+  "offSearch": "In Open Food Facts suchen",
+  "offSearchResults": "Open Food Facts",
+  "offSearchNone": "Keine Produkte mit Nährwerten gefunden. Versuch es mit Marke und Produktname.",
+  "offSearchFailed": "Die Suche hat nicht geklappt. Bist du online?",
+  "offPer100Ml": "{kcal} kcal pro 100 ml",
+  "@offPer100Ml": {"placeholders": {"kcal": {"type": "int"}}},
   "quickLogRecent": "Nochmal essen",
   "quickLogAgainAction": "Nochmal erfassen",
   "quickLogLogged": "{name} erfasst",
@@ -424,6 +433,17 @@
   "cameraCanvasPreviewOn": "Canvas-Vorschau: an",
   "cameraCanvasPreviewOff": "Canvas-Vorschau: aus",
   "backupShareText": "Kalorat-Backup",
+  "backupFailed": "Das Backup konnte nicht erstellt werden. Versuch es noch einmal.",
+  "backupReminderTitle": "Zeit für ein Backup",
+  "backupReminderNever": "Deine Mahlzeiten liegen nur auf diesem Gerät und wurden noch nie gesichert. Ein Backup ist eine Datei, die du in Dateien oder iCloud ablegen kannst.",
+  "backupReminderLast": "Deine Mahlzeiten liegen nur auf diesem Gerät. Letztes Backup vor {days} Tagen.",
+  "@backupReminderLast": {
+    "placeholders": {
+      "days": {"type": "int"}
+    }
+  },
+  "backupReminderAction": "Jetzt sichern",
+  "backupReminderLater": "Später",
   "reportShareText": "Kalorat-Markdown-Bericht",
   "restoreBackupMissing": "Kein Import-Backup vorhanden.",
   "weeklyOnTarget": "Im Ziel",
@@ -589,6 +609,14 @@
       "count": {
         "type": "int"
       }
+    }
+  },
+  "mealsCountOfLimit": "{count} von {limit} Mahlzeiten",
+  "@mealsCountOfLimit": {
+    "description": "Today's meal count once it nears the daily limit",
+    "placeholders": {
+      "count": {"type": "int"},
+      "limit": {"type": "int"}
     }
   },
   "pastDayEmpty": "An diesem Tag ist nichts eingetragen.",

@@ -197,6 +197,9 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
           actionLabel: l10n.reloadButton,
           onAction: provider.performUpdate,
           duration: const Duration(seconds: 10),
+          // Above the tab bar, clear of every tab's content at the top.
+          bottom:
+              MediaQuery.paddingOf(context).bottom + FloatingTabBar.height + 20,
         );
       });
     }
@@ -225,6 +228,8 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
                   allowImplicitScrolling: _buildNeighbours,
                   physics: locked ? const NeverScrollableScrollPhysics() : null,
                   onPageChanged: (index) {
+                    // A message about one tab does not stay over another.
+                    AppToast.dismiss();
                     // A tab tap already set the target page.
                     if (_navigating) return;
                     // The camera follows the page position (_followSwipe).
@@ -232,7 +237,14 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
                     Haptics.selection();
                     setState(() => _currentIndex = index);
                   },
-                  children: _screens,
+                  children: [
+                    for (var i = 0; i < _screens.length; i++)
+                      _VisibleTickers(
+                        controller: _pageController,
+                        index: i,
+                        child: _screens[i],
+                      ),
+                  ],
                 ),
               ),
             ),
@@ -260,6 +272,37 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
             ),
         ],
       ),
+    );
+  }
+}
+
+/// Runs the animations of a tab only while some of it is on screen. A
+/// spinner on a hidden tab (a meal being analysed on Today) otherwise drew
+/// frames the whole time behind the shown one: the camera lagged for as
+/// long as an analysis ran.
+class _VisibleTickers extends StatelessWidget {
+  final PageController controller;
+  final int index;
+  final Widget child;
+
+  const _VisibleTickers({
+    required this.controller,
+    required this.index,
+    required this.child,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: controller,
+      builder: (context, child) {
+        final position = controller.hasClients ? controller.position : null;
+        final page = position != null && position.haveDimensions
+            ? controller.page!
+            : controller.initialPage.toDouble();
+        return TickerMode(enabled: (page - index).abs() < 1, child: child!);
+      },
+      child: child,
     );
   }
 }

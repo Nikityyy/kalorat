@@ -61,6 +61,11 @@ class ProductLookupService {
       'code,product_name,product_name_de,product_name_en,generic_name,'
       'generic_name_de,generic_name_en,brands,quantity,serving_quantity,'
       'serving_quantity_unit,serving_size,product_quantity,product_quantity_unit,nutriments';
+
+  /// Full-text search: Open Food Facts' product API has none; their
+  /// search service (Search-a-licious) answers browsers from any origin.
+  static const _searchHost = 'search.openfoodfacts.org';
+  static const searchTimeout = Duration(seconds: 8);
   static const foundTtl = Duration(days: 30);
   static const notFoundTtl = Duration(hours: 1);
   static const timeout = Duration(seconds: 6);
@@ -130,15 +135,7 @@ class ProductLookupService {
   /// Throws on network and server errors.
   Future<FoodProduct?> _fetch(String code, String language) async {
     final uri = Uri.https(_host, '/api/v2/product/$code', {'fields': _fields});
-    // Browsers send their own User-Agent; a custom header would also cost a
-    // CORS preflight round trip.
-    final headers = kIsWeb
-        ? const <String, String>{}
-        : {
-            'User-Agent':
-                'Kalorat/${AppVersion.name} (https://nikity.is-a.dev)',
-          };
-    final response = await _client.get(uri, headers: headers);
+    final response = await _client.get(uri, headers: _headers);
     if (response.statusCode == 404) return null;
     if (response.statusCode != 200) {
       throw http.ClientException('HTTP ${response.statusCode}', uri);
@@ -153,6 +150,85 @@ class ProductLookupService {
       language: language,
     );
   }
+
+  final Map<String, List<FoodProduct>> _searches = {};
+
+  /// Products named like [query] that have nutrition, best match first;
+  /// null when the search failed (offline, timeout, server error). Open
+  /// Food Facts asks apps not to search while the user types, so this runs
+  /// once per search the user sends, and a repeated one is answered from
+  /// memory. Found products are cached like scanned ones.
+  Future<List<FoodProduct>?> search(
+    String query, {
+    String language = 'en',
+  }) async {
+    final text = query.trim();
+    if (text.length < 2) return const [];
+    final key = '$language|${text.toLowerCase()}';
+    final known = _searches[key];
+    if (known != null) return known;
+
+    final uri = Uri.https(_searchHost, '/search', {
+      'q': text,
+      'langs': language == 'en' ? 'en' : '$language,en',
+      'page_size': '20',
+    });
+    try {
+      final response = await _client
+          .get(uri, headers: _headers)
+          .timeout(searchTimeout);
+      if (response.statusCode != 200) {
+        throw http.ClientException('HTTP ${response.statusCode}', uri);
+      }
+      final body = jsonDecode(utf8.decode(response.bodyBytes));
+      final hits = body is Map && body['hits'] is List
+          ? body['hits'] as List
+          : const [];
+      final products = <FoodProduct>[];
+      for (final hit in hits.whereType<Map>()) {
+        final fields = Map<String, dynamic>.from(hit);
+        final code = fields['code']?.toString() ?? '';
+        if (code.isEmpty) continue;
+        fields['brands'] = searchBrand(fields['brands']);
+        final product = FoodProduct.fromOpenFoodFacts(
+          code,
+          fields,
+          language: language,
+        );
+        if (product == null || !product.hasNutrition) continue;
+        products.add(product);
+        await _writeCache(
+          code,
+          ProductLookupResult(ProductLookupStatus.found, product),
+        );
+      }
+      return _searches[key] = products;
+    } catch (e) {
+      AppLogger.warning('ProductLookup', 'Search for "$text" failed: $e');
+      return null;
+    }
+  }
+
+  /// The brand of a search hit as text: the search service may give a list
+  /// of brand tags ("en:ferrero") where the product API gives "Ferrero".
+  @visibleForTesting
+  static String? searchBrand(Object? brands) {
+    if (brands is String) return brands;
+    if (brands is! List || brands.isEmpty) return null;
+    final tag = brands.first.toString().replaceFirst(RegExp(r'^[a-z]{2}:'), '');
+    if (tag.isEmpty) return null;
+    return tag
+        .split('-')
+        .where((word) => word.isNotEmpty)
+        .map((word) => word[0].toUpperCase() + word.substring(1))
+        .join(' ');
+  }
+
+  /// Browsers send their own User-Agent; a custom header would also cost a
+  /// CORS preflight round trip.
+  Map<String, String> get _headers => kIsWeb
+      ? const <String, String>{}
+      : {'User-Agent': 'Kalorat/${AppVersion.name} (https://nikity.is-a.dev)'};
 
   /// Raised when the way a product is read changes, so cached products are
   /// read again (2: drinks with a unit of g, see FoodProduct._isLiquid).

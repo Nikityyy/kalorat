@@ -266,7 +266,14 @@ class DatabaseService {
           }
         }
       }
-      currentLogicalDate = currentLogicalDate.add(const Duration(days: 1));
+      // The next calendar day, not 24 hours on: the day summer time ends
+      // has 25 hours, and 24 hours after its midnight is still that day,
+      // which read its meals twice.
+      currentLogicalDate = DateTime(
+        currentLogicalDate.year,
+        currentLogicalDate.month,
+        currentLogicalDate.day + 1,
+      );
       daysChecked++;
     }
 

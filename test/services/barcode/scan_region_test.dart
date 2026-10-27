@@ -93,13 +93,21 @@ void main() {
       expect(guide.inflate(12).contains(box.center), isTrue);
     });
 
-    test('a code reaching past the guide is held near it', () {
-      final box = lockBox(
-        onScreen(const Rect.fromLTRB(0.0, 0.3, 1.0, 0.6)),
-        guide,
+    test('a code reaching past the guide keeps its box in the view', () {
+      final code = onScreen(const Rect.fromLTRB(0.1, 0.55, 0.9, 0.7));
+      final box = lockBox(code, Offset.zero & view);
+      expect(
+        box.contains(code.topLeft) && box.contains(code.bottomRight),
+        isTrue,
       );
-      expect(box.left, greaterThanOrEqualTo(guide.left - 12));
-      expect(box.right, lessThanOrEqualTo(guide.right + 12));
+      expect(box.bottom, greaterThan(guide.bottom));
+
+      final wide = lockBox(
+        onScreen(const Rect.fromLTRB(0.0, 0.3, 1.0, 0.6)),
+        Offset.zero & view,
+      );
+      expect(wide.left, greaterThanOrEqualTo(-12));
+      expect(wide.right, lessThanOrEqualTo(view.width + 12));
     });
 
     test('the front camera mirrors the box', () {
