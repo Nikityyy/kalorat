@@ -1912,6 +1912,7 @@ class _HomeScreenState extends State<HomeScreen>
     final l10n = context.l10n;
     final language = context.read<AppProvider>().language;
     var opened = false;
+    MealModel? saved;
     try {
       final result = await _productLookup.lookup(
         code,
@@ -1951,7 +1952,7 @@ class _HomeScreenState extends State<HomeScreen>
             if (stored != null) await _deleteStoredPhotoIfDisposable(stored);
             return;
           }
-          await _openProduct(product!, code, photo, l10n);
+          saved = await _openProduct(product!, code, photo, l10n);
         case ProductLookupStatus.noNutrition:
           _offerLabelPhoto(
             l10n.barcodeNoNutrition(product!.displayName),
@@ -1965,20 +1966,46 @@ class _HomeScreenState extends State<HomeScreen>
       }
     } finally {
       if (mounted) setState(() => _guideLock = null);
-      _barcodeScanner.holdPreview(false);
-      if (opened) {
+      _releaseHeldPreview();
+      if (opened && saved == null) {
         // Back from the product without saving it: the same code, still in
         // front of the camera, opens it again after a short pause instead of
         // only once it has left the view.
         _lastBarcode = null;
         _barcodeQuietUntil = DateTime.now().add(const Duration(seconds: 1));
       } else {
-        // The code is probably still in front of the camera.
+        // Logged, or no product: the code is probably still in front of the
+        // camera and must not open the product again until it has left.
         _lastBarcode = code;
         _lastBarcodeSeen = DateTime.now();
       }
       _barcodeBusy = false;
     }
+    if (saved != null && mounted && _cameraTabIsActive) _confirmLogged(saved);
+  }
+
+  /// Plays the preview held on a code again, unless the camera was paused on
+  /// purpose (tab left, analysis running): that pause stays.
+  void _releaseHeldPreview() {
+    if (_cameraTabIsActive && !_isPreviewPaused) {
+      _barcodeScanner.holdPreview(false);
+    }
+  }
+
+  /// The camera is live again when a scanned product has been logged; this
+  /// says what was logged, and takes it back.
+  void _confirmLogged(MealModel meal) {
+    final provider = context.read<AppProvider>();
+    final l10n = context.l10n;
+    Haptics.confirm();
+    AppToast.show(
+      context,
+      l10n.quickLogLogged(meal.mealName),
+      kind: AppToastKind.success,
+      top: MediaQuery.paddingOf(context).top + 76,
+      actionLabel: l10n.quickLogUndo,
+      onAction: () => provider.deleteMeal(meal.id),
+    );
   }
 
   /// Closes the corners on [code] where the held preview shows it. The
@@ -2008,7 +2035,8 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
-  Future<void> _openProduct(
+  /// Opens [product] as a new entry; the meal when it was logged, else null.
+  Future<MealModel?> _openProduct(
     FoodProduct product,
     String code,
     Future<String?> storedPhoto,
@@ -2019,7 +2047,7 @@ class _HomeScreenState extends State<HomeScreen>
     final photo = await storedPhoto;
     if (!mounted) {
       if (photo != null) await _deleteStoredPhotoIfDisposable(photo);
-      return;
+      return null;
     }
     final meal = product.toMeal(
       id: now.millisecondsSinceEpoch.toString(),
@@ -2027,16 +2055,29 @@ class _HomeScreenState extends State<HomeScreen>
       note: l10n.barcodeSourceNote(code),
       photoPaths: [?photo],
     );
-    await Navigator.push(
+    final logged = Navigator.push(
       context,
-      MaterialPageRoute<void>(
+      MaterialPageRoute<MealModel>(
         builder: (_) => MealDetailScreen(meal: meal, isNewEntry: true),
       ),
     );
+    // Once the product has slid over the camera, the picture it was held on
+    // plays again behind it, so the camera is live when it closes.
+    unawaited(
+      Future<void>.delayed(const Duration(milliseconds: 450), () {
+        if (mounted) {
+          setState(() => _guideLock = null);
+          _releaseHeldPreview();
+        }
+      }),
+    );
+    final result = await logged;
+    final kept = provider.getMealById(meal.id);
     // Discarded: the photo belongs to nothing.
-    if (photo != null && provider.getMealById(meal.id) == null) {
+    if (photo != null && kept == null) {
       await _deleteStoredPhotoIfDisposable(photo);
     }
+    return result == null ? null : kept;
   }
 
   /// Stores the picture a barcode was read in like a captured photo; null

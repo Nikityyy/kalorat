@@ -446,9 +446,9 @@
     decodeImage: decodeImage,
     stop: function () {
       running = false;
-      // The camera is paused or stopped with the scanner; it plays again
-      // through the camera, not from here.
-      held = null;
+      // A picture held on a code stays held: a screen opening over the camera
+      // stops the scanner too, and the preview is released when it closes
+      // (hold(false)), not by this.
       onCode = null;
       hitText = null;
       if (timer) clearTimeout(timer);
