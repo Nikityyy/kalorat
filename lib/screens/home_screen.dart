@@ -644,6 +644,8 @@ class _HomeScreenState extends State<HomeScreen>
         storedPhoto = savedPath;
       }
 
+      await _decodeBeforeShowing([storedPhoto], review: !_isTakingMore);
+      if (!mounted) return;
       setState(() {
         _capturedPhotos.add(storedPhoto);
       });
@@ -1001,6 +1003,11 @@ class _HomeScreenState extends State<HomeScreen>
           }
         }
       }
+      await _decodeBeforeShowing(
+        stored,
+        review: PlatformUtils.isWeb || !_isTakingMore,
+      );
+      if (!mounted) return;
       _capturedPhotos.addAll(stored);
       unawaited(_scanPickedPhotos(images, stored));
       setState(() {});
@@ -1065,6 +1072,30 @@ class _HomeScreenState extends State<HomeScreen>
 
   ImageProvider _photoImageProvider(String photo, {int? cacheWidth}) =>
       PhotoStore.instance.imageProvider(photo, cacheWidth: cacheWidth);
+
+  /// Decodes new photos at the size they are about to be shown at: in the
+  /// review grid ([review]) or as the thumbnail beside the shutter. They
+  /// then appear with the screen instead of an empty frame first. A slow
+  /// decode holds the screen back for a moment at most.
+  Future<void> _decodeBeforeShowing(
+    List<String> photos, {
+    required bool review,
+  }) async {
+    if (photos.isEmpty) return;
+    final images = review
+        ? [
+            for (final photo in photos)
+              _photoImageProvider(photo, cacheWidth: _reviewCacheWidth()),
+          ]
+        : [_photoImageProvider(photos.last, cacheWidth: _thumbnailCacheWidth)];
+    await Future.wait([
+      for (final image in images) precacheImage(image, context),
+    ]).timeout(const Duration(milliseconds: 350), onTimeout: () => []);
+  }
+
+  /// Photos in the review grid, two to a row, and beside the shutter.
+  int _reviewCacheWidth() => (_screenPixelWidth() / 2).round();
+  static const _thumbnailCacheWidth = 180;
 
   /// The screen's width in device pixels: the most a full-width photo needs.
   int _screenPixelWidth() =>
@@ -1500,10 +1531,8 @@ class _HomeScreenState extends State<HomeScreen>
               photos: _capturedPhotos,
               isAnalyzing: _isAnalyzing,
               // Two photos side by side: half the screen is enough.
-              imageFor: (photo) => _photoImageProvider(
-                photo,
-                cacheWidth: (_screenPixelWidth() / 2).round(),
-              ),
+              imageFor: (photo) =>
+                  _photoImageProvider(photo, cacheWidth: _reviewCacheWidth()),
               onOpen: _openCapturedPhoto,
               onRemove: _removeCapturedPhoto,
               onReorder: _reorderCapturedPhoto,
@@ -1747,7 +1776,10 @@ class _HomeScreenState extends State<HomeScreen>
           photoCount: _capturedPhotos.length,
           lastPhoto: _capturedPhotos.isEmpty
               ? null
-              : _photoImageProvider(_capturedPhotos.last, cacheWidth: 180),
+              : _photoImageProvider(
+                  _capturedPhotos.last,
+                  cacheWidth: _thumbnailCacheWidth,
+                ),
           isCapturing: _isCapturing,
           onGallery: _pickFromGallery,
           onCapture: _capturePhoto,

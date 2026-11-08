@@ -83,6 +83,31 @@ void main() {
     expect(await database.migrateInlinePhotos(), isFalse, reason: 'idempotent');
   });
 
+  test(
+    'a photo just saved reads back without the box, until deleted',
+    () async {
+      final bytes = Uint8List.fromList([0xFF, 0xD8, 1, 2, 3]);
+      final ref = await photos.save(bytes);
+      expect(await photos.read(ref), bytes);
+      // Another store on the same box reads it from IndexedDB.
+      final other = PhotoStore(Hive.lazyBox<Uint8List>(PhotoStore.boxName));
+      expect(await other.read(ref), bytes);
+      await photos.delete(ref);
+      expect(await photos.read(ref), isNull);
+    },
+  );
+
+  test('only the last few saved photos are kept in memory', () async {
+    final refs = [
+      for (var i = 0; i < 8; i++) await photos.save(Uint8List.fromList([i])),
+    ];
+    // Gone from the box behind the store's back: only memory still has it.
+    final box = Hive.lazyBox<Uint8List>(PhotoStore.boxName);
+    await box.deleteAll([for (final r in refs) r.substring('kphoto:'.length)]);
+    expect(await photos.read(refs.first), isNull);
+    expect(await photos.read(refs.last), Uint8List.fromList([7]));
+  });
+
   test('recognizes JPEG base64 as inline, not as a file path', () {
     expect(inlinePhoto(0), startsWith('/9j/'));
     expect(PhotoStore.isInlineBase64(inlinePhoto(0)), isTrue);

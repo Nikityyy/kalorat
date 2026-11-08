@@ -27,6 +27,12 @@ class PhotoStore {
   final LazyBox<Uint8List>? _box;
   final Random _random = Random();
 
+  /// The photos saved last, by reference. They are shown right after they
+  /// are taken, and reading them back from IndexedDB took longer than
+  /// decoding them.
+  final Map<String, Uint8List> _recent = {};
+  static const _recentLimit = 6;
+
   PhotoStore(this._box);
 
   static Future<PhotoStore> open() async =>
@@ -49,18 +55,25 @@ class PhotoStore {
     final id =
         '${DateTime.now().millisecondsSinceEpoch}-${_random.nextInt(0x7FFFFFFF).toRadixString(36)}';
     await box.put(id, bytes);
-    return '$_refPrefix$id';
+    final ref = '$_refPrefix$id';
+    _recent[ref] = bytes;
+    if (_recent.length > _recentLimit) _recent.remove(_recent.keys.first);
+    return ref;
   }
 
   Future<Uint8List?> read(String path) async {
     if (path.isEmpty) return null;
-    if (isRef(path)) return _box?.get(path.substring(_refPrefix.length));
+    if (isRef(path)) {
+      return _recent[path] ?? _box?.get(path.substring(_refPrefix.length));
+    }
     if (isInlineBase64(path)) return base64Decode(path);
     return XFile(path).readAsBytes();
   }
 
   Future<void> delete(String path) async {
-    if (isRef(path)) await _box?.delete(path.substring(_refPrefix.length));
+    if (!isRef(path)) return;
+    _recent.remove(path);
+    await _box?.delete(path.substring(_refPrefix.length));
   }
 
   /// Deletes stored photos that no meal, pending capture or backup references.
@@ -73,6 +86,9 @@ class PhotoStore {
       final createdAt = int.tryParse(key.toString().split('-').first);
       return createdAt != null && createdAt < cutoff;
     }).toList();
+    for (final key in orphans) {
+      _recent.remove('$_refPrefix$key');
+    }
     await box.deleteAll(orphans);
     return orphans.length;
   }

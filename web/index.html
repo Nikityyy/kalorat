@@ -196,8 +196,13 @@
     };
 
     // Downscales a photo to fit maxDimension and re-encodes it as JPEG.
-    // Used before storing web photos (see photo_downscale_web.dart).
+    // Used before storing web photos (see photo_downscale_web.dart). In a
+    // worker where the browser has one (photo_encoder.js), else here.
     window.kaloratDownscaleJpeg = async function (bytes, maxDimension, quality) {
+      if (window.kaloratEncodeJpeg) {
+        const encoded = await window.kaloratEncodeJpeg(bytes, maxDimension, quality, false).catch(() => null);
+        if (encoded && encoded.length) return encoded;
+      }
       const bitmap = await createImageBitmap(new Blob([bytes]));
       const scale = Math.min(1, maxDimension / Math.max(bitmap.width, bitmap.height));
       const canvas = document.createElement('canvas');
@@ -224,6 +229,7 @@
   <script src="haptics.js"></script>
   <script src="camera_diagnostics.js"></script>
   <script src="camera_canvas.js"></script>
+  <script src="photo_encoder.js"></script>
   <script src="camera_devices.js"></script>
   <script src="barcode_scanner.js"></script>
   <script src="file_export.js"></script>

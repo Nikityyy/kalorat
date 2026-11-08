@@ -240,10 +240,28 @@ window.kaloratPreviewMirrored = function () {
 // px on its longest side, or null. The camera plugin's takePicture encodes
 // the whole camera frame, which then had to be decoded and encoded again at
 // the stored size; this encodes once, at that size. [mirrored] flips it as
-// the preview shows it, like the plugin's own pictures.
+// the preview shows it, like the plugin's own pictures. The frame is taken
+// at once and encoded in a worker (photo_encoder.js): here, toBlob waited a
+// second for an idle moment the camera screen never has.
 window.kaloratCapturePreview = function (maxDimension, quality, mirrored) {
   var video = kaloratPreviewVideo(true);
   if (!video) return Promise.resolve(null);
+  var inWorker =
+    typeof window.kaloratEncodeJpeg === 'function' && typeof createImageBitmap === 'function'
+      ? createImageBitmap(video).then(function (bitmap) {
+          return window.kaloratEncodeJpeg(bitmap, maxDimension, quality, mirrored);
+        })
+      : Promise.resolve(null);
+  return inWorker
+    .catch(function () {
+      return null;
+    })
+    .then(function (bytes) {
+      return bytes || capturePreviewHere(video, maxDimension, quality, mirrored);
+    });
+};
+
+function capturePreviewHere(video, maxDimension, quality, mirrored) {
   try {
     var scale = Math.min(1, maxDimension / Math.max(video.videoWidth, video.videoHeight));
     var canvas = document.createElement('canvas');
@@ -265,7 +283,7 @@ window.kaloratCapturePreview = function (maxDimension, quality, mirrored) {
   } catch (_) {
     return Promise.resolve(null);
   }
-};
+}
 
 // The torch of the playing preview's camera. The camera plugin reads the
 // torch capability as a list ([true, false]); Safari reports a boolean, so
