@@ -230,4 +230,16 @@ void main() {
     expect(await photos.read('kphoto:$old-pending'), [3]);
     expect(await photos.read(recent), [4]);
   });
+
+  test('reading a stored photo warms the in-memory cache', () async {
+    final bytes = Uint8List.fromList([0xFF, 0xD8, 9, 8, 7]);
+    final ref = await photos.save(bytes);
+    final reopened = PhotoStore(Hive.lazyBox<Uint8List>(PhotoStore.boxName));
+
+    expect(await reopened.read(ref), bytes);
+    await Hive.lazyBox<Uint8List>(
+      PhotoStore.boxName,
+    ).delete(ref.substring('kphoto:'.length));
+    expect(await reopened.read(ref), bytes);
+  });
 }

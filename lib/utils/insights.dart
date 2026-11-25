@@ -76,6 +76,23 @@ class WeeklySummary {
       avgCalories == null ? null : avgCalories! - targetCalories;
 }
 
+Map<DateTime, DayIntake> _windowTotals(
+  Iterable<MealModel> meals, {
+  required DateTime fromDay,
+  required DateTime today,
+  required int dayStartHour,
+}) {
+  final cutoffStart = DateTime(fromDay.year, fromDay.month, fromDay.day - 1);
+  final cutoffEnd = DateTime(today.year, today.month, today.day + 2);
+  return dailyTotals(
+    meals.where(
+      (m) =>
+          !m.timestamp.isBefore(cutoffStart) && m.timestamp.isBefore(cutoffEnd),
+    ),
+    dayStartHour: dayStartHour,
+  );
+}
+
 /// The last seven completed days (today is still being logged) against the
 /// daily target.
 WeeklySummary weeklySummary({
@@ -86,7 +103,12 @@ WeeklySummary weeklySummary({
   int dayStartHour = 0,
 }) {
   final today = logicalDay(now, dayStartHour: dayStartHour);
-  final totals = dailyTotals(meals, dayStartHour: dayStartHour);
+  final totals = _windowTotals(
+    meals,
+    fromDay: DateTime(today.year, today.month, today.day - 7),
+    today: today,
+    dayStartHour: dayStartHour,
+  );
   final days = <DayIntake>[
     for (var i = 7; i >= 1; i--)
       () {
@@ -216,7 +238,12 @@ ExpenditureEstimate estimateExpenditure({
   final lastDay = _dateOnly(points.last.date);
   final span = lastDay.difference(firstDay).inDays;
 
-  final totals = dailyTotals(meals, dayStartHour: dayStartHour);
+  final totals = _windowTotals(
+    meals,
+    fromDay: firstDay,
+    today: today,
+    dayStartHour: dayStartHour,
+  );
   var loggedDays = 0;
   var calories = 0.0;
   for (var i = 0; i < span; i++) {

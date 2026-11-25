@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:provider/provider.dart';
 import '../providers/app_provider.dart';
 import 'package:flutter/material.dart';
@@ -49,12 +51,18 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
   // Off until the app has started: then the pages beside the shown one are
   // built ahead, so the first swipe to them does not stall.
   bool _buildNeighbours = false;
+  Timer? _neighbourTimer;
 
   /// Once the app is up and at rest, draws the sheets and views that open on
   /// a tap once, out of sight, and then builds the other tabs, so none of
   /// them stalls the first time it opens. One per frame, with pauses, so the
   /// start stays as fast as before.
   Future<void> _warmUp() async {
+    _neighbourTimer = Timer(const Duration(milliseconds: 120), () {
+      if (mounted && !_buildNeighbours) {
+        setState(() => _buildNeighbours = true);
+      }
+    });
     await WarmUp.run([
       mealContextSheetWarmUp,
       analyzingViewWarmUp,
@@ -62,7 +70,6 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
       componentSheetWarmUp,
       quickLogSheetWarmUp,
     ]);
-    if (mounted) setState(() => _buildNeighbours = true);
   }
 
   /// While a finger drags the pages, the camera runs whenever any of it is
@@ -77,6 +84,7 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
 
   @override
   void dispose() {
+    _neighbourTimer?.cancel();
     WidgetsBinding.instance.removeObserver(this);
     _pageController.dispose();
     _cameraTabActive.dispose();

@@ -34,11 +34,11 @@
   var MARGIN = 0.12;
   // The next frame is grabbed this long after the last one was read, so the
   // worker is busy most of the time and the main thread still has room for
-  // the preview. (It used to be a fixed 160ms between grabs.)
-  var GAP_MS = 50;
+  // the preview.
+  var GAP_MS = 25;
   var doneAt = 0;
   // The picture kept on a hit: the size meal photos are stored at.
-  var PHOTO_EDGE = 1600;
+  var PHOTO_EDGE = 1536;
 
   var worker = null;
   var ready = false;
@@ -266,9 +266,9 @@
     });
   }
 
-  // Photos are read at up to STILL_EDGE: a barcode is often only a small
-  // part of a photo.
-  var STILL_EDGE = 2048;
+  // Photos are read at up to STILL_EDGE: 1280px reads retail EAN/UPC cleanly
+  // at <40% of 2048px pixel area.
+  var STILL_EDGE = 1280;
 
   function decodeImage(bytes) {
     return whenReady().then(function (ok) {

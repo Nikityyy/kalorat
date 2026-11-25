@@ -78,7 +78,7 @@ class _MealShareScreenState extends State<MealShareScreen> {
 
   ImageProvider? _providerFor(int index) => _photos.isEmpty
       ? null
-      : PhotoStore.instance.imageProvider(_photos[index]);
+      : PhotoStore.instance.imageProvider(_photos[index], cacheWidth: 1080);
 
   @override
   void initState() {
@@ -108,12 +108,10 @@ class _MealShareScreenState extends State<MealShareScreen> {
   /// Decodes the card's images, so they are drawn by the first frame the
   /// picture is made from. One that fails shows its fallback.
   Future<void> _decode(List<ImageProvider> images) async {
-    for (final image in images) {
-      try {
-        await precacheImage(image, context);
-      } catch (_) {}
-      if (!mounted) return;
-    }
+    await Future.wait([
+      for (final image in images)
+        precacheImage(image, context).catchError((_) {}),
+    ]);
   }
 
   void _renderAfterPaint(int generation) {

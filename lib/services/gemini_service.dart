@@ -238,23 +238,40 @@ class GeminiService {
     if (textOnly && (mealContext == null || mealContext.trim().isEmpty)) {
       throw GeminiError(GeminiErrorType.noFood, 'Nothing to analyze');
     }
-    final leftoverParts = textOnly || leftoverPaths.isEmpty
-        ? <Map<String, dynamic>>[]
-        : await _prepareImageParts(leftoverPaths);
+    final (leftoverParts, rawMealParts, availableModels) = await (
+      textOnly || leftoverPaths.isEmpty
+          ? Future.value(const <Map<String, dynamic>>[])
+          : _prepareImageParts(leftoverPaths),
+      textOnly
+          ? Future.value(const <Map<String, dynamic>>[])
+          : _prepareImageParts(imagePaths),
+      _getAvailableModels(),
+    ).wait;
+    final hasLeftovers = leftoverParts.isNotEmpty;
     final imageParts = [
-      if (!textOnly) ...await _prepareImageParts(imagePaths),
+      ...rawMealParts,
       // Photos of what was left on the plate come after the meal, behind a
       // note that names them, so the answer counts only what was eaten.
-      if (leftoverParts.isNotEmpty) ...[
+      if (hasLeftovers) ...[
         {'text': _leftoverNote(leftoverParts.length)},
         ...leftoverParts,
       ],
     ];
     final candidates = _orderedModelsForMode(
-      await _getAvailableModels(),
+      availableModels,
       useAccurateMode: useAccurateMode,
     );
     final runs = useAccurateMode ? ensembleSize : 1;
+    final encodedBody = _encodeAnalysisRequestBody(
+      imageParts,
+      imageCount: imagePaths.length,
+      leftovers: hasLeftovers,
+      useGrams: useGrams,
+      mealContext: mealContext,
+      useAccurateMode: useAccurateMode,
+      allowEstimateVariation: allowEstimateVariation,
+      previousAnalysis: previousAnalysis,
+    );
 
     final controller = StreamController<AnalysisProgress>();
     final results = <Map<String, dynamic>>[];
@@ -280,20 +297,14 @@ class GeminiService {
         try {
           await for (final event in _runWithFallback(
             ensembleModels,
-            imageParts,
-            imageCount: imagePaths.length,
-            leftovers: leftoverParts.isNotEmpty,
-            useGrams: useGrams,
-            mealContext: mealContext,
+            encodedBody,
             useAccurateMode: useAccurateMode,
-            allowEstimateVariation: allowEstimateVariation,
-            previousAnalysis: previousAnalysis,
           )) {
             if (controller.isClosed) return;
             if (event is AnalysisResult) {
               final normalized = _normalizeAnalysisResult(
                 event.data,
-                subtractLeftovers: leftoverParts.isNotEmpty,
+                subtractLeftovers: hasLeftovers,
               );
               results.add(normalized);
               controller.add(
@@ -335,19 +346,13 @@ class GeminiService {
       try {
         await for (final event in _runWithFallback(
           fallbackModels,
-          imageParts,
-          imageCount: imagePaths.length,
-          leftovers: leftoverParts.isNotEmpty,
-          useGrams: useGrams,
-          mealContext: mealContext,
+          encodedBody,
           useAccurateMode: useAccurateMode,
-          allowEstimateVariation: allowEstimateVariation,
-          previousAnalysis: previousAnalysis,
         )) {
           if (event is AnalysisResult) {
             final normalized = _normalizeAnalysisResult(
               event.data,
-              subtractLeftovers: leftoverParts.isNotEmpty,
+              subtractLeftovers: hasLeftovers,
             );
             results.add(normalized);
             yield EstimateReady(1, 1, mealTotalCalories(normalized));
@@ -392,14 +397,8 @@ class GeminiService {
   /// answer.
   Stream<AnalysisProgress> _runWithFallback(
     List<String> candidates,
-    List<Map<String, dynamic>> imageParts, {
-    required int imageCount,
-    bool leftovers = false,
-    required bool useGrams,
-    required String? mealContext,
+    String encodedBody, {
     required bool useAccurateMode,
-    required bool allowEstimateVariation,
-    required Map<String, dynamic>? previousAnalysis,
   }) async* {
     final models = candidates.isNotEmpty
         ? candidates
@@ -411,14 +410,8 @@ class GeminiService {
         // listener and never reaches this catch.
         await for (final event in _makeStreamRequest(
           model,
-          imageParts,
-          imageCount: imageCount,
-          leftovers: leftovers,
-          useGrams: useGrams,
-          mealContext: mealContext,
+          encodedBody,
           useAccurateMode: useAccurateMode,
-          allowEstimateVariation: allowEstimateVariation,
-          previousAnalysis: previousAnalysis,
         )) {
           yield event;
         }
@@ -547,10 +540,9 @@ class GeminiService {
     return parts;
   }
 
-  /// Performs one compact structured streaming request. It yields the
-  /// component names as the answer names them, then the structured result.
-  Stream<AnalysisProgress> _makeStreamRequest(
-    String modelName,
+  /// Encodes the request payload once so parallel Accurate Mode estimates and
+  /// model fallback retries reuse the serialized JSON without re-encoding photos.
+  String _encodeAnalysisRequestBody(
     List<Map<String, dynamic>> imageParts, {
     required int imageCount,
     bool leftovers = false,
@@ -559,7 +551,7 @@ class GeminiService {
     bool useAccurateMode = true,
     bool allowEstimateVariation = false,
     Map<String, dynamic>? previousAnalysis,
-  }) async* {
+  }) {
     final prompt = _getPrompt(
       language,
       useGrams: useGrams,
@@ -579,7 +571,7 @@ class GeminiService {
     ];
 
     final thinkingLevel = useAccurateMode ? 'medium' : 'low';
-    final requestBody = <String, dynamic>{
+    return jsonEncode(<String, dynamic>{
       'system_instruction': {
         'parts': [
           {'text': prompt},
@@ -603,8 +595,16 @@ class GeminiService {
         'responseMimeType': 'application/json',
         'responseSchema': _analysisResponseSchema(leftovers: leftovers),
       },
-    };
+    });
+  }
 
+  /// Performs one compact structured streaming request. It yields the
+  /// component names as the answer names them, then the structured result.
+  Stream<AnalysisProgress> _makeStreamRequest(
+    String modelName,
+    String encodedBody, {
+    bool useAccurateMode = true,
+  }) async* {
     // The key travels in a header, never in the URL: URLs end up in browser
     // history, proxies and logs.
     final url = '$_baseUrlBase/$modelName:streamGenerateContent?alt=sse';
@@ -620,16 +620,13 @@ class GeminiService {
       'x-goog-api-key': apiKey,
     };
 
-    Future<Stream<String>> sendRequest(Map<String, dynamic> payload) async {
-      final body = jsonEncode(payload);
-      return makeStreamRequestPlatform(
-        client: _client,
-        url: url,
-        headers: requestHeaders,
-        body: body,
-        timeout: timeout,
-      );
-    }
+    final platformStream = makeStreamRequestPlatform(
+      client: _client,
+      url: url,
+      headers: requestHeaders,
+      body: encodedBody,
+      timeout: timeout,
+    );
 
     final answerBuffer = StringBuffer();
     final sseBuffer = StringBuffer();
@@ -651,7 +648,6 @@ class GeminiService {
       }
     }
 
-    final platformStream = await sendRequest(requestBody);
     await for (final chunk in platformStream) {
       rawResponseBuffer.write(chunk);
       sseBuffer.write(chunk.replaceAll('\r\n', '\n').replaceAll('\r', '\n'));

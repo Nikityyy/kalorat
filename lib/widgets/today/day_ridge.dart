@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 
+import 'package:flutter/foundation.dart' show setEquals;
 import 'package:flutter/material.dart';
 
 import '../../services/photo_store.dart';
@@ -45,6 +46,8 @@ class DayRidge extends StatelessWidget {
   final Set<String> fresh;
   final Animation<double> progress;
   final ValueChanged<String>? onPinTap;
+  final double height;
+  final double pinSize;
 
   const DayRidge({
     super.key,
@@ -55,10 +58,14 @@ class DayRidge extends StatelessWidget {
     this.dayStartHour = 0,
     this.fresh = const {},
     this.onPinTap,
+    this.height = defaultHeight,
+    this.pinSize = defaultPinSize,
   });
 
-  static const height = 176.0;
-  static const pinSize = 40.0;
+  static const defaultHeight = 176.0;
+  static const defaultPinSize = 40.0;
+  static const compactHeight = 118.0;
+  static const compactPinSize = 32.0;
 
   @override
   Widget build(BuildContext context) {
@@ -76,6 +83,7 @@ class DayRidge extends StatelessWidget {
                 fresh: fresh,
                 t: progress.value,
                 size: Size(constraints.maxWidth, height),
+                pin: pinSize,
               );
               return Stack(
                 clipBehavior: Clip.none,
@@ -103,6 +111,7 @@ class DayRidge extends StatelessWidget {
                           child: _Pin(
                             path: pin.step.photoPath,
                             name: pin.step.name,
+                            size: pinSize,
                             onTap: onPinTap == null
                                 ? null
                                 : () => onPinTap!(pin.step.id),
@@ -145,6 +154,13 @@ class _RidgeLayout {
 
   final List<Offset> line = [];
   final List<_PinPlacement> pins = [];
+  final List<RidgeStep> steps;
+  final Set<String> fresh;
+  final double target;
+  final double endHour;
+  final double t;
+  final Size size;
+  final double pin;
   late final double base;
   late final double goalY;
   late final Offset end;
@@ -154,14 +170,14 @@ class _RidgeLayout {
   late final double Function(double hour) xOf;
 
   _RidgeLayout({
-    required List<RidgeStep> steps,
-    required double target,
-    required double endHour,
-    required Set<String> fresh,
-    required double t,
-    required Size size,
+    required this.steps,
+    required this.target,
+    required this.endHour,
+    required this.fresh,
+    required this.t,
+    required this.size,
+    required this.pin,
   }) {
-    const pin = DayRidge.pinSize;
     final sorted = [...steps]..sort((a, b) => a.hour.compareTo(b.hour));
     final total = sorted.fold<double>(0, (sum, s) => sum + s.kcal);
     final scaleMax = math.max(math.max(target, total), 1.0);
@@ -276,7 +292,7 @@ class _RidgePainter extends CustomPainter {
     for (final pin in layout.pins) {
       if (pin.opacity <= 0) continue;
       canvas.drawLine(
-        Offset(pin.center.dx, pin.center.dy + DayRidge.pinSize / 2),
+        Offset(pin.center.dx, pin.center.dy + layout.pin / 2),
         pin.foot,
         stem..color = AppColors.ink3.withValues(alpha: 0.6 * pin.opacity),
       );
@@ -318,20 +334,43 @@ class _RidgePainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_RidgePainter old) => true;
+  bool shouldRepaint(_RidgePainter old) =>
+      old.dayStartHour != dayStartHour ||
+      old.dark != dark ||
+      old.layout.size != layout.size ||
+      old.layout.pin != layout.pin ||
+      old.layout.target != layout.target ||
+      old.layout.endHour != layout.endHour ||
+      old.layout.t != layout.t ||
+      !_stepsMatch(old.layout.steps, layout.steps) ||
+      !setEquals(old.layout.fresh, layout.fresh);
+
+  static bool _stepsMatch(List<RidgeStep> a, List<RidgeStep> b) {
+    if (identical(a, b)) return true;
+    if (a.length != b.length) return false;
+    for (var i = 0; i < a.length; i++) {
+      if (a[i].id != b[i].id ||
+          a[i].hour != b[i].hour ||
+          a[i].kcal != b[i].kcal) {
+        return false;
+      }
+    }
+    return true;
+  }
 }
 
 class _Pin extends StatelessWidget {
   final String? path;
   final String name;
+  final double size;
   final VoidCallback? onTap;
 
-  const _Pin({this.path, this.name = '', this.onTap});
+  const _Pin({this.path, this.name = '', required this.size, this.onTap});
 
   @override
   Widget build(BuildContext context) {
     final photo = path;
-    final mark = MealMark(name: name, size: DayRidge.pinSize - 4);
+    final mark = MealMark(name: name, size: size - 4);
     return GestureDetector(
       onTap: onTap,
       child: Container(

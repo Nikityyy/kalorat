@@ -74,6 +74,8 @@ class _ProgressScreenState extends State<ProgressScreen>
   int _back = 0;
 
   final _scroll = ScrollController();
+  Object? _cachedBucketsKey;
+  List<_Bucket> _cachedBuckets = const [];
 
   @override
   void initState() {
@@ -306,10 +308,21 @@ class _ProgressScreenState extends State<ProgressScreen>
   }
 
   List<_Bucket> _buckets(AppProvider provider, UserModel user) {
-    final (start, end) = _range(user);
-    final offset = user.dayStartHour;
     final today = _logicalToday(user);
+    final offset = user.dayStartHour;
     final language = provider.language;
+    final key = (
+      provider.dataVersion,
+      _period,
+      _back,
+      offset,
+      language,
+      today,
+    );
+    if (key == _cachedBucketsKey) return _cachedBuckets;
+    _cachedBucketsKey = key;
+
+    final (start, end) = _range(user);
     final meals = provider
         .getMealsByDateRange(
           DateTime(start.year, start.month, start.day, offset),
@@ -328,7 +341,7 @@ class _ProgressScreenState extends State<ProgressScreen>
     }
 
     if (_period == _Period.year) {
-      return [
+      return _cachedBuckets = [
         for (var month = 1; month <= 12; month++)
           () {
             final first = DateTime(start.year, month, 1);
@@ -370,7 +383,7 @@ class _ProgressScreenState extends State<ProgressScreen>
         ),
       );
     }
-    return out;
+    return _cachedBuckets = out;
   }
 
   Future<void> _confirmDeleteWeight(WeightModel weight) async {

@@ -33,6 +33,12 @@ class PhotoStore {
   final Map<String, Uint8List> _recent = {};
   static const _recentLimit = 6;
 
+  void _remember(String ref, Uint8List bytes) {
+    _recent.remove(ref);
+    _recent[ref] = bytes;
+    if (_recent.length > _recentLimit) _recent.remove(_recent.keys.first);
+  }
+
   PhotoStore(this._box);
 
   static Future<PhotoStore> open() async =>
@@ -56,15 +62,22 @@ class PhotoStore {
         '${DateTime.now().millisecondsSinceEpoch}-${_random.nextInt(0x7FFFFFFF).toRadixString(36)}';
     await box.put(id, bytes);
     final ref = '$_refPrefix$id';
-    _recent[ref] = bytes;
-    if (_recent.length > _recentLimit) _recent.remove(_recent.keys.first);
+    _remember(ref, bytes);
     return ref;
   }
 
   Future<Uint8List?> read(String path) async {
     if (path.isEmpty) return null;
     if (isRef(path)) {
-      return _recent[path] ?? _box?.get(path.substring(_refPrefix.length));
+      final cached = _recent[path];
+      if (cached != null) {
+        _recent.remove(path);
+        _recent[path] = cached;
+        return cached;
+      }
+      final bytes = await _box?.get(path.substring(_refPrefix.length));
+      if (bytes != null) _remember(path, bytes);
+      return bytes;
     }
     if (isInlineBase64(path)) return base64Decode(path);
     return XFile(path).readAsBytes();

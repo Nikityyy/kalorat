@@ -235,7 +235,7 @@ class _MlKitBarcodeScanner implements LiveBarcodeScanner {
   void holdPreview(bool hold) {}
 
   @override
-  Future<ScannedBarcode?> decodeImage(XFile image) async {
+  Future<ScannedBarcode?> decodeImage(XFile image, {Uint8List? bytes}) async {
     try {
       final barcodes = await _mlKit.processImage(
         InputImage.fromFilePath(image.path),

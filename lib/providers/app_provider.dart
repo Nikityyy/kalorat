@@ -63,6 +63,7 @@ class AppProvider extends ChangeNotifier with WidgetsBindingObserver {
 
   // Stats cache for performance (invalidated via version counter)
   int _statsCacheVersion = 0;
+  int get dataVersion => _statsCacheVersion;
   StreakData? _cachedStreakData;
   int _cachedStreakVersion = -1;
 
@@ -134,14 +135,15 @@ class AppProvider extends ChangeNotifier with WidgetsBindingObserver {
       if (available) notifyListeners();
     });
 
-    await _databaseService.init();
     _offlineQueueService = OfflineQueueService(_databaseService);
     _exportImportService = ExportImportService(_databaseService);
     _syncService = SyncService(_databaseService);
-    await _notificationService.init();
 
-    _isOnline = await _offlineQueueService.isOnline();
-    _secureApiKey = await _storageService.getApiKey();
+    await Future.wait([
+      _databaseService.init(),
+      _offlineQueueService.isOnline().then((v) => _isOnline = v),
+      _storageService.getApiKey().then((v) => _secureApiKey = v),
+    ]);
 
     // Load user from DB
     _user = _databaseService.getUser();
@@ -220,6 +222,7 @@ class AppProvider extends ChangeNotifier with WidgetsBindingObserver {
     });
 
     // Schedule notifications for existing users with reminders enabled
+    await _notificationService.init();
     if (_user != null) {
       await _notificationService.scheduleMealReminders(
         enabled: _user!.mealRemindersEnabled,
@@ -340,30 +343,27 @@ class AppProvider extends ChangeNotifier with WidgetsBindingObserver {
     _syncService.deleteWeightFromCloud(date);
 
     // Refresh user weight if we deleted the current weight
+    var notified = false;
     if (_user != null) {
-      final allWeights = _databaseService.getAllWeights();
-      allWeights.sort((a, b) => b.date.compareTo(a.date));
+      final allWeights = _databaseService.getAllWeights()
+        ..sort((a, b) => b.date.compareTo(a.date));
 
       // Revert to the newest remaining weight. With no entries left, keep the
       // last known weight: the calorie target still needs one.
       if (allWeights.isNotEmpty && _user!.weight != allWeights.first.weight) {
         await updateUser(weight: allWeights.first.weight);
+        notified = true;
       }
     }
 
-    notifyListeners();
+    if (!notified) notifyListeners();
   }
 
-  bool isMealSyncPending(String id) => _databaseService.getSyncQueue().any(
-    (item) => item['id'] == id && item['type'].toString().startsWith('meal_'),
-  );
+  bool isMealSyncPending(String id) =>
+      _databaseService.getPendingSyncMealIds().contains(id);
 
-  /// The ids of all meals waiting to sync, read from the queue once; a list
-  /// asks this instead of [isMealSyncPending] per row.
-  Set<String> mealIdsPendingSync() => {
-    for (final item in _databaseService.getSyncQueue())
-      if (item['type'].toString().startsWith('meal_')) item['id'].toString(),
-  };
+  /// The ids of all meals waiting to sync, read from cache once per mutation.
+  Set<String> mealIdsPendingSync() => _databaseService.getPendingSyncMealIds();
 
   Future<void> loginWithSupabase({
     required String userId,
@@ -605,8 +605,14 @@ class AppProvider extends ChangeNotifier with WidgetsBindingObserver {
     final cached = _cachedExpenditure;
     if (cached != null && key == _cachedExpenditureKey) return cached;
     _cachedExpenditureKey = key;
+    final windowStart = DateTime(
+      day.year,
+      day.month,
+      day.day - expenditureWindowDays - 1,
+    );
+    final windowEnd = DateTime(day.year, day.month, day.day + 2);
     return _cachedExpenditure = estimateExpenditure(
-      meals: getAllMeals(),
+      meals: getMealsByDateRange(windowStart, windowEnd),
       weights: weights,
       now: now,
       dayStartHour: dayStartHour,
@@ -765,15 +771,16 @@ class AppProvider extends ChangeNotifier with WidgetsBindingObserver {
     }
 
     // Update user's current weight ONLY if this is the most recent entry
+    var notified = false;
     if (_user != null) {
-      final allWeights = _databaseService.getAllWeights();
-      // Sort by date descending (newest first)
-      allWeights.sort((a, b) => b.date.compareTo(a.date));
+      final allWeights = _databaseService.getAllWeights()
+        ..sort((a, b) => b.date.compareTo(a.date));
 
       if (allWeights.isNotEmpty &&
           !weight.date.isBefore(allWeights.first.date)) {
         // If the new weight is equal to or after the newest existing weight, update profile
         await updateUser(weight: weight.weight);
+        notified = true;
       }
     }
 
@@ -782,7 +789,7 @@ class AppProvider extends ChangeNotifier with WidgetsBindingObserver {
       await _healthService.writeWeight(weight.weight, weight.date);
     }
 
-    notifyListeners();
+    if (!notified) notifyListeners();
   }
 
   Future<void> updateWeight(WeightModel previous, WeightModel updated) async {

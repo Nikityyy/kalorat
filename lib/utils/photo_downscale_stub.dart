@@ -12,3 +12,6 @@ Future<Uint8List?> downscaleForAnalysis(
   Uint8List bytes,
   int maxDimension,
 ) async => null;
+
+/// Native builds decode HEIC/HEIF natively; web uses browser codecs.
+bool isUnreadableWebImage(Uint8List bytes) => false;

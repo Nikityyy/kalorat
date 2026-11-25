@@ -76,18 +76,22 @@ class MealRow extends StatelessWidget {
               children: [
                 TextSpan(
                   text: clock(meal.timestamp),
-                  style: AppTypography.number(size: 15, color: AppColors.ink2),
+                  style: AppTypography.number(size: 14, color: AppColors.ink2),
                 ),
                 const TextSpan(text: '  ·  '),
                 ...MonoDigits.spans(
-                  l10n.gramsProtein(meal.protein.round()),
-                  AppTypography.secondary,
+                  l10n.mealMacrosShort(
+                    meal.protein.round(),
+                    meal.carbs.round(),
+                    meal.fats.round(),
+                  ),
+                  AppTypography.secondary.copyWith(fontSize: 14),
                 ),
               ],
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: AppTypography.secondary,
+            style: AppTypography.secondary.copyWith(fontSize: 14),
           );
 
     Widget trailing;

@@ -2605,6 +2605,84 @@ abstract class AppLocalizations {
   /// In de, this message translates to:
   /// **'Analyse fehlgeschlagen. Bitte erneut versuchen.'**
   String get analysisFailed;
+
+  /// No description provided for @unsupportedPhotoFormat.
+  ///
+  /// In de, this message translates to:
+  /// **'Dieses Fotoformat wird von diesem Browser nicht unterstützt. Bitte wähle ein JPEG- oder PNG-Foto.'**
+  String get unsupportedPhotoFormat;
+
+  /// No description provided for @streakBadge.
+  ///
+  /// In de, this message translates to:
+  /// **'{count, plural, =1{1 T. Serie} other{{count} T. Serie}}'**
+  String streakBadge(int count);
+
+  /// No description provided for @streakZeroShort.
+  ///
+  /// In de, this message translates to:
+  /// **'0 T. Serie'**
+  String get streakZeroShort;
+
+  /// No description provided for @kcalLeftSimple.
+  ///
+  /// In de, this message translates to:
+  /// **'noch {kcal} kcal'**
+  String kcalLeftSimple(int kcal);
+
+  /// No description provided for @kcalOverSimple.
+  ///
+  /// In de, this message translates to:
+  /// **'{kcal} kcal über Ziel'**
+  String kcalOverSimple(int kcal);
+
+  /// No description provided for @percentOfGoal.
+  ///
+  /// In de, this message translates to:
+  /// **'{percent}% vom Ziel'**
+  String percentOfGoal(int percent);
+
+  /// No description provided for @proteinReachedShort.
+  ///
+  /// In de, this message translates to:
+  /// **'Ziel erreicht'**
+  String get proteinReachedShort;
+
+  /// No description provided for @gramsToGo.
+  ///
+  /// In de, this message translates to:
+  /// **'noch {grams} g'**
+  String gramsToGo(int grams);
+
+  /// No description provided for @gramsLeft.
+  ///
+  /// In de, this message translates to:
+  /// **'noch {grams} g'**
+  String gramsLeft(int grams);
+
+  /// No description provided for @gramsOver.
+  ///
+  /// In de, this message translates to:
+  /// **'{grams} g drüber'**
+  String gramsOver(int grams);
+
+  /// No description provided for @dailyClimbTitle.
+  ///
+  /// In de, this message translates to:
+  /// **'Tagesverlauf'**
+  String get dailyClimbTitle;
+
+  /// No description provided for @dailyClimbGoal.
+  ///
+  /// In de, this message translates to:
+  /// **'Ziel {kcal} kcal'**
+  String dailyClimbGoal(int kcal);
+
+  /// No description provided for @mealMacrosShort.
+  ///
+  /// In de, this message translates to:
+  /// **'{protein}g E · {carbs}g KH · {fats}g F'**
+  String mealMacrosShort(int protein, int carbs, int fats);
 }
 
 class _AppLocalizationsDelegate

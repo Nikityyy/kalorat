@@ -18,12 +18,12 @@ class NotificationService {
   static const int weightReminderId = 2;
 
   Future<void> init() async {
-    await refreshTimezone();
-
     if (PlatformUtils.isWeb) {
       // Web initialization
       return;
     }
+
+    await refreshTimezone();
 
     const androidSettings = AndroidInitializationSettings(
       '@mipmap/ic_launcher',

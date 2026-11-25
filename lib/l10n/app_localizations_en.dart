@@ -1418,4 +1418,68 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get analysisFailed => 'Analysis failed. Please try again.';
+
+  @override
+  String get unsupportedPhotoFormat =>
+      'This photo format isn\'t supported in this browser. Please choose a JPEG or PNG photo.';
+
+  @override
+  String streakBadge(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '${count}d streak',
+      one: '1d streak',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get streakZeroShort => '0d streak';
+
+  @override
+  String kcalLeftSimple(int kcal) {
+    return '$kcal kcal left';
+  }
+
+  @override
+  String kcalOverSimple(int kcal) {
+    return '$kcal kcal over';
+  }
+
+  @override
+  String percentOfGoal(int percent) {
+    return '$percent% of target';
+  }
+
+  @override
+  String get proteinReachedShort => 'Target reached';
+
+  @override
+  String gramsToGo(int grams) {
+    return '$grams g to go';
+  }
+
+  @override
+  String gramsLeft(int grams) {
+    return '$grams g left';
+  }
+
+  @override
+  String gramsOver(int grams) {
+    return '$grams g over';
+  }
+
+  @override
+  String get dailyClimbTitle => 'Daily climb';
+
+  @override
+  String dailyClimbGoal(int kcal) {
+    return 'Goal $kcal kcal';
+  }
+
+  @override
+  String mealMacrosShort(int protein, int carbs, int fats) {
+    return '${protein}g P · ${carbs}g C · ${fats}g F';
+  }
 }

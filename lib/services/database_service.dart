@@ -23,6 +23,13 @@ class DatabaseService {
   // In-memory indices for O(1) lookup
   final Map<String, List<MealModel>> _mealsDateIndex = {};
   final Set<String> _daysWithMeals = {};
+  final Map<String, dynamic> _mealKeyById = {};
+  List<MealModel>? _cachedAllMeals;
+  final Map<String, dynamic> _weightKeyByDateKey = {};
+  List<WeightModel>? _cachedAllWeights;
+  List<Map<String, dynamic>>? _cachedSyncQueue;
+  Set<String>? _cachedPendingSyncMealIds;
+  Set<String>? _cachedBackupPhotoRefs;
 
   /// Hour (0–6) at which a new calendar day starts for meal attribution.
   /// 0 = midnight (default). 4 = meals logged 00:00–03:59 count as previous day.
@@ -46,7 +53,9 @@ class DatabaseService {
 
   /// Update the day-start offset and rebuild indices so history reflects it.
   Future<void> setDayStartHour(int hour) async {
-    _dayStartHour = hour.clamp(0, 6);
+    final clamped = hour.clamp(0, 6);
+    if (clamped == _dayStartHour) return;
+    _dayStartHour = clamped;
     await _buildIndices();
   }
 
@@ -71,17 +80,20 @@ class DatabaseService {
       Hive.registerAdapter(WeightModelAdapter());
     }
 
-    // Open boxes in parallel: on web each box is its own IndexedDB database.
-    final boxes = await Future.wait<Box<dynamic>>([
+    // Open boxes and photo store in parallel: on web each box is its own
+    // IndexedDB database.
+    late final PhotoStore photoStore;
+    final boxes = await Future.wait<dynamic>([
       _openBoxWithFallback<UserModel>(userBoxName),
       _openBoxWithFallback<MealModel>(mealsBoxName),
       _openBoxWithFallback<WeightModel>(weightsBoxName),
       _openBoxWithFallback('settings_box'),
+      PhotoStore.open().then((store) => photoStore = store),
     ]);
     _userBox = boxes[0] as Box<UserModel>;
     _mealsBox = boxes[1] as Box<MealModel>;
     _weightsBox = boxes[2] as Box<WeightModel>;
-    PhotoStore.instance = await PhotoStore.open();
+    PhotoStore.instance = photoStore;
 
     if (_userBox.isNotEmpty) {
       _dayStartHour = _userBox.getAt(0)?.dayStartHour ?? 0;
@@ -100,23 +112,9 @@ class DatabaseService {
   }
 
   Future<void> _buildIndices() async {
-    _mealsDateIndex.clear();
-    _daysWithMeals.clear();
-
     try {
-      for (final meal in _mealsBox.values) {
-        final dateKey = _getTimestampDateKey(meal.timestamp);
-        if (!_mealsDateIndex.containsKey(dateKey)) {
-          _mealsDateIndex[dateKey] = [];
-        }
-        _mealsDateIndex[dateKey]!.add(meal);
-        _daysWithMeals.add(dateKey);
-      }
-
-      // Sort lists by timestamp desc
-      for (final key in _mealsDateIndex.keys) {
-        _mealsDateIndex[key]!.sort(compareMealsNewestFirst);
-      }
+      _populateMealIndices(_mealsBox.toMap().entries);
+      _rebuildWeightIndices();
     } catch (e) {
       AppLogger.error(
         'DatabaseService',
@@ -126,6 +124,41 @@ class DatabaseService {
       rethrow;
     }
   }
+
+  void _populateMealIndices(Iterable<MapEntry<dynamic, MealModel>> entries) {
+    _mealsDateIndex.clear();
+    _daysWithMeals.clear();
+    _mealKeyById.clear();
+    final allMeals = <MealModel>[];
+    for (final MapEntry(:key, value: meal) in entries) {
+      _mealKeyById[meal.id] = key;
+      allMeals.add(meal);
+      final dateKey = _getTimestampDateKey(meal.timestamp);
+      (_mealsDateIndex[dateKey] ??= []).add(meal);
+      _daysWithMeals.add(dateKey);
+    }
+
+    // Sort lists by timestamp desc
+    for (final bucket in _mealsDateIndex.values) {
+      if (bucket.length > 1) bucket.sort(compareMealsNewestFirst);
+    }
+    allMeals.sort(compareMealsNewestFirst);
+    _cachedAllMeals = allMeals;
+  }
+
+  void _rebuildWeightIndices() {
+    _weightKeyByDateKey.clear();
+    final weights = <WeightModel>[];
+    for (final MapEntry(:key, value: weight) in _weightsBox.toMap().entries) {
+      _weightKeyByDateKey[_weightDateKey(weight.date)] = key;
+      weights.add(weight);
+    }
+    weights.sort((a, b) => b.date.compareTo(a.date));
+    _cachedAllWeights = weights;
+  }
+
+  String _weightDateKey(DateTime date) =>
+      '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
 
   /// Always converts a physical meal timestamp to its logical date key.
   String _getTimestampDateKey(DateTime timestamp) {
@@ -223,7 +256,9 @@ class DatabaseService {
   bool get hasMeals => _mealsBox.isNotEmpty;
 
   List<MealModel> getAllMeals() {
-    return _mealsBox.values.toList()..sort(compareMealsNewestFirst);
+    _cachedAllMeals ??= _mealsBox.values.toList()
+      ..sort(compareMealsNewestFirst);
+    return List.of(_cachedAllMeals!);
   }
 
   List<MealModel> getMealsByDate(DateTime date) {
@@ -282,13 +317,14 @@ class DatabaseService {
   }
 
   List<MealModel> getPendingMeals() {
-    return _mealsBox.values.where((meal) => meal.isPending).toList();
+    final meals = _cachedAllMeals ?? _mealsBox.values;
+    return [for (final meal in meals) if (meal.isPending) meal];
   }
 
   Future<MealModel> saveMeal(MealModel meal) async {
     meal.validate();
     final updatedMeal = meal.copyWith(updatedAt: DateTime.now().toUtc());
-    final existingKey = _findMealKey(updatedMeal.id);
+    final existingKey = _mealKeyById[updatedMeal.id];
 
     // Update Indices
     // If updating, remove old version from index
@@ -314,16 +350,25 @@ class DatabaseService {
     _daysWithMeals.add(newDateKey);
 
     // Save to Hive
-    if (existingKey != null) {
-      await _mealsBox.put(existingKey, updatedMeal);
-    } else {
-      await _mealsBox.put(updatedMeal.id, updatedMeal);
+    final key = existingKey ?? updatedMeal.id;
+    _mealKeyById[updatedMeal.id] = key;
+    if (_cachedAllMeals case final all?) {
+      if (existingKey != null) {
+        all.removeWhere((m) => m.id == updatedMeal.id);
+      }
+      var insertAt = 0;
+      while (insertAt < all.length &&
+          compareMealsNewestFirst(all[insertAt], updatedMeal) < 0) {
+        insertAt++;
+      }
+      all.insert(insertAt, updatedMeal);
     }
+    await _mealsBox.put(key, updatedMeal);
     return updatedMeal;
   }
 
   Future<void> deleteMeal(String mealId) async {
-    final key = _findMealKey(mealId) ?? mealId;
+    final key = _mealKeyById.remove(mealId) ?? mealId;
     final meal = _mealsBox.get(key);
 
     if (meal != null) {
@@ -334,33 +379,27 @@ class DatabaseService {
       }
     }
 
+    _cachedAllMeals?.removeWhere((m) => m.id == mealId);
     await _mealsBox.delete(key);
-    if (meal != null) await _deleteUnreferencedPhotos(meal.photoPaths);
+    if (meal != null && meal.photoPaths.any(PhotoStore.isRef)) {
+      await _deleteUnreferencedPhotos(meal.photoPaths);
+    }
   }
 
   bool hasMeal(String mealId) {
-    return _mealsBox.containsKey(mealId) || _findMealKey(mealId) != null;
+    return _mealKeyById.containsKey(mealId) || _mealsBox.containsKey(mealId);
   }
 
   MealModel? getMealById(String mealId) {
-    final key = _findMealKey(mealId) ?? mealId;
+    final key = _mealKeyById[mealId] ?? mealId;
     return _mealsBox.get(key);
-  }
-
-  /// Helper to find meal by ID when key might differ from ID
-  /// (for backwards compatibility with auto-generated keys)
-  dynamic _findMealKey(String mealId) {
-    for (final key in _mealsBox.keys) {
-      final meal = _mealsBox.get(key);
-      if (meal?.id == mealId) return key;
-    }
-    return null;
   }
 
   // Weight operations
   List<WeightModel> getAllWeights() {
-    return _weightsBox.values.toList()
+    _cachedAllWeights ??= _weightsBox.values.toList()
       ..sort((a, b) => b.date.compareTo(a.date));
+    return List.of(_cachedAllWeights!);
   }
 
   /// Save multiple meals in a single batch write transaction.
@@ -368,9 +407,7 @@ class DatabaseService {
     final Map<dynamic, MealModel> mealsMap = {};
     for (final meal in meals) {
       meal.validate();
-      final existingKey = _findMealKey(meal.id);
-      final key = existingKey ?? meal.id;
-      mealsMap[key] = meal;
+      mealsMap[_mealKeyById[meal.id] ?? meal.id] = meal;
     }
 
     // Bulk write to Hive box
@@ -382,21 +419,14 @@ class DatabaseService {
 
   /// Save multiple weights in a single batch write transaction.
   Future<void> saveWeightsBatch(List<WeightModel> weights) async {
-    final List<WeightModel> currentWeights = _weightsBox.values.toList();
     final Map<dynamic, WeightModel> weightsToPut = {};
     final List<WeightModel> weightsToAdd = [];
 
     for (final weight in weights) {
       weight.validate();
-      final existingIndex = currentWeights.indexWhere(
-        (w) =>
-            w.date.year == weight.date.year &&
-            w.date.month == weight.date.month &&
-            w.date.day == weight.date.day,
-      );
-      if (existingIndex >= 0) {
-        final key = _weightsBox.keyAt(existingIndex);
-        weightsToPut[key] = weight;
+      final existingKey = _weightKeyByDateKey[_weightDateKey(weight.date)];
+      if (existingKey != null) {
+        weightsToPut[existingKey] = weight;
       } else {
         weightsToAdd.add(weight);
       }
@@ -408,19 +438,12 @@ class DatabaseService {
     if (weightsToAdd.isNotEmpty) {
       await _weightsBox.addAll(weightsToAdd);
     }
+    _rebuildWeightIndices();
   }
 
   WeightModel? getWeightByDate(DateTime date) {
-    try {
-      return _weightsBox.values.firstWhere(
-        (w) =>
-            w.date.year == date.year &&
-            w.date.month == date.month &&
-            w.date.day == date.day,
-      );
-    } catch (e) {
-      return null;
-    }
+    final key = _weightKeyByDateKey[_weightDateKey(date)];
+    return key == null ? null : _weightsBox.get(key);
   }
 
   Future<void> saveWeight(WeightModel weight) async {
@@ -429,28 +452,22 @@ class DatabaseService {
       updatedAt: DateTime.now().toUtc(),
       isPending: true,
     );
-    final existingIndex = _weightsBox.values.toList().indexWhere(
-      (w) =>
-          w.date.year == weight.date.year &&
-          w.date.month == weight.date.month &&
-          w.date.day == weight.date.day,
-    );
-    if (existingIndex >= 0) {
-      await _weightsBox.putAt(existingIndex, weight);
+    final dateKey = _weightDateKey(weight.date);
+    final existingKey = _weightKeyByDateKey[dateKey];
+    if (existingKey != null) {
+      await _weightsBox.put(existingKey, weight);
     } else {
-      await _weightsBox.add(weight);
+      final newKey = await _weightsBox.add(weight);
+      _weightKeyByDateKey[dateKey] = newKey;
     }
+    _cachedAllWeights = null;
   }
 
   Future<void> deleteWeight(DateTime date) async {
-    final index = _weightsBox.values.toList().indexWhere(
-      (w) =>
-          w.date.year == date.year &&
-          w.date.month == date.month &&
-          w.date.day == date.day,
-    );
-    if (index >= 0) {
-      await _weightsBox.deleteAt(index);
+    final key = _weightKeyByDateKey.remove(_weightDateKey(date));
+    if (key != null) {
+      await _weightsBox.delete(key);
+      _cachedAllWeights = null;
     }
   }
 
@@ -524,14 +541,15 @@ class DatabaseService {
               WeightModel.fromJson(Map<String, dynamic>.from(json as Map)),
         )
         .toList();
+    final seenMealIds = <String>{};
     for (final meal in meals) {
       meal.validate();
+      if (!seenMealIds.add(meal.id)) {
+        throw ValidationException(ValidationIssue.duplicateMealIds);
+      }
     }
     for (final weight in weights) {
       weight.validate();
-    }
-    if (meals.map((meal) => meal.id).toSet().length != meals.length) {
-      throw ValidationException(ValidationIssue.duplicateMealIds);
     }
     final newPhotoRefs = <String>[];
     for (var i = 0; i < meals.length; i++) {
@@ -546,16 +564,19 @@ class DatabaseService {
     final oldWeights = _weightsBox.toMap();
     if (createBackup) {
       await Hive.box('settings_box').put('last_import_backup', exportAll());
+      _cachedBackupPhotoRefs = null;
     }
 
+    final mealsById = {for (final meal in meals) meal.id: meal};
     try {
       await _userBox.clear();
       await _mealsBox.clear();
       await _weightsBox.clear();
       if (user != null) await _userBox.add(user);
-      await _mealsBox.putAll({for (final meal in meals) meal.id: meal});
+      await _mealsBox.putAll(mealsById);
       await _weightsBox.addAll(weights);
-      await _buildIndices();
+      _populateMealIndices(mealsById.entries);
+      _rebuildWeightIndices();
     } catch (_) {
       for (final ref in newPhotoRefs) {
         await PhotoStore.instance.delete(ref);
@@ -641,14 +662,17 @@ class DatabaseService {
     }
     if (changed) {
       await settings.put('last_import_backup', {...backup!, 'meals': migrated});
+      _cachedBackupPhotoRefs = null;
     }
     return changed;
   }
 
   Set<String> _backupPhotoRefs() {
-    final meals = getLastImportBackup()?['meals'];
-    if (meals is! List) return const {};
-    return {
+    if (_cachedBackupPhotoRefs case final cached?) return cached;
+    final backup = Hive.box('settings_box').get('last_import_backup');
+    final meals = backup is Map ? backup['meals'] : null;
+    if (meals is! List) return _cachedBackupPhotoRefs = const {};
+    return _cachedBackupPhotoRefs = {
       for (final meal in meals)
         for (final path in (meal as Map)['photoPaths'] as List? ?? const [])
           if (path is String && PhotoStore.isRef(path)) path,
@@ -666,11 +690,14 @@ class DatabaseService {
 
   /// Photos still used by a meal, the import backup or an unsent capture.
   Future<Set<String>> _referencedPhotoPaths() async {
+    final meals = _cachedAllMeals ?? _mealsBox.values;
     final referenced = <String>{
-      for (final meal in _mealsBox.values) ...meal.photoPaths,
+      for (final meal in meals) ...meal.photoPaths,
       ..._backupPhotoRefs(),
     };
-    final pending = await Hive.openBox<dynamic>(pendingPhotosBoxName);
+    final pending = Hive.isBoxOpen(pendingPhotosBoxName)
+        ? Hive.box<dynamic>(pendingPhotosBoxName)
+        : await Hive.openBox<dynamic>(pendingPhotosBoxName);
     final pendingPaths = pending.get(pendingPhotosKey);
     if (pendingPaths is List) {
       referenced.addAll(pendingPaths.whereType<String>());
@@ -682,13 +709,23 @@ class DatabaseService {
   Future<int> deleteOrphanPhotos() async =>
       PhotoStore.instance.deleteOrphans(await _referencedPhotoPaths());
 
-  List<Map<String, dynamic>> getSyncQueue() {
-    final raw = Hive.box(
+  List<Map<String, dynamic>> _loadSyncQueue() {
+    return _cachedSyncQueue ??= (Hive.box(
       'settings_box',
-    ).get('sync_queue', defaultValue: const []);
-    return (raw as List)
+    ).get('sync_queue', defaultValue: const []) as List)
         .map((item) => Map<String, dynamic>.from(item as Map))
         .toList();
+  }
+
+  List<Map<String, dynamic>> getSyncQueue() => [
+    for (final item in _loadSyncQueue()) Map<String, dynamic>.from(item),
+  ];
+
+  Set<String> getPendingSyncMealIds() {
+    return _cachedPendingSyncMealIds ??= Set.unmodifiable({
+      for (final item in _loadSyncQueue())
+        if (item['type'].toString().startsWith('meal_')) item['id'].toString(),
+    });
   }
 
   Future<void> queueSync(String type, String id) async {
@@ -704,12 +741,16 @@ class DatabaseService {
         'id': id,
         'queuedAt': DateTime.now().toIso8601String(),
       });
+    _cachedSyncQueue = queue;
+    _cachedPendingSyncMealIds = null;
     await Hive.box('settings_box').put('sync_queue', queue);
   }
 
   Future<void> removeFromSyncQueue(String type, String id) async {
     final queue = getSyncQueue()
       ..removeWhere((item) => item['type'] == type && item['id'] == id);
+    _cachedSyncQueue = queue;
+    _cachedPendingSyncMealIds = null;
     await Hive.box('settings_box').put('sync_queue', queue);
   }
 
@@ -734,6 +775,8 @@ class DatabaseService {
     await _userBox.clear();
     await _mealsBox.clear();
     await _weightsBox.clear();
-    _buildIndices();
+    _cachedSyncQueue = null;
+    _cachedPendingSyncMealIds = null;
+    await _buildIndices();
   }
 }

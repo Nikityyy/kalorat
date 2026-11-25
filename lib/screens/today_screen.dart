@@ -19,11 +19,11 @@ import '../utils/haptics.dart';
 import '../widgets/common/adaptive.dart';
 import '../widgets/app_toast.dart';
 import '../widgets/common/mono_digits.dart';
-import '../widgets/common/thin_bar.dart';
 import '../widgets/first_use_card.dart';
 import '../widgets/inputs/pressable.dart';
 import '../widgets/today/day_ridge.dart';
 import '../widgets/today/meal_row.dart';
+import '../widgets/today/today_stats_grid.dart';
 import 'meal_detail_screen.dart';
 import 'settings_screen.dart';
 
@@ -369,6 +369,8 @@ class _TodayScreenState extends State<TodayScreen>
 
     final target = user?.dailyCalorieTarget.toDouble() ?? 2000;
     final proteinTarget = user?.dailyProteinTarget.toDouble() ?? 0;
+    final carbTarget = user?.dailyCarbTarget.toDouble() ?? 0;
+    final fatTarget = user?.dailyFatTarget.toDouble() ?? 0;
     final now = DateTime.now();
     final dayStart = DateTime(day.year, day.month, day.day, _offset);
     double hoursOf(DateTime t) => t.difference(dayStart).inMinutes / 60;
@@ -406,6 +408,13 @@ class _TodayScreenState extends State<TodayScreen>
                   onForward: () => _step(1),
                 ),
               ),
+              SliverToBoxAdapter(
+                child: StreakStrip(
+                  data: provider.streakData,
+                  language: language,
+                  dayStartHour: _offset,
+                ),
+              ),
               if (provider.isProcessingQueue)
                 SliverToBoxAdapter(
                   child: Padding(
@@ -435,47 +444,46 @@ class _TodayScreenState extends State<TodayScreen>
                 child: AnimatedBuilder(
                   animation: _climb,
                   builder: (context, _) {
-                    // While a meal climbs, the numbers count with its step.
+                    // While a meal climbs, the tile totals count with its step.
                     final rise = Curves.easeOutCubic.transform(
                       (_climb.value / 0.52).clamp(0, 1),
                     );
-                    double eaten = 0, protein = 0;
+                    double eaten = 0, protein = 0, carbs = 0, fats = 0;
                     for (final m in logged) {
                       final share = _fresh.contains(m.id) ? rise : 1.0;
                       eaten += m.calories * share;
                       protein += m.protein * share;
+                      carbs += m.carbs * share;
+                      fats += m.fats * share;
                     }
-                    return _Hero(
-                      isToday: isToday,
+                    return TodayStatsGrid(
                       eaten: eaten,
-                      target: target,
+                      calorieTarget: target,
                       protein: protein,
                       proteinTarget: proteinTarget,
+                      carbs: carbs,
+                      carbTarget: carbTarget,
+                      fats: fats,
+                      fatTarget: fatTarget,
+                      isToday: isToday,
                     );
                   },
                 ),
               ),
               SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
-                  child: DayRidge(
-                    steps: steps,
-                    target: target,
-                    endHour: isToday ? hoursOf(now).clamp(0, 24) : 24,
-                    dayStartHour: _offset,
-                    fresh: _fresh,
-                    progress: _climb,
-                    onPinTap: (id) {
-                      final meal = logged.where((m) => m.id == id);
-                      if (meal.isNotEmpty) _open(meal.first);
-                    },
-                  ),
+                child: _DailyClimbCard(
+                  steps: steps,
+                  target: target,
+                  endHour: isToday ? hoursOf(now).clamp(0, 24) : 24,
+                  dayStartHour: _offset,
+                  fresh: _fresh,
+                  progress: _climb,
+                  onPinTap: (id) {
+                    final meal = logged.where((m) => m.id == id);
+                    if (meal.isNotEmpty) _open(meal.first);
+                  },
                 ),
               ),
-              if (logged.isNotEmpty)
-                SliverToBoxAdapter(
-                  child: _MacroLine(meals: logged, user: user),
-                ),
               if (rows.isEmpty)
                 SliverToBoxAdapter(
                   child: _EmptyDay(
@@ -490,7 +498,7 @@ class _TodayScreenState extends State<TodayScreen>
               else ...[
                 SliverToBoxAdapter(
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 28, 20, 4),
+                    padding: const EdgeInsets.fromLTRB(20, 20, 20, 4),
                     child: Text(
                       // Close to the daily limit, the count says so before
                       // the next meal is turned down.
@@ -700,180 +708,75 @@ class _Header extends StatelessWidget {
   }
 }
 
-class _Hero extends StatelessWidget {
-  final bool isToday;
-  final double eaten;
+class _DailyClimbCard extends StatelessWidget {
+  final List<RidgeStep> steps;
   final double target;
-  final double protein;
-  final double proteinTarget;
+  final double endHour;
+  final int dayStartHour;
+  final Set<String> fresh;
+  final Animation<double> progress;
+  final ValueChanged<String> onPinTap;
 
-  const _Hero({
-    required this.isToday,
-    required this.eaten,
+  const _DailyClimbCard({
+    required this.steps,
     required this.target,
-    required this.protein,
-    required this.proteinTarget,
+    required this.endHour,
+    required this.dayStartHour,
+    required this.fresh,
+    required this.progress,
+    required this.onPinTap,
   });
 
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final left = target - eaten;
-    final targetText = target.round().toString();
-
-    final String big;
-    final String sub;
-    if (!isToday) {
-      big = eaten.round().toString();
-      sub = l10n.kcalOfTarget(targetText);
-    } else if (left >= 0) {
-      big = left.round().toString();
-      sub = eaten == 0 ? l10n.kcalToEatToday : l10n.kcalLeftOf(targetText);
-    } else {
-      big = (-left).round().toString();
-      sub = l10n.kcalOverTarget(targetText);
-    }
-
-    final proteinLeft = (proteinTarget - protein).round();
-    final Widget proteinLine;
-    if (proteinTarget <= 0) {
-      proteinLine = const SizedBox.shrink();
-    } else if (!isToday) {
-      proteinLine = MonoDigits(
-        l10n.proteinOfTarget(protein.round(), proteinTarget.round()),
-        style: AppTypography.body.copyWith(color: AppColors.ink2),
-      );
-    } else if (proteinLeft <= 0) {
-      proteinLine = Text(
-        l10n.proteinReached,
-        style: AppTypography.body.copyWith(
-          color: AppColors.primary,
-          fontWeight: FontWeight.w700,
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(14, 12, 14, 8),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(AppTheme.borderRadius),
+          border: Border.all(color: AppColors.border),
         ),
-      );
-    } else {
-      proteinLine = MonoDigits(
-        l10n.proteinToGo(proteinLeft),
-        style: AppTypography.body.copyWith(
-          color: AppColors.primary,
-          fontWeight: FontWeight.w700,
-        ),
-      );
-    }
-
-    return Semantics(
-      container: true,
-      label: '$big $sub',
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            ExcludeSemantics(
-              child: FittedBox(
-                fit: BoxFit.scaleDown,
-                alignment: AlignmentDirectional.centerStart,
-                child: Text(big, style: AppTypography.hero(size: 88)),
-              ),
-            ),
-            const SizedBox(height: 8),
-            ExcludeSemantics(
-              child: MonoDigits(
-                sub,
-                style: AppTypography.body.copyWith(color: AppColors.ink2),
-              ),
-            ),
-            const SizedBox(height: 2),
-            proteinLine,
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// The day's three macros against their targets, in ink: the accent is kept
-/// for the day's progress.
-class _MacroLine extends StatelessWidget {
-  final List<MealModel> meals;
-  final UserModel? user;
-
-  const _MacroLine({required this.meals, required this.user});
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = context.l10n;
-    double p = 0, c = 0, f = 0;
-    for (final m in meals) {
-      p += m.protein;
-      c += m.carbs;
-      f += m.fats;
-    }
-    final u = user;
-    // Carbs and fat have a ceiling; protein is a floor to reach, never over.
-    Widget cell(
-      String label,
-      double value,
-      num? target, {
-      bool ceiling = true,
-    }) {
-      final share = target == null || target <= 0
-          ? 0.0
-          : (value / target).clamp(0.0, 1.0);
-      // Going over a ceiling is the one place the day turns red.
-      final over =
-          ceiling &&
-          target != null &&
-          target > 0 &&
-          value.round() > target.round();
-      return Expanded(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              label,
-              style: AppTypography.meta.copyWith(color: AppColors.ink2),
-            ),
-            const SizedBox(height: 2),
-            Text.rich(
-              TextSpan(
-                children: [
-                  TextSpan(
-                    text: value.round().toString(),
-                    style: AppTypography.number(
-                      size: 16,
-                      color: over ? AppColors.negative : null,
-                    ),
+            Row(
+              children: [
+                Text(
+                  l10n.dailyClimbTitle.toUpperCase(),
+                  style: AppTypography.meta.copyWith(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.7,
+                    color: AppColors.ink2,
                   ),
-                  if (target != null)
-                    TextSpan(
-                      text: '/${target.round()}',
-                      style: AppTypography.number(
-                        size: 16,
-                        color: AppColors.ink3,
-                      ),
-                    ),
-                  TextSpan(text: ' ${l10n.grams}', style: AppTypography.meta),
-                ],
-              ),
+                ),
+                const Spacer(),
+                MonoDigits(
+                  l10n.dailyClimbGoal(target.round()),
+                  style: AppTypography.meta.copyWith(
+                    fontSize: 11,
+                    color: AppColors.ink3,
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 6),
-            ThinBar(share: share, color: over ? AppColors.negative : null),
+            DayRidge(
+              height: DayRidge.compactHeight,
+              pinSize: DayRidge.compactPinSize,
+              steps: steps,
+              target: target,
+              endHour: endHour,
+              dayStartHour: dayStartHour,
+              fresh: fresh,
+              progress: progress,
+              onPinTap: onPinTap,
+            ),
           ],
         ),
-      );
-    }
-
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
-      child: Row(
-        children: [
-          cell(l10n.protein, p, u?.dailyProteinTarget, ceiling: false),
-          const SizedBox(width: 16),
-          cell(l10n.carbs, c, u?.dailyCarbTarget),
-          const SizedBox(width: 16),
-          cell(l10n.fats, f, u?.dailyFatTarget),
-        ],
       ),
     );
   }

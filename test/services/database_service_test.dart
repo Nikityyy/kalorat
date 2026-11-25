@@ -207,4 +207,72 @@ void main() {
     expect(database.getSyncCursor('tombstones_a'), isNull);
     expect(database.getSyncCursor('tombstones_b'), isNull);
   });
+
+  test('maintains indexed meal, weight and sync caches across mutations', () async {
+    final d1 = DateTime(2026, 7, 1);
+    final d2 = DateTime(2026, 7, 2);
+    await database.saveWeight(WeightModel(date: d1, weight: 74.2));
+    await database.saveWeight(WeightModel(date: d2, weight: 73.8));
+    expect(database.getAllWeights().map((w) => w.weight), [73.8, 74.2]);
+    expect(database.getWeightByDate(d2)?.weight, 73.8);
+
+    await database.saveWeight(WeightModel(date: d1, weight: 74.0));
+    expect(database.getWeightByDate(d1)?.weight, 74.0);
+    await database.deleteWeight(d2);
+    expect(database.getWeightByDate(d2), isNull);
+    expect(database.getAllWeights().single.weight, 74.0);
+
+    await database.queueSync('meal_upsert', 'm1');
+    expect(database.getPendingSyncMealIds(), {'m1'});
+    await database.removeFromSyncQueue('meal_upsert', 'm1');
+    expect(database.getPendingSyncMealIds(), isEmpty);
+
+    await database.saveMeal(
+      MealModel(
+        id: 'm_cached',
+        timestamp: DateTime(2026, 7, 2, 12),
+        photoPaths: const [],
+        mealName: 'Lunch',
+        calories: 500,
+      ),
+    );
+    expect(database.hasMeal('m_cached'), isTrue);
+    expect(database.getMealById('m_cached')?.calories, 500);
+    expect(database.getAllMeals().map((m) => m.id), ['m_cached']);
+    await database.deleteMeal('m_cached');
+    expect(database.hasMeal('m_cached'), isFalse);
+    expect(database.getAllMeals(), isEmpty);
+  });
+
+  test('getPendingMeals and dayStartHour remain consistent after importAll', () async {
+    await database.importAll({
+      'meals': [
+        {
+          'id': 'late',
+          'timestamp': DateTime(2026, 7, 3, 2, 30).toIso8601String(),
+          'photoPaths': const <String>[],
+          'mealName': 'Late snack',
+          'calories': 300,
+          'isPending': true,
+        },
+        {
+          'id': 'lunch',
+          'timestamp': DateTime(2026, 7, 3, 12, 0).toIso8601String(),
+          'photoPaths': const <String>[],
+          'mealName': 'Lunch',
+          'calories': 600,
+        },
+      ],
+      'weights': const [],
+    });
+
+    expect(database.getPendingMeals().map((m) => m.id), ['late']);
+    await database.setDayStartHour(4);
+    expect(
+      database.getMealsByDate(DateTime(2026, 7, 2)).map((m) => m.id),
+      ['late'],
+    );
+    await database.setDayStartHour(4);
+    expect(database.getPendingMeals().map((m) => m.id), ['late']);
+  });
 }

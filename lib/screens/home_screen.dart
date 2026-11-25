@@ -158,6 +158,7 @@ class _HomeScreenState extends State<HomeScreen>
   static const String _pendingPhotosBox = DatabaseService.pendingPhotosBoxName;
   static const String _pendingPhotosKey = DatabaseService.pendingPhotosKey;
   static const String _pendingPhotoTimesKey = 'pending_photo_times';
+  Future<void> _pendingPhotosQueue = Future<void>.value();
 
   bool get _cameraTabIsActive =>
       widget.activeListenable?.value ?? widget.isActive;
@@ -275,7 +276,7 @@ class _HomeScreenState extends State<HomeScreen>
   /// back and forth end in the state of the last one.
   void _syncCameraPreview() {
     _previewSync = _previewSync
-        .then((_) async {
+        .then<void>((_) async {
           final controller = _cameraController;
           if (!mounted ||
               controller == null ||
@@ -440,14 +441,20 @@ class _HomeScreenState extends State<HomeScreen>
     var canUseTorch = true;
 
     try {
-      minZoom = await controller.getMinZoomLevel();
-      maxZoom = await controller.getMaxZoomLevel();
+      final results = await Future.wait<double>([
+        controller.getMinZoomLevel(),
+        controller.getMaxZoomLevel(),
+      ]);
+      minZoom = results[0];
+      maxZoom = results[1];
       canZoom = maxZoom > minZoom;
       if (canZoom) {
         final initialZoom = _currentZoomLevel
             .clamp(minZoom, maxZoom)
             .toDouble();
-        await controller.setZoomLevel(initialZoom);
+        if ((initialZoom - 1.0).abs() > 0.001) {
+          await controller.setZoomLevel(initialZoom);
+        }
         _currentZoomLevel = initialZoom;
       }
     } catch (e) {
@@ -566,10 +573,25 @@ class _HomeScreenState extends State<HomeScreen>
     if (retry) await _initCamera(forceRestart: true);
   }
 
+  Future<Box<dynamic>> _openPendingBox() => Hive.isBoxOpen(_pendingPhotosBox)
+      ? Future.value(Hive.box<dynamic>(_pendingPhotosBox))
+      : Hive.openBox<dynamic>(_pendingPhotosBox);
+
+  // Serialize pending-photo mutations so an unawaited save never races clear.
+  Future<void> _enqueuePendingWrite(
+    Future<void> Function(Box<dynamic> box) work,
+  ) {
+    return _pendingPhotosQueue = _pendingPhotosQueue.then((_) async {
+      try {
+        await work(await _openPendingBox());
+      } catch (_) {}
+    });
+  }
+
   /// Restore photos that were captured but not yet analyzed (e.g. after PWA refresh).
   Future<void> _restorePersistedPhotos() async {
     try {
-      final box = await Hive.openBox<dynamic>(_pendingPhotosBox);
+      final box = await _openPendingBox();
       final stored = box.get(_pendingPhotosKey);
       final takenAt = box.get(_pendingPhotoTimesKey);
       if (stored is List && stored.isNotEmpty && mounted) {
@@ -590,26 +612,28 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   /// Persist current photo list so it survives a PWA reload / app restart.
-  Future<void> _persistPhotos() async {
-    try {
-      final box = await Hive.openBox<dynamic>(_pendingPhotosBox);
-      await box.put(_pendingPhotosKey, List<String>.from(_capturedPhotos));
-      await box.put(_pendingPhotoTimesKey, {
-        for (final photo in _capturedPhotos)
-          if (_photoTakenAt[photo] case final taken?)
-            photo: taken.millisecondsSinceEpoch,
-      });
-    } catch (_) {}
+  Future<void> _persistPhotos() {
+    final photos = List<String>.from(_capturedPhotos);
+    final times = {
+      for (final photo in photos)
+        if (_photoTakenAt[photo] case final taken?)
+          photo: taken.millisecondsSinceEpoch,
+    };
+    return _enqueuePendingWrite(
+      (box) => Future.wait([
+        box.put(_pendingPhotosKey, photos),
+        box.put(_pendingPhotoTimesKey, times),
+      ]),
+    );
   }
 
   /// Clear persisted photos after analysis or discard.
-  Future<void> _clearPersistedPhotos() async {
-    try {
-      final box = await Hive.openBox<dynamic>(_pendingPhotosBox);
-      await box.delete(_pendingPhotosKey);
-      await box.delete(_pendingPhotoTimesKey);
-    } catch (_) {}
-  }
+  Future<void> _clearPersistedPhotos() => _enqueuePendingWrite(
+    (box) => Future.wait([
+      box.delete(_pendingPhotosKey),
+      box.delete(_pendingPhotoTimesKey),
+    ]),
+  );
 
   Future<void> _capturePhoto() async {
     if (_cameraController == null ||
@@ -649,7 +673,7 @@ class _HomeScreenState extends State<HomeScreen>
       setState(() {
         _capturedPhotos.add(storedPhoto);
       });
-      await _persistPhotos();
+      unawaited(_persistPhotos());
       if (!_isTakingMore && _isTorchOn) {
         await _setTorchMode(false);
       }
@@ -976,17 +1000,40 @@ class _HomeScreenState extends State<HomeScreen>
         return;
       }
 
-      // On web, store in the photo store
-      // On mobile, copy to app documents directory
+      // On web, process, downscale and store picked photos concurrently.
+      // Unreadable containers (such as raw HEIC on Chromium) are skipped with
+      // feedback rather than storing blank cards.
+      final validImages = <XFile>[];
       final stored = <String>[];
+      final storedBytes = <Uint8List>[];
+      var skippedUnreadable = 0;
+
       if (PlatformUtils.isWeb) {
-        for (final image in images) {
-          final original = await image.readAsBytes();
-          final bytes = await downscaleForStorage(original);
-          final ref = await PhotoStore.instance.save(bytes);
-          stored.add(ref);
-          if (photoTakenAt(original) case final taken?) {
-            _photoTakenAt[ref] = taken;
+        final prepared = await Future.wait([
+          for (final image in images)
+            () async {
+              final original = await image.readAsBytes();
+              final bytes = await downscaleForStorage(original);
+              if (isUnreadableWebImage(bytes)) return null;
+              final ref = await PhotoStore.instance.save(bytes);
+              return (
+                image: image,
+                ref: ref,
+                bytes: bytes,
+                taken: photoTakenAt(original),
+              );
+            }(),
+        ]);
+        for (final item in prepared) {
+          if (item == null) {
+            skippedUnreadable++;
+            continue;
+          }
+          validImages.add(item.image);
+          stored.add(item.ref);
+          storedBytes.add(item.bytes);
+          if (item.taken case final taken?) {
+            _photoTakenAt[item.ref] = taken;
           }
         }
       } else {
@@ -996,25 +1043,45 @@ class _HomeScreenState extends State<HomeScreen>
               'meal_${DateTime.now().millisecondsSinceEpoch}_${_capturedPhotos.length + stored.length}.jpg';
           final savedPath = '${appDir.path}/$fileName';
           await File(image.path).copy(savedPath);
+          final original = await image.readAsBytes();
+          validImages.add(image);
           stored.add(savedPath);
+          storedBytes.add(original);
           // The picker's resize keeps the camera's metadata.
-          if (photoTakenAt(await image.readAsBytes()) case final taken?) {
+          if (photoTakenAt(original) case final taken?) {
             _photoTakenAt[savedPath] = taken;
           }
         }
       }
+
+      if (!mounted) return;
+      if (skippedUnreadable > 0) {
+        _showMessage(context.l10n.unsupportedPhotoFormat);
+      }
+      if (stored.isEmpty) {
+        if (PlatformUtils.isWeb) {
+          if (_capturedPhotos.isEmpty) {
+            await _initCamera();
+          } else {
+            setState(() => _isTakingMore = false);
+          }
+        }
+        return;
+      }
+
       await _decodeBeforeShowing(
         stored,
         review: PlatformUtils.isWeb || !_isTakingMore,
       );
       if (!mounted) return;
       _capturedPhotos.addAll(stored);
-      unawaited(_scanPickedPhotos(images, stored));
-      setState(() {});
-      await _persistPhotos();
-      if (PlatformUtils.isWeb && mounted) {
-        setState(() => _isTakingMore = false);
-      }
+      unawaited(
+        _scanPickedPhotos(validImages, stored, bytesList: storedBytes),
+      );
+      setState(() {
+        if (PlatformUtils.isWeb) _isTakingMore = false;
+      });
+      unawaited(_persistPhotos());
     } else if (PlatformUtils.isWeb && mounted) {
       if (_capturedPhotos.isEmpty) {
         await _initCamera();
@@ -1056,17 +1123,23 @@ class _HomeScreenState extends State<HomeScreen>
       }
     });
 
-    await _deleteStoredPhotoIfDisposable(removedPhoto);
+    final cleanup = Future.wait([
+      _deleteStoredPhotoIfDisposable(removedPhoto),
+      if (_capturedPhotos.isEmpty)
+        _clearPersistedPhotos()
+      else
+        _persistPhotos(),
+    ]);
 
     if (_capturedPhotos.isEmpty) {
-      await _clearPersistedPhotos();
+      await cleanup;
       if (!_isCameraInitialized ||
           _cameraController == null ||
           !_cameraController!.value.isInitialized) {
         await _initCamera();
       }
     } else {
-      await _persistPhotos();
+      unawaited(cleanup);
     }
   }
 
@@ -1807,7 +1880,7 @@ class _HomeScreenState extends State<HomeScreen>
   /// Calls are serialized; repeating one is cheap.
   void _syncBarcodeScanner() {
     _barcodeSync = _barcodeSync
-        .then((_) async {
+        .then<void>((_) async {
           final controller = _cameraController;
           if (_shouldScanBarcodes && controller != null) {
             final view = _lastPreviewConstraints?.biggest;
@@ -1838,7 +1911,7 @@ class _HomeScreenState extends State<HomeScreen>
 
   Future<void> _stopBarcodeScanner() {
     _barcodeSync = _barcodeSync
-        .then((_) async {
+        .then<void>((_) async {
           if (_barcodeController == null) return;
           _barcodeController = null;
           await _barcodeScanner.stop();
@@ -2047,7 +2120,10 @@ class _HomeScreenState extends State<HomeScreen>
   Future<void> _lockOnHeldFrame(Future<Uint8List?> frame, String code) async {
     final bytes = await frame;
     if (bytes == null || !mounted || _guideLock?.code != code) return;
-    final found = await _barcodeScanner.decodeImage(XFile.fromData(bytes));
+    final found = await _barcodeScanner.decodeImage(
+      XFile.fromData(bytes),
+      bytes: bytes,
+    );
     final lock = _guideLock;
     if (!mounted ||
         found == null ||
@@ -2154,14 +2230,18 @@ class _HomeScreenState extends State<HomeScreen>
   /// product with nutrition values. Runs while the photos are reviewed.
   Future<void> _scanPickedPhotos(
     List<XFile> images,
-    List<String> stored,
-  ) async {
+    List<String> stored, {
+    List<Uint8List>? bytesList,
+  }) async {
     if (_photoBarcode.value != null) return;
     final generation = _photoScanGeneration;
     final language = context.read<AppProvider>().language;
     bool stale() => !mounted || generation != _photoScanGeneration;
     for (var i = 0; i < images.length && i < stored.length; i++) {
-      final barcode = await _barcodeScanner.decodeImage(images[i]);
+      final barcode = await _barcodeScanner.decodeImage(
+        images[i],
+        bytes: bytesList != null && i < bytesList.length ? bytesList[i] : null,
+      );
       if (stale()) return;
       if (barcode == null) continue;
       final valid = barcode.format == 'UPCE'

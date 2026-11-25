@@ -167,12 +167,12 @@ class _WebBarcodeScanner implements LiveBarcodeScanner {
   }
 
   @override
-  Future<ScannedBarcode?> decodeImage(XFile image) async {
+  Future<ScannedBarcode?> decodeImage(XFile image, {Uint8List? bytes}) async {
     final api = _api;
     if (api == null) return null;
     try {
-      final bytes = await image.readAsBytes();
-      final result = await api.decodeImage(bytes.toJS).toDart;
+      final raw = bytes ?? await image.readAsBytes();
+      final result = await api.decodeImage(raw.toJS).toDart;
       if (result == null) return null;
       return ScannedBarcode(
         result.text,

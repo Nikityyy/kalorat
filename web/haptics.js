@@ -48,23 +48,39 @@
   }
 
   var layer = null;
+  var sw = null;
   var down = false;
   var armed = false;
+  var downX = 0;
+  var downY = 0;
   var restoreTimer = 0;
+  var disarmTimer = 0;
 
   function passThrough(on) {
     if (layer) layer.style.pointerEvents = on ? 'none' : 'auto';
   }
 
-  // A text field has the keyboard: the switch stays out of its way, so
+  function disarm() {
+    armed = false;
+    clearTimeout(disarmTimer);
+    if (layer) layer.removeAttribute('for');
+  }
+
+  // A text field has the keyboard: the overlay stays out of its way, so
   // taps place the cursor and the field keeps its focus.
   function editing() {
     var el = document.activeElement;
-    return !!el && el !== layer && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable);
+    return !!el && el !== layer && el !== sw && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable);
   }
 
   window.kaloratHaptic = function () {
-    if (down) armed = true;
+    if (!down) return;
+    armed = true;
+    // Dynamically associate the label only for explicitly armed taps so
+    // unarmed touches/scrolls on iOS never activate the underlying switch.
+    if (layer && sw) layer.htmlFor = sw.id;
+    clearTimeout(disarmTimer);
+    disarmTimer = setTimeout(disarm, 250);
   };
 
   // Called once the app runs. Flutter has its pointer listeners on window
@@ -73,39 +89,72 @@
   window.kaloratHapticsInit = function () {
     var view = document.querySelector('flutter-view');
     if (layer || !view) return;
-    layer = document.createElement('input');
-    layer.type = 'checkbox';
-    layer.setAttribute('switch', '');
+
+    sw = document.createElement('input');
+    sw.id = 'kalorat-haptic-switch';
+    sw.type = 'checkbox';
+    sw.setAttribute('switch', '');
+    sw.tabIndex = -1;
+    sw.setAttribute('aria-hidden', 'true');
+    sw.style.cssText =
+      'position:fixed;left:0;top:0;width:1px;height:1px;margin:0;padding:0;' +
+      'appearance:auto;-webkit-appearance:auto;opacity:0;pointer-events:none;' +
+      'z-index:-1';
+
+    // Keep the hit overlay as a neutral <label> without a `for` attribute at
+    // rest so iOS UIKit switch gestures/haptics never trigger on blank taps.
+    layer = document.createElement('label');
     layer.tabIndex = -1;
     layer.setAttribute('aria-hidden', 'true');
-    // Native appearance and opacity 0 (not display:none): the switch has to
-    // be really there under the finger for the tick to play.
     layer.style.cssText =
       'position:fixed;left:0;top:0;width:100vw;height:100vh;margin:0;padding:0;' +
-      'appearance:auto;-webkit-appearance:auto;opacity:0;z-index:2147483000;' +
+      'opacity:0;z-index:2147483000;' +
       'touch-action:none;-webkit-tap-highlight-color:transparent;' +
       '-webkit-touch-callout:none;-webkit-user-select:none;user-select:none';
+    if (editing()) passThrough(true);
+    view.appendChild(sw);
     view.appendChild(layer);
 
-    // Never takes focus: a focused switch would pull it from the app and
-    // its text fields. Flipping does not need it.
+    // Never takes focus: a focused control would pull it from the app and
+    // its text fields. Flipping via label does not need focus.
     layer.addEventListener('mousedown', function (e) {
       e.preventDefault();
     });
-    layer.addEventListener('focus', function () {
-      layer.blur();
+    sw.addEventListener('focus', function () {
+      sw.blur();
+    });
+    sw.addEventListener('change', function () {
+      setTimeout(disarm, 0);
+    });
+    layer.addEventListener('click', function (e) {
+      if (!armed) {
+        e.preventDefault();
+        disarm();
+        return;
+      }
+      setTimeout(disarm, 0);
     });
     layer.addEventListener('pointerdown', function (e) {
       if (!e.isPrimary) return;
       down = true;
-      armed = false;
+      downX = e.clientX;
+      downY = e.clientY;
+      disarm();
+    });
+    window.addEventListener('pointermove', function (e) {
+      if (!e.isPrimary || !down) return;
+      if (Math.abs(e.clientX - downX) > 10 || Math.abs(e.clientY - downY) > 10) {
+        down = false;
+        disarm();
+      }
     });
     window.addEventListener('pointerup', function (e) {
       if (!e.isPrimary || !down) return;
       down = false;
       if (armed) return;
-      // Not a tap that buzzes: the click that follows goes to the app
-      // below instead of flipping the switch.
+      // Not a tap that buzzes: strip association and let the click that
+      // follows go to the app below without flipping the switch.
+      disarm();
       passThrough(true);
       clearTimeout(restoreTimer);
       restoreTimer = setTimeout(function () {
@@ -114,12 +163,12 @@
     });
     window.addEventListener('pointercancel', function () {
       down = false;
-      armed = false;
+      disarm();
     });
     window.addEventListener(
       'click',
       function (e) {
-        if (e.target === layer || editing()) return;
+        if (e.target === layer || e.target === sw || editing()) return;
         clearTimeout(restoreTimer);
         setTimeout(function () {
           if (!editing()) passThrough(false);

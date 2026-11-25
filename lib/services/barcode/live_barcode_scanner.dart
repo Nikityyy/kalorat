@@ -72,7 +72,8 @@ abstract class LiveBarcodeScanner {
   void holdPreview(bool hold);
 
   /// Reads the first retail code in a photo; null when there is none.
-  Future<ScannedBarcode?> decodeImage(XFile image);
+  /// Callers that already read [bytes] can pass them to avoid a second read.
+  Future<ScannedBarcode?> decodeImage(XFile image, {Uint8List? bytes});
 
   Future<void> stop();
 

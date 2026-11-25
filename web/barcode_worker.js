@@ -72,9 +72,10 @@ function tiltedSize(image, angle) {
 }
 
 function tilted(image, angle) {
+  var cap = Math.min(1, 960 / Math.max(image.width, image.height));
   var size = tiltedSize(image, angle);
-  var w = size.w;
-  var h = size.h;
+  var w = Math.max(1, Math.round(size.w * cap));
+  var h = Math.max(1, Math.round(size.h * cap));
   if (!tiltCanvas || tiltCanvas.width !== w || tiltCanvas.height !== h) {
     tiltCanvas = new OffscreenCanvas(w, h);
     tiltCtx = tiltCanvas.getContext('2d', { willReadFrequently: true });
@@ -84,6 +85,7 @@ function tilted(image, angle) {
   tiltCtx.fillRect(0, 0, w, h);
   tiltCtx.translate(w / 2, h / 2);
   tiltCtx.rotate(angle);
+  tiltCtx.scale(cap, cap);
   tiltCtx.drawImage(canvas, -image.width / 2, -image.height / 2);
   return tiltCtx.getImageData(0, 0, w, h);
 }

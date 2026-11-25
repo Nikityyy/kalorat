@@ -257,5 +257,21 @@ void main() {
       );
       expect(estimate.kcal, closeTo(2500, 1));
     });
+
+    test('window cutoff preserves dayStartHour attribution and drops ancient history', () {
+      final estimate = estimateExpenditure(
+        meals: [
+          // Ancient noise far outside window should be ignored cleanly.
+          meal(daysAgo(90), 9000),
+          // 02:30 counts toward the previous logical day with dayStartHour = 4.
+          for (var d = 22; d >= 1; d--) meal(daysAgo(d - 1, 2), 2500),
+        ],
+        weights: [for (var i = 21; i >= 0; i -= 3) weigh(daysAgo(i), 80)],
+        now: now,
+        dayStartHour: 4,
+      );
+      expect(estimate.status, ExpenditureStatus.ready);
+      expect(estimate.kcal, closeTo(2500, 1));
+    });
   });
 }

@@ -1434,4 +1434,68 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get analysisFailed =>
       'Analyse fehlgeschlagen. Bitte erneut versuchen.';
+
+  @override
+  String get unsupportedPhotoFormat =>
+      'Dieses Fotoformat wird von diesem Browser nicht unterstützt. Bitte wähle ein JPEG- oder PNG-Foto.';
+
+  @override
+  String streakBadge(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count T. Serie',
+      one: '1 T. Serie',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get streakZeroShort => '0 T. Serie';
+
+  @override
+  String kcalLeftSimple(int kcal) {
+    return 'noch $kcal kcal';
+  }
+
+  @override
+  String kcalOverSimple(int kcal) {
+    return '$kcal kcal über Ziel';
+  }
+
+  @override
+  String percentOfGoal(int percent) {
+    return '$percent% vom Ziel';
+  }
+
+  @override
+  String get proteinReachedShort => 'Ziel erreicht';
+
+  @override
+  String gramsToGo(int grams) {
+    return 'noch $grams g';
+  }
+
+  @override
+  String gramsLeft(int grams) {
+    return 'noch $grams g';
+  }
+
+  @override
+  String gramsOver(int grams) {
+    return '$grams g drüber';
+  }
+
+  @override
+  String get dailyClimbTitle => 'Tagesverlauf';
+
+  @override
+  String dailyClimbGoal(int kcal) {
+    return 'Ziel $kcal kcal';
+  }
+
+  @override
+  String mealMacrosShort(int protein, int carbs, int fats) {
+    return '${protein}g E · ${carbs}g KH · ${fats}g F';
+  }
 }

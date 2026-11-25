@@ -63,10 +63,7 @@ class _PhotoViewerState extends State<_PhotoViewer>
   );
   late int _index = widget.initialIndex;
   final _zoom = TransformationController();
-  late final AnimationController _zoomAnimation = AnimationController(
-    vsync: this,
-    duration: const Duration(milliseconds: 220),
-  )..addListener(() => _zoom.value = _zoomTween!.evaluate(_zoomAnimation));
+  late final AnimationController _zoomAnimation;
   Matrix4Tween? _zoomTween;
   Offset _doubleTapAt = Offset.zero;
   bool _zoomed = false;
@@ -78,6 +75,10 @@ class _PhotoViewerState extends State<_PhotoViewer>
   @override
   void initState() {
     super.initState();
+    _zoomAnimation = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 220),
+    )..addListener(() => _zoom.value = _zoomTween!.evaluate(_zoomAnimation));
     _zoom.addListener(() {
       final zoomed = _zoom.value.getMaxScaleOnAxis() > 1.01;
       if (zoomed != _zoomed) setState(() => _zoomed = zoomed);

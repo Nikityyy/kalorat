@@ -33,7 +33,8 @@ class _NoBarcodeScanner implements LiveBarcodeScanner {
   void holdPreview(bool hold) {}
 
   @override
-  Future<ScannedBarcode?> decodeImage(XFile image) async => null;
+  Future<ScannedBarcode?> decodeImage(XFile image, {Uint8List? bytes}) async =>
+      null;
 
   @override
   Future<void> stop() async {}
