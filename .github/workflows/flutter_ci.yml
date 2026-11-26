@@ -98,16 +98,18 @@ jobs:
         touch _site/.nojekyll
 
     - name: Setup Pages
-      uses: actions/configure-pages@v5
+      uses: actions/configure-pages@v6
 
     - name: Upload artifact
-      uses: actions/upload-pages-artifact@v3
+      uses: actions/upload-pages-artifact@v5
       with:
         path: '_site'
+        # _site/.nojekyll is hidden, and v5 leaves hidden files out by default.
+        include-hidden-files: true
 
     - name: Deploy to GitHub Pages
       id: deployment
-      uses: actions/deploy-pages@v4
+      uses: actions/deploy-pages@v5
 
   # — Job 3: Build & Release APK —
   build-apk:
